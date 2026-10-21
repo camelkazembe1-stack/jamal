@@ -3,92 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JMS Multsystem Management — Login</title>
+  <title>JMS Multsystem Management</title>
   <style>
+    * { box-sizing: border-box; }
     body {
-      margin: 0; min-height: 100vh; display: grid; place-items: center;
-      padding: 24px; box-sizing: border-box; background: #f3f6fb;
-      font-family: Arial, sans-serif; color: #172033;
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: #172033;
+      background: #f3f6fb;
     }
-    main {
-      width: 100%; max-width: 430px; box-sizing: border-box;
-      padding: 36px 28px; border-radius: 18px; background: white;
-      text-align: center; box-shadow: 0 12px 40px #17203318;
+    #login-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
     }
-    h1 { font-size: 27px; }
-    p { line-height: 1.6; color: #596579; }
-    button {
-      width: 100%; padding: 14px; border: 0; border-radius: 9px;
-      background: #1769e0; color: white; font-size: 16px;
-      font-weight: bold; cursor: pointer;
+    .login-card {
+      width: 100%;
+      max-width: 460px;
+      padding: 36px 28px;
+      background: white;
+      border-radius: 18px;
+      text-align: center;
+      box-shadow: 0 12px 40px #17203318;
     }
-    button:disabled { opacity: .6; cursor: wait; }
-    #status { overflow-wrap: anywhere; font-size: 14px; }
+    h1 { margin-top: 0; }
+    p { line-height: 1.6; }
+    #google-login {
+      display: inline-block;
+      padding: 13px 22px;
+      border: 0;
+      border-radius: 9px;
+      background: #1769e0;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #google-login:disabled { opacity: .65; cursor: wait; }
+    #status { overflow-wrap: anywhere; }
+    #application {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+      border: 0;
+      background: white;
+    }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Welcome to JMS Multsystem Management</h1>
-    <p>Please login to save and secure your data.</p>
-    <button id="login" disabled>Loading secure login…</button>
-    <p id="status" role="status" aria-live="polite">Connecting to Firebase…</p>
+  <main id="login-screen">
+    <section class="login-card">
+      <h1>Welcome to JMS Multsystem Management</h1>
+      <p>Please login to save and secure your data.</p>
+      <button id="google-login" type="button">Continue with Google</button>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
   </main>
 
-  <script type="module">
-    import { auth, googleProvider, authReady } from "./firebase.js";
-    import {
-      signInWithPopup,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+  <iframe
+    id="application"
+    title="JMS Multsystem Management application"
+    allow="clipboard-read; clipboard-write"
+  ></iframe>
 
-    const button = document.getElementById("login");
-    const status = document.getElementById("status");
-    let busy = false;
-
-    try {
-      await authReady;
-      await auth.authStateReady();
-
-      if (auth.currentUser) {
-        window.location.replace("/home/app/");
-      } else {
-        button.disabled = false;
-        button.textContent = "Continue with Google";
-        status.textContent = "Please sign in with your Google account.";
-      }
-    } catch (error) {
-      status.textContent = "Firebase initialization failed: " + error.message;
-      console.error("Firebase initialization:", error);
-    }
-
-    button.addEventListener("click", async () => {
-      if (busy) return;
-      busy = true;
-      button.disabled = true;
-      button.textContent = "Signing in…";
-      status.textContent = "Complete sign-in in the Google window.";
-
-      try {
-        await authReady;
-        const result = await signInWithPopup(auth, googleProvider);
-
-        if (!result.user) {
-          throw new Error("Google sign-in returned no authenticated user.");
-        }
-
-        status.textContent = "Login successful. Opening your home page…";
-        window.location.replace("/home/app/");
-      } catch (error) {
-        console.error("Google sign-in failed:", error);
-        status.textContent = error.code
-          ? error.code + ": " + error.message
-          : error.message;
-
-        button.disabled = false;
-        button.textContent = "Try Google Login Again";
-        busy = false;
-      }
-    });
-  </script>
+  <script type="module" src="./single-url.js"></script>
 </body>
 </html>
