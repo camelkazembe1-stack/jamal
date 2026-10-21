@@ -73,7 +73,8 @@
 
     import {
       onAuthStateChanged,
-      signOut
+      signOut,
+      getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const heading = document.getElementById("heading");
@@ -82,6 +83,9 @@
 
     try {
       await authReady;
+
+      // Resolve any pending Google sign-in before deciding to return to login.
+      await getRedirectResult(auth);
 
       onAuthStateChanged(auth, (user) => {
         if (!user) {

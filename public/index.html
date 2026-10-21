@@ -110,17 +110,38 @@
 
     import {
       onAuthStateChanged,
-      signInWithRedirect
+      signInWithRedirect,
+      getRedirectResult
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const button = document.getElementById("google-login");
     const message = document.getElementById("message");
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.replace("./home.html");
+    async function initializeLoginPage() {
+      try {
+        await authReady;
+
+        // Process Google's redirect result before checking login state.
+        const result = await getRedirectResult(auth);
+
+        if (result?.user || auth.currentUser) {
+          window.location.replace("./home.html");
+          return;
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            window.location.replace("./home.html");
+          }
+        });
+      } catch (error) {
+        console.error("Google redirect verification failed:", error);
+        message.textContent =
+          "Could not verify your Google login. Please try signing in again.";
       }
-    });
+    }
+
+    initializeLoginPage();
 
     button.addEventListener("click", async () => {
       button.disabled = true;
