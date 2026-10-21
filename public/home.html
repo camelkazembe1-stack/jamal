@@ -3,65 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Home | JMS Multsystem Management</title>
+  <title>JMS Multsystem Management - Home</title>
   <style>
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
       padding: 24px;
-      background: #f5f7fb;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e8efff, #f7f9fc);
       color: #172033;
-      font-family: Arial, Helvetica, sans-serif;
     }
-
-    main {
+    .card {
       width: 100%;
       max-width: 520px;
-      padding: 40px 28px;
-      background: white;
-      border: 1px solid #e5e9f2;
-      border-radius: 18px;
+      padding: 36px 28px;
       text-align: center;
-      box-shadow: 0 12px 40px rgba(24, 39, 75, .08);
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 12px 40px #17203318;
     }
-
-    .success {
-      width: 58px;
-      height: 58px;
-      display: grid;
-      place-items: center;
-      margin: 0 auto 20px;
-      border-radius: 50%;
-      background: #e7f8ed;
-      color: #188548;
-      font-size: 30px;
-    }
-
-    h1 { margin: 0 0 14px; font-size: 29px; }
-    p { color: #657087; line-height: 1.7; overflow-wrap: anywhere; }
-
-    #logout {
+    h1 { font-size: 28px; }
+    p { line-height: 1.6; color: #596579; overflow-wrap: anywhere; }
+    button {
       margin-top: 18px;
       padding: 12px 22px;
       border: 0;
-      border-radius: 8px;
-      background: #3157c8;
+      border-radius: 9px;
+      background: #1769e0;
       color: white;
       font-size: 15px;
       cursor: pointer;
     }
-
-    #logout:disabled { opacity: .6; }
   </style>
 </head>
 <body>
-  <main>
-    <div class="success" aria-hidden="true">✓</div>
-    <h1 id="heading">Checking your login…</h1>
+  <main class="card">
+    <h1 id="heading">Verifying your login…</h1>
     <p id="details" role="status" aria-live="polite">
       Please wait while we verify your Google account.
     </p>
@@ -70,26 +50,35 @@
 
   <script type="module">
     import { auth, authReady } from "./firebase.js";
-
     import {
-      onAuthStateChanged,
-      signOut,
-      getRedirectResult
+      getRedirectResult,
+      signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const heading = document.getElementById("heading");
     const details = document.getElementById("details");
     const logout = document.getElementById("logout");
 
-    try {
-      await authReady;
+    async function initializeHome() {
+      try {
+        await authReady;
+        await auth.authStateReady();
 
-      // Resolve any pending Google sign-in before deciding to return to login.
-      await getRedirectResult(auth);
+        // Firebase restores the persisted user before we check the session.
+        const result = await getRedirectResult(auth);
+        const user = result?.user || auth.currentUser;
 
-      onAuthStateChanged(auth, (user) => {
         if (!user) {
-          window.location.replace("./index.html");
+          heading.textContent = "Login session not found";
+          details.textContent =
+            "No authenticated Google account was restored. " +
+            "Use the login page and try again.";
+          const loginButton = document.createElement("button");
+          loginButton.textContent = "Return to login";
+          loginButton.addEventListener("click", () => {
+            window.location.replace("/");
+          });
+          details.after(loginButton);
           return;
         }
 
@@ -98,25 +87,32 @@
           "Welcome" + (user.displayName ? ", " + user.displayName : "") +
           ". Your Google account has been authenticated.";
         logout.hidden = false;
-      });
-    } catch (error) {
-      console.error("Authentication verification failed:", error);
-      heading.textContent = "Login verification failed";
-      details.textContent = "Please return to the login page and try again.";
+      } catch (error) {
+        console.error("Home authentication check failed:", error);
+        heading.textContent = "Could not verify your login";
+        details.textContent =
+          (error.code || error.message || "Unknown authentication error") +
+          ". Please return to the login page and try again.";
+      }
     }
 
     logout.addEventListener("click", async () => {
       logout.disabled = true;
+      details.textContent = "Signing out…";
 
       try {
         await signOut(auth);
-        window.location.replace("./index.html");
+        window.location.replace("/");
       } catch (error) {
         console.error("Sign-out failed:", error);
-        details.textContent = "Sign-out failed. Please try again.";
+        details.textContent =
+          "Sign-out failed: " +
+          (error.code || error.message || "Please try again.");
         logout.disabled = false;
       }
     });
+
+    initializeHome();
   </script>
 </body>
 </html>

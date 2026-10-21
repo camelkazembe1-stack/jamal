@@ -2,30 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>jamali is coding</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JMS Multsystem Management - Login</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-    }
-
+    * { box-sizing: border-box; }
     body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fff;
-      color: #000;
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
       font-family: Arial, sans-serif;
-      font-size: 32px;
+      background: linear-gradient(135deg, #e8efff, #f7f9fc);
+      color: #172033;
     }
+    .card {
+      width: 100%;
+      max-width: 440px;
+      padding: 36px 28px;
+      text-align: center;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 12px 40px #17203318;
+    }
+    h1 { font-size: 27px; margin: 0 0 14px; }
+    p { line-height: 1.6; color: #596579; overflow-wrap: anywhere; }
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 14px;
+      border: 0;
+      border-radius: 9px;
+      background: #1769e0;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .65; cursor: wait; }
   </style>
 </head>
-<body>jamali is coding</body>
+<body>
+  <main class="card">
+    <h1>Welcome to JMS Multsystem Management</h1>
+    <p>Please login to save and secure your data.</p>
+    <button id="google-login" type="button">Continue with Google</button>
+    <p id="message" role="status" aria-live="polite">Checking your login session…</p>
+  </main>
+
+  <script type="module">
+    import { auth, googleProvider, authReady } from "./public/firebase.js";
+    import {
+      getRedirectResult,
+      signInWithRedirect
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const button = document.getElementById("google-login");
+    const message = document.getElementById("message");
+    let redirecting = false;
+
+    async function initializeLogin() {
+      button.disabled = true;
+
+      try {
+        await authReady;
+        await auth.authStateReady();
+
+        const result = await getRedirectResult(auth);
+        const user = result?.user || auth.currentUser;
+
+        if (user) {
+          redirecting = true;
+          message.textContent = "Login successful. Opening your home page…";
+          window.location.replace("/home.html");
+          return;
+        }
+
+        message.textContent = "Please sign in with your Google account.";
+        button.disabled = false;
+      } catch (error) {
+        console.error("Login initialization failed:", error);
+        message.textContent =
+          "Could not check your login: " +
+          (error.code || error.message || "Please try again.");
+        button.disabled = false;
+      }
+    }
+
+    button.addEventListener("click", async () => {
+      if (redirecting) return;
+
+      button.disabled = true;
+      message.textContent = "Connecting securely to Google…";
+
+      try {
+        await authReady;
+        await signInWithRedirect(auth, googleProvider);
+      } catch (error) {
+        console.error("Google sign-in failed:", error);
+        message.textContent =
+          "Google login failed: " +
+          (error.code || error.message || "Please try again.");
+        button.disabled = false;
+      }
+    });
+
+    initializeLogin();
+  </script>
+</body>
 </html>
