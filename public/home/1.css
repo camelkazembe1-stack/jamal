@@ -73,3 +73,14 @@ body {
 main button:not(#dashboard-buttons .dashboard-button) {
   aspect-ratio: 1 / 1;
 }
+
+
+/* JAMALI Business button */
+#business-button {
+  background: #16803c !important;
+  color: #ffffff !important;
+  aspect-ratio: 1 / 1;
+}
+#business-button:hover {
+  background: #11652f !important;
+}
