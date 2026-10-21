@@ -50,7 +50,7 @@
       await auth.authStateReady();
 
       if (auth.currentUser) {
-        window.location.replace("./home.html");
+        window.location.replace("/home/app/");
       } else {
         button.disabled = false;
         button.textContent = "Continue with Google";
@@ -77,7 +77,7 @@
         }
 
         status.textContent = "Login successful. Opening your home page…";
-        window.location.replace("./home.html");
+        window.location.replace("/home/app/");
       } catch (error) {
         console.error("Google sign-in failed:", error);
         status.textContent = error.code
