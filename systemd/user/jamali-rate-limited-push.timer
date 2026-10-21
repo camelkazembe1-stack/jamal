@@ -1,0 +1,11 @@
+[Unit]
+Description=Check JAMALI pending changes every 10 seconds
+
+[Timer]
+OnBootSec=10s
+OnUnitInactiveSec=10s
+AccuracySec=1s
+Unit=jamali-rate-limited-push.service
+
+[Install]
+WantedBy=timers.target
