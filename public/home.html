@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home | JMS Multsystem Management</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #f5f7fb;
+      color: #172033;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    main {
+      width: 100%;
+      max-width: 520px;
+      padding: 40px 28px;
+      background: white;
+      border: 1px solid #e5e9f2;
+      border-radius: 18px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(24, 39, 75, .08);
+    }
+
+    .success {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: #e7f8ed;
+      color: #188548;
+      font-size: 30px;
+    }
+
+    h1 { margin: 0 0 14px; font-size: 29px; }
+    p { color: #657087; line-height: 1.7; overflow-wrap: anywhere; }
+
+    #logout {
+      margin-top: 18px;
+      padding: 12px 22px;
+      border: 0;
+      border-radius: 8px;
+      background: #3157c8;
+      color: white;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    #logout:disabled { opacity: .6; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="success" aria-hidden="true">✓</div>
+    <h1 id="heading">Checking your login…</h1>
+    <p id="details" role="status" aria-live="polite">
+      Please wait while we verify your Google account.
+    </p>
+    <button id="logout" type="button" hidden>Sign out</button>
+  </main>
+
+  <script type="module">
+    import { auth, authReady } from "./firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const heading = document.getElementById("heading");
+    const details = document.getElementById("details");
+    const logout = document.getElementById("logout");
+
+    try {
+      await authReady;
+
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          window.location.replace("./index.html");
+          return;
+        }
+
+        heading.textContent = "You are successfully logged in!";
+        details.textContent =
+          "Welcome" + (user.displayName ? ", " + user.displayName : "") +
+          ". Your Google account has been authenticated.";
+        logout.hidden = false;
+      });
+    } catch (error) {
+      console.error("Authentication verification failed:", error);
+      heading.textContent = "Login verification failed";
+      details.textContent = "Please return to the login page and try again.";
+    }
+
+    logout.addEventListener("click", async () => {
+      logout.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("./index.html");
+      } catch (error) {
+        console.error("Sign-out failed:", error);
+        details.textContent = "Sign-out failed. Please try again.";
+        logout.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
