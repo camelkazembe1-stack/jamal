@@ -3,147 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f7fb">
-  <title>JMS Multsystem Management | Login</title>
+  <title>JMS Multsystem Management - Login</title>
   <style>
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
       padding: 24px;
-      background: #f5f7fb;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #e8efff, #f7f9fc);
       color: #172033;
-      font-family: Arial, Helvetica, sans-serif;
     }
-
-    main {
+    .card {
       width: 100%;
       max-width: 440px;
-      padding: 42px 30px;
-      background: white;
-      border: 1px solid #e5e9f2;
-      border-radius: 18px;
+      padding: 36px 28px;
       text-align: center;
-      box-shadow: 0 12px 40px rgba(24, 39, 75, .08);
-    }
-
-    .brand {
-      margin-bottom: 24px;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #3157c8;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 0 0 14px;
-      font-size: clamp(26px, 6vw, 34px);
-      line-height: 1.2;
-    }
-
-    p {
-      margin: 0 0 28px;
-      color: #657087;
-      font-size: 16px;
-      line-height: 1.7;
-    }
-
-    #google-login {
-      width: 100%;
-      min-height: 52px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 12px 18px;
-      border: 1px solid #d5d9e2;
-      border-radius: 9px;
       background: white;
-      color: #202735;
+      border-radius: 18px;
+      box-shadow: 0 12px 40px #17203318;
+    }
+    h1 { font-size: 27px; margin: 0 0 14px; }
+    p { line-height: 1.6; color: #596579; overflow-wrap: anywhere; }
+    button {
+      width: 100%;
+      margin-top: 18px;
+      padding: 14px;
+      border: 0;
+      border-radius: 9px;
+      background: #1769e0;
+      color: white;
       font-size: 16px;
-      font-weight: 600;
+      font-weight: bold;
       cursor: pointer;
     }
-
-    #google-login:hover { background: #f8f9fc; }
-    #google-login:disabled { opacity: .6; cursor: wait; }
-
-    .google-g {
-      font-size: 22px;
-      font-weight: 700;
-      color: #4285f4;
-    }
-
-    #message {
-      min-height: 24px;
-      margin-top: 18px;
-      margin-bottom: 0;
-      font-size: 14px;
-      overflow-wrap: anywhere;
-    }
+    button:disabled { opacity: .65; cursor: wait; }
   </style>
 </head>
 <body>
-  <main>
-    <div class="brand">JMS Multsystem Management</div>
+  <main class="card">
     <h1>Welcome to JMS Multsystem Management</h1>
-    <p>Please log in with Google to help save and secure your data.</p>
-
-    <button id="google-login" type="button">
-      <span class="google-g" aria-hidden="true">G</span>
-      <span>Continue with Google</span>
-    </button>
-
-    <p id="message" role="status" aria-live="polite"></p>
+    <p>Please login to save and secure your data.</p>
+    <button id="google-login" type="button">Continue with Google</button>
+    <p id="message" role="status" aria-live="polite">Checking your login session…</p>
   </main>
 
   <script type="module">
+    import { auth, googleProvider, authReady } from "./firebase.js";
     import {
-      auth,
-      googleProvider,
-      authReady
-    } from "./firebase.js";
-
-    import {
-      onAuthStateChanged,
-      signInWithRedirect,
-      getRedirectResult
+      getRedirectResult,
+      signInWithRedirect
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
     const button = document.getElementById("google-login");
     const message = document.getElementById("message");
+    let redirecting = false;
 
-    async function initializeLoginPage() {
+    async function initializeLogin() {
+      button.disabled = true;
+
       try {
         await authReady;
+        await auth.authStateReady();
 
-        // Process Google's redirect result before checking login state.
         const result = await getRedirectResult(auth);
+        const user = result?.user || auth.currentUser;
 
-        if (result?.user || auth.currentUser) {
-          window.location.replace("./home.html");
+        if (user) {
+          redirecting = true;
+          message.textContent = "Login successful. Opening your home page…";
+          window.location.replace("/home.html");
           return;
         }
 
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            window.location.replace("./home.html");
-          }
-        });
+        message.textContent = "Please sign in with your Google account.";
+        button.disabled = false;
       } catch (error) {
-        console.error("Google redirect verification failed:", error);
+        console.error("Login initialization failed:", error);
         message.textContent =
-          "Could not verify your Google login. Please try signing in again.";
+          "Could not check your login: " +
+          (error.code || error.message || "Please try again.");
+        button.disabled = false;
       }
     }
 
-    initializeLoginPage();
-
     button.addEventListener("click", async () => {
+      if (redirecting) return;
+
       button.disabled = true;
       message.textContent = "Connecting securely to Google…";
 
@@ -153,10 +101,13 @@
       } catch (error) {
         console.error("Google sign-in failed:", error);
         message.textContent =
-          "Login could not start. Please check your connection and Firebase Authentication settings.";
+          "Google login failed: " +
+          (error.code || error.message || "Please try again.");
         button.disabled = false;
       }
     });
+
+    initializeLogin();
   </script>
 </body>
 </html>
