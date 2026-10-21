@@ -1,113 +1,94 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JMS Multsystem Management - Login</title>
+  <title>JMS Multsystem Management — Login</title>
   <style>
-    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #e8efff, #f7f9fc);
-      color: #172033;
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      padding: 24px; box-sizing: border-box; background: #f3f6fb;
+      font-family: Arial, sans-serif; color: #172033;
     }
-    .card {
-      width: 100%;
-      max-width: 440px;
-      padding: 36px 28px;
-      text-align: center;
-      background: white;
-      border-radius: 18px;
-      box-shadow: 0 12px 40px #17203318;
+    main {
+      width: 100%; max-width: 430px; box-sizing: border-box;
+      padding: 36px 28px; border-radius: 18px; background: white;
+      text-align: center; box-shadow: 0 12px 40px #17203318;
     }
-    h1 { font-size: 27px; margin: 0 0 14px; }
-    p { line-height: 1.6; color: #596579; overflow-wrap: anywhere; }
+    h1 { font-size: 27px; }
+    p { line-height: 1.6; color: #596579; }
     button {
-      width: 100%;
-      margin-top: 18px;
-      padding: 14px;
-      border: 0;
-      border-radius: 9px;
-      background: #1769e0;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
+      width: 100%; padding: 14px; border: 0; border-radius: 9px;
+      background: #1769e0; color: white; font-size: 16px;
+      font-weight: bold; cursor: pointer;
     }
-    button:disabled { opacity: .65; cursor: wait; }
+    button:disabled { opacity: .6; cursor: wait; }
+    #status { overflow-wrap: anywhere; font-size: 14px; }
   </style>
 </head>
 <body>
-  <main class="card">
+  <main>
     <h1>Welcome to JMS Multsystem Management</h1>
     <p>Please login to save and secure your data.</p>
-    <button id="google-login" type="button">Continue with Google</button>
-    <p id="message" role="status" aria-live="polite">Checking your login session…</p>
+    <button id="login" disabled>Loading secure login…</button>
+    <p id="status" role="status" aria-live="polite">Connecting to Firebase…</p>
   </main>
 
   <script type="module">
     import { auth, googleProvider, authReady } from "./firebase.js";
     import {
-      getRedirectResult,
-      signInWithRedirect
+      signInWithPopup,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
-    const button = document.getElementById("google-login");
-    const message = document.getElementById("message");
-    let redirecting = false;
+    const button = document.getElementById("login");
+    const status = document.getElementById("status");
+    let busy = false;
 
-    async function initializeLogin() {
-      button.disabled = true;
+    try {
+      await authReady;
+      await auth.authStateReady();
 
-      try {
-        await authReady;
-        await auth.authStateReady();
-
-        const result = await getRedirectResult(auth);
-        const user = result?.user || auth.currentUser;
-
-        if (user) {
-          redirecting = true;
-          message.textContent = "Login successful. Opening your home page…";
-          window.location.replace("/home.html");
-          return;
-        }
-
-        message.textContent = "Please sign in with your Google account.";
+      if (auth.currentUser) {
+        window.location.replace("./home.html");
+      } else {
         button.disabled = false;
-      } catch (error) {
-        console.error("Login initialization failed:", error);
-        message.textContent =
-          "Could not check your login: " +
-          (error.code || error.message || "Please try again.");
-        button.disabled = false;
+        button.textContent = "Continue with Google";
+        status.textContent = "Please sign in with your Google account.";
       }
+    } catch (error) {
+      status.textContent = "Firebase initialization failed: " + error.message;
+      console.error("Firebase initialization:", error);
     }
 
     button.addEventListener("click", async () => {
-      if (redirecting) return;
-
+      if (busy) return;
+      busy = true;
       button.disabled = true;
-      message.textContent = "Connecting securely to Google…";
+      button.textContent = "Signing in…";
+      status.textContent = "Complete sign-in in the Google window.";
 
       try {
         await authReady;
-        await signInWithRedirect(auth, googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
+
+        if (!result.user) {
+          throw new Error("Google sign-in returned no authenticated user.");
+        }
+
+        status.textContent = "Login successful. Opening your home page…";
+        window.location.replace("./home.html");
       } catch (error) {
         console.error("Google sign-in failed:", error);
-        message.textContent =
-          "Google login failed: " +
-          (error.code || error.message || "Please try again.");
+        status.textContent = error.code
+          ? error.code + ": " + error.message
+          : error.message;
+
         button.disabled = false;
+        button.textContent = "Try Google Login Again";
+        busy = false;
       }
     });
-
-    initializeLogin();
   </script>
 </body>
 </html>
