@@ -84,3 +84,86 @@ main button:not(#dashboard-buttons .dashboard-button) {
 #business-button:hover {
   background: #11652f !important;
 }
+
+
+/* ===== JAMALI BUSINESS DASHBOARD DESIGN ===== */
+#dashboard-buttons {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  margin: 28px 0;
+  box-sizing: border-box;
+}
+
+#dashboard-buttons .dashboard-button,
+#dashboard-buttons #business-button {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #16803c;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #20a653 0%, #116b35 100%);
+  color: #ffffff;
+  box-shadow: 0 5px 14px rgba(22, 128, 60, 0.20);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease,
+              background 160ms ease;
+}
+
+#dashboard-buttons .dashboard-button:hover,
+#dashboard-buttons #business-button:hover {
+  background: linear-gradient(145deg, #16803c 0%, #0b5729 100%);
+  box-shadow: 0 8px 20px rgba(22, 128, 60, 0.28);
+  transform: translateY(-2px);
+}
+
+#dashboard-buttons .dashboard-button:focus-visible {
+  outline: 3px solid #86efac;
+  outline-offset: 3px;
+}
+
+#dashboard-buttons .business-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255,255,255,0.45);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.16);
+  font-size: 27px;
+  line-height: 1;
+}
+
+#dashboard-buttons .business-label {
+  display: block;
+  max-width: 100%;
+  line-height: 1.3;
+}
+
+@media (max-width: 900px) {
+  #dashboard-buttons {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  #dashboard-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
