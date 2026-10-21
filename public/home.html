@@ -1,57 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JMS Multsystem Management - Home</title>
+  <title>JMS Multsystem Management — Home</title>
   <style>
-    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #e8efff, #f7f9fc);
-      color: #172033;
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      padding: 24px; box-sizing: border-box; background: #f3f6fb;
+      font-family: Arial, sans-serif; color: #172033;
     }
-    .card {
-      width: 100%;
-      max-width: 520px;
-      padding: 36px 28px;
-      text-align: center;
-      background: white;
-      border-radius: 18px;
-      box-shadow: 0 12px 40px #17203318;
+    main {
+      width: 100%; max-width: 500px; box-sizing: border-box;
+      padding: 36px 28px; border-radius: 18px; background: white;
+      text-align: center; box-shadow: 0 12px 40px #17203318;
     }
-    h1 { font-size: 28px; }
-    p { line-height: 1.6; color: #596579; overflow-wrap: anywhere; }
+    #status { overflow-wrap: anywhere; }
     button {
-      margin-top: 18px;
-      padding: 12px 22px;
-      border: 0;
-      border-radius: 9px;
-      background: #1769e0;
-      color: white;
-      font-size: 15px;
+      padding: 12px 22px; border: 0; border-radius: 9px;
+      background: #1769e0; color: white; font-size: 15px;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1 id="heading">Verifying your login…</h1>
-    <p id="details" role="status" aria-live="polite">
-      Please wait while we verify your Google account.
-    </p>
-    <button id="logout" type="button" hidden>Sign out</button>
+  <main>
+    <h1 id="heading">Checking your login…</h1>
+    <p id="details" role="status" aria-live="polite">Verifying your Firebase session.</p>
+    <button id="logout" hidden>Sign out</button>
   </main>
 
   <script type="module">
     import { auth, authReady } from "./firebase.js";
     import {
-      getRedirectResult,
+      onAuthStateChanged,
       signOut
     } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
@@ -59,60 +41,45 @@
     const details = document.getElementById("details");
     const logout = document.getElementById("logout");
 
-    async function initializeHome() {
-      try {
-        await authReady;
-        await auth.authStateReady();
+    try {
+      await authReady;
+      await auth.authStateReady();
 
-        // Firebase restores the persisted user before we check the session.
-        const result = await getRedirectResult(auth);
-        const user = result?.user || auth.currentUser;
+      const user = auth.currentUser;
 
-        if (!user) {
-          heading.textContent = "Login session not found";
-          details.textContent =
-            "No authenticated Google account was restored. " +
-            "Use the login page and try again.";
-          const loginButton = document.createElement("button");
-          loginButton.textContent = "Return to login";
-          loginButton.addEventListener("click", () => {
-            window.location.replace("/");
-          });
-          details.after(loginButton);
-          return;
-        }
-
+      if (!user) {
+        heading.textContent = "Login session not found";
+        details.textContent =
+          "No active Google login was found in this browser. Please sign in again.";
+        const link = document.createElement("a");
+        link.href = "./index.html";
+        link.textContent = "Return to login";
+        details.appendChild(document.createElement("br"));
+        details.appendChild(link);
+      } else {
         heading.textContent = "You are successfully logged in!";
-        details.textContent =
-          "Welcome" + (user.displayName ? ", " + user.displayName : "") +
-          ". Your Google account has been authenticated.";
+        details.textContent = "Welcome, " + (user.displayName || user.email || "user") +
+          ". Your Google account is authenticated.";
         logout.hidden = false;
-      } catch (error) {
-        console.error("Home authentication check failed:", error);
-        heading.textContent = "Could not verify your login";
-        details.textContent =
-          (error.code || error.message || "Unknown authentication error") +
-          ". Please return to the login page and try again.";
       }
+    } catch (error) {
+      heading.textContent = "Unable to verify login";
+      details.textContent = error.code
+        ? error.code + ": " + error.message
+        : error.message;
+      console.error("Home authentication check:", error);
     }
 
     logout.addEventListener("click", async () => {
       logout.disabled = true;
-      details.textContent = "Signing out…";
-
       try {
         await signOut(auth);
-        window.location.replace("/");
+        window.location.replace("./index.html");
       } catch (error) {
-        console.error("Sign-out failed:", error);
-        details.textContent =
-          "Sign-out failed: " +
-          (error.code || error.message || "Please try again.");
+        details.textContent = "Sign-out failed: " + error.message;
         logout.disabled = false;
       }
     });
-
-    initializeHome();
   </script>
 </body>
 </html>
