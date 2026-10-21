@@ -1,5 +1,10 @@
-import { initializeApp } from "firebase/app";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  setPersistence,
+  browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtE7p5LM8L2yaJB0JJCyyTz763CBQhKGE",
@@ -11,21 +16,12 @@ const firebaseConfig = {
   measurementId: "G-DHB2DJ769H"
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
-let analytics = null;
+googleProvider.setCustomParameters({
+  prompt: "select_account"
+});
 
-if (typeof window !== "undefined") {
-  isSupported()
-    .then((supported) => {
-      if (supported) {
-        analytics = getAnalytics(app);
-      }
-    })
-    .catch((error) => {
-      console.error("Firebase Analytics initialization failed:", error);
-    });
-}
-
-export { app, analytics };
-export default app;
+export const authReady = setPersistence(auth, browserLocalPersistence);
