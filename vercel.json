@@ -1,0 +1,12 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": true,
+  "rewrites": [
+    {
+      "source": {
+        "src": "/home/app/"
+      },
+      "destination": "/public/home/1.html"
+    }
+  ]
+}
