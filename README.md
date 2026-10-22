@@ -1,19 +1,29 @@
 # JAMALI Multisystem Management
 
-## Pages and files
+## Public URL
 
-- Login page: `/` (`public/index.html`).
-- Home page: `/home/` (`public/home/1.html`).
-- Google sign-in redirects to `/home/` after successful authentication.
-- The home page redirects unauthenticated visitors to the login page.
-- The Business button is green and square. The desktop grid supports up to eight buttons per row.
-- No Sign out button is displayed on the home page.
-- The Business destination page has not yet been created.
+All page navigation must remain at the root URL:
+
+`https://jamali-lime.vercel.app/`
+
+The root page displays Google login when the visitor is signed out. After successful login, the home page is loaded into the root page without changing the browser URL.
+
+## Home page files
+
+- `public/home/1.html` — Home page HTML.
+- `public/home/1.css` — Home page styling, including the green square Business button.
+- `public/home/1.js` — Home page authentication guard and Business button behavior.
+- `public/firebase.js` — Firebase initialization and authentication configuration.
+- `public/index.html` — Root entry point and Google login.
+
+The home page files remain in the `home/` folder. They are loaded internally while the public address remains `https://jamali-lime.vercel.app/`.
+
+The Business page has not been created yet.
 
 ## Public file inventory
 
-- `public/firebase.js` — Firebase initialization and Google Authentication configuration.
-- `public/home/1.css` — Home page styling; square green system buttons, up to eight per row on desktop.
-- `public/home/1.html` — Authenticated home page.
-- `public/home/1.js` — Home page authentication guard and Business button behavior.
-- `public/index.html` — Login page with Google sign-in.
+- `public/firebase.js`
+- `public/home/1.css`
+- `public/home/1.html`
+- `public/home/1.js`
+- `public/index.html`

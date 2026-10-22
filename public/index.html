@@ -226,11 +226,34 @@
       status.classList.add("error");
     }
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.replace("./home/");
-      }
-    });
+    onAuthStateChanged(auth, async (user) => {
+  if (!user) return;
+
+  try {
+    const response = await fetch("/home/1.html", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Could not load the home page.");
+    }
+
+    let page = await response.text();
+
+    // Keep assets in the home folder while the browser remains at "/".
+    page = page
+      .replaceAll('href="./1.css"', 'href="/home/1.css"')
+      .replaceAll('src="./1.js"', 'src="/home/1.js"');
+
+    document.open();
+    document.write(page);
+    document.close();
+  } catch (error) {
+    console.error("JAMALI home page could not be loaded:", error);
+    const status = document.getElementById("login-status")
+      || document.getElementById("status");
+    if (status) {
+      status.textContent = "Could not load the home page. Please refresh and try again.";
+    }
+  }
+});
 
     button.addEventListener("click", async () => {
       button.disabled = true;
@@ -243,7 +266,7 @@
 
         if (result.user) {
           status.textContent = "Login successful. Opening JAMALI...";
-          window.location.replace("./home/");
+          window.location.replace("/");
         }
       } catch (error) {
         console.error("JAMALI Google sign-in failed:", error);
