@@ -1,44 +1,66 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7fb">
-  <title>JMS Multisystem Management — Home</title>
+  <meta name="description" content="JMS Multisystem Management home dashboard.">
+  <title>Home Dashboard | JMS Multisystem Management</title>
   <link rel="stylesheet" href="./1.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">J</span>
-      <div class="brand-text">
-        <h1>JMS Multisystem Management</h1>
-        <p>Home dashboard</p>
-      </div>
-    </div>
+    <a class="brand" href="/" aria-label="JMS Multisystem Management home">
+      <span class="brand-mark" aria-hidden="true">JMS</span>
+      <span class="brand-text">
+        <span class="brand-title">JMS Multisystem Management</span>
+        <span class="brand-subtitle">Home dashboard</span>
+      </span>
+    </a>
+
     <button id="logout" class="logout-button" type="button" hidden>
       Sign out
     </button>
   </header>
 
   <main class="page-content">
-    <section class="welcome">
-      <h2>Welcome</h2>
-      <p>Select a system to continue.</p>
+    <section class="welcome" aria-labelledby="welcome-title">
+      <p class="eyebrow">YOUR WORKSPACE</p>
+      <h1 id="welcome-title">Welcome</h1>
+      <p class="welcome-description">Select a system to continue.</p>
     </section>
 
-    <nav id="dashboard-buttons" aria-label="Main dashboard">
-      <button
-        type="button"
-        class="dashboard-button business-button"
-        id="business-button"
-      >
-        <span class="button-icon" aria-hidden="true">B</span>
-        <span class="button-label">Business</span>
-      </button>
-    </nav>
+    <section class="systems-section" aria-labelledby="systems-title">
+      <div class="section-heading">
+        <h2 id="systems-title">Your systems</h2>
+        <span class="system-count">1 system</span>
+      </div>
 
-    <p id="dashboard-status" role="status" aria-live="polite"></p>
+      <nav id="dashboard-buttons" class="dashboard-grid"
+           aria-label="Available systems">
+        <button
+          type="button"
+          class="dashboard-button business-button"
+          id="business-button"
+          aria-label="Open Business"
+        >
+          <span class="tile-top">
+            <span class="button-icon" aria-hidden="true">B</span>
+            <span class="tile-arrow" aria-hidden="true">↗</span>
+          </span>
+          <span class="button-label">Business</span>
+          <span class="button-description">Manage business transactions</span>
+        </button>
+      </nav>
+    </section>
+
+    <p id="dashboard-status" class="dashboard-status"
+       role="status" aria-live="polite"></p>
+
+    <footer class="dashboard-footer">
+      <span>JMS Multisystem Management</span>
+      <span>Management made simple.</span>
+    </footer>
   </main>
 
   <script type="module" src="./1.js"></script>

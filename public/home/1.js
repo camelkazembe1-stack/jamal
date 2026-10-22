@@ -1,4 +1,5 @@
 import { auth, authReady } from "../firebase.js";
+
 import {
   onAuthStateChanged,
   signOut
@@ -46,8 +47,8 @@ if (logoutButton) {
     try {
       await authReady;
       await signOut(auth);
-      // The parent page handles signed-out state.
-      // Do not redirect to index.html.
+      // The parent application manages the signed-out state.
+      // Keep the browser's top-level URL unchanged.
     } catch (error) {
       console.error("Sign-out failed:", error);
       showStatus("Sign-out failed. Please try again.");
@@ -58,9 +59,9 @@ if (logoutButton) {
 
 if (businessButton) {
   businessButton.addEventListener("click", () => {
-  // Navigate within the application frame to preserve the root URL.
-  window.location.href = "/business/3.html";
-});
+    showStatus("");
+    window.location.href = "/business/3.html";
+  });
 }
 
 initializeDashboard();
