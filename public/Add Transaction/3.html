@@ -17,14 +17,12 @@
         <h1>Add Transaction</h1>
         <p class="subtitle">Select a transaction and enter its details.</p>
       </div>
-      <button type="button" id="display-transactions" class="button button-primary">
-        Display Transactions
-      </button>
+      
     </header>
 
     <div id="status-message" class="status-message" role="status" aria-live="polite"></div>
 
-    <section id="transaction-options-panel" class="panel" hidden>
+    <section id="transaction-options-panel" class="panel" >
       <h2>Choose a transaction</h2>
       <div class="transaction-groups">
         <section class="transaction-group">
@@ -60,7 +58,7 @@
       </div>
     </section>
 
-    <section id="form-panel" class="panel" hidden>
+    <section id="form-panel" class="panel" >
       <h2 id="form-heading">Transaction details</h2>
       <form id="transaction-form">
         <div id="form-fields" class="form-grid"></div>
@@ -71,7 +69,7 @@
       </form>
     </section>
 
-    <section id="transactions-panel" class="panel" hidden>
+    <section id="transactions-panel" class="panel" >
       <div class="section-heading">
         <div>
           <h2>Saved transactions</h2>
@@ -83,58 +81,7 @@
     </section>
   </main>
 
-<!-- JAMALI: AUTO-DISPLAY TRANSACTION BUTTONS START -->
-<script>
-(() => {
-  function showTransactionButtons() {
-    const buttons = [...document.querySelectorAll('button, input[type="button"], input[type="submit"]')];
-    const displayButton = buttons.find(button =>
-      (button.innerText || button.value || '').trim().replace(/\s+/g, ' ').toLowerCase()
-        === 'display transactions'
-    );
 
-    if (displayButton) {
-      displayButton.click();
-      return true;
-    }
-
-    // If no display button exists, reveal the transaction-group containers
-    // using common IDs/classes without changing transaction-saving logic.
-    const groups = document.querySelectorAll(
-      '#transactionGroups, #transaction-groups, #transactionOptions, ' +
-      '.transaction-groups, .transaction-groups-container, .transaction-options, ' +
-      '[data-transaction-groups]'
-    );
-
-    if (groups.length) {
-      groups.forEach(element => {
-        element.hidden = false;
-        element.style.display = '';
-        element.setAttribute('aria-hidden', 'false');
-      });
-      return true;
-    }
-    return false;
-  }
-
-  function initialize() {
-    let attempts = 0;
-    const timer = setInterval(() => {
-      attempts++;
-      if (showTransactionButtons() || attempts >= 20) {
-        clearInterval(timer);
-      }
-    }, 150);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize, { once: true });
-  } else {
-    initialize();
-  }
-})();
-</script>
-<!-- JAMALI: AUTO-DISPLAY TRANSACTION BUTTONS END -->
 
 </body>
 </html>

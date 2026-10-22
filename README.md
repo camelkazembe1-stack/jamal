@@ -71,7 +71,7 @@ jamali/
 
 ### Add Transaction
 
-Transaction buttons appear automatically when the page opens, grouped as follows:
+Transaction buttons appear directly when the page opens; there is no Display Transactions button. Groups:
 
 - IN: Sales, Commission Received.
 - OUT: Purchases, Rent.
