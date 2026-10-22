@@ -299,3 +299,77 @@ form.addEventListener("submit", async event => {
     saveButton.textContent = "Save Transaction";
   }
 });
+
+
+/* JAMALI: hide transaction choices while entering a transaction */
+(() => {
+  const transactionNames = new Set([
+    "sales",
+    "commission received",
+    "purchases",
+    "rent",
+    "retained profit",
+    "withdraw cash",
+    "deposit cash"
+  ]);
+
+  const categoryNames = new Set(["in", "out", "neutral", "contra"]);
+
+  function setupTransactionChoiceView() {
+    if (document.documentElement.dataset.transactionChoiceViewReady === "true") return;
+    document.documentElement.dataset.transactionChoiceViewReady = "true";
+
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("button");
+      if (!button) return;
+
+      const name = (button.textContent || "").trim().replace(/\s+/g, " ").toLowerCase();
+      if (!transactionNames.has(name)) return;
+
+      // Hide all transaction-choice buttons and their category headings.
+      document.querySelectorAll("button").forEach((item) => {
+        const text = (item.textContent || "").trim().replace(/\s+/g, " ").toLowerCase();
+        if (transactionNames.has(text)) item.classList.add("transaction-choice-hidden");
+      });
+
+      document.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((heading) => {
+        const text = (heading.textContent || "").trim().toLowerCase();
+        if (categoryNames.has(text)) heading.classList.add("transaction-choice-hidden");
+      });
+
+      // Hide category containers when they contain no form controls.
+      document.querySelectorAll(
+        ".transaction-section, .transaction-group, .transaction-category, .transaction-buttons"
+      ).forEach((group) => {
+        if (
+          !group.querySelector("input, select, textarea, form") &&
+          group.querySelector("button")
+        ) {
+          group.classList.add("transaction-choice-hidden");
+        }
+      });
+
+      // Scroll the newly opened form into view after the existing click handler runs.
+      window.setTimeout(() => {
+        const forms = [...document.querySelectorAll(
+          "form, #transaction-form, #form-container, #entry-form, #transactionForm, .transaction-form, .form-panel"
+        )];
+
+        const visibleForm = forms.find((form) =>
+          form.getClientRects().length > 0 &&
+          !form.classList.contains("transaction-choice-hidden")
+        );
+
+        if (visibleForm) {
+          visibleForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    }, true);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupTransactionChoiceView, { once: true });
+  } else {
+    setupTransactionChoiceView();
+  }
+})();
