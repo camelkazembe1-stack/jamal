@@ -5,6 +5,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const loginButton = document.getElementById("google-login");
+const loginScreen = document.getElementById("login-screen");
 const application = document.getElementById("application");
 const status = document.getElementById("status");
 
@@ -57,6 +58,7 @@ function saveCurrentPage() {
 
 function showLogin() {
   if (application) application.style.display = "none";
+  if (loginScreen) loginScreen.style.display = "grid";
 
   if (loginButton) {
     loginButton.hidden = false;
@@ -72,6 +74,7 @@ function showApplication(user) {
     return;
   }
 
+  if (loginScreen) loginScreen.style.display = "none";
   if (loginButton) loginButton.hidden = true;
 
   showStatus("");
@@ -98,7 +101,8 @@ if (loginButton) {
 
     try {
       await authReady;
-      await signInWithPopup(auth, googleProvider);
+      const credential = await signInWithPopup(auth, googleProvider);
+      showApplication(credential.user);
     } catch (error) {
       console.error("Google sign-in failed:", error);
       showStatus(error.message || "Google sign-in failed.");
