@@ -1,153 +1,22 @@
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f4f7f5;
-  color: #17231b;
-}
-
-.business-page {
-  width: min(100% - 32px, 1000px);
-  margin: 0 auto;
-  padding: 32px 0;
-}
-
-.business-header {
-  margin-bottom: 28px;
-}
-
-.business-header h1 {
-  margin: 0 0 8px;
-  font-size: clamp(26px, 4vw, 36px);
-}
-
-.business-header p {
-  margin: 0;
-  color: #647067;
-}
-
-.business-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.business-action {
-  display: flex;
-  min-height: 180px;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 16px;
-  border: 0;
-  border-radius: 16px;
-  background: #16a34a;
-  color: white;
-  font-size: clamp(16px, 2vw, 21px);
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 5px 14px rgb(22 163 74 / 16%);
-  transition: background .15s ease, transform .15s ease;
-}
-
-.business-action:hover {
-  background: #15803d;
-  transform: translateY(-2px);
-}
-
-.business-action:focus-visible,
-.business-panel input:focus-visible,
-.business-panel button:focus-visible {
-  outline: 3px solid #14532d;
-  outline-offset: 3px;
-}
-
-.action-icon {
-  font-size: 42px;
-  line-height: 1;
-}
-
-.business-panel {
-  margin-top: 24px;
-  padding: 24px;
-  border: 1px solid #dce5de;
-  border-radius: 14px;
-  background: white;
-}
-
-.business-panel[hidden] {
-  display: none;
-}
-
-.business-panel h2 {
-  margin-top: 0;
-}
-
-.transaction-form {
-  display: grid;
-  gap: 14px;
-}
-
-.transaction-form label {
-  display: grid;
-  gap: 6px;
-  font-weight: 600;
-}
-
-.transaction-form input {
-  width: 100%;
-  min-height: 42px;
-  padding: 10px;
-  border: 1px solid #cbd5ce;
-  border-radius: 8px;
-  font: inherit;
-}
-
-.transaction-form button,
-.panel-button {
-  min-height: 42px;
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 8px;
-  background: #16a34a;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.transaction-list {
-  padding-left: 20px;
-}
-
-.transaction-list li {
-  margin: 10px 0;
-  overflow-wrap: anywhere;
-}
-
-.empty-message,
-.form-message {
-  color: #647067;
-}
-
-@media (max-width: 520px) {
-  .business-page {
-    width: min(100% - 24px, 1000px);
-    padding-top: 24px;
-  }
-
-  .business-actions {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .business-action {
-    min-height: 135px;
-  }
-
-  .business-panel {
-    padding: 18px;
-  }
-}
+* { box-sizing: border-box; }
+body { margin: 0; background: #f4f7f5; color: #17231b; font-family: Arial, Helvetica, sans-serif; }
+.business-page { width: min(100% - 32px, 1000px); margin: auto; padding: 32px 0; }
+.page-header { margin-bottom: 28px; }
+.page-header h1 { margin: 0 0 8px; font-size: clamp(26px, 4vw, 36px); }
+.page-header p { margin: 0; color: #647067; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.action-button { display: flex; min-height: 180px; padding: 20px; align-items: center; justify-content: center; flex-direction: column; gap: 16px; border-radius: 16px; background: #16a34a; color: white; text-decoration: none; text-align: center; font-size: clamp(16px, 2vw, 21px); font-weight: 700; box-shadow: 0 5px 14px rgb(22 163 74 / 16%); transition: background .15s ease, transform .15s ease; }
+.action-button:hover { background: #15803d; transform: translateY(-2px); }
+.action-button:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #14532d; outline-offset: 3px; }
+.icon { font-size: 42px; line-height: 1; }
+.content-panel { width: min(100% - 32px, 760px); margin: 24px auto; padding: 24px; border: 1px solid #dce5de; border-radius: 14px; background: white; }
+.content-panel h1 { margin-top: 0; }
+.transaction-form { display: grid; gap: 14px; }
+.transaction-form label { display: grid; gap: 6px; font-weight: 600; }
+.transaction-form input { width: 100%; min-height: 42px; padding: 10px; border: 1px solid #cbd5ce; border-radius: 8px; font: inherit; }
+.primary-button, .back-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 10px 16px; border: 0; border-radius: 8px; background: #16a34a; color: white; text-decoration: none; font-weight: 700; cursor: pointer; }
+.back-row { margin-top: 22px; }
+.transaction-list { padding-left: 22px; }
+.transaction-list li { margin: 12px 0; overflow-wrap: anywhere; }
+.muted { color: #647067; }
+@media (max-width: 520px) { .business-page { width: min(100% - 24px, 1000px); padding-top: 24px; } .actions { grid-template-columns: 1fr; gap: 12px; } .action-button { min-height: 135px; } .content-panel { width: calc(100% - 24px); padding: 18px; } }
