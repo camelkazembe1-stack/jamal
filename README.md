@@ -105,3 +105,8 @@ Selecting a transaction opens its relevant entry fields. Transactions are saved 
 - `public/sidebar.js` adds a compact navigation list for HTML pages discovered under `public/`.
 - The homepage links to `/`; other pages link to their public HTML paths.
 - Newly added HTML pages appear in the generated sidebar list after this code is updated and deployed.
+
+## Shared Sidebar Integration
+- HTML pages under `public/`, except `index.html`, load `/sidebar.js`.
+- Shared navigation and the compact sidebar are maintained in `public/sidebar.js`.
+- New HTML pages should include `<script src="/sidebar.js" defer></script>` before the closing body tag.
