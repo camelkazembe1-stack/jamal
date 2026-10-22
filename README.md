@@ -2,16 +2,17 @@
 
 ## Contents of `public/`
 
-The `public/` directory contains the files served as static website assets by the deployment configuration.
+This directory contains the static website files served by the deployment.
 
-- **`public/firebase.js`** — Firebase browser configuration. Initializes the JAMALI Firebase application and initializes Google Analytics when supported. Exports the Firebase app and Analytics variable. It does not by itself implement login, database access, or other Firebase services.
+- **`public/firebase.js`** — Firebase browser configuration. Initializes the JAMALI Firebase application and attempts to initialize Google Analytics when supported. Exports the Firebase app and Analytics variable. It does not implement authentication or database operations.
+- **`public/index.html`** — JAMALI homepage. Displays the JAMALI brand, a welcome heading, a short introduction, the current year, and a simple status area. Loads firebase.js as an ES module.
 
-## Firebase configuration
+## Firebase
 
-`public/firebase.js` initializes the JAMALI Firebase application using the configured Firebase project and attempts to initialize Google Analytics when supported by the browser.
+`public/firebase.js` initializes the Firebase application and attempts to initialize Analytics when supported by the browser.
 
-The Firebase configuration is intended for browser use. Secure Firebase data with appropriate Firebase Authentication settings and Firestore or Storage security rules. Do not put private service account credentials in browser files.
+The homepage imports this module. A successful module import does not mean that user authentication, database access, or other Firebase features are implemented.
 
-## Current limitations
+## Current homepage
 
-The presence of `firebase.js` does not mean that login, database operations, or other Firebase features have been implemented. Those require additional code.
+`public/index.html` currently provides a simple welcome page. It does not contain login controls or links to other sections.
