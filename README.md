@@ -90,3 +90,8 @@ Selecting a transaction opens its relevant entry fields. Transactions are saved 
 
 - The Add Transaction module imports the initialized app from `/firebase.js`.
 - Firebase App and Firestore modules use the same SDK version (11.10.0).
+
+## All Transactions
+- The View File page contains an All Transaction button.
+- The button opens `/all-transaction.html`, which lists saved Firestore transactions and supports searching.
+- The page requires a signed-in user and Firestore read permission for the `transactions` collection.
