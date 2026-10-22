@@ -58,8 +58,9 @@ if (logoutButton) {
 
 if (businessButton) {
   businessButton.addEventListener("click", () => {
-    window.location.href = "/business/3.html";
-  });
+  // Navigate within the application frame to preserve the root URL.
+  window.location.href = "/business/3.html";
+});
 }
 
 initializeDashboard();
