@@ -95,3 +95,8 @@ Selecting a transaction opens its relevant entry fields. Transactions are saved 
 - The View File page contains an All Transaction button.
 - The button opens `/all-transaction.html`, which lists saved Firestore transactions and supports searching.
 - The page requires a signed-in user and Firestore read permission for the `transactions` collection.
+
+## Compact Sidebar
+- Shared navigation styles are managed by `public/sidebar.js`.
+- Sidebar navigation items use a compact 32px height, targeting up to 16 visible items depending on screen height.
+- `public/index.html` remains excluded from the shared sidebar.

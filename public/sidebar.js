@@ -246,3 +246,73 @@
     installSidebar();
   }
 })();
+
+
+/* JAMALI COMPACT SIDEBAR OVERRIDE START */
+(() => {
+  const applyCompactSidebar = () => {
+    if (document.getElementById("jamali-compact-sidebar-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "jamali-compact-sidebar-style";
+    style.textContent = `
+      #jamali-sidebar {
+        box-sizing: border-box !important;
+        width: 180px !important;
+        min-width: 180px !important;
+        max-width: 180px !important;
+        padding: 8px !important;
+        gap: 4px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+
+      #jamali-sidebar a,
+      #jamali-sidebar button {
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        margin: 2px 0 !important;
+        padding: 5px 9px !important;
+        font-size: 13px !important;
+        line-height: 20px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        border-radius: 6px !important;
+      }
+
+      #jamali-sidebar a > *,
+      #jamali-sidebar button > * {
+        min-width: 0 !important;
+        max-width: 100% !important;
+      }
+
+      @media (max-height: 700px) {
+        #jamali-sidebar a,
+        #jamali-sidebar button {
+          height: 29px !important;
+          min-height: 29px !important;
+          max-height: 29px !important;
+          margin: 1px 0 !important;
+          padding-top: 4px !important;
+          padding-bottom: 4px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyCompactSidebar, { once: true });
+  } else {
+    applyCompactSidebar();
+  }
+})();
+/* JAMALI COMPACT SIDEBAR OVERRIDE END */
