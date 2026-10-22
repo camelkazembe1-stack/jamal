@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087f5b">
+  <meta name="description" content="JAMALI Multisystem Management home page">
+  <title>JAMALI | Home</title>
+  <link rel="stylesheet" href="./1.css">
+  <script type="module" src="./1.js"></script>
+</head>
+<body>
+  <header>
+    <p class="brand">JAMALI</p>
+  </header>
+
+  <main>
+    <section class="welcome">
+      <h1>Welcome to JAMALI</h1>
+      <p>Multisystem Management</p>
+      <p id="account-email" class="account" hidden></p>
+    </section>
+
+    <h2 class="section-title">Your systems</h2>
+
+    <section class="systems" aria-label="JAMALI systems">
+      <button id="business-button"
+              class="business-button"
+              type="button"
+              aria-label="Open Business">
+        <span class="business-title">Business</span>
+      </button>
+    </section>
+
+    <div id="home-status"
+         class="status"
+         role="status"
+         aria-live="polite"></div>
+  </main>
+
+  <footer>
+    &copy; <span id="year"></span> JAMALI Multisystem Management
+  </footer>
+</body>
+</html>
