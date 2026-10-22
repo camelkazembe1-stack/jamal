@@ -30,15 +30,6 @@ The Business page has not been created yet.
 
 ## Complete Repository Tree
 
-This tree is generated from the current project directory. It includes hidden files and folders but excludes Git's internal `.git/` directory.
-
-## Complete Repository Tree
-
-This tree is generated from the current project directory. It includes hidden files and folders but excludes Git's internal `.git/` directory.
-
-## Complete Repository Tree
-
-<!-- REPOSITORY_TREE_START -->
 ```text
 .
 ├── public/
@@ -57,4 +48,3 @@ This tree is generated from the current project directory. It includes hidden fi
 ├── README.md
 └── vercel.json
 ```
-<!-- REPOSITORY_TREE_END -->
