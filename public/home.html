@@ -41,17 +41,7 @@
       letter-spacing: 2px;
     }
 
-    .signout {
-      padding: 10px 15px;
-      border: 1px solid rgb(255 255 255 / 65%);
-      border-radius: 9px;
-      background: transparent;
-      color: white;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    main {
+main {
       flex: 1;
       width: min(100%, 1000px);
       margin: 0 auto;
@@ -85,43 +75,52 @@
       font-size: 20px;
     }
 
-    .business-button {
-      display: flex;
+    .business-button,
+    .business-square-button {
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      width: 100%;
-      min-height: 100px;
-      padding: 22px 25px;
+      justify-content: center;
+      width: 120px;
+      height: 120px;
+      min-width: 120px;
+      min-height: 120px;
+      max-width: 120px;
+      max-height: 120px;
+      flex: 0 0 120px;
+      box-sizing: border-box;
+      padding: 12px;
       border: 0;
-      border-radius: 15px;
-      background: #087f5b;
-      color: white;
-      text-align: left;
+      border-radius: 12px;
+      background: #16a34a;
+      color: #fff;
+      text-align: center;
       cursor: pointer;
       transition: background .2s, transform .2s;
     }
 
-    .business-button:hover {
-      background: #066748;
+    .business-button:hover,
+    .business-square-button:hover {
+      background: #15803d;
       transform: translateY(-2px);
     }
 
     .business-title {
       display: block;
-      margin-bottom: 7px;
-      font-size: 21px;
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.3;
       font-weight: 800;
     }
 
-    .business-description {
-      color: #e0f4e9;
-      font-size: 14px;
-      line-height: 1.5;
+    .business-button:focus-visible,
+    .business-square-button:focus-visible {
+      outline: 3px solid #86efac;
+      outline-offset: 3px;
     }
 
+    .business-description,
     .arrow {
-      font-size: 28px;
+      display: none;
     }
 
     .status {
@@ -139,39 +138,6 @@
       font-size: 12px;
     }
   </style>
-
-<style id="jamali-business-square-style">
-.business-square-button {
-  width: 120px !important;
-  height: 120px !important;
-  min-width: 120px !important;
-  min-height: 120px !important;
-  max-width: 120px !important;
-  max-height: 120px !important;
-  box-sizing: border-box !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 12px !important;
-  border: 0 !important;
-  border-radius: 12px !important;
-  background: #16a34a !important;
-  color: white !important;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  text-align: center !important;
-  cursor: pointer !important;
-  flex: 0 0 120px !important;
-}
-.business-square-button:hover {
-  background: #15803d !important;
-}
-.business-square-button:focus-visible {
-  outline: 3px solid #86efac;
-  outline-offset: 3px;
-}
-</style>
-
 </head>
 
 <body>
@@ -184,21 +150,15 @@
     <section class="welcome">
       <h1>Welcome to JAMALI</h1>
       <p>Multisystem Management</p>
-      <p id="account-email" class="account">Checking your account...</p>
+      <p id="account-email" class="account" hidden></p>
     </section>
 
     <h2 class="section-title">Your systems</h2>
 
     <button id="business-button"
-            class="business-button"
+            class="business-button business-square-button"
             type="button">
-      <span>
-        <span class="business-title">Business</span>
-        <span class="business-description">
-          Open the Business section
-        </span>
-      </span>
-      <span class="arrow" aria-hidden="true">&rarr;</span>
+      <span class="business-title">Business</span>
     </button>
 
     <div id="home-status"
@@ -219,14 +179,10 @@
   <script type="module">
     import { auth } from "./firebase.js";
 
-    import {
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
     const email = document.getElementById("account-email");
     const status = document.getElementById("home-status");
-    const signOutButton = document.getElementById("sign-out");
     const businessButton = document.getElementById("business-button");
 
     let authenticated = false;
@@ -240,19 +196,7 @@
 
       authenticated = true;
       email.textContent = user.email || "Google account signed in";
-    });
-
-    signOutButton.addEventListener("click", async () => {
-      signOutButton.disabled = true;
-
-      try {
-        await signOut(auth);
-        window.location.replace("./index.html");
-      } catch (error) {
-        console.error("JAMALI sign-out failed:", error);
-        status.textContent = "Could not sign out. Please try again.";
-        signOutButton.disabled = false;
-      }
+      email.hidden = false;
     });
 
     businessButton.addEventListener("click", () => {
