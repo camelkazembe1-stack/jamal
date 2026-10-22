@@ -4,10 +4,10 @@ import {
   getFirestore, collection, addDoc, serverTimestamp, writeBatch, doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = getApps().length ? getApp() : null;
-const db = app ? getFirestore(app) : null;
+const firebaseApp = getApps().length ? getApp() : null;
+const db = firebaseApp ? getFirestore(firebaseApp) : null;
 
-const groups = {
+const transactionGroups = {
   "Sales": "IN",
   "Commission Received": "IN",
   "Purchases": "OUT",
@@ -17,172 +17,217 @@ const groups = {
   "Deposit Cash": "CONTRA"
 };
 
-const form = document.getElementById("transaction-form");
 const panel = document.getElementById("entry-panel");
-const fields = document.getElementById("dynamic-fields");
+const form = document.getElementById("transaction-form");
+const fields = document.getElementById("fields");
 const title = document.getElementById("form-title");
-const status = document.getElementById("form-status");
+const status = document.getElementById("status");
 const saveButton = document.getElementById("save-button");
 let selectedTransaction = "";
 
-function addField(id, label, type = "text", options = {}) {
+function createField({ id, label, type = "text", required = false, choices = [], min, step }) {
   const wrapper = document.createElement("div");
   wrapper.className = "field";
-  const lab = document.createElement("label");
-  lab.htmlFor = id;
-  lab.textContent = label;
+
+  const labelElement = document.createElement("label");
+  labelElement.htmlFor = id;
+  labelElement.textContent = label;
+
   let input;
   if (type === "select") {
     input = document.createElement("select");
-    for (const item of options.choices || []) {
+    choices.forEach(choice => {
       const option = document.createElement("option");
-      option.value = item.value;
-      option.textContent = item.label;
+      option.value = choice.value;
+      option.textContent = choice.label;
       input.appendChild(option);
-    }
+    });
   } else {
     input = document.createElement("input");
     input.type = type;
-    if (type === "number") {
-      input.min = "0.01";
-      input.step = "0.01";
-    }
-    if (options.placeholder) input.placeholder = options.placeholder;
+    if (min !== undefined) input.min = String(min);
+    if (step !== undefined) input.step = String(step);
   }
+
   input.id = id;
   input.name = id;
-  if (options.required) input.required = true;
-  if (options.value) input.value = options.value;
-  wrapper.append(lab, input);
+  input.required = required;
+  wrapper.append(labelElement, input);
   fields.appendChild(wrapper);
-  return input;
+  return { input, wrapper, labelElement };
 }
 
-function buildForm(transaction) {
+function amountField(id = "amount", label = "Amount") {
+  return createField({ id, label, type: "number", required: true, min: 0.01, step: 0.01 });
+}
+
+function nameAndMethodFields(flow) {
+  const methodField = createField({
+    id: "method",
+    label: "Method",
+    type: "select",
+    required: true,
+    choices: [
+      { value: "Cash", label: "Cash" },
+      { value: "Credit", label: "Credit" },
+      { value: "Bank", label: "Bank" }
+    ]
+  });
+  const nameField = createField({ id: "name", label: "Name" });
+
+  function updateNameField() {
+    const method = methodField.input.value;
+    nameField.wrapper.hidden = method === "Cash";
+    nameField.input.required = method !== "Cash";
+    nameField.labelElement.textContent =
+      method === "Credit" ? (flow === "IN" ? "Customer name" : "Supplier name") :
+      method === "Bank" ? "Bank name" : "Name";
+    if (method === "Cash") nameField.input.value = "";
+  }
+
+  methodField.input.addEventListener("change", updateNameField);
+  updateNameField();
+  return { methodField, nameField };
+}
+
+function buildTransactionForm(transaction) {
   selectedTransaction = transaction;
-  const flow = groups[transaction];
-  title.textContent = transaction;
   fields.replaceChildren();
+  form.reset();
   status.textContent = "";
   status.className = "";
+  title.textContent = transaction;
   panel.hidden = false;
 
-  if (flow === "IN" || flow === "OUT") {
-    const method = addField("method", "Method", "select", {
-      required: true,
-      choices: [
-        {value:"Cash", label:"Cash"},
-        {value:"Credit", label:"Credit"},
-        {value:"Bank", label:"Bank"}
-      ]
-    });
-    const name = addField("name", "Customer / Supplier / Bank name");
-    const amount = addField("amount", "Amount", "number", {required:true});
-    name.required = false;
+  const flow = transactionGroups[transaction];
 
-    const updateName = () => {
-      name.required = method.value !== "Cash";
-      name.parentElement.querySelector("label").textContent =
-        method.value === "Credit" ? "Customer / Supplier name" :
-        method.value === "Bank" ? "Bank name" : "Name (not required for Cash)";
-      name.parentElement.hidden = method.value === "Cash";
-      name.value = "";
-    };
-    method.addEventListener("change", updateName);
-    updateName();
+  if (flow === "IN" || flow === "OUT") {
+    const { methodField } = nameAndMethodFields(flow);
+    amountField();
 
     if (flow === "OUT") {
-      const chargesChoice = addField("charges-choice", "Bank charges", "select", {
+      const chargeMode = createField({
+        id: "chargeMode",
+        label: "Bank charges",
+        type: "select",
         choices: [
-          {value:"without", label:"Without charges"},
-          {value:"with", label:"With charges"}
+          { value: "without", label: "Without charges" },
+          { value: "with", label: "With charges" }
         ]
       });
-      const charges = addField("charges", "Charge amount", "number");
-      charges.parentElement.hidden = true;
-      chargesChoice.addEventListener("change", () => {
-        charges.parentElement.hidden = !(method.value === "Bank" && chargesChoice.value === "with");
-        charges.required = method.value === "Bank" && chargesChoice.value === "with";
+      const charges = createField({
+        id: "charges",
+        label: "Charge amount",
+        type: "number",
+        min: 0,
+        step: 0.01
       });
-      method.addEventListener("change", () => {
-        chargesChoice.parentElement.hidden = method.value !== "Bank";
-        charges.parentElement.hidden = !(method.value === "Bank" && chargesChoice.value === "with");
-        charges.required = method.value === "Bank" && chargesChoice.value === "with";
-      });
-      chargesChoice.parentElement.hidden = true;
+      chargeMode.wrapper.hidden = true;
+      charges.wrapper.hidden = true;
+
+      function updateCharges() {
+        const bank = methodField.input.value === "Bank";
+        chargeMode.wrapper.hidden = !bank;
+        charges.wrapper.hidden = !bank || chargeMode.input.value !== "with";
+        charges.input.required = bank && chargeMode.input.value === "with";
+        if (!bank) charges.input.value = "";
+      }
+      methodField.input.addEventListener("change", updateCharges);
+      chargeMode.input.addEventListener("change", updateCharges);
+      updateCharges();
     }
   } else if (transaction === "Retained Profit") {
-    addField("amount", "Amount", "number", {required:true});
+    amountField();
   } else if (transaction === "Deposit Cash") {
-    addField("amount", "Amount to deposit", "number", {required:true});
-    addField("bankName", "Bank name", "text", {required:true});
+    amountField("amount", "Amount to deposit");
+    createField({ id: "bankName", label: "Bank name", required: true });
   } else if (transaction === "Withdraw Cash") {
-    addField("amount", "Amount to withdraw", "number", {required:true});
-    addField("bankName", "Bank name", "text", {required:true});
-    addField("chargeMode", "Withdrawal charges", "select", {
+    amountField("amount", "Amount to withdraw");
+    createField({ id: "bankName", label: "Bank name", required: true });
+    const mode = createField({
+      id: "chargeMode",
+      label: "Withdrawal charges",
+      type: "select",
       choices: [
-        {value:"without", label:"Without charges"},
-        {value:"with", label:"With charges"}
+        { value: "without", label: "Without charges" },
+        { value: "with", label: "With charges" }
       ]
     });
-    const charges = addField("charges", "Charge amount", "number");
-    charges.parentElement.hidden = true;
-    const chargeMode = fields.querySelector("#chargeMode");
-    chargeMode.addEventListener("change", () => {
-      charges.parentElement.hidden = chargeMode.value !== "with";
-      charges.required = chargeMode.value === "with";
+    const charges = createField({
+      id: "charges",
+      label: "Charge amount",
+      type: "number",
+      min: 0,
+      step: 0.01
+    });
+    charges.wrapper.hidden = true;
+    mode.input.addEventListener("change", () => {
+      charges.wrapper.hidden = mode.input.value !== "with";
+      charges.input.required = mode.input.value === "with";
+      if (mode.input.value !== "with") charges.input.value = "";
     });
   }
-  panel.scrollIntoView({behavior:"smooth", block:"start"});
+
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 document.querySelectorAll("[data-transaction]").forEach(button => {
-  button.addEventListener("click", () => buildForm(button.dataset.transaction));
+  button.addEventListener("click", () => buildTransactionForm(button.dataset.transaction));
 });
 
 document.getElementById("cancel-button").addEventListener("click", () => {
   form.reset();
+  fields.replaceChildren();
   panel.hidden = true;
   selectedTransaction = "";
   status.textContent = "";
 });
 
+function showError(message) {
+  status.className = "error";
+  status.textContent = message;
+}
+
 form.addEventListener("submit", async event => {
   event.preventDefault();
+
   if (!db) {
-    status.className = "error";
-    status.textContent = "Firebase is not initialized. Check public/firebase.js.";
+    showError("Firebase is not initialized. Check public/firebase.js.");
     return;
   }
-  const flow = groups[selectedTransaction];
-  const data = new FormData(form);
-  const amount = Number(data.get("amount"));
+
+  const flow = transactionGroups[selectedTransaction];
+  const values = new FormData(form);
+  const amount = Number(values.get("amount"));
   if (!Number.isFinite(amount) || amount <= 0) {
-    status.className = "error";
-    status.textContent = "Enter an amount greater than zero.";
+    showError("Enter an amount greater than zero.");
     return;
   }
 
-  const method = data.get("method") || "";
-  const name = method === "Cash" ? "" :
-    method === "Credit" ? String(data.get("name") || "").trim() :
-    method === "Bank" ? String(data.get("name") || "").trim() : "";
-  if ((method === "Credit" || method === "Bank") && !name) {
-    status.className = "error";
-    status.textContent = "Enter the required customer, supplier, or bank name.";
+  const isTransfer = ["Deposit Cash", "Withdraw Cash"].includes(selectedTransaction);
+  const method = isTransfer ? "Bank" : (values.get("method") || "");
+  const name = isTransfer
+    ? String(values.get("bankName") || "").trim()
+    : method === "Cash" ? ""
+    : String(values.get("name") || "").trim();
+
+  if ((isTransfer && !name) || (!isTransfer && method !== "Cash" && !name)) {
+    showError("Please complete the required name or bank field.");
     return;
   }
 
-  const charges = Number(data.get("charges") || 0);
-  if (!Number.isFinite(charges) || charges < 0 ||
-      (data.get("charges") && charges >= amount && selectedTransaction === "Withdraw Cash")) {
-    status.className = "error";
-    status.textContent = "Check the charge amount.";
+  const charges = Number(values.get("charges") || 0);
+  if (!Number.isFinite(charges) || charges < 0) {
+    showError("Enter a valid charge amount.");
+    return;
+  }
+  if (selectedTransaction === "Withdraw Cash" && charges >= amount && charges > 0) {
+    showError("Withdrawal charges must be less than the withdrawal amount.");
     return;
   }
 
   const record = {
-    date: new Date().toISOString().slice(0,10),
+    date: new Date().toISOString().slice(0, 10),
     createdAt: serverTimestamp(),
     transactionName: selectedTransaction,
     flow,
@@ -192,40 +237,40 @@ form.addEventListener("submit", async event => {
     charges: 0
   };
 
+  if (isTransfer) {
+    record.cashTransfer = true;
+    record.charges = selectedTransaction === "Withdraw Cash" ? charges : 0;
+  } else if (flow === "OUT" && method === "Bank" && values.get("chargeMode") === "with") {
+    record.charges = charges;
+  }
+
   saveButton.disabled = true;
   saveButton.textContent = "Saving…";
   status.className = "";
   status.textContent = "Saving transaction…";
 
   try {
-    if (selectedTransaction === "Withdraw Cash" || selectedTransaction === "Deposit Cash") {
-      record.method = "Bank";
-      record.name = String(data.get("bankName") || "").trim();
-      record.cashTransfer = true;
-      record.charges = selectedTransaction === "Withdraw Cash" ? charges : 0;
-    } else {
-      record.charges = flow === "OUT" && method === "Bank" ? charges : 0;
-    }
-
     if (selectedTransaction === "Withdraw Cash" && charges > 0) {
       const batch = writeBatch(db);
-      const mainRef = doc(collection(db, "transactions"));
+      const transactionRef = doc(collection(db, "transactions"));
       const chargeRef = doc(collection(db, "transactions"));
-      batch.set(mainRef, record);
+
+      batch.set(transactionRef, record);
       batch.set(chargeRef, {
         date: record.date,
         createdAt: serverTimestamp(),
         transactionName: "Bank Charges",
         flow: "OUT",
         method: "Bank",
-        name: record.name,
+        name,
         amount: charges,
         charges: 0,
-        parentTransactionId: mainRef.id
+        parentTransactionId: transactionRef.id
       });
       await batch.commit();
     } else {
       await addDoc(collection(db, "transactions"), record);
+
       if (flow === "OUT" && method === "Bank" && charges > 0) {
         await addDoc(collection(db, "transactions"), {
           date: record.date,
@@ -243,12 +288,12 @@ form.addEventListener("submit", async event => {
     status.className = "success";
     status.textContent = `${selectedTransaction} saved successfully.`;
     form.reset();
+    fields.replaceChildren();
     panel.hidden = true;
     selectedTransaction = "";
   } catch (error) {
-    console.error("Failed to save transaction:", error);
-    status.className = "error";
-    status.textContent = `Could not save transaction: ${error.message || "Check Firebase permissions and connection."}`;
+    console.error("Transaction save failed:", error);
+    showError(`Could not save transaction: ${error.message || "Check Firebase connection and Firestore rules."}`);
   } finally {
     saveButton.disabled = false;
     saveButton.textContent = "Save Transaction";

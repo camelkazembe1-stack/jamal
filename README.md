@@ -71,12 +71,12 @@ jamali/
 
 ### Add Transaction
 
-Transaction buttons appear immediately on page load:
+The Add Transaction page displays transaction buttons immediately.
 
 - IN: Sales, Commission Received
 - OUT: Purchases, Rent
 - NEUTRAL: Retained Profit
 - CONTRA: Withdraw Cash, Deposit Cash
 
-Selecting a transaction opens its applicable amount, method, name, bank, and charges fields. Submissions are saved to the Firestore `transactions` collection.
+Selecting a transaction opens its relevant entry fields. Transactions are saved to the Firestore `transactions` collection. A withdrawal or bank-payment charge is recorded as a separate Bank Charges transaction where applicable.
 
