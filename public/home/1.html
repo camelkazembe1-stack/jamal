@@ -34,5 +34,43 @@
   <footer>
     &copy; <span id="year"></span> JAMALI 
   </footer>
+
+<script id="jamali-business-loader">
+(() => {
+  if (window.__jamaliBusinessLoaderInstalled) return;
+  window.__jamaliBusinessLoaderInstalled = true;
+
+  document.addEventListener("click", async event => {
+    const control = event.target.closest("a, button");
+    if (!control || !/^business$/i.test((control.textContent || "").trim())) return;
+    event.preventDefault();
+
+    try {
+      const response = await fetch("/business/3.html", { cache: "no-store" });
+      if (!response.ok) throw new Error("Business page could not be loaded.");
+      const source = await response.text();
+      const parsed = new DOMParser().parseFromString(source, "text/html");
+
+      document.title = "Business | JAMALI";
+      document.head.querySelectorAll('[data-jamali-business-style]').forEach(node => node.remove());
+      const css = document.createElement("link");
+      css.rel = "stylesheet";
+      css.href = "/business/3.css";
+      css.dataset.jamaliBusinessStyle = "true";
+      document.head.appendChild(css);
+
+      document.body.innerHTML = parsed.body.innerHTML;
+      const script = document.createElement("script");
+      script.src = "/business/3.js";
+      script.dataset.jamaliBusinessScript = "true";
+      document.body.appendChild(script);
+    } catch (error) {
+      console.error(error);
+      alert("The Business page could not be opened. Please check that it is deployed.");
+    }
+  });
+})();
+</script>
+
 </body>
 </html>

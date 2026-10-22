@@ -33,6 +33,10 @@ The Business page has not been created yet.
 ```text
 .
 ├── public/
+│   ├── business/
+│   │   ├── 3.css
+│   │   ├── 3.html
+│   │   └── 3.js
 │   ├── home/
 │   │   ├── 1.css
 │   │   ├── 1.html
