@@ -167,3 +167,57 @@ main button:not(#dashboard-buttons .dashboard-button) {
     gap: 10px;
   }
 }
+
+/* JAMALI SQUARE DASHBOARD GRID START */
+
+/* Mobile: two square buttons per row */
+#dashboard-buttons {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  align-items: stretch;
+}
+
+#dashboard-buttons .dashboard-button {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+/* Business button: green square */
+#dashboard-buttons #business-button {
+  background-color: #198754;
+  color: #ffffff;
+  border: 1px solid #157347;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+#dashboard-buttons #business-button:hover {
+  background-color: #157347;
+}
+
+/* Tablet: four square buttons per row */
+@media (min-width: 600px) {
+  #dashboard-buttons {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Desktop: exactly eight square buttons per row */
+@media (min-width: 1024px) {
+  #dashboard-buttons {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+/* JAMALI SQUARE DASHBOARD GRID END */
