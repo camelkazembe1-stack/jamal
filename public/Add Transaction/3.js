@@ -1,11 +1,9 @@
-import "/firebase.js";
-import { getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { app as firebaseApp } from "/firebase.js";
 import {
   getFirestore, collection, addDoc, serverTimestamp, writeBatch, doc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-const firebaseApp = getApps().length ? getApp() : null;
-const db = firebaseApp ? getFirestore(firebaseApp) : null;
+const db = getFirestore(firebaseApp);
 
 const transactionGroups = {
   "Sales": "IN",
