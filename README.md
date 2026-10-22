@@ -6,37 +6,36 @@ JAMALI is a web application served from the `public/` directory.
 
 https://jamali-lime.vercel.app/
 
-The website is intended to use the root address for its page navigation.
+The application is intended to keep navigation at the root website address.
 
 ## Main Pages
 
-| Page | File |
-|---|---|
-| Home | `public/home/1.html` |
-| Business | `public/Business/2.html` |
-| Add Transaction | `public/Add Transaction/3.html` |
-| View File | `public/View File/4.html` |
+- Home: `public/home/1.html`
+- Business: `public/Business/2.html`
+- Add Transaction: `public/Add Transaction/3.html`
+- View File: `public/View File/4.html`
 
-Page names should match their corresponding button names. The Business page provides navigation to Add Transaction and View File. The Add Transaction and View File buttons should use square green styling consistent with the Business button.
+Page names should match the names of their corresponding navigation buttons.
 
-## Application Files
+## Button Design Standard
 
-- `public/index.html` — website entry point and login interface.
-- `public/firebase.js` — Firebase configuration and authentication setup.
-- Each numbered page has its own HTML, CSS, and JavaScript files.
-- `vercel.json` — Vercel deployment configuration.
-- `README.md` — project documentation and repository tree.
-- `scripts/` and `systemd/` — project automation files.
+All HTML pages use a shared button design:
+
+- Identical square dimensions: 140 × 140 pixels on normal screens.
+- Green background with white, bold, centered text.
+- Consistent rounded corners, spacing, and hover styling.
+- Applied to form buttons and links used as page-navigation buttons.
+- The button dimensions reduce on very narrow screens to fit the display.
+
+The shared style is embedded in each HTML page so it remains available when page content is loaded dynamically.
 
 ## Transaction Storage
 
-The current transaction pages use browser `localStorage` with the key
-`jamali_business_transactions`. These entries are stored in the browser and
-are not automatically synchronized with Firebase or other devices.
+The transaction pages currently use browser `localStorage`. Data saved in one browser is not automatically synchronized with Firebase or other devices.
 
-## Repository Structure
+## Repository Tree
 
-The tree below is generated from the files currently present in this project.
+The tree below reflects the files currently present in the project.
 
 ## Complete Repository Tree
 
