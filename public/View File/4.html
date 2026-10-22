@@ -1,107 +1,19 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>View File | JAMALI</title>
-  <link rel="stylesheet" href="/business/4.css">
-
-<style id="jamali-global-square-buttons">
-/* JAMALI GLOBAL BUTTON STANDARD: identical square dimensions everywhere */
-:root {
-  --jamali-button-size: 140px;
-  --jamali-button-green: #16a34a;
-  --jamali-button-green-hover: #15803d;
-  --jamali-button-text: #ffffff;
-}
-
-button,
-input[type="button"],
-input[type="submit"],
-input[type="reset"],
-.jamali-square-button,
-.btn,
-.button,
-a[data-jamali-page],
-a.jamali-button {
-  box-sizing: border-box !important;
-  width: var(--jamali-button-size) !important;
-  min-width: var(--jamali-button-size) !important;
-  max-width: var(--jamali-button-size) !important;
-  height: var(--jamali-button-size) !important;
-  min-height: var(--jamali-button-size) !important;
-  max-height: var(--jamali-button-size) !important;
-  aspect-ratio: 1 / 1 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex: 0 0 var(--jamali-button-size) !important;
-  padding: 12px !important;
-  margin: 6px !important;
-  border: 0 !important;
-  border-radius: 8px !important;
-  background: var(--jamali-button-green) !important;
-  color: var(--jamali-button-text) !important;
-  font: inherit;
-  font-weight: 700 !important;
-  line-height: 1.35 !important;
-  text-align: center !important;
-  text-decoration: none !important;
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
-  vertical-align: middle;
-  cursor: pointer;
-}
-
-button:hover,
-input[type="button"]:hover,
-input[type="submit"]:hover,
-input[type="reset"]:hover,
-.jamali-square-button:hover,
-.btn:hover,
-.button:hover,
-a[data-jamali-page]:hover,
-a.jamali-button:hover {
-  background: var(--jamali-button-green-hover) !important;
-  color: var(--jamali-button-text) !important;
-}
-
-button:focus-visible,
-input[type="button"]:focus-visible,
-input[type="submit"]:focus-visible,
-input[type="reset"]:focus-visible,
-.jamali-square-button:focus-visible,
-a[data-jamali-page]:focus-visible {
-  outline: 3px solid #14532d !important;
-  outline-offset: 3px !important;
-}
-
-/* Consistent layout when a page groups its navigation buttons. */
-.jamali-button-grid {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, var(--jamali-button-size)) !important;
-  gap: 12px !important;
-  align-items: start !important;
-}
-
-@media (max-width: 360px) {
-  :root { --jamali-button-size: 120px; }
-}
-</style>
-
-
-<script src="/sidebar.js" defer></script>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:#f4f7f5;font-family:Arial,sans-serif}
+    .all-transactions{display:inline-block;padding:22px 34px;background:#138044;color:white;
+      border-radius:8px;text-decoration:none;font-size:20px;font-weight:bold}
+    .all-transactions:hover{background:#0d6635}
+  </style>
 </head>
 <body>
-  <main class="content-panel">
-    <h1>View File</h1>
-    <p class="muted">Saved business transactions</p>
-    <section id="transaction-results" aria-live="polite"></section>
-    <div class="back-row">
-      <a class="back-button" href="/Business/2.html" data-jamali-page="/Business/2.html">Back to Business</a>
-      <button class="primary-button jamali-square-button" id="download-file" type="button">Download CSV</button>
-    </div>
-  </main>
-  <script src="/business/4.js"></script>
+  <a class="all-transactions" href="/all-transaction.html">All Transaction</a>
 </body>
 </html>
