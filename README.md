@@ -6,8 +6,6 @@ JAMALI is a web application served from the `public/` directory.
 
 https://jamali-lime.vercel.app/
 
-The application is intended to keep navigation at the root website address.
-
 ## Main Pages
 
 - Home: `public/home/1.html`
@@ -15,27 +13,13 @@ The application is intended to keep navigation at the root website address.
 - Add Transaction: `public/Add Transaction/3.html`
 - View File: `public/View File/4.html`
 
-Page names should match the names of their corresponding navigation buttons.
+## Shared Sidebar
 
-## Button Design Standard
-
-All HTML pages use a shared button design:
-
-- Identical square dimensions: 140 × 140 pixels on normal screens.
-- Green background with white, bold, centered text.
-- Consistent rounded corners, spacing, and hover styling.
-- Applied to form buttons and links used as page-navigation buttons.
-- The button dimensions reduce on very narrow screens to fit the display.
-
-The shared style is embedded in each HTML page so it remains available when page content is loaded dynamically.
+`public/sidebar.js` provides shared navigation and consistent square green navigation buttons. Every HTML page in `public/` loads this script except `public/index.html`, which remains the entry/login page.
 
 ## Transaction Storage
 
-The transaction pages currently use browser `localStorage`. Data saved in one browser is not automatically synchronized with Firebase or other devices.
-
-## Repository Tree
-
-The tree below reflects the files currently present in the project.
+The transaction pages currently use browser `localStorage`; entries are not automatically synchronized with Firebase or other devices.
 
 ## Complete Repository Tree
 
@@ -59,7 +43,8 @@ The tree below reflects the files currently present in the project.
 │   │   ├── 4.html
 │   │   └── 4.js
 │   ├── firebase.js
-│   └── index.html
+│   ├── index.html
+│   └── sidebar.js
 ├── scripts
 │   └── jamali-rate-limited-push.sh
 ├── systemd
