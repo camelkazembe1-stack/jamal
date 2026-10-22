@@ -27,3 +27,32 @@ The Business page has not been created yet.
 - `public/home/1.html`
 - `public/home/1.js`
 - `public/index.html`
+
+## Complete Repository Tree
+
+This tree is generated from the current project directory. It includes hidden files and folders but excludes Git's internal `.git/` directory.
+
+## Complete Repository Tree
+
+This tree is generated from the current project directory. It includes hidden files and folders but excludes Git's internal `.git/` directory.
+
+<!-- REPOSITORY_TREE_START -->
+```text
+.
+├── public/
+│   ├── home/
+│   │   ├── 1.css
+│   │   ├── 1.html
+│   │   └── 1.js
+│   ├── firebase.js
+│   └── index.html
+├── scripts/
+│   └── jamali-rate-limited-push.sh
+├── systemd/
+│   └── user/
+│       ├── jamali-rate-limited-push.service
+│       └── jamali-rate-limited-push.timer
+├── README.md
+└── vercel.json
+```
+<!-- REPOSITORY_TREE_END -->
