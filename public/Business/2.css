@@ -20,3 +20,43 @@ body { margin: 0; background: #f4f7f5; color: #17231b; font-family: Arial, Helve
 .transaction-list li { margin: 12px 0; overflow-wrap: anywhere; }
 .muted { color: #647067; }
 @media (max-width: 520px) { .business-page { width: min(100% - 24px, 1000px); padding-top: 24px; } .actions { grid-template-columns: 1fr; gap: 12px; } .action-button { min-height: 135px; } .content-panel { width: calc(100% - 24px); padding: 18px; } }
+
+
+/* JAMALI: consistent square green navigation buttons */
+.jamali-square-button,
+a[data-jamali-page],
+button.jamali-square-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    padding: 12px;
+    border: 0;
+    border-radius: 8px;
+    background: #16a34a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+.jamali-square-button:hover,
+a[data-jamali-page]:hover {
+    background: #15803d;
+    color: #ffffff;
+}
+.jamali-button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+@media (min-width: 1000px) {
+    .jamali-button-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* END JAMALI square green buttons */
