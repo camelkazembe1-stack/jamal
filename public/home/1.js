@@ -4,41 +4,54 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
-const logout = document.getElementById("logout");
+const logoutButton = document.getElementById("logout");
 const businessButton = document.getElementById("business-button");
+const dashboardStatus = document.getElementById("dashboard-status");
 
-(async () => {
+function showStatus(message = "") {
+  if (dashboardStatus) {
+    dashboardStatus.textContent = message;
+  }
+}
+
+async function initializeDashboard() {
   try {
     await authReady;
     await auth.authStateReady();
 
     onAuthStateChanged(auth, (user) => {
-      if (logout) {
-        logout.hidden = !user;
-        logout.disabled = false;
+      if (logoutButton) {
+        logoutButton.hidden = !user;
+        logoutButton.disabled = false;
       }
 
-      // Do not redirect to index.html.
-      // The parent login page handles the signed-out state.
+      if (!user) {
+        showStatus("Your session has ended. Please sign in again.");
+        return;
+      }
+
+      showStatus("");
     });
   } catch (error) {
-    console.error("Dashboard authentication error:", error);
-    if (logout) logout.hidden = true;
+    console.error("Dashboard authentication initialization failed:", error);
+    showStatus("Unable to check your login session. Please refresh and try again.");
   }
-})();
+}
 
-if (logout) {
-  logout.addEventListener("click", async () => {
-    logout.disabled = true;
+if (logoutButton) {
+  logoutButton.addEventListener("click", async () => {
+    logoutButton.disabled = true;
+    showStatus("");
 
     try {
       await authReady;
       await signOut(auth);
-      // The parent page observes sign-out and shows the login screen.
-      // No navigation to index.html is required.
+      // The parent page handles signed-out state.
+      // Do not redirect to index.html.
     } catch (error) {
       console.error("Sign-out failed:", error);
-      logout.disabled = false;
+      showStatus("Sign-out failed. Please try again.");
+      logoutButton.disabled = false;
     }
   });
 }
@@ -48,3 +61,5 @@ if (businessButton) {
     window.location.href = "/business/3.html";
   });
 }
+
+initializeDashboard();

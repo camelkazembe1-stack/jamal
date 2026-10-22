@@ -1,223 +1,257 @@
-body {
-      margin: 0; min-height: 100vh; display: grid; place-items: center;
-      padding: 24px; box-sizing: border-box; background: #f3f6fb;
-      font-family: Arial, sans-serif; color: #172033;
-    }
-    main {
-      width: 100%; max-width: 500px; box-sizing: border-box;
-      padding: 36px 28px; border-radius: 18px; background: white;
-      text-align: center; box-shadow: 0 12px 40px #17203318;
-    }
-    #status { overflow-wrap: anywhere; }
-    button {
-      padding: 12px 22px; border: 0; border-radius: 9px;
-      background: #1769e0; color: white; font-size: 15px;
-      cursor: pointer;
-    }
-
-
-/* JAMALI dashboard: square buttons, eight per row on desktop. */
-#dashboard-buttons {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 12px;
-  width: 100%;
-  margin: 28px 0;
-  align-items: stretch;
+:root {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #172033;
+  background: #f4f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-#dashboard-buttons .dashboard-button {
-  width: 100%;
+* {
+  box-sizing: border-box;
+}
+
+html {
   min-width: 0;
-  aspect-ratio: 1 / 1;
-  padding: 8px;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  min-height: 100vh;
+  background: #f4f7fb;
+}
+
+button {
+  font: inherit;
+}
+
+.topbar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  overflow-wrap: anywhere;
-  white-space: normal;
-  border: 0;
-  border-radius: 10px;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 18px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e3e9f2;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   background: #1769e0;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+.brand-text h1 {
+  margin: 0;
+  font-size: clamp(15px, 2vw, 20px);
+  line-height: 1.3;
+}
+
+.brand-text p {
+  margin: 4px 0 0;
+  color: #69758a;
+  font-size: 13px;
+}
+
+.logout-button {
+  flex: 0 0 auto;
+  padding: 10px 15px;
+  border: 1px solid #d7deea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #263449;
   cursor: pointer;
-  box-sizing: border-box;
 }
 
-#dashboard-buttons .dashboard-button:hover {
-  filter: brightness(0.92);
+.logout-button:hover {
+  background: #eef3fa;
 }
 
-#dashboard-buttons .dashboard-button:focus-visible {
-  outline: 3px solid #f59e0b;
-  outline-offset: 3px;
+.page-content {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
 }
 
-@media (max-width: 900px) {
-  #dashboard-buttons {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+.welcome {
+  margin: 0 0 24px;
 }
 
-@media (max-width: 520px) {
-  #dashboard-buttons {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
+.welcome h2 {
+  margin: 0 0 8px;
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.25;
 }
 
-/* Keep other home-page buttons square as requested. */
-main button:not(#dashboard-buttons .dashboard-button) {
-  aspect-ratio: 1 / 1;
+.welcome p {
+  margin: 0;
+  color: #69758a;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
-
-/* JAMALI Business button */
-#business-button {
-  background: #16803c !important;
-  color: #ffffff !important;
-  aspect-ratio: 1 / 1;
-}
-#business-button:hover {
-  background: #11652f !important;
-}
-
-
-/* ===== JAMALI BUSINESS DASHBOARD DESIGN ===== */
+/*
+ * SQUARE DASHBOARD:
+ * Two columns on small screens, four on tablets, eight on desktop.
+ * align-self:start prevents grid stretching from changing button height.
+ */
 #dashboard-buttons {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
   gap: 14px;
   width: 100%;
-  margin: 28px 0;
-  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-#dashboard-buttons .dashboard-button,
-#dashboard-buttons #business-button {
-  width: 100%;
-  min-width: 0;
-  aspect-ratio: 1 / 1;
-  box-sizing: border-box;
+.dashboard-button {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid #16803c;
-  border-radius: 16px;
-  background: linear-gradient(145deg, #20a653 0%, #116b35 100%);
+
+  width: 100% !important;
+  height: auto !important;
+  min-width: 0;
+  min-height: 0 !important;
+  max-height: none;
+
+  aspect-ratio: 1 / 1;
+  align-self: start;
+  justify-self: stretch;
+
+  margin: 0;
+  padding: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
   color: #ffffff;
-  box-shadow: 0 5px 14px rgba(22, 128, 60, 0.20);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
   text-align: center;
   white-space: normal;
   overflow-wrap: anywhere;
+
   cursor: pointer;
-  transition: transform 160ms ease, box-shadow 160ms ease,
-              background 160ms ease;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
 }
 
-#dashboard-buttons .dashboard-button:hover,
-#dashboard-buttons #business-button:hover {
-  background: linear-gradient(145deg, #16803c 0%, #0b5729 100%);
-  box-shadow: 0 8px 20px rgba(22, 128, 60, 0.28);
-  transform: translateY(-2px);
+.business-button {
+  background: #198754;
+  border-color: #157347;
 }
 
-#dashboard-buttons .dashboard-button:focus-visible {
-  outline: 3px solid #86efac;
+.business-button:hover {
+  background: #157347;
+  box-shadow: 0 5px 14px rgb(21 115 71 / 18%);
+}
+
+.business-button:focus-visible,
+.logout-button:focus-visible {
+  outline: 3px solid #1769e0;
   outline-offset: 3px;
 }
 
-#dashboard-buttons .business-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border: 1px solid rgba(255,255,255,0.45);
-  border-radius: 12px;
-  background: rgba(255,255,255,0.16);
-  font-size: 27px;
-  line-height: 1;
-}
-
-#dashboard-buttons .business-label {
-  display: block;
-  max-width: 100%;
-  line-height: 1.3;
-}
-
-@media (max-width: 900px) {
-  #dashboard-buttons {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 520px) {
-  #dashboard-buttons {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-}
-
-/* JAMALI SQUARE DASHBOARD GRID START */
-
-/* Mobile: two square buttons per row */
-#dashboard-buttons {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  width: 100%;
-  align-items: stretch;
-}
-
-#dashboard-buttons .dashboard-button {
-  display: flex;
-  width: 100%;
-  min-width: 0;
+.button-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(30px, 35%, 56px);
   aspect-ratio: 1 / 1;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  text-align: center;
+  margin-bottom: 10px;
+  border: 2px solid rgb(255 255 255 / 75%);
+  border-radius: 10px;
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 800;
 }
 
-/* Business button: green square */
-#dashboard-buttons #business-button {
-  background-color: #198754;
-  color: #ffffff;
-  border: 1px solid #157347;
-  border-radius: 8px;
+.button-label {
+  max-width: 100%;
+  font-size: clamp(12px, 1.5vw, 17px);
+  line-height: 1.3;
   font-weight: 700;
 }
 
-#dashboard-buttons #business-button:hover {
-  background-color: #157347;
+#dashboard-status {
+  min-height: 20px;
+  margin-top: 16px;
+  color: #69758a;
+  font-size: 13px;
 }
 
-/* Tablet: four square buttons per row */
+[hidden] {
+  display: none !important;
+}
+
+/* Tablet: four equal-width columns. */
 @media (min-width: 600px) {
   #dashboard-buttons {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 
-/* Desktop: exactly eight square buttons per row */
+/* Desktop: exactly eight equal-width columns. */
 @media (min-width: 1024px) {
   #dashboard-buttons {
     grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 
-/* JAMALI SQUARE DASHBOARD GRID END */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 14px;
+  }
+
+  .brand {
+    gap: 9px;
+  }
+
+  .brand-mark {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .page-content {
+    padding: 22px 14px 32px;
+  }
+
+  #dashboard-buttons {
+    gap: 10px;
+  }
+
+  .dashboard-button {
+    padding: 6px;
+    border-radius: 9px;
+  }
+
+  .button-icon {
+    margin-bottom: 7px;
+    border-radius: 7px;
+  }
+}

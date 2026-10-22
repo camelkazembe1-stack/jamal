@@ -3,19 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JMS Multsystem Management — Home</title>
+  <meta name="theme-color" content="#f4f7fb">
+  <title>JMS Multisystem Management — Home</title>
   <link rel="stylesheet" href="./1.css">
 </head>
 <body>
-  <main>
-    <button id="logout" hidden>Sign out</button>
-  
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">J</span>
+      <div class="brand-text">
+        <h1>JMS Multisystem Management</h1>
+        <p>Home dashboard</p>
+      </div>
+    </div>
+    <button id="logout" class="logout-button" type="button" hidden>
+      Sign out
+    </button>
+  </header>
+
+  <main class="page-content">
+    <section class="welcome">
+      <h2>Welcome</h2>
+      <p>Select a system to continue.</p>
+    </section>
+
     <nav id="dashboard-buttons" aria-label="Main dashboard">
-      <button type="button" class="dashboard-button" id="business-button">
-        Business
+      <button
+        type="button"
+        class="dashboard-button business-button"
+        id="business-button"
+      >
+        <span class="button-icon" aria-hidden="true">B</span>
+        <span class="button-label">Business</span>
       </button>
     </nav>
-</main>
+
+    <p id="dashboard-status" role="status" aria-live="polite"></p>
+  </main>
 
   <script type="module" src="./1.js"></script>
 </body>
