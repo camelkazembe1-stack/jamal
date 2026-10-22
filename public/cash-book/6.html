@@ -11,25 +11,27 @@
 <main class="wrap">
   <a class="back" href="/view-file/4">&larr; View File</a>
   <h1>Cash Book</h1>
-  <p class="sub">Cash transactions only (Flow Method = Cash). Money in on the DR side, money out on the CR side. Updates live.</p>
+  <p class="sub">Double-column cash book: money in on the DR side, money out on the CR side, with separate <b>Cash</b> and <b>Bank</b> columns (Flow Method). Cash and Bank balance independently. Updates live.</p>
 
   <div class="card table-card" id="table-card">
     <div class="table-wrap">
       <table class="cb">
         <thead>
           <tr class="sides">
-            <th colspan="4" class="side-dr">DR</th>
-            <th colspan="4" class="side-cr">CR</th>
+            <th colspan="5" class="side-dr">DR</th>
+            <th colspan="5" class="side-cr">CR</th>
           </tr>
           <tr>
             <th scope="col">Date</th>
             <th scope="col">Detail</th>
             <th scope="col">Folio</th>
-            <th scope="col" class="amt">Amount</th>
+            <th scope="col" class="amt">Cash</th>
+            <th scope="col" class="amt">Bank</th>
             <th scope="col">Date</th>
             <th scope="col">Detail</th>
             <th scope="col">Folio</th>
-            <th scope="col" class="amt">Amount</th>
+            <th scope="col" class="amt">Cash</th>
+            <th scope="col" class="amt">Bank</th>
           </tr>
         </thead>
         <tbody id="cb-body"></tbody>
@@ -40,8 +42,8 @@
 
   <div class="card empty" id="empty-state" hidden>
     <div class="empty-icon">&#128218;</div>
-    <p class="empty-title">No cash transactions yet</p>
-    <p class="empty-sub">Save one in <a href="/add-transaction/3">Add Transaction</a> with Flow Method <b>Cash</b> &mdash; it will appear here instantly.</p>
+    <p class="empty-title">No cash or bank transactions yet</p>
+    <p class="empty-sub">Save one in <a href="/add-transaction/3">Add Transaction</a> with Flow Method <b>Cash</b> or <b>Bank</b> &mdash; it will appear here instantly.</p>
   </div>
 
   <p class="count-line" id="count-line"></p>
