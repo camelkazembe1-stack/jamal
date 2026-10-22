@@ -1,169 +1,106 @@
 # JAMALI — JMS Multisystem Management
 
-## Project Overview
+JAMALI is a web application for JMS Multisystem Management. It provides Google sign-in and an authenticated home dashboard.
 
-JAMALI is a web application featuring Google sign-in and a home dashboard. It uses Firebase Authentication, HTML, CSS, JavaScript, and Vercel hosting.
+## Official Website
 
-The project keeps page markup, styling, and behavior in separate files.
+https://jamali-lime.vercel.app/
 
-## Official Website Address
+The application is designed to keep the browser at the root website address while displaying the dashboard after successful authentication.
 
-**https://jamali-lime.vercel.app/**
+## Features
 
-The browser's visible top-level URL must remain exactly at the website root during application navigation. Internal application resources may load separately, but the visible address must not change to page-specific paths.
+- Google sign-in using Firebase Authentication.
+- Persistent authentication using Firebase browser-local persistence.
+- Authentication-state monitoring.
+- Home dashboard with a Business button.
+- Responsive dashboard layout.
+- Green Business button design.
+- Square dashboard buttons, with up to eight columns on desktop screens.
+- Sign-out functionality.
+- Vercel hosting.
+
+## Technology Stack
+
+- HTML5
+- CSS3
+- JavaScript ES modules
+- Firebase Authentication
+- Firebase SDK 11.6.0
+- Vercel
 
 ## Project Structure
 
-Important files include:
-
-- `index.html` — root website entry page.
-- `public/index.html` — public entry page, if used by deployment.
-- `public/firebase.js` — Firebase application and authentication setup.
-- `public/home/1.html` — home dashboard markup.
-- `public/home/1.css` — home dashboard styling.
-- `public/home/1.js` — home dashboard behavior.
-- `vercel.json` — Vercel routing and deployment configuration.
-- `README.md` — project documentation.
-
-Inspect the repository before creating or renaming files. Files at the repository root and files under `public/` may be served differently depending on the Vercel configuration.
-
-## Page File Naming
-
-Application pages use numbered filenames within their respective directories. Keep each page's HTML, CSS, and JavaScript separate, using the same number for related files.
-
-Example:
-
-    public/
-    ├── firebase.js
+    jamali/
     ├── index.html
-    └── home/
-        ├── 1.html
-        ├── 1.css
-        └── 1.js
+    ├── single-url.js
+    ├── firebase.js
+    ├── README.md
+    ├── vercel.json
+    ├── public/
+    │   ├── index.html
+    │   ├── single-url.js
+    │   ├── firebase.js
+    │   └── home/
+    │       ├── 1.html
+    │       ├── 1.css
+    │       └── 1.js
+    ├── scripts/
+    │   └── jamali-rate-limited-push.sh
+    └── systemd/
+        └── user/
+            ├── jamali-rate-limited-push.service
+            └── jamali-rate-limited-push.timer
 
-Keep the login entry page unnumbered as `index.html`. Inspect existing files before assigning numbers or creating new pages.
+## Authentication Flow
 
-## Home Dashboard
+1. Open the official website.
+2. Select **Continue with Google**.
+3. Complete Google sign-in.
+4. Firebase verifies the authentication state.
+5. After successful authentication, the home dashboard is displayed.
+6. Select **Sign out** to end the session.
 
-The home dashboard uses:
+The intended public website address remains:
 
-- `public/home/1.html`
-- `public/home/1.css`
-- `public/home/1.js`
+https://jamali-lime.vercel.app/
 
-Dashboard design requirements:
+## Dashboard
 
-- Square buttons.
-- Eight buttons per row on desktop when space permits.
-- Responsive layouts for smaller screens.
-- A green Business button.
-- Readable labels and accessible controls.
+The home dashboard is located in `public/home/`.
 
-Make visual changes in CSS whenever possible. Avoid modifying working JavaScript for styling-only tasks.
+- `1.html` contains the dashboard markup.
+- `1.css` contains dashboard styling and responsive layout rules.
+- `1.js` handles authentication checks and sign-out behavior.
 
-## Firebase Authentication
+The Business button is intended to open the Business application. Its destination must correspond to an existing, deployed Business page.
 
-Firebase Authentication handles Google sign-in and session management. The shared configuration is maintained in `public/firebase.js`.
+## Firebase Configuration
 
-Preserve the existing Firebase project configuration and working sign-in flow. Protect pages that require authentication, remove temporary diagnostic messages from production content, and ensure the deployed hostname is authorized in Firebase Authentication settings.
+Firebase configuration is maintained in the Firebase JavaScript modules.
 
-## Navigation and Routing
+Before deployment, verify:
 
-The visible browser address must remain:
+- The Firebase project configuration is correct.
+- Google is enabled as a sign-in provider.
+- The deployed website's domain is authorized in Firebase Authentication.
+- Authentication imports use the correct file paths.
+- The login and dashboard pages use compatible Firebase configuration.
 
-`https://jamali-lime.vercel.app/`
+Do not commit private credentials, service-account keys, or other secrets.
 
-Inspect `index.html`, page-loading scripts, and `vercel.json` before changing navigation. Ensure resources load correctly and navigation preserves the required top-level address.
+## Deployment
 
-Do not introduce obsolete page-specific routes. Preserve the required single-address navigation design.
+The application is hosted on Vercel.
 
-## Deployment and Git Synchronization
+After making changes:
 
-JAMALI is hosted on Vercel. The repository uses an automatic Git synchronization workflow.
+1. Validate the updated files.
+2. Commit the changes to Git.
+3. Confirm that the intended GitHub repository receives the commit.
+4. Verify the Vercel deployment.
+5. Test Google sign-in, dashboard access, the Business button, and sign-out.
 
-For changes:
+## Important
 
-1. Inspect the existing implementation.
-2. Edit the necessary files.
-3. Validate the changes.
-4. Run `git diff --check`.
-5. Review and commit the intended changes.
-6. Allow the configured automatic synchronization service to publish local commits.
-7. Verify the live website after deployment.
-
-A local commit does not guarantee that deployment has completed.
-
-## Development Guidelines
-
-- Preserve the established project structure.
-- Keep HTML, CSS, and JavaScript separate.
-- Preserve working Firebase authentication.
-- Keep the visible website address at `https://jamali-lime.vercel.app/`.
-- Avoid obsolete routing instructions.
-- Remove temporary diagnostic text from production pages.
-- Maintain responsive desktop and mobile layouts.
-- Validate changes before committing.
-- Update this README whenever the project changes.
-
-## Current Development Focus
-
-Maintain the single-address website experience, preserve Google sign-in, improve the home dashboard and green Business button, and keep documentation aligned with the actual implementation.
-
-## Page and File Function Reference
-
-This reference is generated from the files currently present in the repository. Descriptions of HTML pages are based on their markup, and JavaScript descriptions are based on detectable code patterns. Confirm any behavior not evident from static inspection.
-
-### HTML Pages
-
-- **`index.html`** — Page title: JMS Multsystem Management. Headings: Welcome to JMS Multsystem Management. Buttons: Continue with Google. Scripts: ./single-url.js.
-- **`public/home/1.html`** — Page title: JMS Multsystem Management — Home. Buttons: Sign out, Business. Stylesheets: ./1.css. Scripts: ./1.js.
-- **`public/index.html`** — Page title: JMS Multsystem Management. Headings: Welcome to JMS Multsystem Management. Buttons: Continue with Google. Scripts: ./single-url.js.
-
-### JavaScript Files
-
-- **`firebase.js`** — JavaScript module; inspect its code to confirm its specific responsibilities.
-- **`public/firebase.js`** — Detected behavior: Google sign-in / Firebase authentication, authentication state and session handling.
-- **`public/home/1.js`** — Detected behavior: authentication state and session handling, sign-out handling, event-driven user interactions, navigation or browser URL handling.
-- **`public/single-url.js`** — Detected behavior: Google sign-in / Firebase authentication, authentication state and session handling, embedded page loading or navigation, event-driven user interactions. Detected functions: showLogin, showApplication.
-- **`single-url.js`** — Detected behavior: Google sign-in / Firebase authentication, authentication state and session handling, embedded page loading or navigation, event-driven user interactions. Detected functions: showLogin, showApplication.
-
-### Stylesheets
-
-- **`public/home/1.css`** — Styles the corresponding page or interface components; inspect selectors to determine the exact components affected.
-
-### Other Project Files
-
-- **`README.md`** — Project documentation, setup guidance, architecture, and development instructions.
-- **`scripts/jamali-rate-limited-push.sh`** — Shell script for setup, deployment, automation, diagnostics, or maintenance; inspect its commands for exact behavior.
-- **`systemd/user/jamali-rate-limited-push.service`** — Project file; inspect its contents or format to determine its exact role.
-- **`systemd/user/jamali-rate-limited-push.timer`** — Project file; inspect its contents or format to determine its exact role.
-- **`vercel.json`** — Vercel deployment and routing configuration.
-
-## Complete Repository Structure
-
-The following tree is generated from the current working repository. Git internals, dependency directories, and common generated build folders are excluded.
-
-```text
-.
-├── public
-│   ├── home
-│   │   ├── 1.css
-│   │   ├── 1.html
-│   │   └── 1.js
-│   ├── firebase.js
-│   ├── index.html
-│   └── single-url.js
-├── scripts
-│   └── jamali-rate-limited-push.sh
-├── systemd
-│   └── user
-│       ├── jamali-rate-limited-push.service
-│       └── jamali-rate-limited-push.timer
-├── firebase.js
-├── index.html
-├── README.md
-├── single-url.js
-└── vercel.json
-```
-
-Repository inventory: 3 HTML page(s), 1 CSS stylesheet(s), and 5 JavaScript file(s).
+This README documents the intended project structure and behavior. Features should be considered operational only after they have been tested in the deployed application.
