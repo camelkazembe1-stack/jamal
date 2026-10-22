@@ -1,122 +1,71 @@
 # JAMALI — JMS Multisystem Management
 
-JAMALI is a web application for managing systems through a shared dashboard.
+JAMALI is a web application featuring Google sign-in, an authenticated home dashboard, and shared navigation.
 
-## Website
-
-https://jamali-lime.vercel.app/
-
-The application is hosted on Vercel and uses Firebase Authentication for Google sign-in.
-
-## Technology
-
-- HTML
-- CSS
-- JavaScript ES modules
-- Firebase Authentication
-- Vercel hosting
-
-## Project structure
-
-```text
-public/
-├── index.html
-├── firebase.js
-├── sidebar.js
-├── home/
-│   ├── 1.html
-│   ├── 1.css
-│   └── 1.js
-├── business/
-│   └── 3.html
-└── health/
-    ├── 4.html
-    ├── 4.css
-    └── 4.js
-You want to update the JAMALI README so that the **Business system becomes a Health system**.
-
-Run this single terminal block in `~/jamali`. It will inspect the README and Business page, update the README to document Health instead of Business, and commit the change. It will **not rename or delete your existing Business files**.
-
-```bash
-cd ~/jamali && {
-  set -eu
-
-  echo "========== CURRENT README =========="
-  cat README.md
-
-  echo
-  echo "========== EXISTING HEALTH FILES =========="
-  find public -maxdepth 3 -type f -iname '*health*' -print
-
-  echo
-  echo "========== UPDATE README =========="
-  cat > README.md <<'EOF'
-# JAMALI — JMS Multisystem Management
-
-JAMALI is a web application for managing systems through a shared dashboard.
-
-## Website
+## Official Website
 
 https://jamali-lime.vercel.app/
 
-The application is hosted on Vercel and uses Firebase Authentication for Google sign-in.
+The application uses Firebase Authentication and is hosted on Vercel.
 
-## Technology
+## Features
 
-- HTML
-- CSS
-- JavaScript ES modules
-- Firebase Authentication
-- Vercel hosting
+- Google sign-in using Firebase Authentication.
+- Persistent authentication and authentication-state monitoring.
+- Responsive home dashboard.
+- Shared sidebar navigation.
+- Home and Business page components.
+- Sign-out functionality.
+- Vercel hosting.
 
-## Project structure
+## Technology Stack
+
+- HTML5, CSS3, and JavaScript ES modules.
+- Firebase Authentication and Firebase JavaScript SDK.
+- Vercel hosting.
+
+## Project Structure
 
 ```text
-public/
+jamali/
 ├── index.html
-├── firebase.js
-├── sidebar.js
-├── home/
-│   ├── 1.html
-│   ├── 1.css
-│   └── 1.js
-├── business/
-│   └── 3.html
-└── health/
-    ├── 4.html
-    ├── 4.css
-    └── 4.js
+├── README.md
+├── vercel.json
+├── public/
+│   ├── index.html
+│   ├── firebase.js
+│   ├── single-url.js
+│   ├── sidebar.js
+│   ├── home/
+│   │   ├── 1.html
+│   │   ├── 1.css
+│   │   └── 1.js
+│   └── business/
+│       └── 3.html
+├── scripts/
+│   └── jamali-rate-limited-push.sh
+└── systemd/
+    └── user/
+        ├── jamali-rate-limited-push.service
+        └── jamali-rate-limited-push.timer
 ```
-
-The Health directory above describes the intended Health page structure; create those files before relying on the Health system in production.
-
-## Dashboard
-
-The Home dashboard provides navigation to application systems.
-
-- **Home:** Main dashboard.
-- **Health:** Intended health-management system.
-
-The shared sidebar component is located at `public/sidebar.js`.
 
 ## Authentication
 
-Firebase Authentication provides Google sign-in. Keep the existing Firebase configuration and authentication flow when modifying the application.
+Users sign in through Google using Firebase Authentication. Verify the authentication redirect and session persistence against the deployed application.
 
-## URL architecture
+## Dashboard and Navigation
 
-The official website address is:
+The dashboard files are in `public/home/`. The shared sidebar component is `public/sidebar.js`. Verify that each intended page imports the component and that its links work correctly.
 
-https://jamali-lime.vercel.app/
+## Health System
 
-The application is configured to use Vercel's `public` directory for deployment. Preserve the single-URL architecture when changing page navigation.
+The current project structure contains `public/business/3.html`; a separate Health page has not been confirmed. Implement the Health page and update the dashboard and sidebar before describing Health functionality as available.
 
-## Development
+## Deployment
 
-The local repository is located at `~/jamali`.
+The application is hosted on Vercel and configured through `vercel.json`. After committing changes, allow the configured automatic-push workflow to run and verify the deployed website.
 
-After making changes, validate the affected files and commit the changes. The configured automatic Git workflow handles pushing commits.
+## Documentation Policy
 
-## Important implementation status
-
-The README documents the intended Health system. The existing Business page may still be present in `public/business/3.html`; updating this README does not convert that page into a working Health application.
+Keep this README synchronized with the actual project files and tested behavior. Planned functionality must not be described as completed functionality.
