@@ -6,8 +6,11 @@
 
   // PAGES: bump n (n++) when a page gets a new version
   var PAGES = [
-    { label: "Home", icon: "🏠", folder: "home", n: 1 }
-  ]
+    { label: "Home",            icon: "🏠", folder: "home",            n: 1 },
+    { label: "Business",        icon: "🏢", folder: "business",        n: 2 },
+    { label: "Add Transaction", icon: "🧾", folder: "add-transaction", n: 3 },
+    { label: "View File",       icon: "📄", folder: "view-file",       n: 4 }
+  ];
 
   var current = location.pathname.split("/")[1]; // active folder from URL
 
