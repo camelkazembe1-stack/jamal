@@ -108,3 +108,62 @@ A local commit does not guarantee that deployment has completed.
 ## Current Development Focus
 
 Maintain the single-address website experience, preserve Google sign-in, improve the home dashboard and green Business button, and keep documentation aligned with the actual implementation.
+
+## Page and File Function Reference
+
+This reference is generated from the files currently present in the repository. Descriptions of HTML pages are based on their markup, and JavaScript descriptions are based on detectable code patterns. Confirm any behavior not evident from static inspection.
+
+### HTML Pages
+
+- **`index.html`** — Page title: JMS Multsystem Management. Headings: Welcome to JMS Multsystem Management. Buttons: Continue with Google. Scripts: ./single-url.js.
+- **`public/home/1.html`** — Page title: JMS Multsystem Management — Home. Buttons: Sign out, Business. Stylesheets: ./1.css. Scripts: ./1.js.
+- **`public/index.html`** — Page title: JMS Multsystem Management. Headings: Welcome to JMS Multsystem Management. Buttons: Continue with Google. Scripts: ./single-url.js.
+
+### JavaScript Files
+
+- **`firebase.js`** — JavaScript module; inspect its code to confirm its specific responsibilities.
+- **`public/firebase.js`** — Detected behavior: Google sign-in / Firebase authentication, authentication state and session handling.
+- **`public/home/1.js`** — Detected behavior: authentication state and session handling, sign-out handling, event-driven user interactions, navigation or browser URL handling.
+- **`public/single-url.js`** — Detected behavior: Google sign-in / Firebase authentication, authentication state and session handling, embedded page loading or navigation, event-driven user interactions. Detected functions: showLogin, showApplication.
+- **`single-url.js`** — Detected behavior: Google sign-in / Firebase authentication, authentication state and session handling, embedded page loading or navigation, event-driven user interactions. Detected functions: showLogin, showApplication.
+
+### Stylesheets
+
+- **`public/home/1.css`** — Styles the corresponding page or interface components; inspect selectors to determine the exact components affected.
+
+### Other Project Files
+
+- **`README.md`** — Project documentation, setup guidance, architecture, and development instructions.
+- **`scripts/jamali-rate-limited-push.sh`** — Shell script for setup, deployment, automation, diagnostics, or maintenance; inspect its commands for exact behavior.
+- **`systemd/user/jamali-rate-limited-push.service`** — Project file; inspect its contents or format to determine its exact role.
+- **`systemd/user/jamali-rate-limited-push.timer`** — Project file; inspect its contents or format to determine its exact role.
+- **`vercel.json`** — Vercel deployment and routing configuration.
+
+## Complete Repository Structure
+
+The following tree is generated from the current working repository. Git internals, dependency directories, and common generated build folders are excluded.
+
+```text
+.
+├── public
+│   ├── home
+│   │   ├── 1.css
+│   │   ├── 1.html
+│   │   └── 1.js
+│   ├── firebase.js
+│   ├── index.html
+│   └── single-url.js
+├── scripts
+│   └── jamali-rate-limited-push.sh
+├── systemd
+│   └── user
+│       ├── jamali-rate-limited-push.service
+│       └── jamali-rate-limited-push.timer
+├── firebase.js
+├── index.html
+├── README.md
+├── single-url.js
+└── vercel.json
+```
+
+Repository inventory: 3 HTML page(s), 1 CSS stylesheet(s), and 5 JavaScript file(s).
