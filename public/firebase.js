@@ -1,4 +1,4 @@
-// JAMALI — shared Firebase module
+// JAMALI — shared Firebase module (auth + firestore)
 // index.html uses it for Google login, inner pages use requireAuth()
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -10,6 +10,19 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  addDoc,
+  writeBatch,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtE7p5LM8L2yaJB0JJCyyTz763CBQhKGE",
@@ -27,10 +40,17 @@ export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: "select_account" });
 
+export const db = getFirestore(app);
+
 // Analytics only where the environment supports it
 isSupported().then((ok) => { if (ok) getAnalytics(app); }).catch(() => {});
 
 export { onAuthStateChanged, signInWithPopup, signOut };
+export {
+  getFirestore, collection, doc, addDoc, writeBatch,
+  query, where, orderBy, onSnapshot,
+  serverTimestamp, Timestamp
+};
 
 // Guard for inner pages: resolve with the user, or bounce to index.html
 export function requireAuth() {
