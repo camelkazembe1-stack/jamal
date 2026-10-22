@@ -14,18 +14,21 @@
   style.id = "jamali-sidebar-style";
   style.textContent = `
     :root {
-      --jamali-square-size: 140px;
+      --jamali-sidebar-width: 180px;
+      --jamali-sidebar-button-width: 140px;
+      --jamali-sidebar-button-height: 80px;
       --jamali-green: #16a34a;
       --jamali-green-hover: #15803d;
     }
+
     #jamali-sidebar {
       position: fixed;
       z-index: 99999;
       top: 0;
       left: 0;
       bottom: 0;
-      width: 172px;
-      padding: 18px 12px;
+      width: var(--jamali-sidebar-width);
+      padding: 16px 12px;
       box-sizing: border-box;
       background: #123b2b;
       color: white;
@@ -34,77 +37,77 @@
       align-items: center;
       gap: 12px;
       overflow-y: auto;
+      overflow-x: hidden;
       box-shadow: 2px 0 10px #0002;
     }
+
     #jamali-sidebar .jamali-sidebar-title {
-      color: white;
-      font-size: 20px;
-      font-weight: 800;
-      margin: 6px 0 14px;
-      text-align: center;
-    }
-    #jamali-sidebar .jamali-sidebar-link {
-      width: 140px;
-      height: 140px;
-      min-width: 140px;
-      min-height: 140px;
       box-sizing: border-box;
+      width: 100%;
+      min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px;
+      color: white;
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+      margin: 0;
+    }
+
+    #jamali-sidebar .jamali-sidebar-link {
+      box-sizing: border-box;
+      width: var(--jamali-sidebar-button-width);
+      height: var(--jamali-sidebar-button-height);
+      min-width: var(--jamali-sidebar-button-width);
+      min-height: var(--jamali-sidebar-button-height);
+      max-width: var(--jamali-sidebar-button-width);
+      max-height: var(--jamali-sidebar-button-height);
+      flex: 0 0 var(--jamali-sidebar-button-height);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 10px;
       border: 0;
-      border-radius: 8px;
+      border-radius: 7px;
       background: var(--jamali-green);
-      color: #fff;
+      color: #ffffff;
       font-weight: 700;
+      line-height: 1.3;
       text-align: center;
       text-decoration: none;
       overflow-wrap: anywhere;
       cursor: pointer;
     }
+
     #jamali-sidebar .jamali-sidebar-link:hover,
     #jamali-sidebar .jamali-sidebar-link:focus-visible {
       background: var(--jamali-green-hover);
-      color: white;
+      color: #ffffff;
       outline-offset: 3px;
     }
+
     body.jamali-has-sidebar {
-      padding-left: 172px !important;
+      padding-left: var(--jamali-sidebar-width) !important;
       box-sizing: border-box;
     }
-    @media (max-width: 600px) {
-      #jamali-sidebar {
-        position: relative;
-        width: 100%;
-        height: auto;
-        bottom: auto;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      #jamali-sidebar .jamali-sidebar-title {
-        width: 100%;
-      }
-      #jamali-sidebar .jamali-sidebar-link {
-        width: 112px;
-        height: 112px;
-        min-width: 112px;
-        min-height: 112px;
-      }
-      body.jamali-has-sidebar {
-        padding-left: 0 !important;
-      }
-    }
-    /* Keep page buttons consistently square and green. */
-    button, input[type="button"], input[type="submit"],
-    input[type="reset"], .jamali-square-button, a.jamali-button,
+
+    /* Main-page action buttons remain square. */
+    button,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    .jamali-square-button,
+    a.jamali-button,
     a[data-jamali-page] {
       box-sizing: border-box;
       width: 140px;
       height: 140px;
       min-width: 140px;
       min-height: 140px;
+      max-width: 140px;
+      max-height: 140px;
       aspect-ratio: 1 / 1;
       display: inline-flex;
       align-items: center;
@@ -113,19 +116,45 @@
       border: 0;
       border-radius: 8px;
       background: var(--jamali-green);
-      color: #fff;
+      color: #ffffff;
       font-weight: 700;
       text-align: center;
       text-decoration: none;
       overflow-wrap: anywhere;
       cursor: pointer;
     }
-    button:hover, input[type="button"]:hover,
-    input[type="submit"]:hover, input[type="reset"]:hover,
-    .jamali-square-button:hover, a.jamali-button:hover,
+
+    button:hover,
+    input[type="button"]:hover,
+    input[type="submit"]:hover,
+    input[type="reset"]:hover,
+    .jamali-square-button:hover,
+    a.jamali-button:hover,
     a[data-jamali-page]:hover {
       background: var(--jamali-green-hover);
-      color: #fff;
+      color: #ffffff;
+    }
+
+    @media (max-width: 600px) {
+      #jamali-sidebar {
+        position: relative;
+        top: auto;
+        left: auto;
+        bottom: auto;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      #jamali-sidebar .jamali-sidebar-title {
+        flex: 0 0 100%;
+      }
+
+      body.jamali-has-sidebar {
+        padding-left: 0 !important;
+      }
     }
   `;
   document.head.appendChild(style);
