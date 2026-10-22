@@ -1,31 +1,22 @@
 # JAMALI Multisystem Management
 
-## Public website files
+## Website
 
-The following inventory is generated from the current contents of `public/`.
+- The website is served from the `public/` directory.
+- `public/index.html` is the login page.
+- `public/home.html` is the authenticated home page.
+- `public/firebase.js` initializes Firebase and Google Authentication.
 
-- `public/firebase.js` — Firebase app and authentication initialization.
-- `public/home.html` — Authenticated home page with a square green Business button and sign-out control.
-- `public/index.html` — Login page and Google sign-in entry point.
+## Home page
 
-## Business button
-
-The Business button on `public/home.html` is styled as a 120 × 120 pixel green square with centered white text.
-
-## Authentication setup
-
-Google sign-in must be enabled in Firebase Authentication, and the deployed domain must be listed under Firebase authorized domains.
-
-## Current public file inventory
-
-Generated from the actual files in `public/`.
-
-- `public/firebase.js` — Firebase initialization and authentication configuration.
-- `public/home.html` — Authenticated home page with a square green Business button.
-- `public/index.html` — Login page.
-
-## Home page controls
-
-- The home page is `public/home.html`.
 - The Business button is a green 120 × 120 pixel square.
-- The visible Sign out button/link is removed.
+- The Business button is only available on the authenticated home page.
+- Unauthenticated visitors are redirected to the login page.
+- No Sign out button is displayed or wired into the home page.
+- The Business destination page has not yet been created.
+
+## Public file inventory
+
+- `public/firebase.js` — Firebase initialization and Google Authentication configuration.
+- `public/home.html` — Authenticated home page with a green square Business button.
+- `public/index.html` — Login page with Google sign-in.
