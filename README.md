@@ -68,3 +68,14 @@ jamali/
 ├── README.md
 └── vercel.json
 ```
+
+### Add Transaction
+
+Transaction buttons appear automatically when the page opens, grouped as follows:
+
+- IN: Sales, Commission Received.
+- OUT: Purchases, Rent.
+- NEUTRAL: Retained Profit.
+- CONTRA: Withdraw Cash, Deposit Cash.
+
+Selecting a transaction opens its applicable fields and follows that transaction's existing flow.
