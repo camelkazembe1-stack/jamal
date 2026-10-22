@@ -268,3 +268,9 @@ form button:hover,
     margin: 5px 0;
   }
 }
+
+
+/* JAMALI: transaction choices disappear when a form opens */
+.transaction-choice-hidden {
+  display: none !important;
+}
