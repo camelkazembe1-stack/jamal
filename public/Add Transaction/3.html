@@ -82,5 +82,59 @@
       <div id="transaction-groups"></div>
     </section>
   </main>
+
+<!-- JAMALI: AUTO-DISPLAY TRANSACTION BUTTONS START -->
+<script>
+(() => {
+  function showTransactionButtons() {
+    const buttons = [...document.querySelectorAll('button, input[type="button"], input[type="submit"]')];
+    const displayButton = buttons.find(button =>
+      (button.innerText || button.value || '').trim().replace(/\s+/g, ' ').toLowerCase()
+        === 'display transactions'
+    );
+
+    if (displayButton) {
+      displayButton.click();
+      return true;
+    }
+
+    // If no display button exists, reveal the transaction-group containers
+    // using common IDs/classes without changing transaction-saving logic.
+    const groups = document.querySelectorAll(
+      '#transactionGroups, #transaction-groups, #transactionOptions, ' +
+      '.transaction-groups, .transaction-groups-container, .transaction-options, ' +
+      '[data-transaction-groups]'
+    );
+
+    if (groups.length) {
+      groups.forEach(element => {
+        element.hidden = false;
+        element.style.display = '';
+        element.setAttribute('aria-hidden', 'false');
+      });
+      return true;
+    }
+    return false;
+  }
+
+  function initialize() {
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts++;
+      if (showTransactionButtons() || attempts >= 20) {
+        clearInterval(timer);
+      }
+    }, 150);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize, { once: true });
+  } else {
+    initialize();
+  }
+})();
+</script>
+<!-- JAMALI: AUTO-DISPLAY TRANSACTION BUTTONS END -->
+
 </body>
 </html>
