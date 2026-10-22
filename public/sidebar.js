@@ -1,5 +1,9 @@
 /* JAMALI — shared sidebar (all pages except index.html) */
 (function () {
+
+  // Address bar always shows the bare domain
+  try { history.replaceState({}, "", "/"); } catch (e) {}
+
   // PAGES: bump n (n++) when a page gets a new version
   var PAGES = [
     { label: "Home", icon: "🏠", folder: "home", n: 1 }
