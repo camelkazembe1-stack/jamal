@@ -16,7 +16,7 @@ The root page displays Google login when the visitor is signed out. After succes
 - `public/firebase.js` — Firebase initialization and authentication configuration.
 - `public/index.html` — Root entry point and Google login.
 
-The home page files remain in the `home/` folder. They are loaded internally while the public address remains `https://jamali-lime.vercel.app/`.
+The home page files remain in the `home/` folder. The public home route `/home/` redirects to the root URL. Authenticated home content should load internally while the public address remains `https://jamali-lime.vercel.app/`.
 
 The Business page has not been created yet.
 
