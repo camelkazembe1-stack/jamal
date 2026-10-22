@@ -1,32 +1,42 @@
-# JAMALI Multisystem Management
+# JAMALI
 
-## Public URL
+JAMALI is a web application served from the `public/` directory.
 
-All page navigation must remain at the root URL:
+## Live Website
 
-`https://jamali-lime.vercel.app/`
+https://jamali-lime.vercel.app/
 
-The root page displays Google login when the visitor is signed out. After successful login, the home page is loaded into the root page without changing the browser URL.
+The website is intended to use the root address for its page navigation.
 
-## Home page files
+## Main Pages
 
-- `public/home/1.html` — Home page HTML.
-- `public/home/1.css` — Home page styling, including the green square Business button.
-- `public/home/1.js` — Home page authentication guard and Business button behavior.
-- `public/firebase.js` — Firebase initialization and authentication configuration.
-- `public/index.html` — Root entry point and Google login.
+| Page | File |
+|---|---|
+| Home | `public/home/1.html` |
+| Business | `public/Business/2.html` |
+| Add Transaction | `public/Add Transaction/3.html` |
+| View File | `public/View File/4.html` |
 
-The home page files remain in the `home/` folder. The public home route `/home/` redirects to the root URL. Authenticated home content should load internally while the public address remains `https://jamali-lime.vercel.app/`.
+Page names should match their corresponding button names. The Business page provides navigation to Add Transaction and View File. The Add Transaction and View File buttons should use square green styling consistent with the Business button.
 
-The Business page has not been created yet.
+## Application Files
 
-## Public file inventory
+- `public/index.html` — website entry point and login interface.
+- `public/firebase.js` — Firebase configuration and authentication setup.
+- Each numbered page has its own HTML, CSS, and JavaScript files.
+- `vercel.json` — Vercel deployment configuration.
+- `README.md` — project documentation and repository tree.
+- `scripts/` and `systemd/` — project automation files.
 
-- `public/firebase.js`
-- `public/home/1.css`
-- `public/home/1.html`
-- `public/home/1.js`
-- `public/index.html`
+## Transaction Storage
+
+The current transaction pages use browser `localStorage` with the key
+`jamali_business_transactions`. These entries are stored in the browser and
+are not automatically synchronized with Firebase or other devices.
+
+## Repository Structure
+
+The tree below is generated from the files currently present in this project.
 
 ## Complete Repository Tree
 
@@ -41,16 +51,6 @@ The Business page has not been created yet.
 │   │   ├── 2.css
 │   │   ├── 2.html
 │   │   └── 2.js
-│   ├── business
-│   │   ├── 2.css
-│   │   ├── 2.html
-│   │   ├── 2.js
-│   │   ├── 3.css
-│   │   ├── 3.html
-│   │   ├── 3.js
-│   │   ├── 4.css
-│   │   ├── 4.html
-│   │   └── 4.js
 │   ├── home
 │   │   ├── 1.css
 │   │   ├── 1.html
