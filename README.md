@@ -36,6 +36,8 @@ This tree is generated from the current project directory. It includes hidden fi
 
 This tree is generated from the current project directory. It includes hidden files and folders but excludes Git's internal `.git/` directory.
 
+## Complete Repository Tree
+
 <!-- REPOSITORY_TREE_START -->
 ```text
 .
