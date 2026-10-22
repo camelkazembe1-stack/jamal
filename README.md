@@ -36,7 +36,13 @@ The Business page has not been created yet.
 │   ├── business/
 │   │   ├── 2.css
 │   │   ├── 2.html
-│   │   └── 2.js
+│   │   ├── 2.js
+│   │   ├── 3.css
+│   │   ├── 3.html
+│   │   ├── 3.js
+│   │   ├── 4.css
+│   │   ├── 4.html
+│   │   └── 4.js
 │   ├── home/
 │   │   ├── 1.css
 │   │   ├── 1.html
