@@ -12,7 +12,7 @@ let authenticated = false;
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     authenticated = false;
-    window.location.replace("../index.html");
+    window.location.replace("../");
     return;
   }
 
@@ -23,7 +23,7 @@ onAuthStateChanged(auth, (user) => {
 
 businessButton.addEventListener("click", () => {
   if (!authenticated) {
-    window.location.replace("../index.html");
+    window.location.replace("../");
     return;
   }
 

@@ -228,7 +228,7 @@
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        window.location.replace("./home/1.html");
+        window.location.replace("./home/");
       }
     });
 
@@ -243,7 +243,7 @@
 
         if (result.user) {
           status.textContent = "Login successful. Opening JAMALI...";
-          window.location.replace("./home/1.html");
+          window.location.replace("./home/");
         }
       } catch (error) {
         console.error("JAMALI Google sign-in failed:", error);

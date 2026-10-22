@@ -3,8 +3,8 @@
 ## Pages and files
 
 - Login page: `/` (`public/index.html`).
-- Home page: `/home/1.html` (`public/home/1.html`).
-- Google sign-in redirects to `/home/1.html` after successful authentication.
+- Home page: `/home/` (`public/home/1.html`).
+- Google sign-in redirects to `/home/` after successful authentication.
 - The home page redirects unauthenticated visitors to the login page.
 - The Business button is green and square. The desktop grid supports up to eight buttons per row.
 - No Sign out button is displayed on the home page.
