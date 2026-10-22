@@ -23,16 +23,17 @@ The transaction pages currently use browser `localStorage`; entries are not auto
 
 ## Add Transaction and Firestore
 
-The Add Transaction page is located at `public/Add Transaction/3.html`.
+The Add Transaction page is `public/Add Transaction/3.html`.
 
-- Groups: IN, OUT, NEUTRAL, and CONTRA.
-- IN: Sales and Discount Received, using Cash, Credit, or Bank.
-- OUT: Purchases and Rent, using Cash, Credit, or Bank.
+- Display Transactions reveals the four labelled groups and their transaction buttons together.
+- IN: Sales and Discount Received.
+- OUT: Purchases and Rent.
 - NEUTRAL: Retained Profit.
-- CONTRA: Deposit Cash and Withdraw Cash.
-- Transactions are saved in the Cloud Firestore `transactions` collection with `date`, `transactionName`, `flow`, `method`, `name`, `amount`, and `charges` fields.
-- Bank charges, when greater than zero, are recorded as a separate OUT transaction in the same atomic Firestore batch.
-- This page uses the Firebase app initialized by the existing `/firebase.js` file; keep the existing Firebase configuration unchanged.
+- CONTRA: Withdraw Cash and Deposit Cash.
+- Selecting a transaction opens its form with the applicable fields visible together.
+- Transaction records are saved in the Cloud Firestore `transactions` collection with `date`, `transactionName`, `flow`, `method`, `name`, `amount`, and `charges`.
+- Bank charges, when greater than zero, are saved as a separate OUT transaction in the same atomic Firestore batch.
+- The page uses the existing `/firebase.js` Firebase initialization and does not replace the project configuration.
 
 ## Complete Repository Tree
 

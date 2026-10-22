@@ -15,36 +15,49 @@
       <div>
         <p class="eyebrow">JAMALI ACCOUNTING</p>
         <h1>Add Transaction</h1>
-        <p class="subtitle">Record and review your business transactions.</p>
+        <p class="subtitle">Select a transaction and enter its details.</p>
       </div>
-      <button type="button" id="display-transactions" class="button button-secondary">
+      <button type="button" id="display-transactions" class="button button-primary">
         Display Transactions
       </button>
     </header>
 
     <div id="status-message" class="status-message" role="status" aria-live="polite"></div>
 
-    <section class="panel">
-      <h2>Choose transaction group</h2>
-      <div class="group-grid">
-        <button type="button" class="group-button group-in" data-flow="IN">
-          <span>IN</span><small>Money coming in</small>
-        </button>
-        <button type="button" class="group-button group-out" data-flow="OUT">
-          <span>OUT</span><small>Money going out</small>
-        </button>
-        <button type="button" class="group-button group-neutral" data-flow="NEUTRAL">
-          <span>NEUTRAL</span><small>Retained profit</small>
-        </button>
-        <button type="button" class="group-button group-contra" data-flow="CONTRA">
-          <span>CONTRA</span><small>Cash and bank transfers</small>
-        </button>
-      </div>
-    </section>
-
     <section id="transaction-options-panel" class="panel" hidden>
-      <h2 id="transaction-options-heading">Choose transaction</h2>
-      <div id="transaction-options" class="option-grid"></div>
+      <h2>Choose a transaction</h2>
+      <div class="transaction-groups">
+        <section class="transaction-group">
+          <h3 class="flow-heading flow-in">IN — Money coming in</h3>
+          <div class="option-grid">
+            <button type="button" class="option-button" data-flow="IN" data-transaction="Sales">Sales</button>
+            <button type="button" class="option-button" data-flow="IN" data-transaction="Discount Received">Discount Received</button>
+          </div>
+        </section>
+
+        <section class="transaction-group">
+          <h3 class="flow-heading flow-out">OUT — Money going out</h3>
+          <div class="option-grid">
+            <button type="button" class="option-button" data-flow="OUT" data-transaction="Purchases">Purchases</button>
+            <button type="button" class="option-button" data-flow="OUT" data-transaction="Rent">Rent</button>
+          </div>
+        </section>
+
+        <section class="transaction-group">
+          <h3 class="flow-heading flow-neutral">NEUTRAL — Retained profit</h3>
+          <div class="option-grid">
+            <button type="button" class="option-button" data-flow="NEUTRAL" data-transaction="Retained Profit">Retained Profit</button>
+          </div>
+        </section>
+
+        <section class="transaction-group">
+          <h3 class="flow-heading flow-contra">CONTRA — Cash and bank transfers</h3>
+          <div class="option-grid">
+            <button type="button" class="option-button" data-flow="CONTRA" data-transaction="Withdraw Cash">Withdraw Cash</button>
+            <button type="button" class="option-button" data-flow="CONTRA" data-transaction="Deposit Cash">Deposit Cash</button>
+          </div>
+        </section>
+      </div>
     </section>
 
     <section id="form-panel" class="panel" hidden>
@@ -62,7 +75,7 @@
       <div class="section-heading">
         <div>
           <h2>Saved transactions</h2>
-          <p class="muted">Transactions saved in Cloud Firestore.</p>
+          <p class="muted">Transactions stored in Cloud Firestore.</p>
         </div>
         <button type="button" id="refresh-transactions" class="button button-secondary">Refresh</button>
       </div>
