@@ -32,8 +32,16 @@ The Business page has not been created yet.
 
 ```text
 .
-├── public/
-│   ├── business/
+├── public
+│   ├── Add Transaction
+│   │   ├── 3.css
+│   │   ├── 3.html
+│   │   └── 3.js
+│   ├── Business
+│   │   ├── 2.css
+│   │   ├── 2.html
+│   │   └── 2.js
+│   ├── business
 │   │   ├── 2.css
 │   │   ├── 2.html
 │   │   ├── 2.js
@@ -43,16 +51,20 @@ The Business page has not been created yet.
 │   │   ├── 4.css
 │   │   ├── 4.html
 │   │   └── 4.js
-│   ├── home/
+│   ├── home
 │   │   ├── 1.css
 │   │   ├── 1.html
 │   │   └── 1.js
+│   ├── View File
+│   │   ├── 4.css
+│   │   ├── 4.html
+│   │   └── 4.js
 │   ├── firebase.js
 │   └── index.html
-├── scripts/
+├── scripts
 │   └── jamali-rate-limited-push.sh
-├── systemd/
-│   └── user/
+├── systemd
+│   └── user
 │       ├── jamali-rate-limited-push.service
 │       └── jamali-rate-limited-push.timer
 ├── README.md

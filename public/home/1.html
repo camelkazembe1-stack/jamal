@@ -46,7 +46,7 @@
     event.preventDefault();
 
     try {
-      const response = await fetch("/business/2.html", { cache: "no-store" });
+      const response = await fetch("/Business/2.html", { cache: "no-store" });
       if (!response.ok) throw new Error("Business page could not be loaded.");
       const source = await response.text();
       const parsed = new DOMParser().parseFromString(source, "text/html");
