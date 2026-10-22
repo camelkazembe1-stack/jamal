@@ -316,3 +316,87 @@
   }
 })();
 /* JAMALI COMPACT SIDEBAR OVERRIDE END */
+
+
+/* JAMALI ALL PUBLIC PAGES START */
+(() => {
+  const pages = [{"url": "/Add%20Transaction/3.html", "label": "3", "file": "Add Transaction/3.html"}, {"url": "/Business/2.html", "label": "2", "file": "Business/2.html"}, {"url": "/View%20File/4.html", "label": "4", "file": "View File/4.html"}, {"url": "/all-transaction.html", "label": "All Transaction", "file": "all-transaction.html"}, {"url": "/home/1.html", "label": "1", "file": "home/1.html"}, {"url": "/", "label": "Home", "file": "index.html"}];
+  const sectionId = "jamali-all-public-pages";
+  const styleId = "jamali-all-public-pages-style";
+
+  function install() {
+    const sidebar = document.getElementById("jamali-sidebar");
+    if (!sidebar) return false;
+
+    let section = document.getElementById(sectionId);
+    if (!section) {
+      section = document.createElement("div");
+      section.id = sectionId;
+      section.setAttribute("aria-label", "All public pages");
+      section.style.cssText = "display:flex;flex-direction:column;gap:4px;width:100%;";
+      sidebar.appendChild(section);
+    }
+
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = `
+        #jamali-all-public-pages .jamali-page-link {
+          box-sizing:border-box!important;
+          display:flex!important;
+          align-items:center!important;
+          width:100%!important;
+          min-width:0!important;
+          min-height:32px!important;
+          height:32px!important;
+          margin:1px 0!important;
+          padding:5px 9px!important;
+          overflow:hidden!important;
+          border-radius:6px!important;
+          font-size:13px!important;
+          line-height:20px!important;
+          white-space:nowrap!important;
+          text-overflow:ellipsis!important;
+          text-decoration:none!important;
+        }
+        @media(max-height:700px) {
+          #jamali-all-public-pages .jamali-page-link {
+            min-height:29px!important;height:29px!important;
+            padding-top:4px!important;padding-bottom:4px!important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    const current = location.pathname.replace(/\\/g, "/");
+    section.replaceChildren();
+
+    for (const page of pages) {
+      const link = document.createElement("a");
+      link.className = "jamali-page-link";
+      link.href = page.url;
+      link.textContent = page.label;
+      link.title = page.file;
+      if (current === page.url ||
+          (page.url !== "/" && current.replace(/\\/$/, "") === page.url.replace(/\\/$/, ""))) {
+        link.setAttribute("aria-current", "page");
+      }
+      section.appendChild(link);
+    }
+    return true;
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", install, { once: true });
+  } else {
+    install();
+  }
+  // sidebar.js may create the sidebar after this script runs.
+  let attempts = 0;
+  const timer = setInterval(() => {
+    attempts++;
+    if (install() || attempts >= 40) clearInterval(timer);
+  }, 250);
+})();
+/* JAMALI ALL PUBLIC PAGES END */
