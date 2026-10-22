@@ -8,10 +8,23 @@
 <script src="/sidebar.js" defer></script>
 </head>
 <body>
-  <main class="wrap">
-    <h1>📄 View File</h1>
-    <p class="soon">View File module — coming soon.</p>
-  </main>
-  <script type="module" src="/view-file/4.js"></script>
+<main class="wrap">
+  <a class="back" href="/business/2">&larr; Business</a>
+  <h1>View File</h1>
+  <p class="sub">Pick a file to view.</p>
+
+  <div class="grid">
+    <a class="tile" href="/all-transactions/5">
+      <span class="tile-icon">&#128202;</span>
+      <span class="tile-label">All Transactions</span>
+    </a>
+    <a class="tile" href="/cash-book/6">
+      <span class="tile-icon">&#128209;</span>
+      <span class="tile-label">Cash Book</span>
+    </a>
+    <!-- more view file buttons: one .tile each, 8 per row -->
+  </div>
+</main>
+<script type="module" src="/view-file/4.js"></script>
 </body>
 </html>

@@ -73,3 +73,14 @@ calls `requireAuth()` → not-logged-in users are bounced back to `/`.
 - Reachable from the sidebar and from a tile on Business (page 2).
 - add-transaction (page 3) now saves to Firestore `transactions` via writeBatch;
   firebase.js exports auth + Firestore (db, collection, addDoc, serverTimestamp, ...).
+
+### View File module: pages 5 + 6 (updated 2026-10-23)
+- View File (page 4) is now a LAUNCHER - its buttons redirect to module pages:
+  - "All Transactions" -> /all-transactions/5 (page 5: live 6-column table of
+    every transaction, IN/OUT/NEUTRAL/CONTRA filter tabs, bank charge rows).
+  - "Cash Book" -> /cash-book/6 (page 6, new): only Flow Method = Cash,
+    IN on the DR side / OUT on the CR side, folios numbered sequentially
+    across both sides, balance c/d closes the book, balance b/d opens the
+    next period. NEUTRAL + CONTRA and Credit/Bank are excluded.
+- Sidebar stays: Home, Business, Add Transaction, View File (module entry).
+- add-transaction (page 3) success button links to /all-transactions/5.
