@@ -1,5 +1,6 @@
 // add-transaction (page 3) — JAMALI transaction engine
-// Steps: 1 type -> 2 transaction -> 3 form -> 4 saved. No page reloads.
+// Steps: 1 choose (groups shown as LABELS, transactions sit on their group)
+//        -> 2 form -> 3 saved. No page reloads.
 // Every record gets the 6 fields: transactionName, dateTime, flowMethod,
 // transactionType, name, amount. Bank charges save as a SEPARATE record.
 import { requireAuth, db, collection, doc, writeBatch, serverTimestamp } from "/firebase.js";
@@ -38,46 +39,37 @@ function showStep(n) {
   window.scrollTo({ top: 0 });
 }
 
-/* ---------- step 1: type tiles ---------- */
-const TYPE_META = {
-  IN:      { icon: "\u2B06\uFE0F", chip: "t-in" },
-  OUT:     { icon: "\u2B07\uFE0F", chip: "t-out" },
-  NEUTRAL: { icon: "\u2696\uFE0F", chip: "t-neutral" },
-  CONTRA:  { icon: "\u{1F501}", chip: "t-contra" }
-};
+/* ---------- step 1: all groups at once — labels, not buttons ---------- */
+const TYPE_BADGE = { IN: "b-in", OUT: "b-out", NEUTRAL: "b-neutral", CONTRA: "b-contra" };
 
- $("#type-grid").innerHTML = Object.keys(TRANSACTIONS).map((t) =>
-  `<button class="tile type-tile ${TYPE_META[t].chip}" type="button" data-type="${t}">
-     <span class="tile-icon">${TYPE_META[t].icon}</span>
-     <span class="tile-label">${t}</span>
-   </button>`).join("");
+ $("#groups").innerHTML = Object.keys(TRANSACTIONS).map((t) =>
+  `<section class="group">
+     <h2 class="group-label"><span class="badge ${TYPE_BADGE[t]}">${t}</span></h2>
+     <div class="grid">
+       ${TRANSACTIONS[t].map((x) =>
+         `<button class="tile" type="button" data-type="${t}" data-txn="${x.name}">
+            <span class="tile-icon">${x.icon}</span>
+            <span class="tile-label">${x.name}</span>
+          </button>`).join("")}
+     </div>
+   </section>`).join("");
 
-document.querySelectorAll(".type-tile").forEach((b) =>
-  b.addEventListener("click", () => {
-    state.type = b.dataset.type;
-    state.txn = null;
-    $("#type-title").textContent = state.type;
-    $("#txn-grid").innerHTML = TRANSACTIONS[state.type].map((x) =>
-      `<button class="tile" type="button" data-txn="${x.name}">
-         <span class="tile-icon">${x.icon}</span>
-         <span class="tile-label">${x.name}</span>
-       </button>`).join("");
-    document.querySelectorAll("#txn-grid .tile").forEach((t) =>
-      t.addEventListener("click", () => {
-        state.txn = t.dataset.txn;
-        openForm();
-      }));
-    showStep(2);
+/* click a transaction -> hide ALL tiles -> form shows immediately */
+document.querySelectorAll("#groups .tile").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    state.type = btn.dataset.type;
+    state.txn = btn.dataset.txn;
+    openForm();
   }));
 
-/* ---------- step 3: dynamic form ---------- */
+/* ---------- step 2: dynamic form ---------- */
 const METHOD_ICONS = { Cash: "\u{1F4B5}", Credit: "\u{1F464}", Bank: "\u{1F3DB}\uFE0F" };
 
 function openForm() {
   state.method = null;
   state.charges = null;
   $("#txn-title").textContent = state.txn;
-  $("#txn-sub").textContent = "Step 3 of 3 \u00B7 " + state.type +
+  $("#txn-sub").textContent = "Step 2 of 2 \u00B7 " + state.type +
     (state.type === "NEUTRAL" ? " \u00B7 no flow method" : "");
   $("#in-amount").value = "";
   $("#in-person").value = "";
@@ -101,7 +93,7 @@ function openForm() {
   }
   document.querySelectorAll("#charges-seg .seg-btn").forEach((x) => x.classList.remove("is-on"));
   refreshFields();
-  showStep(3);
+  showStep(2);
 }
 
 function chargesAllowed() {
@@ -210,7 +202,7 @@ function updatePreview() {
     $("#done-note").textContent = docs.length === 1
       ? "1 record saved to Firestore."
       : "2 records saved \u2014 the transaction and its bank charges are separate records.";
-    showStep(4);
+    showStep(3);
   } catch (e) {
     err("Save failed: " + (e && e.code === "permission-denied"
       ? "check your Firestore rules and sign in again."
@@ -223,7 +215,6 @@ function updatePreview() {
 
 /* ---------- back / reset ---------- */
  $("#back-2").addEventListener("click", () => showStep(1));
- $("#back-3").addEventListener("click", () => showStep(2));
  $("#again-btn").addEventListener("click", () => {
   state.type = state.txn = null;
   showStep(1);
