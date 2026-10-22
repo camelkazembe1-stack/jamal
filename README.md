@@ -26,13 +26,16 @@ Local changes are pushed to GitHub automatically by a systemd user timer
 | `public/firebase.js` | **Shared Firebase module** (v10.12.2, gstatic CDN). Exports `auth`, `provider`, `signInWithPopup`, `signOut`, `onAuthStateChanged`, and `requireAuth()` — the guard every inner page calls; no user → redirect to `/`. |
 | `public/sidebar.js` | **Shared sidebar**, auto-injected (HTML + CSS) into every page that includes it — all pages except `index.html`. Shows only Home for now. Link targets are controlled by the `PAGES` array at the top of the file. |
 | `public/home/1.html / 1.css / 1.js` | **Page 1 — Home.** Launcher grid of square buttons, 8 per row (4 on tablets, 3 on phones). Business tile → `/business/2`. Guarded by `requireAuth()`. |
-| `public/business/2.html / 2.css / 2.js` | **Page 2 — Business.** Placeholder ("coming soon"), same auth guard + sidebar. |
+| `public/business/2.html / 2.css / 2.js` | **Page 2 — Business.** PURE launcher: square-tile grid, 8 per row. Buttons redirect to real pages (Transaction → `/transaction/3`, View File → `/view-file/4`). Nothing loads inside Business itself. |
+| `public/transaction/3.html / 3.css / 3.js` | **Page 3 — Transaction.** Placeholder, same auth guard + sidebar. |
+| `public/view-file/4.html / 4.css / 4.js` | **Page 4 — View File.** Placeholder, same auth guard + sidebar. |
 
 ## Numbering convention (IMPORTANT)
 
 - Every page except `index.html` lives in its own folder with ONE stable number:
   `page/n.html` + `page/n.css` + `page/n.js`
-- `n` is a **global page counter**: home = 1, business = 2, the next new page = 3, and so on (`n++`)
+- `n` is a **global page counter**: home = 1, business = 2, transaction = 3, view-file = 4, the next new page = 5, and so on (`n++`)
+- **Folder name = page name exactly** (the folder is the page's UID): `transaction/` = Transaction, `view-file/` = View File
 - Old file versions live in **Git history** (the auto-push commits everything), so files stay stable and get revised in place.
 
 ## Design rules
