@@ -100,3 +100,8 @@ Selecting a transaction opens its relevant entry fields. Transactions are saved 
 - Shared navigation styles are managed by `public/sidebar.js`.
 - Sidebar navigation items use a compact 32px height, targeting up to 16 visible items depending on screen height.
 - `public/index.html` remains excluded from the shared sidebar.
+
+## Sidebar Page Navigation
+- `public/sidebar.js` adds a compact navigation list for HTML pages discovered under `public/`.
+- The homepage links to `/`; other pages link to their public HTML paths.
+- Newly added HTML pages appear in the generated sidebar list after this code is updated and deployed.
