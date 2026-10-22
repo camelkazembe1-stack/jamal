@@ -373,3 +373,86 @@ form.addEventListener("submit", async event => {
     setupTransactionChoiceView();
   }
 })();
+
+
+/* JAMALI: payment methods as selectable buttons */
+(() => {
+  const methodNames = ["Cash", "Credit", "Bank"];
+
+  function enhanceMethodSelectors() {
+    document.querySelectorAll("select").forEach((select) => {
+      if (select.dataset.methodButtonsReady === "true") return;
+
+      const options = [...select.options];
+      const matching = methodNames.filter((name) =>
+        options.some((option) => option.text.trim().toLowerCase() === name.toLowerCase())
+      );
+
+      // Only transform selectors that are actually payment-method selectors.
+      if (matching.length !== 3) return;
+
+      select.dataset.methodButtonsReady = "true";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "method-button-group";
+      wrapper.setAttribute("role", "group");
+      wrapper.setAttribute("aria-label", "Select payment method");
+
+      matching.forEach((method) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "method-choice-button";
+        button.textContent = method;
+        button.setAttribute("aria-pressed", "false");
+
+        button.addEventListener("click", () => {
+          const option = [...select.options].find(
+            (item) => item.text.trim().toLowerCase() === method.toLowerCase()
+          );
+          if (!option) return;
+
+          select.value = option.value;
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+          select.dispatchEvent(new Event("input", { bubbles: true }));
+
+          wrapper.querySelectorAll(".method-choice-button").forEach((item) => {
+            const active = item === button;
+            item.classList.toggle("selected", active);
+            item.setAttribute("aria-pressed", String(active));
+          });
+        });
+
+        wrapper.appendChild(button);
+      });
+
+      select.insertAdjacentElement("afterend", wrapper);
+      select.classList.add("method-select-hidden");
+
+      const syncSelection = () => {
+        const selectedOption = options.find((option) => option.value === select.value);
+        const selectedName = selectedOption?.text.trim().toLowerCase() || "";
+        wrapper.querySelectorAll(".method-choice-button").forEach((button) => {
+          const active = button.textContent.trim().toLowerCase() === selectedName;
+          button.classList.toggle("selected", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
+      };
+
+      select.addEventListener("change", syncSelection);
+      syncSelection();
+    });
+  }
+
+  function start() {
+    enhanceMethodSelectors();
+
+    const observer = new MutationObserver(() => enhanceMethodSelectors());
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start, { once: true });
+  } else {
+    start();
+  }
+})();
