@@ -15,3 +15,17 @@ The Business button on `public/home.html` is styled as a 120 × 120 pixel green 
 ## Authentication setup
 
 Google sign-in must be enabled in Firebase Authentication, and the deployed domain must be listed under Firebase authorized domains.
+
+## Current public file inventory
+
+Generated from the actual files in `public/`.
+
+- `public/firebase.js` — Firebase initialization and authentication configuration.
+- `public/home.html` — Authenticated home page with a square green Business button.
+- `public/index.html` — Login page.
+
+## Home page controls
+
+- The home page is `public/home.html`.
+- The Business button is a green 120 × 120 pixel square.
+- The visible Sign out button/link is removed.
