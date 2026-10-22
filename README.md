@@ -65,3 +65,11 @@ calls `requireAuth()` → not-logged-in users are bounced back to `/`.
 1. Files change locally → timer detects pending changes (every 10s)
 2. Script commits + pushes to GitHub `main` (rate-limited, once / 60s)
 3. Vercel builds and deploys automatically
+
+### Page 5 - All Transactions (added 2026-10-23)
+- Folder `public/all-transactions/` - files `5.html`, `5.css`, `5.js` (page n = 5).
+- Live table of every Firestore transaction (IN / OUT / NEUTRAL / CONTRA) with
+  the six fields; type filter tabs; bank charges show as separate rows.
+- Reachable from the sidebar and from a tile on Business (page 2).
+- add-transaction (page 3) now saves to Firestore `transactions` via writeBatch;
+  firebase.js exports auth + Firestore (db, collection, addDoc, serverTimestamp, ...).
