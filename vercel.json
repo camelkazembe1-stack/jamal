@@ -1,5 +1,17 @@
 {
   "cleanUrls": true,
   "trailingSlash": true,
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/home/",
+      "destination": "/",
+      "permanent": false
+    }
+  ]
 }
