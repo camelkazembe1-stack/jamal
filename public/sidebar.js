@@ -2,21 +2,8 @@
 (function () {
   // PAGES: bump n (n++) when a page gets a new version
   var PAGES = [
-    { label: "Home",      icon: "🏠", folder: "home",      n: 1 },
-    { label: "Dashboard", icon: "📊", folder: "dashboard", n: 1 },
-    { label: "Inventory", icon: "📦", folder: "inventory", n: 1 },
-    { label: "Sales",     icon: "🛒", folder: "sales",     n: 1 },
-    { label: "Purchases", icon: "🧾", folder: "purchases", n: 1 },
-    { label: "Customers", icon: "👥", folder: "customers", n: 1 },
-    { label: "Suppliers", icon: "🚚", folder: "suppliers", n: 1 },
-    { label: "Employees", icon: "🧑‍💼", folder: "employees", n: 1 },
-    { label: "Finance",   icon: "💰", folder: "finance",   n: 1 },
-    { label: "Reports",   icon: "📈", folder: "reports",   n: 1 },
-    { label: "Calendar",  icon: "📅", folder: "calendar",  n: 1 },
-    { label: "Messages",  icon: "💬", folder: "messages",  n: 1 },
-    { label: "Settings",  icon: "⚙️", folder: "settings",  n: 1 },
-    { label: "Support",   icon: "🆘", folder: "support",   n: 1 }
-  ];
+    { label: "Home", icon: "🏠", folder: "home", n: 1 }
+  ]
 
   var current = location.pathname.split("/")[1]; // active folder from URL
 
