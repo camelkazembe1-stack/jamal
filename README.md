@@ -80,3 +80,8 @@ The Add Transaction page displays transaction buttons immediately.
 
 Selecting a transaction opens its relevant entry fields. Transactions are saved to the Firestore `transactions` collection. A withdrawal or bank-payment charge is recorded as a separate Bank Charges transaction where applicable.
 
+## Add Transaction Page
+
+- The transaction page uses absolute CSS and JavaScript asset paths so resources continue to load when the page is served from a nested Vercel route.
+- Responsive styling provides consistent green transaction buttons, clear sections, and styled transaction forms.
+- Transaction entry and Firebase saving logic remain in `public/Add Transaction/3.js`.
