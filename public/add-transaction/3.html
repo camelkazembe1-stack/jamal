@@ -10,27 +10,19 @@
 <body>
 <main class="wrap">
 
-  <!-- STEP 1 · transaction type -->
+  <!-- STEP 1 · choose — groups are LABELS, transactions sit on their group -->
   <section class="step is-active" id="step-1">
     <a class="back" href="/business/2">&larr; Business</a>
     <h1>Add Transaction</h1>
-    <p class="sub">Step 1 of 3 — choose the transaction type.</p>
-    <div class="grid" id="type-grid"></div>
+    <p class="sub">Step 1 of 2 — pick a transaction from its group.</p>
+    <div id="groups"></div>
   </section>
 
-  <!-- STEP 2 · transaction -->
+  <!-- STEP 2 · details -->
   <section class="step" id="step-2">
-    <button class="back" id="back-2" type="button">&larr; Type</button>
-    <h1 id="type-title">Type</h1>
-    <p class="sub">Step 2 of 3 — choose the transaction.</p>
-    <div class="grid" id="txn-grid"></div>
-  </section>
-
-  <!-- STEP 3 · details -->
-  <section class="step" id="step-3">
-    <button class="back" id="back-3" type="button">&larr; Transactions</button>
+    <button class="back" id="back-2" type="button">&larr; Transactions</button>
     <h1 id="txn-title">Transaction</h1>
-    <p class="sub" id="txn-sub">Step 3 of 3</p>
+    <p class="sub" id="txn-sub">Step 2 of 2</p>
 
     <div class="card form-card">
       <div class="field" id="f-amount">
@@ -72,8 +64,8 @@
     </div>
   </section>
 
-  <!-- STEP 4 · saved -->
-  <section class="step" id="step-4">
+  <!-- STEP 3 · saved -->
+  <section class="step" id="step-3">
     <div class="card done-card">
       <div class="done-icon">&#10003;</div>
       <h1>Transaction Saved</h1>
