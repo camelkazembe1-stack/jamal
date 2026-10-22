@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#087f5b">
+  <meta name="description" content="Welcome to JAMALI.">
+  <title>JAMALI</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f8f7;
+      color: #18352b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      width: 100%;
+      padding: 20px 6%;
+      background: #087f5b;
+      color: white;
+    }
+
+    .brand {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 32px 20px;
+    }
+
+    .welcome {
+      width: min(100%, 620px);
+      padding: clamp(28px, 6vw, 56px);
+      text-align: center;
+      background: white;
+      border: 1px solid #e1ebe6;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgb(17 63 45 / 8%);
+    }
+
+    .welcome h1 {
+      margin: 0 0 16px;
+      font-size: clamp(36px, 7vw, 56px);
+      letter-spacing: -1.5px;
+    }
+
+    .welcome p {
+      margin: 0 auto 28px;
+      max-width: 420px;
+      color: #60736a;
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    .status {
+      min-height: 24px;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #60736a;
+    }
+
+    footer {
+      padding: 20px;
+      text-align: center;
+      color: #718078;
+      font-size: 13px;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .welcome {
+        animation: appear 450ms ease-out both;
+      }
+
+      @keyframes appear {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <p class="brand">JAMALI</p>
+  </header>
+
+  <main>
+    <section class="welcome" aria-labelledby="welcome-title">
+      <h1 id="welcome-title">Welcome to JAMALI</h1>
+      <p>A simple starting point for the JAMALI platform.</p>
+      <div id="firebase-status" class="status" role="status" aria-live="polite">
+        Welcome.
+      </div>
+    </section>
+  </main>
+
+  <footer>&copy; <span id="year"></span> JAMALI</footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+
+  <script type="module">
+    const status = document.getElementById("firebase-status");
+
+    try {
+      const firebase = await import("./firebase.js");
+      if (firebase.app) {
+        status.textContent = "Welcome.";
+      }
+    } catch (error) {
+      console.error("JAMALI Firebase initialization failed:", error);
+      status.textContent = "Welcome.";
+    }
+  </script>
+</body>
+</html>
