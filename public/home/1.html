@@ -46,7 +46,7 @@
     event.preventDefault();
 
     try {
-      const response = await fetch("/business/3.html", { cache: "no-store" });
+      const response = await fetch("/business/2.html", { cache: "no-store" });
       if (!response.ok) throw new Error("Business page could not be loaded.");
       const source = await response.text();
       const parsed = new DOMParser().parseFromString(source, "text/html");
@@ -55,13 +55,13 @@
       document.head.querySelectorAll('[data-jamali-business-style]').forEach(node => node.remove());
       const css = document.createElement("link");
       css.rel = "stylesheet";
-      css.href = "/business/3.css";
+      css.href = "/business/2.css";
       css.dataset.jamaliBusinessStyle = "true";
       document.head.appendChild(css);
 
       document.body.innerHTML = parsed.body.innerHTML;
       const script = document.createElement("script");
-      script.src = "/business/3.js";
+      script.src = "/business/2.js";
       script.dataset.jamaliBusinessScript = "true";
       document.body.appendChild(script);
     } catch (error) {

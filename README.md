@@ -34,9 +34,9 @@ The Business page has not been created yet.
 .
 ├── public/
 │   ├── business/
-│   │   ├── 3.css
-│   │   ├── 3.html
-│   │   └── 3.js
+│   │   ├── 2.css
+│   │   ├── 2.html
+│   │   └── 2.js
 │   ├── home/
 │   │   ├── 1.css
 │   │   ├── 1.html
