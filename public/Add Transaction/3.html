@@ -1,87 +1,60 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#15803d">
-  <title>JAMALI | Add Transaction</title>
-  <link rel="stylesheet" href="./3.css">
-  <script src="/sidebar.js" defer></script>
-  <script type="module" src="./3.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Add Transaction | JAMALI</title>
+  <link rel="stylesheet" href="3.css">
+  <script type="module" src="3.js"></script>
 </head>
 <body>
-  <main class="transaction-page">
-    <header class="page-header">
-      <div>
-        <p class="eyebrow">JAMALI ACCOUNTING</p>
-        <h1>Add Transaction</h1>
-        <p class="subtitle">Select a transaction and enter its details.</p>
-      </div>
-      
+  <main class="page">
+    <header>
+      <h1>Add Transaction</h1>
+      <p>Select a transaction, complete its fields, and save.</p>
     </header>
 
-    <div id="status-message" class="status-message" role="status" aria-live="polite"></div>
-
-    <section id="transaction-options-panel" class="panel" >
-      <h2>Choose a transaction</h2>
-      <div class="transaction-groups">
-        <section class="transaction-group">
-          <h3 class="flow-heading flow-in">IN — Money coming in</h3>
-          <div class="option-grid">
-            <button type="button" class="option-button" data-flow="IN" data-transaction="Sales">Sales</button>
-            <button type="button" class="option-button" data-flow="IN" data-transaction="Discount Received">Discount Received</button>
-          </div>
-        </section>
-
-        <section class="transaction-group">
-          <h3 class="flow-heading flow-out">OUT — Money going out</h3>
-          <div class="option-grid">
-            <button type="button" class="option-button" data-flow="OUT" data-transaction="Purchases">Purchases</button>
-            <button type="button" class="option-button" data-flow="OUT" data-transaction="Rent">Rent</button>
-          </div>
-        </section>
-
-        <section class="transaction-group">
-          <h3 class="flow-heading flow-neutral">NEUTRAL — Retained profit</h3>
-          <div class="option-grid">
-            <button type="button" class="option-button" data-flow="NEUTRAL" data-transaction="Retained Profit">Retained Profit</button>
-          </div>
-        </section>
-
-        <section class="transaction-group">
-          <h3 class="flow-heading flow-contra">CONTRA — Cash and bank transfers</h3>
-          <div class="option-grid">
-            <button type="button" class="option-button" data-flow="CONTRA" data-transaction="Withdraw Cash">Withdraw Cash</button>
-            <button type="button" class="option-button" data-flow="CONTRA" data-transaction="Deposit Cash">Deposit Cash</button>
-          </div>
-        </section>
+    <section id="transaction-groups" aria-label="Transaction types">
+      <div class="group">
+        <h2>IN</h2>
+        <div class="buttons">
+          <button type="button" class="transaction-button" data-transaction="Sales">Sales</button>
+          <button type="button" class="transaction-button" data-transaction="Commission Received">Commission Received</button>
+        </div>
+      </div>
+      <div class="group">
+        <h2>OUT</h2>
+        <div class="buttons">
+          <button type="button" class="transaction-button" data-transaction="Purchases">Purchases</button>
+          <button type="button" class="transaction-button" data-transaction="Rent">Rent</button>
+        </div>
+      </div>
+      <div class="group">
+        <h2>NEUTRAL</h2>
+        <div class="buttons">
+          <button type="button" class="transaction-button" data-transaction="Retained Profit">Retained Profit</button>
+        </div>
+      </div>
+      <div class="group">
+        <h2>CONTRA</h2>
+        <div class="buttons">
+          <button type="button" class="transaction-button" data-transaction="Withdraw Cash">Withdraw Cash</button>
+          <button type="button" class="transaction-button" data-transaction="Deposit Cash">Deposit Cash</button>
+        </div>
       </div>
     </section>
 
-    <section id="form-panel" class="panel" >
-      <h2 id="form-heading">Transaction details</h2>
+    <section id="entry-panel" class="entry-panel" hidden>
+      <h2 id="form-title">Transaction</h2>
       <form id="transaction-form">
-        <div id="form-fields" class="form-grid"></div>
-        <div class="form-actions">
-          <button type="button" id="cancel-form" class="button button-secondary">Cancel</button>
-          <button type="submit" id="save-transaction" class="button button-primary">Save</button>
+        <div id="dynamic-fields" class="fields"></div>
+        <div class="actions">
+          <button id="save-button" type="submit">Save Transaction</button>
+          <button id="cancel-button" type="button" class="secondary">Cancel</button>
         </div>
       </form>
-    </section>
-
-    <section id="transactions-panel" class="panel" >
-      <div class="section-heading">
-        <div>
-          <h2>Saved transactions</h2>
-          <p class="muted">Transactions stored in Cloud Firestore.</p>
-        </div>
-        <button type="button" id="refresh-transactions" class="button button-secondary">Refresh</button>
-      </div>
-      <div id="transaction-groups"></div>
+      <p id="form-status" role="status" aria-live="polite"></p>
     </section>
   </main>
-
-
-
 </body>
 </html>
