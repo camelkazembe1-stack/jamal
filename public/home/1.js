@@ -18,11 +18,8 @@ const businessButton = document.getElementById("business-button");
         logout.disabled = false;
       }
 
-      if (!user) {
-        // Do not redirect to index.html from inside the dashboard.
-        // The parent login page handles the signed-out state.
-        return;
-      }
+      // Do not redirect to index.html.
+      // The parent login page handles the signed-out state.
     });
   } catch (error) {
     console.error("Dashboard authentication error:", error);
@@ -37,9 +34,8 @@ if (logout) {
     try {
       await authReady;
       await signOut(auth);
-
-      // The parent page observes sign-out and shows the login button.
-      // Keep the browser at the website's root URL.
+      // The parent page observes sign-out and shows the login screen.
+      // No navigation to index.html is required.
     } catch (error) {
       console.error("Sign-out failed:", error);
       logout.disabled = false;
