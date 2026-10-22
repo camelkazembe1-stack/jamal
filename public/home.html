@@ -139,12 +139,45 @@
       font-size: 12px;
     }
   </style>
+
+<style id="jamali-business-square-style">
+  .business-square-button {
+    width: 120px !important;
+    height: 120px !important;
+    min-width: 120px !important;
+    min-height: 120px !important;
+    max-width: 120px !important;
+    max-height: 120px !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px !important;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: #16a34a !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    flex: 0 0 120px !important;
+  }
+  .business-square-button:hover {
+    background: #15803d !important;
+  }
+  .business-square-button:focus-visible {
+    outline: 3px solid #86efac;
+    outline-offset: 3px;
+  }
+</style>
+
 </head>
 
 <body>
   <header>
     <p class="brand">JAMALI</p>
-    <button id="sign-out" class="signout" type="button">
+    <button id="sign-out" class="signout business-square-button" type="button">
       Sign out
     </button>
   </header>
