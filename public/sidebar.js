@@ -15,8 +15,8 @@
   style.textContent = `
     :root {
       --jamali-sidebar-width: 180px;
-      --jamali-sidebar-button-width: 140px;
-      --jamali-sidebar-button-height: 80px;
+      --jamali-sidebar-button-width: 110px;
+      --jamali-sidebar-button-height: 100px;
       --jamali-green: #16a34a;
       --jamali-green-hover: #15803d;
     }
