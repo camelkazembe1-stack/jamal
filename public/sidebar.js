@@ -1,18 +1,30 @@
 /* JAMALI — shared sidebar (all pages except index.html) */
 (function () {
 
+  // Current folder — read BEFORE the address bar is cleaned, so the
+  // active page can still be highlighted in the family tree
+  var current = location.pathname.split("/")[1];
+
   // Address bar always shows the bare domain
   try { history.replaceState({}, "", "/"); } catch (e) {}
 
-  // PAGES: bump n (n++) when a page gets a new version
+  // PAGES — the family tree of the app.
+  // Every page is a CHILD of the page whose buttons open it:
+  //   Home (d0)
+  //    └ Business (d1)               <- Business button lives on Home
+  //       ├ Add Transaction (d2)     <- button lives on Business
+  //       └ View File (d2)           <- button lives on Business
+  //          ├ All Transactions (d3) <- buttons live on View File
+  //          └ Cash Book (d3)
+  // d = depth. Each child sits exactly ONE letter inside its parent.
   var PAGES = [
-    { label: "Home",            icon: "🏠", folder: "home",            n: 1 },
-    { label: "Business",        icon: "🏢", folder: "business",        n: 2 },
-    { label: "Add Transaction", icon: "🧾", folder: "add-transaction", n: 3 },
-    { label: "View File",       icon: "📄", folder: "view-file",       n: 4 }
-  ];;
-
-  var current = location.pathname.split("/")[1]; // active folder from URL
+    { label: "Home",             icon: "🏠", folder: "home",             n: 1, d: 0 },
+    { label: "Business",         icon: "🏢", folder: "business",         n: 2, d: 1 },
+    { label: "Add Transaction",  icon: "🧾", folder: "add-transaction",  n: 3, d: 2 },
+    { label: "View File",        icon: "📄", folder: "view-file",        n: 4, d: 2 },
+    { label: "All Transactions", icon: "📊", folder: "all-transactions", n: 5, d: 3 },
+    { label: "Cash Book",        icon: "📕", folder: "cash-book",        n: 6, d: 3 }
+  ];
 
   var css = document.createElement("style");
   css.textContent = [
@@ -26,6 +38,9 @@
     "#jamali-sidebar nav{flex:1;overflow-y:auto;padding:8px 0}",
     "#jamali-sidebar a{display:flex;align-items:center;gap:12px;padding:9px 18px;",
     "color:#94a3b8;text-decoration:none;font-size:14px;border-left:3px solid transparent}",
+    "#jamali-sidebar a.lv1{padding-left:26px}",
+    "#jamali-sidebar a.lv2{padding-left:34px}",
+    "#jamali-sidebar a.lv3{padding-left:42px}",
     "#jamali-sidebar a:hover{background:#1e293b;color:#fff}",
     "#jamali-sidebar a.active{background:#1e293b;color:#fff;border-left-color:#38bdf8}",
     "body.jamali-has-sidebar{margin-left:220px}",
@@ -57,8 +72,9 @@
 
   var links = PAGES.map(function (p) {
     var href = "/" + p.folder + "/" + p.n;
-    var active = p.folder === current ? " class=\"active\"" : "";
-    return "<a href=\"" + href + "\"" + active + "><span>" + p.icon + "</span>" + p.label + "</a>";
+    var cls = "lv" + (p.d || 0);
+    if (p.folder === current) cls += " active";
+    return "<a href=\"" + href + "\" class=\"" + cls + "\"><span>" + p.icon + "</span>" + p.label + "</a>";
   }).join("");
 
   var aside = document.createElement("aside");
