@@ -2,17 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#087f5b">
-  <meta name="description" content="Welcome to JAMALI.">
-  <title>JAMALI</title>
+  <meta name="description"
+        content="JAMALI Multisystem Management. Sign in to save and secure your data.">
+  <title>JAMALI | Multisystem Management</title>
 
   <style>
     :root {
-      color-scheme: light;
       font-family: Arial, Helvetica, sans-serif;
-      background: #f5f8f7;
-      color: #18352b;
+      color: #17392d;
+      background: #f3f8f5;
+      font-synthesis: none;
     }
 
     * {
@@ -20,17 +21,16 @@
     }
 
     body {
-      min-height: 100vh;
       margin: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
     header {
-      width: 100%;
-      padding: 20px 6%;
+      padding: 22px 7%;
       background: #087f5b;
-      color: white;
+      color: #fff;
     }
 
     .brand {
@@ -44,61 +44,117 @@
       flex: 1;
       display: grid;
       place-items: center;
-      padding: 32px 20px;
+      padding: 32px 18px;
     }
 
-    .welcome {
-      width: min(100%, 620px);
-      padding: clamp(28px, 6vw, 56px);
+    .login-card {
+      width: min(100%, 460px);
+      padding: 42px 30px;
       text-align: center;
-      background: white;
-      border: 1px solid #e1ebe6;
+      background: #fff;
+      border: 1px solid #e0eae4;
       border-radius: 20px;
-      box-shadow: 0 12px 40px rgb(17 63 45 / 8%);
+      box-shadow: 0 15px 45px rgb(22 65 44 / 9%);
     }
 
-    .welcome h1 {
-      margin: 0 0 16px;
-      font-size: clamp(36px, 7vw, 56px);
-      letter-spacing: -1.5px;
+    .symbol {
+      display: grid;
+      place-items: center;
+      width: 66px;
+      height: 66px;
+      margin: 0 auto 22px;
+      border-radius: 19px;
+      background: #e4f4ec;
+      color: #087f5b;
+      font-size: 30px;
+      font-weight: 800;
     }
 
-    .welcome p {
-      margin: 0 auto 28px;
-      max-width: 420px;
-      color: #60736a;
-      font-size: 17px;
+    h1 {
+      margin: 0 0 15px;
+      font-size: clamp(27px, 5vw, 35px);
+      line-height: 1.2;
+      letter-spacing: -1px;
+    }
+
+    .description {
+      margin: 0 auto 27px;
+      max-width: 350px;
+      color: #65766c;
       line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .google-button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 54px;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 10px;
+      background: #087f5b;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+
+    .google-button:hover:not(:disabled) {
+      background: #066748;
+      transform: translateY(-1px);
+    }
+
+    .google-button:disabled {
+      opacity: .7;
+      cursor: wait;
+    }
+
+    .google-letter {
+      display: grid;
+      place-items: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: #fff;
+      color: #087f5b;
+      font-size: 16px;
+      font-weight: 800;
     }
 
     .status {
       min-height: 24px;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #60736a;
+      margin-top: 19px;
+      color: #65766c;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .status.error {
+      color: #b42318;
+    }
+
+    .security-note {
+      margin: 22px 0 0;
+      color: #7a887f;
+      font-size: 12px;
+      line-height: 1.6;
     }
 
     footer {
       padding: 20px;
       text-align: center;
-      color: #718078;
-      font-size: 13px;
+      color: #75847b;
+      font-size: 12px;
     }
 
-    @media (prefers-reduced-motion: no-preference) {
-      .welcome {
-        animation: appear 450ms ease-out both;
-      }
-
-      @keyframes appear {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+    @media (max-width: 420px) {
+      .login-card {
+        padding: 34px 22px;
       }
     }
   </style>
@@ -110,33 +166,110 @@
   </header>
 
   <main>
-    <section class="welcome" aria-labelledby="welcome-title">
-      <h1 id="welcome-title">Welcome to JAMALI</h1>
-      <p>A simple starting point for the JAMALI platform.</p>
-      <div id="firebase-status" class="status" role="status" aria-live="polite">
-        Welcome.
+    <section class="login-card" aria-labelledby="welcome-heading">
+      <div class="symbol" aria-hidden="true">J</div>
+
+      <h1 id="welcome-heading">
+        Welcome to JAMALI Multisystem Management
+      </h1>
+
+      <p class="description">
+        Log in to save and secure your data. Sign in with your Google
+        account to continue to JAMALI.
+      </p>
+
+      <button id="google-login" class="google-button" type="button">
+        <span class="google-letter" aria-hidden="true">G</span>
+        <span id="button-label">Continue with Google</span>
+      </button>
+
+      <div id="login-status"
+           class="status"
+           role="status"
+           aria-live="polite">
+        Secure sign-in with your Google account.
       </div>
+
+      <p class="security-note">
+        Your account is used to identify you. Data access must also
+        be protected by appropriate Firebase security rules.
+      </p>
     </section>
   </main>
 
-  <footer>&copy; <span id="year"></span> JAMALI</footer>
+  <footer>
+    &copy; <span id="year"></span> JAMALI Multisystem Management
+  </footer>
 
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
   </script>
 
   <script type="module">
-    const status = document.getElementById("firebase-status");
+    import {
+      auth,
+      googleProvider
+    } from "./firebase.js";
 
-    try {
-      const firebase = await import("./firebase.js");
-      if (firebase.app) {
-        status.textContent = "Welcome.";
-      }
-    } catch (error) {
-      console.error("JAMALI Firebase initialization failed:", error);
-      status.textContent = "Welcome.";
+    import {
+      signInWithPopup,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+    const button = document.getElementById("google-login");
+    const buttonLabel = document.getElementById("button-label");
+    const status = document.getElementById("login-status");
+
+    function showError(message) {
+      status.textContent = message;
+      status.classList.add("error");
     }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.replace("./home.html");
+      }
+    });
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      buttonLabel.textContent = "Connecting to Google...";
+      status.classList.remove("error");
+      status.textContent = "Please complete Google sign-in.";
+
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+
+        if (result.user) {
+          status.textContent = "Login successful. Opening JAMALI...";
+          window.location.replace("./home.html");
+        }
+      } catch (error) {
+        console.error("JAMALI Google sign-in failed:", error);
+
+        const messages = {
+          "auth/popup-closed-by-user":
+            "Google sign-in was cancelled. Click the button to try again.",
+          "auth/popup-blocked":
+            "Your browser blocked the Google sign-in window. Allow pop-ups and try again.",
+          "auth/unauthorized-domain":
+            "This website domain is not authorized in Firebase Authentication.",
+          "auth/operation-not-allowed":
+            "Google sign-in is not enabled in Firebase Authentication.",
+          "auth/network-request-failed":
+            "Network error. Check your internet connection and try again."
+        };
+
+        showError(
+          messages[error.code] ||
+          "Google sign-in failed. Please try again."
+        );
+
+        buttonLabel.textContent = "Continue with Google";
+        button.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>

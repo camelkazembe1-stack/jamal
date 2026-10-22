@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087f5b">
+  <title>JAMALI | Home</title>
+
+  <style>
+    :root {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #17392d;
+      background: #f3f8f5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 6%;
+      background: #087f5b;
+      color: white;
+    }
+
+    .brand {
+      margin: 0;
+      font-size: 27px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .signout {
+      padding: 10px 15px;
+      border: 1px solid rgb(255 255 255 / 65%);
+      border-radius: 9px;
+      background: transparent;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      width: min(100%, 1000px);
+      margin: 0 auto;
+      padding: 42px 22px;
+    }
+
+    .welcome {
+      margin-bottom: 30px;
+    }
+
+    .welcome h1 {
+      margin: 0 0 12px;
+      font-size: clamp(29px, 5vw, 42px);
+      letter-spacing: -1px;
+    }
+
+    .welcome p {
+      margin: 0;
+      color: #65766c;
+      line-height: 1.7;
+    }
+
+    .account {
+      margin-top: 12px !important;
+      overflow-wrap: anywhere;
+      font-size: 14px;
+    }
+
+    .section-title {
+      margin: 32px 0 17px;
+      font-size: 20px;
+    }
+
+    .business-button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: 100%;
+      min-height: 100px;
+      padding: 22px 25px;
+      border: 0;
+      border-radius: 15px;
+      background: #087f5b;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+
+    .business-button:hover {
+      background: #066748;
+      transform: translateY(-2px);
+    }
+
+    .business-title {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .business-description {
+      color: #e0f4e9;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .arrow {
+      font-size: 28px;
+    }
+
+    .status {
+      min-height: 24px;
+      margin-top: 18px;
+      color: #65766c;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      padding: 20px;
+      text-align: center;
+      color: #75847b;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <p class="brand">JAMALI</p>
+    <button id="sign-out" class="signout" type="button">
+      Sign out
+    </button>
+  </header>
+
+  <main>
+    <section class="welcome">
+      <h1>Welcome to JAMALI</h1>
+      <p>Multisystem Management</p>
+      <p id="account-email" class="account">Checking your account...</p>
+    </section>
+
+    <h2 class="section-title">Your systems</h2>
+
+    <button id="business-button"
+            class="business-button"
+            type="button">
+      <span>
+        <span class="business-title">Business</span>
+        <span class="business-description">
+          Open the Business section
+        </span>
+      </span>
+      <span class="arrow" aria-hidden="true">&rarr;</span>
+    </button>
+
+    <div id="home-status"
+         class="status"
+         role="status"
+         aria-live="polite"></div>
+  </main>
+
+  <footer>
+    &copy; <span id="year"></span> JAMALI Multisystem Management
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
+  </script>
+
+  <script type="module">
+    import { auth } from "./firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+    const email = document.getElementById("account-email");
+    const status = document.getElementById("home-status");
+    const signOutButton = document.getElementById("sign-out");
+    const businessButton = document.getElementById("business-button");
+
+    let authenticated = false;
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        authenticated = false;
+        window.location.replace("./index.html");
+        return;
+      }
+
+      authenticated = true;
+      email.textContent = user.email || "Google account signed in";
+    });
+
+    signOutButton.addEventListener("click", async () => {
+      signOutButton.disabled = true;
+
+      try {
+        await signOut(auth);
+        window.location.replace("./index.html");
+      } catch (error) {
+        console.error("JAMALI sign-out failed:", error);
+        status.textContent = "Could not sign out. Please try again.";
+        signOutButton.disabled = false;
+      }
+    });
+
+    businessButton.addEventListener("click", () => {
+      if (!authenticated) {
+        window.location.replace("./index.html");
+        return;
+      }
+
+      status.textContent =
+        "The Business button is ready. The Business page has not been created yet.";
+    });
+  </script>
+</body>
+</html>

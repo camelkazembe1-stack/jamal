@@ -1,18 +1,20 @@
 # JAMALI
 
-## Contents of `public/`
+## Public directory
 
-This directory contains the static website files served by the deployment.
+The `public/` directory contains the static files served by the deployment. Its current contents are listed below.
 
-- **`public/firebase.js`** — Firebase browser configuration. Initializes the JAMALI Firebase application and attempts to initialize Google Analytics when supported. Exports the Firebase app and Analytics variable. It does not implement authentication or database operations.
-- **`public/index.html`** — JAMALI homepage. Displays the JAMALI brand, a welcome heading, a short introduction, the current year, and a simple status area. Loads firebase.js as an ES module.
+- **`public/firebase.js`** — Firebase configuration and initialization. Exports the Firebase app, Authentication instance, GoogleAuthProvider, and Analytics variable. Uses the JAMALI Firebase project configuration.
+- **`public/home.html`** — Authenticated JAMALI home page. Checks Firebase Authentication, redirects signed-out users to index.html, displays the signed-in account email, and provides Business and Sign out buttons. The Business page itself has not yet been implemented.
+- **`public/index.html`** — JAMALI login page. Displays the JAMALI Multisystem Management welcome message and a Continue with Google button. Uses Firebase Authentication popup sign-in and redirects signed-in users to home.html. Google sign-in must be enabled in Firebase Console.
 
-## Firebase
+## Google sign-in setup
 
-`public/firebase.js` initializes the Firebase application and attempts to initialize Analytics when supported by the browser.
+1. Open Firebase Console and select project `jamal-542b5`.
+2. Open Authentication and enable the Google sign-in provider.
+3. In Authentication settings, add the deployed website domain to the authorized domains list.
+4. Serve the website through HTTPS or localhost. ES modules and Firebase Authentication may not work when opening HTML files directly with a `file://` URL.
 
-The homepage imports this module. A successful module import does not mean that user authentication, database access, or other Firebase features are implemented.
+## Current limitations
 
-## Current homepage
-
-`public/index.html` currently provides a simple welcome page. It does not contain login controls or links to other sections.
+Google sign-in depends on Firebase Console provider and domain settings. The Business button currently displays a message because a Business page has not been implemented. Authentication alone does not secure application data; configure suitable Firebase security rules before storing private user data.
