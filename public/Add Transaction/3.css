@@ -8,3 +8,43 @@ h1 { margin-top: 0; }
 button, .back-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 10px 16px; border: 0; border-radius: 8px; background: #16a34a; color: white; text-decoration: none; font-weight: 700; cursor: pointer; }
 .back-row { margin-top: 22px; }
 .muted { color: #647067; }
+
+
+/* JAMALI: consistent square green navigation buttons */
+.jamali-square-button,
+a[data-jamali-page],
+button.jamali-square-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    padding: 12px;
+    border: 0;
+    border-radius: 8px;
+    background: #16a34a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+.jamali-square-button:hover,
+a[data-jamali-page]:hover {
+    background: #15803d;
+    color: #ffffff;
+}
+.jamali-button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+@media (min-width: 1000px) {
+    .jamali-button-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* END JAMALI square green buttons */
