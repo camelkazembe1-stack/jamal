@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creditors Book — JAMALI</title>
+<link rel="stylesheet" href="/creditors-book/16.css">
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/view-file/4">&larr; View File</a>
+  <h1>Creditors Book</h1>
+  <p class="sub">Money the business <b>owes</b>: credit purchases increase a supplier's balance; payments to suppliers and purchases returns reduce it. Balances are tracked per supplier, with the total outstanding payable at the end. Updates live.</p>
+
+  <div class="card table-card" id="table-card">
+    <div class="table-wrap">
+      <table class="bk">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Detail</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="amt">Credit Purchases</th>
+            <th scope="col" class="amt">Payments</th>
+            <th scope="col" class="amt">Balance Owed</th>
+          </tr>
+        </thead>
+        <tbody id="bk-body"></tbody>
+        <tfoot id="bk-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card people-card" id="people-card">
+    <h2>Balance per creditor</h2>
+    <table class="people"><tbody id="people-body"></tbody></table>
+  </div>
+
+  <div class="card empty" id="empty-state" hidden>
+    <div class="empty-icon">&#128188;</div>
+    <p class="empty-title">No creditor transactions yet</p>
+    <p class="empty-sub">Credit purchases (Flow Method <b>Credit</b>, type OUT) and payments to suppliers appear here automatically. Plain cash expenses never enter this book.</p>
+  </div>
+
+  <p class="count-line" id="count-line"></p>
+</main>
+<script type="module" src="/creditors-book/16.js"></script>
+</body>
+</html>
