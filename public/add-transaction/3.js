@@ -11,11 +11,15 @@ await requireAuth(); // not logged in? -> bounced to "/"
 const TRANSACTIONS = {
   IN: [
     { name: "Sales",                 icon: "\u{1F4B0}" },
-    { name: "Commission Receivable", icon: "\u{1F9EE}" }
+    { name: "Commission Receivable", icon: "\u{1F9EE}" },
+    { name: "Purchase Return",       icon: "\u{21AA}\u{FE0F}" },
+    { name: "Petty Cash",            icon: "\u{1FA99}" }
   ],
   OUT: [
-    { name: "Purchases", icon: "\u{1F6D2}" },
-    { name: "Rent",      icon: "\u{1F3E0}" }
+    { name: "Purchases",     icon: "\u{1F6D2}" },
+    { name: "Rent",          icon: "\u{1F3E0}" },
+    { name: "Sales Return",  icon: "\u{21A9}\u{FE0F}" },
+    { name: "Petty Expense", icon: "\u{1F9F9}" }
   ],
   NEUTRAL: [
     { name: "Capital", icon: "\u{1F3E6}" },
