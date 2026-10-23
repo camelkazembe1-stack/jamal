@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger — JAMALI</title>
+<link rel="stylesheet" href="/ledger/18.css">
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/view-file/4">&larr; View File</a>
+  <h1>Ledger</h1>
+  <p class="sub">Every account gets its own page &mdash; <b>Sales A/C</b>, <b>Rent A/C</b>, <b>Cash A/C</b>, <b>Customer A A/C</b> &mdash; in the same DR/CR layout as the cash book. Each transaction posts to two accounts, the <b>Folio</b> shows the book each entry came from, and every account closes with <b>Balance c/d</b> and opens the next period with <b>Balance b/d</b>. Updates live.</p>
+
+  <div class="card accounts-card" id="accounts-card">
+    <h2>Accounts</h2>
+    <div class="acct-grid" id="acct-grid"></div>
+  </div>
+
+  <div class="card table-card" id="table-card">
+    <h2 class="acct-title" id="acct-title">Account</h2>
+    <div class="table-wrap">
+      <table class="lg">
+        <thead>
+          <tr class="sides">
+            <th colspan="4" class="side-dr">DR &mdash; Debit</th>
+            <th colspan="4" class="side-cr">CR &mdash; Credit</th>
+          </tr>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Detail</th>
+            <th scope="col">Folio</th>
+            <th scope="col" class="amt">Amount (TZS)</th>
+            <th scope="col">Date</th>
+            <th scope="col">Detail</th>
+            <th scope="col">Folio</th>
+            <th scope="col" class="amt">Amount (TZS)</th>
+          </tr>
+        </thead>
+        <tbody id="lg-body"></tbody>
+        <tfoot id="lg-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card empty" id="empty-state" hidden>
+    <div class="empty-icon">&#128216;</div>
+    <p class="empty-title">No accounts to show yet</p>
+    <p class="empty-sub">Save a transaction in <a href="/add-transaction/3">Add Transaction</a> and its accounts will open here automatically.</p>
+  </div>
+
+  <p class="count-line" id="count-line"></p>
+</main>
+<script type="module" src="/ledger/18.js"></script>
+</body>
+</html>

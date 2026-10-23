@@ -26,7 +26,8 @@
   //          ├ Cash Receipts (d3)
   //          ├ Cash Payments (d3)
   //          ├ Creditors Book (d3)
-  //          └ Debtors Book (d3)
+  //          ├ Debtors Book (d3)
+  //          └ Ledger (d3)
   // d = depth. Each child sits exactly ONE letter inside its parent.
   var PAGES = [
     { label: "Home",             icon: "🏠", folder: "home",             n: 1,  d: 0 },
@@ -45,7 +46,8 @@
     { label: "Cash Receipts",    icon: "💵", folder: "cash-receipts",    n: 13, d: 3 },
     { label: "Cash Payments",    icon: "💸", folder: "cash-payments",    n: 14, d: 3 },
     { label: "Creditors Book",   icon: "🏦", folder: "creditors-book",   n: 16, d: 3 },
-    { label: "Debtors Book",     icon: "🤝", folder: "debtors-book",     n: 17, d: 3 }
+    { label: "Debtors Book",     icon: "🤝", folder: "debtors-book",     n: 17, d: 3 },
+    { label: "Ledger",           icon: "📘", folder: "ledger",           n: 18, d: 3 }
   ];
 
   var css = document.createElement("style");
