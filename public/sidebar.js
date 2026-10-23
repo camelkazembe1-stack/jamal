@@ -11,19 +11,35 @@
   // PAGES — the family tree of the app.
   // Every page is a CHILD of the page whose buttons open it:
   //   Home (d0)
-  //    └ Business (d1)               <- Business button lives on Home
-  //       ├ Add Transaction (d2)     <- button lives on Business
-  //       └ View File (d2)           <- button lives on Business
-  //          ├ All Transactions (d3) <- buttons live on View File
-  //          └ Cash Book (d3)
+  //    └ Business (d1)                <- Business button lives on Home
+  //       ├ Add Transaction (d2)      <- button lives on Business
+  //       └ View File (d2)            <- button lives on Business
+  //          ├ All Transactions (d3)  <- buttons live on View File
+  //          ├ Cash Book (d3)
+  //          ├ Petty Cash Book (d3)
+  //          ├ Sales Journal (d3)
+  //          ├ Purchases Journal (d3)
+  //          ├ Sales Returns (d3)
+  //          ├ Purchases Returns (d3)
+  //          ├ General Journal (d3)
+  //          ├ Cash Receipts (d3)
+  //          └ Cash Payments (d3)
   // d = depth. Each child sits exactly ONE letter inside its parent.
   var PAGES = [
-    { label: "Home",             icon: "🏠", folder: "home",             n: 1, d: 0 },
-    { label: "Business",         icon: "🏢", folder: "business",         n: 2, d: 1 },
-    { label: "Add Transaction",  icon: "🧾", folder: "add-transaction",  n: 3, d: 2 },
-    { label: "View File",        icon: "📄", folder: "view-file",        n: 4, d: 2 },
-    { label: "All Transactions", icon: "📊", folder: "all-transactions", n: 5, d: 3 },
-    { label: "Cash Book",        icon: "📕", folder: "cash-book",        n: 6, d: 3 }
+    { label: "Home",             icon: "🏠", folder: "home",             n: 1,  d: 0 },
+    { label: "Business",         icon: "🏢", folder: "business",         n: 2,  d: 1 },
+    { label: "Add Transaction",  icon: "🧾", folder: "add-transaction",  n: 3,  d: 2 },
+    { label: "View File",        icon: "📄", folder: "view-file",        n: 4,  d: 2 },
+    { label: "All Transactions", icon: "📊", folder: "all-transactions", n: 5,  d: 3 },
+    { label: "Cash Book",        icon: "📕", folder: "cash-book",        n: 6,  d: 3 },
+    { label: "Petty Cash Book",  icon: "🪙", folder: "petty-cash",       n: 7,  d: 3 },
+    { label: "Sales Journal",    icon: "🛍️", folder: "sales-journal",    n: 8,  d: 3 },
+    { label: "Purchases Journal", icon: "🛒", folder: "purchases-journal", n: 9, d: 3 },
+    { label: "Sales Returns",    icon: "↩️", folder: "sales-returns",    n: 10, d: 3 },
+    { label: "Purchases Returns", icon: "↪️", folder: "purchases-returns", n: 11, d: 3 },
+    { label: "General Journal",  icon: "📓", folder: "general-journal",  n: 12, d: 3 },
+    { label: "Cash Receipts",    icon: "💵", folder: "cash-receipts",    n: 13, d: 3 },
+    { label: "Cash Payments",    icon: "💸", folder: "cash-payments",    n: 14, d: 3 }
   ];
 
   var css = document.createElement("style");
