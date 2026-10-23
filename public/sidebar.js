@@ -15,7 +15,8 @@
   //       ├ Add Transaction (d2)      <- button lives on Business
   //       └ View File (d2)            <- button lives on Business
   //          ├ All Transactions (d3)  <- buttons live on View File
-  //          ├ Cash Book (d3)
+  //          ├ Cash Book (d3)         <- single column, cash only
+  //          ├ Double Column Cash Book (d3)
   //          ├ Petty Cash Book (d3)
   //          ├ Sales Journal (d3)
   //          ├ Purchases Journal (d3)
@@ -31,7 +32,8 @@
     { label: "Add Transaction",  icon: "🧾", folder: "add-transaction",  n: 3,  d: 2 },
     { label: "View File",        icon: "📄", folder: "view-file",        n: 4,  d: 2 },
     { label: "All Transactions", icon: "📊", folder: "all-transactions", n: 5,  d: 3 },
-    { label: "Cash Book",        icon: "📕", folder: "cash-book",        n: 6,  d: 3 },
+    { label: "Cash Book",        icon: "📒", folder: "cash-book-single", n: 15, d: 3 },
+    { label: "Double Column Cash Book", icon: "📕", folder: "cash-book", n: 6,  d: 3 },
     { label: "Petty Cash Book",  icon: "🪙", folder: "petty-cash",       n: 7,  d: 3 },
     { label: "Sales Journal",    icon: "🛍️", folder: "sales-journal",    n: 8,  d: 3 },
     { label: "Purchases Journal", icon: "🛒", folder: "purchases-journal", n: 9, d: 3 },
