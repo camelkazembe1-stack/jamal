@@ -1,4 +1,3 @@
-cat > README.md << 'EOF'
 # JAMALI
 
 **Plain, honest bookkeeping for a small trading business.**
@@ -80,92 +79,125 @@ accent colour, and cleans up printing (sidebar, buttons and filters hidden,
 white paper background). Look: light slate background, white 14px-radius
 cards, sky-blue accents, dark navy sidebar.
 
-## Page map
+## The repo — every file and folder, and what it does
 
-**Core**
+Page folders each carry the same three files (`N.html` + `N.css` + `N.js`,
+see Architecture) — so below, every file and folder is explained by what it
+is **for**, not by what sits inside it.
 
-| # | Folder              | Page                                                   |
-| - | ------------------- | ------------------------------------------------------ |
-| 1 | `home`              | Home — sign-in landing and news                        |
-| 2 | `business`          | Business — control room; opens Add Transaction / View File |
-| 3 | `add-transaction`   | Add Transaction — the journal entry engine             |
-| 4 | `view-file`         | View File — launcher grid for every book and report    |
-| 5 | `all-transactions`  | All Transactions — the full journal, filterable        |
+**At the root**
 
-**Cash books**
+| Path | Role |
+| --- | --- |
+| `firestore.rules` | The guard dog. Decides who may read or write each collection: the journal stays append-only, registers can be created and settled but never deleted, everything needs a signed-in user, and anything not matched is denied. |
+| `vercel.json` | The routing table. Turns clean URLs like `/petty-cash/7` into the real `petty-cash/7.html`, so the address bar stays at the domain root. |
+| `README.md` | This guide — the architecture, the pages, the data model and the rules of the game in one place. |
+| `scripts/` | Home-grown operational tooling. |
+| `scripts/jamali-rate-limited-push.sh` | The gentle deployer — pushes git changes rate-limited, so deployments stay steady instead of bursty. |
+| `systemd/user/` | User-level systemd units that keep the deploy rhythm running on their own. |
+| `systemd/user/jamali-rate-limited-push.service` | Runs the push script as a service. |
+| `systemd/user/jamali-rate-limited-push.timer` | Fires that service on a schedule. |
+| `public/` | The entire app — the web root Vercel serves. Everything below lives here. |
 
-| #  | Folder              | Page                                                    |
-| -- | ------------------- | ------------------------------------------------------- |
-| 6  | `cash-book`         | Double Column Cash Book — bank + cash, DR/CR            |
-| 15 | `cash-book-single`  | Cash Book — single column                               |
+**Inside `public/` — shared files and engines**
 
-**Journals (pages 7–14, one engine)**
+| Path | Role |
+| --- | --- |
+| `index.html` | The front door — Google sign-in, and where signed-out visitors land. |
+| `firebase.js` | The one Firebase module every page imports — Google auth, Firestore exports and the `requireAuth()` guard. |
+| `sidebar.js` | The family-tree navigation shared by every page — sidebar, active highlight, mobile burger, address-bar cleanup. |
+| `journals/` | The journal engine (`journal.js` + `journal.css`) that renders the eight journals, pages 7–14. |
+| `records/` | The register engine (`records.js` + `records.css`) behind the register pages 21–40 — and the design base for the report pages too. |
+| `reports/` | The report engine (`reports.js`) that generates the reports and schedules, pages 41–54 — views only, no data entry. |
 
-| #  | Folder               | Page                        |
-| -- | -------------------- | --------------------------- |
-| 7  | `petty-cash`         | Petty Cash Book             |
-| 8  | `sales-journal`      | Sales Journal               |
-| 9  | `purchases-journal`  | Purchases Journal           |
-| 10 | `sales-returns`      | Sales Returns Journal       |
-| 11 | `purchases-returns`  | Purchases Returns Journal   |
-| 12 | `general-journal`    | General Journal — two-sided DR/CR |
-| 13 | `cash-receipts`      | Cash Receipts Journal       |
-| 14 | `cash-payments`      | Cash Payments Journal       |
+**Inside `public/` — the page folders**
 
-**Ledgers**
+*Core*
 
-| #  | Folder          | Page                                                          |
-| -- | --------------- | ------------------------------------------------------------- |
-| 16 | `creditors-book`| Creditors Book — what JAMALI owes, per supplier               |
-| 17 | `debtors-book`  | Debtors Book — what customers owe JAMALI                      |
-| 18 | `ledger`        | Ledger — every account on its own page (DR/CR, Balance c/d → b/d) |
+| Folder | # | Role |
+| --- | --- | --- |
+| `home` | 1 | The landing page after sign-in — greeting, news and the jump-off point. |
+| `business` | 2 | The control room — opens Add Transaction and View File. |
+| `add-transaction` | 3 | The journal entry engine — every transaction is recorded here, once. |
+| `view-file` | 4 | The library — a tile launcher for every book, register and report. |
+| `all-transactions` | 5 | The full journal — every recorded transaction, filterable in one table. |
 
-**Registers & documents (pages 21–40, one engine)**
+*Cash books*
 
-| #  | Folder                      | Page                              |
-| -- | --------------------------- | --------------------------------- |
-| 21 | `sales-order-book`          | Sales Order Book                  |
-| 22 | `purchase-order-book`       | Purchase Order Book               |
-| 23 | `sales-invoice`             | Sales Invoices                    |
-| 24 | `purchase-invoice`          | Purchase Invoices                 |
-| 25 | `grn-register`              | GRN Register — goods received     |
-| 26 | `dispatch-register`         | Dispatch Register — goods sent    |
-| 27 | `sales-invoice-register`    | Sales Invoice Register            |
-| 28 | `purchase-invoice-register` | Purchase Invoice Register         |
-| 29 | `debit-note-register`       | Debit Note Register               |
-| 30 | `credit-note-register`      | Credit Note Register              |
-| 31 | `stock-movement`            | Stock Movement                    |
-| 32 | `fixed-assets`              | Fixed Assets Register             |
-| 33 | `depreciation`              | Depreciation (straight-line)      |
-| 34 | `payroll`                   | Payroll                           |
-| 35 | `employee-advance`          | Employee Advance                  |
-| 36 | `petty-cash-voucher`        | Petty Cash Voucher                |
-| 37 | `receipt-voucher`           | Receipt Voucher                   |
-| 38 | `payment-voucher`           | Payment Voucher                   |
-| 39 | `cheque-register`           | Cheque Register                   |
-| 40 | `delivery-note`             | Delivery Note                     |
+| Folder | # | Role |
+| --- | --- | --- |
+| `cash-book` | 6 | Double-column cash book — bank and cash side by side, DR and CR. |
+| `cash-book-single` | 15 | Single-column cash book — cash movements only. |
 
-**Reports & schedules (pages 41–54, generated)**
+*Journals (one engine, pages 7–14)*
 
-| #  | Folder                        | Page                                        |
-| -- | ----------------------------- | ------------------------------------------- |
-| 41 | `trial-balance`               | Trial Balance — debits must equal credits   |
-| 42 | `adjusted-trial-balance`      | Adjusted Trial Balance (+ adjustments table)|
-| 43 | `post-closing-trial-balance`  | Post-Closing Trial Balance                  |
-| 44 | `ar-schedule`                 | AR Schedule — receivables by customer       |
-| 45 | `ap-schedule`                 | AP Schedule — payables by supplier          |
-| 46 | `inventory-valuation`         | Inventory Valuation (FIFO + weighted avg)   |
-| 47 | `fixed-assets-schedule`       | Fixed Assets Schedule                       |
-| 48 | `accumulated-depreciation`    | Accumulated Depreciation                    |
-| 49 | `accrued-expenses`            | Accrued Expenses                            |
-| 50 | `prepaid-expenses`            | Prepaid Expenses                            |
-| 51 | `accrued-income`              | Accrued Income                              |
-| 52 | `unearned-revenue`            | Unearned Revenue                            |
-| 53 | `bank-reconciliation`         | Bank Reconciliation                         |
-| 54 | `suspense-account`            | Suspense Account — clears at zero           |
+| Folder | # | Role |
+| --- | --- | --- |
+| `petty-cash` | 7 | Petty Cash Book — small day-to-day spend (names containing "Petty" land here). |
+| `sales-journal` | 8 | Sales Journal — credit sales at a glance. |
+| `purchases-journal` | 9 | Purchases Journal — credit purchases at a glance. |
+| `sales-returns` | 10 | Sales Returns Journal — goods customers sent back. |
+| `purchases-returns` | 11 | Purchases Returns Journal — goods sent back to suppliers. |
+| `general-journal` | 12 | General Journal — everything that fits nowhere else, two-sided DR/CR. |
+| `cash-receipts` | 13 | Cash Receipts Journal — money coming in. |
+| `cash-payments` | 14 | Cash Payments Journal — money going out. |
 
-**Provisioned, folders pending:** Bills Receivable (19) and Bills Payable
-(20) — the `bills` collection is already in the security rules.
+*Ledgers*
+
+| Folder | # | Role |
+| --- | --- | --- |
+| `creditors-book` | 16 | What JAMALI owes — running balance per supplier. |
+| `debtors-book` | 17 | What customers owe JAMALI — running balance per customer. |
+| `ledger` | 18 | Every account on its own T-page — DR/CR sides, Balance c/d → b/d. Also home of the shared `postings.js` engine. |
+
+*Registers & documents (one engine, pages 21–40)*
+
+| Folder | # | Role |
+| --- | --- | --- |
+| `sales-order-book` | 21 | Customer orders taken — not yet invoiced. |
+| `purchase-order-book` | 22 | Orders placed with suppliers — not yet received. |
+| `sales-invoice` | 23 | Sales invoices raised on customers. |
+| `purchase-invoice` | 24 | Purchase invoices received from suppliers. |
+| `grn-register` | 25 | Goods Received Notes — what physically arrived. |
+| `dispatch-register` | 26 | Dispatch notes — what physically left the building. |
+| `sales-invoice-register` | 27 | Every sales invoice with its settlement status. |
+| `purchase-invoice-register` | 28 | Every purchase invoice with its settlement status. |
+| `debit-note-register` | 29 | Debit notes — corrections that reduce what we owe suppliers. |
+| `credit-note-register` | 30 | Credit notes — corrections that reduce what customers owe us. |
+| `stock-movement` | 31 | Goods in, goods out and the running quantity per stock item. |
+| `fixed-assets` | 32 | What the business owns — each asset at cost, in service. |
+| `depreciation` | 33 | Straight-line depreciation computed per asset. |
+| `payroll` | 34 | Salaries, deductions and net pay per employee. |
+| `employee-advance` | 35 | Money advanced to employees and how it is recovered. |
+| `petty-cash-voucher` | 36 | Signed vouchers behind every small cash spend. |
+| `receipt-voucher` | 37 | Proof when money is received. |
+| `payment-voucher` | 38 | The approval trail when money goes out. |
+| `cheque-register` | 39 | Every cheque written — pending, cleared or bounced. |
+| `delivery-note` | 40 | Delivery notes — what went out with each consignment. |
+
+*Reports & schedules (generated, pages 41–54)*
+
+| Folder | # | Role |
+| --- | --- | --- |
+| `trial-balance` | 41 | All ledger balances in one table — debits must equal credits. |
+| `adjusted-trial-balance` | 42 | The trial balance plus the adjustment entries. |
+| `post-closing-trial-balance` | 43 | After the nominal accounts are closed to Capital. |
+| `ar-schedule` | 44 | Receivables by customer, straight from the books. |
+| `ap-schedule` | 45 | Payables by supplier, straight from the books. |
+| `inventory-valuation` | 46 | FIFO layers and weighted average, side by side. |
+| `fixed-assets-schedule` | 47 | Cost, additions and depreciation to date per asset. |
+| `accumulated-depreciation` | 48 | The wear-and-tear tally per asset. |
+| `accrued-expenses` | 49 | Expenses incurred but not yet paid. |
+| `prepaid-expenses` | 50 | Expenses paid but not yet consumed. |
+| `accrued-income` | 51 | Income earned but not yet received. |
+| `unearned-revenue` | 52 | Money received but not yet earned. |
+| `bank-reconciliation` | 53 | Statement vs books — the difference must be zero. |
+| `suspense-account` | 54 | The temporary parking spot — it clears at zero. |
+
+**Provisioned, folders pending:** Bills Receivable (19) — bills drawn on
+customers, tracked to settlement — and Bills Payable (20) — bills accepted
+from suppliers, tracked to payment. The `bills` collection is already in
+the security rules.
 
 ## Data model
 
@@ -250,4 +282,36 @@ their own pages, read by every derived view:
   `jamali-rate-limited-push.timer` run it on a schedule, keeping deployment
   steady instead of bursty.
 
-## Repo layout
+## Local development
+
+```bash
+cd ~/jamali/public
+python3 -m http.server 8080        # or: npx serve
+# open http://localhost:8080
+```
+
+Sign-in and data need the real Firebase project — pages without a session
+bounce to `/` by design. To develop offline, point `public/firebase.js` at
+a mock module that fakes auth and `onSnapshot`.
+
+## Adding page #N (checklist)
+
+1. `mkdir public/<folder>` — add `N.html` (links the shared base css, its
+   own `N.css`, `/sidebar.js`, and its own `N.js`), `N.css`, `N.js`.
+2. Register it in `sidebar.js` → `PAGES` (label, icon, folder, page
+   number, depth) — the sidebar and active highlight come free.
+3. Add its tile to the **View File** launcher grid (`view-file/4.html`).
+4. New collection? Extend `firestore.rules` (keep `delete: if false`) and
+   `firebase deploy --only firestore:rules`.
+5. Every folder ships **html + css + js** — no exceptions.
+
+## Status & roadmap
+
+- **Shipped:** core (1–5), cash books (6, 15), journals (7–14), ledgers
+  (16–18), registers & documents (21–40), reports & schedules (41–54) —
+  52 pages, all live.
+- **Next up:** Bills Receivable / Bills Payable (19–20) and the wider
+  report suite — sales, purchases and cash analyses, profitability,
+  budgets and ratios.
+
+*Last updated: 23 October 2026.*
