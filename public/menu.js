@@ -8,6 +8,7 @@
 window.JAMALI_MENU = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
     { label: "Business", icon: "🏢", folder: "business", n: 2, d: 1 },
+    { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 1 },
     { label: "Add Transaction", icon: "🧾", folder: "add-transaction", n: 3, d: 2 },
     { label: "View File", icon: "📄", folder: "view-file", n: 4, d: 2 },
     { label: "All Transactions", icon: "📊", folder: "all-transactions", n: 5, d: 3 },
@@ -60,5 +61,4 @@ window.JAMALI_MENU = [
     { label: "Unearned Revenue", icon: "🎁", folder: "unearned-revenue", n: 52, d: 3 },
     { label: "Bank Reconciliation", icon: "🏧", folder: "bank-reconciliation", n: 53, d: 3 },
     { label: "Suspense Account", icon: "🌀", folder: "suspense-account", n: 54, d: 3 },
-    { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 3 },
 ];
