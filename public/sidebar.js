@@ -1,4 +1,8 @@
-/* JAMALI — shared sidebar (all pages except index.html) */
+/* JAMALI — shared sidebar (every page except index.html).
+   FROZEN FILE — do not rewrite this file to add or change a page.
+   It draws the menu from window.JAMALI_MENU (menu.js): it holds no page
+   data, it fetches nothing, it imports nothing — it calls no file.
+   To add a page: add ONE line to menu.js. That is all. */
 (function () {
 
   // Current folder — read BEFORE the address bar is cleaned, so the
@@ -8,70 +12,8 @@
   // Address bar always shows the bare domain
   try { history.replaceState({}, "", "/"); } catch (e) {}
 
-  // PAGES — the family tree of the app.
-// Every page is a CHILD of the page whose buttons open it:
-//   Home (d0) > Business (d1) > {Add Transaction, View File} (d2)
-//   View File children (d3): All Transactions, the books & journals,
-//   the registers (orders, invoices, goods, notes, vouchers, cheques,
-//   payroll, assets), the 14 reports/schedules — pages 5-54 — and
-//   the Computer quick-maths tool (62).
-  var PAGES = [
-    { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
-    { label: "Business", icon: "🏢", folder: "business", n: 2, d: 1 },
-    { label: "Add Transaction", icon: "🧾", folder: "add-transaction", n: 3, d: 2 },
-    { label: "View File", icon: "📄", folder: "view-file", n: 4, d: 2 },
-    { label: "All Transactions", icon: "📊", folder: "all-transactions", n: 5, d: 3 },
-    { label: "Cash Book", icon: "📒", folder: "cash-book-single", n: 15, d: 3 },
-    { label: "Double Column Cash Book", icon: "📕", folder: "cash-book", n: 6, d: 3 },
-    { label: "Petty Cash Book", icon: "🪙", folder: "petty-cash", n: 7, d: 3 },
-    { label: "Sales Journal", icon: "🛍️", folder: "sales-journal", n: 8, d: 3 },
-    { label: "Purchases Journal", icon: "🛒", folder: "purchases-journal", n: 9, d: 3 },
-    { label: "Sales Returns", icon: "↩️", folder: "sales-returns", n: 10, d: 3 },
-    { label: "Purchases Returns", icon: "↪️", folder: "purchases-returns", n: 11, d: 3 },
-    { label: "General Journal", icon: "📓", folder: "general-journal", n: 12, d: 3 },
-    { label: "Cash Receipts", icon: "💵", folder: "cash-receipts", n: 13, d: 3 },
-    { label: "Cash Payments", icon: "💸", folder: "cash-payments", n: 14, d: 3 },
-    { label: "Creditors Book", icon: "🏦", folder: "creditors-book", n: 16, d: 3 },
-    { label: "Debtors Book", icon: "🤝", folder: "debtors-book", n: 17, d: 3 },
-    { label: "Ledger", icon: "📘", folder: "ledger", n: 18, d: 3 },
-    { label: "Bills Receivable", icon: "📥", folder: "bills-receivable", n: 19, d: 3 },
-    { label: "Bills Payable", icon: "📤", folder: "bills-payable", n: 20, d: 3 },
-    { label: "Sales Order Book", icon: "📋", folder: "sales-order-book", n: 21, d: 3 },
-    { label: "Purchase Order Book", icon: "🛒", folder: "purchase-order-book", n: 22, d: 3 },
-    { label: "Sales Invoice", icon: "🧾", folder: "sales-invoice", n: 23, d: 3 },
-    { label: "Purchase Invoice", icon: "🧾", folder: "purchase-invoice", n: 24, d: 3 },
-    { label: "GRN Register", icon: "📦", folder: "grn-register", n: 25, d: 3 },
-    { label: "Dispatch Register", icon: "🚚", folder: "dispatch-register", n: 26, d: 3 },
-    { label: "Sales Invoice Register", icon: "🧾", folder: "sales-invoice-register", n: 27, d: 3 },
-    { label: "Purchase Invoice Register", icon: "🧾", folder: "purchase-invoice-register", n: 28, d: 3 },
-    { label: "Debit Note Register", icon: "↩️", folder: "debit-note-register", n: 29, d: 3 },
-    { label: "Credit Note Register", icon: "↪️", folder: "credit-note-register", n: 30, d: 3 },
-    { label: "Stock Movement", icon: "📊", folder: "stock-movement", n: 31, d: 3 },
-    { label: "Fixed Assets", icon: "🏗️", folder: "fixed-assets", n: 32, d: 3 },
-    { label: "Depreciation", icon: "📉", folder: "depreciation", n: 33, d: 3 },
-    { label: "Payroll", icon: "👥", folder: "payroll", n: 34, d: 3 },
-    { label: "Employee Advance", icon: "💵", folder: "employee-advance", n: 35, d: 3 },
-    { label: "Petty Cash Voucher", icon: "🪙", folder: "petty-cash-voucher", n: 36, d: 3 },
-    { label: "Receipt Voucher", icon: "🧾", folder: "receipt-voucher", n: 37, d: 3 },
-    { label: "Payment Voucher", icon: "💳", folder: "payment-voucher", n: 38, d: 3 },
-    { label: "Cheque Register", icon: "🏦", folder: "cheque-register", n: 39, d: 3 },
-    { label: "Delivery Note", icon: "📬", folder: "delivery-note", n: 40, d: 3 },
-    { label: "Trial Balance", icon: "⚖️", folder: "trial-balance", n: 41, d: 3 },
-    { label: "Adjusted Trial Balance", icon: "🧮", folder: "adjusted-trial-balance", n: 42, d: 3 },
-    { label: "Post-Closing Trial Balance", icon: "🔒", folder: "post-closing-trial-balance", n: 43, d: 3 },
-    { label: "AR Schedule", icon: "🤝", folder: "ar-schedule", n: 44, d: 3 },
-    { label: "AP Schedule", icon: "🏦", folder: "ap-schedule", n: 45, d: 3 },
-    { label: "Inventory Valuation", icon: "🏷️", folder: "inventory-valuation", n: 46, d: 3 },
-    { label: "Fixed Assets Schedule", icon: "🏛️", folder: "fixed-assets-schedule", n: 47, d: 3 },
-    { label: "Accumulated Depreciation", icon: "📚", folder: "accumulated-depreciation", n: 48, d: 3 },
-    { label: "Accrued Expenses", icon: "⏰", folder: "accrued-expenses", n: 49, d: 3 },
-    { label: "Prepaid Expenses", icon: "⏳", folder: "prepaid-expenses", n: 50, d: 3 },
-    { label: "Accrued Income", icon: "💰", folder: "accrued-income", n: 51, d: 3 },
-    { label: "Unearned Revenue", icon: "🎁", folder: "unearned-revenue", n: 52, d: 3 },
-    { label: "Bank Reconciliation", icon: "🏧", folder: "bank-reconciliation", n: 53, d: 3 },
-    { label: "Suspense Account", icon: "🌀", folder: "suspense-account", n: 54, d: 3 },
-    { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 3 },
-  ];
+  // The family tree — provided by menu.js. This file holds no page data.
+  var PAGES = window.JAMALI_MENU || [];
 
   var css = document.createElement("style");
   css.textContent = [
