@@ -13,7 +13,8 @@
 //   Home (d0) > Business (d1) > {Add Transaction, View File} (d2)
 //   View File children (d3): All Transactions, the books & journals,
 //   the registers (orders, invoices, goods, notes, vouchers, cheques,
-//   payroll, assets) and the 14 reports/schedules — pages 5-54.
+//   payroll, assets), the 14 reports/schedules — pages 5-54 — and
+//   the Computer quick-maths tool (62).
   var PAGES = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
     { label: "Business", icon: "🏢", folder: "business", n: 2, d: 1 },
@@ -69,6 +70,7 @@
     { label: "Unearned Revenue", icon: "🎁", folder: "unearned-revenue", n: 52, d: 3 },
     { label: "Bank Reconciliation", icon: "🏧", folder: "bank-reconciliation", n: 53, d: 3 },
     { label: "Suspense Account", icon: "🌀", folder: "suspense-account", n: 54, d: 3 },
+    { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 3 },
   ];
 
   var css = document.createElement("style");
