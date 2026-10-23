@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Reconciliation — JAMALI</title>
+<link rel="stylesheet" href="/records/records.css">
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/view-file/4">&larr; View File</a>
+  <h1>Bank Reconciliation</h1>
+  <p class="sub">Explains the gap between the bank statement and the books. Add the <b>Balance per bank statement</b> first, then each reconciling item (deposits in transit, outstanding cheques, bank charges/credits, errors as &plusmn;). JAMALI compares the adjusted bank balance with the <b>Bank A/C</b> from the ledger &mdash; the difference must reach zero. Updates live.</p>
+  <div id="sum"></div>
+  <div id="items"></div>
+
+</main>
+<script type="module" src="/bank-reconciliation/53.js"></script>
+</body>
+</html>

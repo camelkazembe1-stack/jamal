@@ -3,16 +3,9 @@
 //   1. Layout = the cash book layout: DR on the left, CR on the right, both
 //      sides with Date | Detail | Folio | Amount
 //   2. Title = the account name + " A/C" (Sales A/C, Rent A/C, Customer A A/C, ...)
-//   3. Every IN/OUT transaction posts to TWO accounts (double entry):
-//        sales              -> CR Sales A/C          (sales returns -> DR Sales Returns A/C)
-//        purchases          -> DR Purchases A/C      (purchases returns -> CR Purchases Returns A/C)
-//        other IN  (income) -> CR <transaction name> A/C   (IN goes to CR)
-//        other OUT (expense)-> DR <transaction name> A/C   (OUT goes to DR)
-//      The opposite side is the value given/received:
-//        Flow Method Cash/Bank -> Cash A/C / Bank A/C (IN lands on DR, OUT on CR)
-//        Flow Method Credit    -> the person's own A/C (credit sale DR, credit purchase CR)
-//      A Cash/Bank payment from/to a person who has credit activity settles
-//      that person's account (customers CR, suppliers DR).
+//   3. Every IN/OUT transaction posts to TWO accounts (double entry) — the
+//      posting engine now lives in /ledger/postings.js (shared with the
+//      reports so the Trial Balance etc. always match this page)
 //   4. Personal accounts (Customer/Supplier/Landlord with credit activity)
 //      show transactions on BOTH sides: sales/purchases on one side,
 //      payments and returns on the other
@@ -25,13 +18,9 @@
 //      sits on the CR side
 //   8. NEUTRAL and CONTRA transactions are never posted
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
-import { classify } from "/journals/journal.js";
+import { buildAccounts } from "/ledger/postings.js";
 
 await requireAuth(); // not logged in? -> bounced to "/"
-
-const FOLIO = { petty: "PB", sales: "SJ", purchases: "PJ", salesReturns: "SR",
-                purchasesReturns: "PR", general: "GJ", cashReceipts: "CRJ", cashPayments: "CPJ" };
-const CORE = ["Cash", "Bank", "Sales", "Purchases", "Sales Returns", "Purchases Returns"];
 
 const $ = (s) => document.querySelector(s);
 const grid = $("#acct-grid");
@@ -58,121 +47,14 @@ function asDate(ts) {
   return typeof ts.toDate === "function" ? ts.toDate() : new Date(ts);
 }
 
-function fmtDate(ts) {
-  if (!ts) return "\u2014";
-  return asDate(ts).toLocaleDateString("en-GB"); // 21/10/2026
-}
-
 function plusDays(ts, days) {
   const d = new Date(asDate(ts));
   d.setDate(d.getDate() + days);
   return d.toLocaleDateString("en-GB");
 }
 
-const typeOf = (t) => String(t.transactionType || "").toUpperCase();
-const flowOf = (t) => String(t.flowMethod || "").trim().toLowerCase();
-const hayOf = (t) => (String(t.transactionName || "") + " " + String(t.name || "")).toLowerCase();
-
-const hasRet = (t) => hayOf(t).includes("return");
-const purchasy = (t) => hayOf(t).includes("purchas") || hayOf(t).includes("supplier");
-const isSRet = (t) => hasRet(t) && !purchasy(t);   // returns FIRST — "Sales Return" also contains "sales"
-const isPRet = (t) => hasRet(t) && purchasy(t);
-const isSale = (t) => typeOf(t) === "IN" && !hasRet(t) &&
-  (hayOf(t).includes("sale") || hayOf(t).includes("sold"));
-const isPurchase = (t) => typeOf(t) === "OUT" && !hasRet(t) &&
-  (hayOf(t).includes("purchas") || hayOf(t).includes("bought") || hayOf(t).includes("buy"));
-
-const moneyAcct = (t) => (flowOf(t) === "bank" ? "Bank" : "Cash");
-const moneyDetail = (t) =>
-  flowOf(t) === "bank" ? "Bank" : flowOf(t) === "cash" ? "Cash" : null;
-const nominal = (t) => (t.transactionName || "General"); // display adds " A/C"
-
-function postingsFor(t, creditPeople) {
-  const type = typeOf(t);
-  const flow = flowOf(t);
-  const person = t.name || null;
-  const txn = t.transactionName || "";
-  const folio = FOLIO[classify(t)] || "\u2014";
-  const date = fmtDate(t.dateTime);
-  const amt = Number(t.amount || 0);
-  const row = (acct, detail) => ({ acct, detail: detail || "\u2014", folio, date, amt });
-
-  if (isSRet(t)) {
-    const dr = row("Sales Returns", person || moneyDetail(t));
-    const cr = person
-      ? row(person, "Sales Returns")
-      : row(flow === "credit" ? "Sundry Debtors" : moneyAcct(t), "Sales Returns");
-    return { dr, cr };
-  }
-  if (isPRet(t)) {
-    const cr = row("Purchases Returns", person || moneyDetail(t));
-    const dr = person
-      ? row(person, "Purchases Returns")
-      : row(flow === "credit" ? "Sundry Creditors" : moneyAcct(t), "Purchases Returns");
-    return { dr, cr };
-  }
-  if (isSale(t)) {
-    const cr = row("Sales", person || moneyDetail(t));
-    const dr = flow === "credit"
-      ? row(person || "Sundry Debtors", "Sales")
-      : row(moneyAcct(t), "Sales");
-    return { dr, cr };
-  }
-  if (isPurchase(t)) {
-    const dr = row("Purchases", person || moneyDetail(t));
-    const cr = flow === "credit"
-      ? row(person || "Sundry Creditors", "Purchases")
-      : row(moneyAcct(t), "Purchases");
-    return { dr, cr };
-  }
-  if (type === "IN") { // other receipts (income)
-    const dr = flow === "credit"
-      ? row(person || "Sundry Debtors", txn)
-      : row(moneyAcct(t), txn || "Receipt");
-    const cr = (person && flow !== "credit" && creditPeople.has(person))
-      ? row(person, moneyDetail(t))
-      : row(nominal(t), flow === "credit" ? (person || "Credit") : (person || moneyDetail(t)));
-    return { dr, cr };
-  }
-  // OUT — other payments (expenses)
-  const cr = flow === "credit"
-    ? row(person || "Sundry Creditors", txn)
-    : row(moneyAcct(t), txn || "Payment");
-  const dr = (person && flow !== "credit" && creditPeople.has(person))
-    ? row(person, moneyDetail(t))
-    : row(nominal(t), flow === "credit" ? (person || "Credit") : (person || moneyDetail(t)));
-  return { dr, cr };
-}
-
-function buildModel(txns) {
-  const live = txns.filter((t) => typeOf(t) === "IN" || typeOf(t) === "OUT");
-  const creditPeople = new Set(
-    live.filter((t) => flowOf(t) === "credit" && t.name).map((t) => t.name));
-  const accts = new Map();
-  const acctOf = (name) => {
-    let a = accts.get(name);
-    if (!a) { a = { dr: [], cr: [], lastTs: null }; accts.set(name, a); }
-    return a;
-  };
-  live.forEach((t) => {
-    const p = postingsFor(t, creditPeople);
-    const dr = acctOf(p.dr.acct), cr = acctOf(p.cr.acct);
-    dr.dr.push(p.dr);
-    cr.cr.push(p.cr);
-    if (!dr.lastTs || asDate(t.dateTime) > asDate(dr.lastTs)) dr.lastTs = t.dateTime;
-    if (!cr.lastTs || asDate(t.dateTime) > asDate(cr.lastTs)) cr.lastTs = t.dateTime;
-  });
-  const names = [...accts.keys()];
-  const order = CORE.filter((n) => accts.has(n))
-    .concat(names.filter((n) => !CORE.includes(n) && !creditPeople.has(n))
-      .sort((a, b) => a.localeCompare(b)))
-    .concat(names.filter((n) => creditPeople.has(n))
-      .sort((a, b) => a.localeCompare(b)));
-  return { order, accts };
-}
-
 function render() {
-  const MODEL = buildModel(TXNS);
+  const MODEL = buildAccounts(TXNS);
 
   // ---- account chips with closing balance (DR/CR) ----
   grid.innerHTML = MODEL.order.map((name) => {
