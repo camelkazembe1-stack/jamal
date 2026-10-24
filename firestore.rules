@@ -27,6 +27,10 @@ service cloud.firestore {
     match /adjustments/{id}      { allow create, read, update: if request.auth != null; allow delete: if false; }
     match /bankrec/{id}          { allow create, read, update: if request.auth != null; allow delete: if false; }
     match /suspense/{id}         { allow create, read, update: if request.auth != null; allow delete: if false; }
+    // Health: victim registration (page 322) and triage assessments (page 323).
+    // Append only, like the journal: create and read, never edited, never deleted.
+    match /healthRegistrations/{id} { allow create, read: if request.auth != null; allow update, delete: if false; }
+    match /healthTriage/{id}        { allow create, read: if request.auth != null; allow update, delete: if false; }
     match /{document=**} {
       allow read, write: if false;
     }

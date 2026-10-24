@@ -331,4 +331,7 @@ window.JAMALI_MENU = [
     { label: "XML Validator", icon: "🔢", folder: "xml-validator", n: 318, d: 3 },
     { label: "CSV Validator", icon: "🔢", folder: "csv-validator", n: 319, d: 3 },
     { label: "Data Format Converter", icon: "🔢", folder: "data-format-converter", n: 320, d: 3 },
+    { label: "Health", icon: "🏥", folder: "health", n: 321, d: 1 },
+    { label: "Registration", icon: "📝", folder: "victim-registration", n: 322, d: 2 },
+    { label: "Triage", icon: "🚑", folder: "triage", n: 323, d: 2 },
 ];
