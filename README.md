@@ -15,7 +15,7 @@ Record once, read everywhere: cash books, journals, ledger, trial balance and sc
 
 Append only journal: Firestore rules forbid updating or deleting a transaction, so the books cannot be silently rewritten.
 
-54 bookkeeping pages, plus the Convertor: a hub of 256 square buttons, each opening a real working tool page, all client side.
+61 bookkeeping pages, plus the Convertor: a hub of 256 square buttons, each opening a real working tool page, all client side.
 
 A collapsible family tree sidebar on every page: branches open and close with a tap, the active page highlights itself, and the whole tree folds into a burger drawer on the phone.
 
@@ -77,12 +77,14 @@ Then ship it: git add -A, git commit, git push. Vercel deploys every push.
 
 The file is idempotent: run it once or ten times, the result is the same.
 
+This guide is maintained entry by entry, never regenerated wholesale: when a page changes, only that page's entry is edited; when a page is added, it gets one new entry under its own page number, and every other entry stands untouched. The entry numbers of the page sections are the page numbers themselves, kept in step with menu.js.
+
 
 THE REPO, FILE BY FILE
 
 Every page folder carries the same three files: N.html, N.css and N.js. Below, every file and folder has its number and one plain line about what it is for, and one blank line separates each entry. For the bookkeeping pages the entry number is the page number. Folders are explained by what they are for, not by what sits inside them.
 
-The bookkeeping pages, one folder each, entries 1 to 54:
+The bookkeeping pages, one folder each, entries 1 to 61:
 
 1. home - the landing page after sign in: greeting and two tiles, Business and Computer.
 
@@ -192,7 +194,19 @@ The bookkeeping pages, one folder each, entries 1 to 54:
 
 54. suspense-account - the temporary parking spot: it clears at zero.
 
-Pages 55 to 61 are reserved for the wider report suite and are not in the tree yet.
+55. general-ledger-report - every posting of one account for a chosen period: Date, Folio, Detail, Debit, Credit and a running Balance, with the opening balance brought in from before the start date.
+
+56. ar-report - receivables per customer for a period: invoices, payments, notes and returns proven in one table, with each customer's open items listed under the totals.
+
+57. ap-report - payables per supplier for a period: the same invoice, payment, note and return proof on the supplier side.
+
+58. customer-statement - one customer's running account over a period: opening balance, every movement, closing balance and a small figures card.
+
+59. supplier-statement - one supplier's running account over a period, the mirror of the customer statement.
+
+60. aged-receivables - what customers owe, bucketed Current, 1 to 30, 31 to 60, 61 to 90 and 90 plus, as of a movable date, overdue rows tinted.
+
+61. aged-payables - the same aging buckets for what JAMALI owes its suppliers.
 
 The tools family:
 
@@ -220,7 +234,7 @@ The shared files and engines:
 
 72. records - the engine folder (records.js and records.css) behind the register pages 21 to 40, and the design base for the report pages too.
 
-73. reports - the engine folder (reports.js) that generates the reports and schedules, pages 41 to 54. Views only, no data entry.
+73. reports - the engine folders (reports.js and reports2.js) that generate the reports and schedules, pages 41 to 61. reports2 adds the period bar, the account selector and the aging buckets. Views only, no data entry.
 
 74. convertor tools.js - the Convertor registry: the 14 families and all 256 tools with id, label, slug and page number. The hub grid and the sidebar children both read it, so buttons and tree can never drift apart. slugs.txt and pages.txt sit beside it for the folder building loops.
 
@@ -293,6 +307,8 @@ suspense: feeds the suspense account (54).
 
 bills: feeds bills receivable and payable (19, 20, folders pending).
 
+The report pages 55 to 61 add no collection of their own: they read transactions, invoices and notes and generate every figure at read time.
+
 
 SECURITY
 
@@ -352,7 +368,7 @@ ADDING A NEW PAGE
 
 Create the folder inside public and add N.html, N.css and N.js. The html links the shared base css and its own css, loads menu.js and sidebar.js (menu first, both deferred), then its own js.
 
-Add ONE line to menu.js with the label, icon, folder, page number and depth. The sidebar tree, the open and close arrows and the active highlight all come free. Page numbers are never reused: the next free page number is 321, and 55 to 61 stay reserved for the report suite.
+Add ONE line to menu.js with the label, icon, folder, page number and depth. The sidebar tree, the open and close arrows and the active highlight all come free. Page numbers are never reused: the next free page number is 321.
 
 Add its tile to the View File launcher grid in view-file/4.html, or a square tile on Computer for a tools module.
 
@@ -365,8 +381,8 @@ Every folder ships html, css and js. No exceptions.
 
 STATUS AND ROADMAP
 
-Shipped: home 1, business 2, add transaction 3, view file 4, all transactions 5, cash books 6 and 15, journals 7 to 14, creditors, debtors and ledger 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 54, the Computer launcher 62, the Convertor hub 63 and all 256 tools live on their own pages 65 to 320.
+Shipped: home 1, business 2, add transaction 3, view file 4, all transactions 5, cash books 6 and 15, journals 7 to 14, creditors, debtors and ledger 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 61, the Computer launcher 62, the Convertor hub 63 and all 256 tools live on their own pages 65 to 320.
 
-Next up: the bills receivable and payable folders (19, 20, provisioned), the wider report suite on the reserved pages 55 to 61, and further converter catalogue phases whenever you call for them.
+Next up: the bills receivable and payable folders (19, 20, provisioned), the remaining reports of the 24 report wave, and further converter catalogue phases whenever you call for them.
 
 Last updated: 24 October 2026.

@@ -1,0 +1,19 @@
+/* JAMALI — reports2 engine extras (pages 55-61): period bar, account
+   selector, DR/CR balance badges, open-items card title. */
+.r2-period { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; margin-bottom: 16px; }
+.r2-period label { font-size: 12px; font-weight: 800; color: #475569; display: flex; align-items: center; gap: 7px; }
+.r2-period input[type="date"] { border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 9px; font-size: 13.5px; background: #fff; }
+.r2-period input[type="date"]:focus { outline: 2px solid #bae6fd; border-color: #0ea5e9; }
+.r2-clear { border: 1px solid #cbd5e1; background: #fff; color: #475569; font-weight: 700; font-size: 12.5px; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+.r2-clear:hover { border-color: #0ea5e9; color: #0ea5e9; }
+.r2-hint { color: #94a3b8; font-size: 12px; }
+.r2-sel { border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 10px; font-size: 14px; background: #fff; margin-bottom: 16px; max-width: 440px; width: 100%; font-weight: 700; color: #0f172a; }
+.r2-sel:focus { outline: 2px solid #bae6fd; border-color: #0ea5e9; }
+.r2-h2 { font-size: 15px; padding: 16px 20px 0; }
+.r2-badge { display: inline-block; font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 999px; margin-left: 6px; }
+.r2-dr { background: #d1fae5; color: #047857; }
+.r2-cr { background: #e0f2fe; color: #075985; }
+@media (max-width: 640px) {
+  .r2-period { flex-direction: column; align-items: stretch; }
+  .r2-period label { justify-content: space-between; }
+}

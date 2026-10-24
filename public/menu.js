@@ -60,6 +60,13 @@ window.JAMALI_MENU = [
     { label: "Unearned Revenue", icon: "🎁", folder: "unearned-revenue", n: 52, d: 3 },
     { label: "Bank Reconciliation", icon: "🏧", folder: "bank-reconciliation", n: 53, d: 3 },
     { label: "Suspense Account", icon: "🌀", folder: "suspense-account", n: 54, d: 3 },
+    { label: "General Ledger Report", icon: "📗", folder: "general-ledger-report", n: 55, d: 3 },
+    { label: "AR Report", icon: "🤝", folder: "ar-report", n: 56, d: 3 },
+    { label: "AP Report", icon: "🏦", folder: "ap-report", n: 57, d: 3 },
+    { label: "Customer Statement", icon: "📄", folder: "customer-statement", n: 58, d: 3 },
+    { label: "Supplier Statement", icon: "📃", folder: "supplier-statement", n: 59, d: 3 },
+    { label: "Aged Receivables", icon: "📆", folder: "aged-receivables", n: 60, d: 3 },
+    { label: "Aged Payables", icon: "🗓️", folder: "aged-payables", n: 61, d: 3 },
     { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 1 },
     { label: "Convertor", icon: "🔄", folder: "convertor", n: 63, d: 2 },
   // --- Convertor: all 256 tools as sidebar children of Convertor (Task 28) ---
