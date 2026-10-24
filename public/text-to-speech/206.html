@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text to Speech — JAMALI Convertor</title>
+<link rel="stylesheet" href="/text-to-speech/206.css">
+
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/convertor/63">&larr; Convertor</a>
+  <div class="t-head"><h1>Text to Speech</h1></div>
+  <div class="t-chips">
+    <span class="t-chip t-fam">🎵 Audio Tools</span>
+    <span class="t-chip">Tool #142 of 256</span>
+    <span class="t-chip">/text-to-speech/206</span>
+  </div>
+<div class="t-panel">
+  <label class="t-lab" for="in">Text to speak</label>
+  <textarea class="t-in" id="in" placeholder="Type anything…"></textarea>
+  <div class="t-grid3" style="margin-top:12px">
+    <div><label class="t-lab" for="voice">Voice</label><select class="t-sel" id="voice"></select></div>
+    <div><label class="t-lab" for="rate">Speed (<span id="rv">1</span>×)</label><input class="t-in" id="rate" type="range" min="0.5" max="2" step="0.1" value="1"></div>
+    <div><label class="t-lab" for="pitch">Pitch (<span id="pv">1</span>)</label><input class="t-in" id="pitch" type="range" min="0.5" max="2" step="0.1" value="1"></div>
+  </div>
+  <div class="t-row"><button class="t-btn" id="run">Speak</button>
+  <button class="t-btn ghost" id="stop2">Stop</button></div>
+  <p class="t-msg" id="t-msg"></p>
+</div>
+  <div class="t-links"><a class="t-btn" href="/convertor/63">All Convertor tools</a>
+  <a class="t-btn ghost" href="/computer/62">Computer</a></div>
+</main>
+<script src="/text-to-speech/206.js" defer></script>
+</body>
+</html>

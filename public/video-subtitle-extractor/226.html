@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Subtitle Extractor — JAMALI Convertor</title>
+<link rel="stylesheet" href="/video-subtitle-extractor/226.css">
+
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/convertor/63">&larr; Convertor</a>
+  <div class="t-head"><h1>Video Subtitle Extractor</h1></div>
+  <div class="t-chips">
+    <span class="t-chip t-fam">🎬 Video Tools</span>
+    <span class="t-chip">Tool #162 of 256</span>
+    <span class="t-chip">/video-subtitle-extractor/226</span>
+  </div>
+  <div class="t-note">Browser media APIs do not expose subtitle tracks inside a container. Use the SRT/VTT converters for sidecar files.</div>
+<div class="t-panel">
+  <div class="t-drop" id="drop">Drop the file here or click to choose<small id="drop-hint">Video file (optional — nothing is uploaded)</small></div>
+  <input type="file" id="file" accept="video/*,.mkv,.mp4,.webm" hidden>
+  <div class="t-row"><button class="t-btn" id="run">Run</button></div>
+  <p class="t-msg" id="t-msg"></p>
+  <ul class="t-files" id="files"></ul>
+</div><div class="t-panel">
+  <div class="t-note">Browsers do not expose subtitle tracks stored inside a video container (MKV/MP4 embedded subs
+  are invisible to web APIs), and shipping a full container parser is a later engine wave. If your subtitles are
+  sidecar files, the converters below work right now.</div>
+  <div class="t-row">
+    <a class="t-btn ghost" href="/srt-to-vtt/163">SRT to VTT</a>
+    <a class="t-btn ghost" href="/vtt-to-srt/164">VTT to SRT</a>
+  </div>
+  <p class="t-msg" id="t-msg"></p>
+</div>
+  <div class="t-links"><a class="t-btn" href="/convertor/63">All Convertor tools</a>
+  <a class="t-btn ghost" href="/computer/62">Computer</a></div>
+</main>
+<script src="/video-subtitle-extractor/226.js" defer></script>
+</body>
+</html>

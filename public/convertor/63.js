@@ -1,6 +1,7 @@
 /* JAMALI — page 63 · Convertor hub engine.
-   Draws every family and tool from window.JAMALI_TOOLS (tools.js) as buttons.
-   Each button links to the tool's own page: /<slug>/64.
+   Draws every family and tool from window.JAMALI_TOOLS (tools.js) as SQUARE
+   buttons, 8 per row (the layout lives in 63.css).
+   Each button links to the tool's own page: /<slug>/<n> (n = id + 64).
    The search box filters buttons by name, family or address. */
 (function () {
   var root = document.getElementById("tool-cats");
@@ -25,9 +26,10 @@
     fam.tools.forEach(function (t) {
       var a = document.createElement("a");
       a.className = "tool";
-      a.href = "/" + t.slug + "/64";
-      a.title = "#" + t.id + " · " + fam.label;
+      a.href = "/" + t.slug + "/" + t.n;
+      a.title = "#" + t.id + " · " + t.label + " · /" + t.slug + "/" + t.n;
       a.setAttribute("data-search", (t.label + " " + fam.label + " " + t.slug).toLowerCase());
+      a.setAttribute("data-page", t.n);
       var name = document.createElement("span");
       name.className = "tool-name";
       name.textContent = t.label;
