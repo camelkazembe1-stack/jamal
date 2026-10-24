@@ -1,7 +1,9 @@
 /* JAMALI — page 62 · Computer (records family)
    Own stylesheet for this folder — every JAMALI folder ships html + css + js.
    Base design system lives in /records/records.css (imported below), so this file works
-   standalone too. */
+   standalone too.
+   Task 29: the calculator is gone — Computer is a launcher of SQUARE module
+   tiles, exactly 8 per row (same tile language as Home and Business). */
 @import url("/records/records.css");
 
 /* page accent — Computer */
@@ -9,44 +11,31 @@ h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #0d9488; }
 
-/* ---------- calculator ---------- */
-.comp-card { padding: 18px 20px 14px; max-width: 480px; }
-.comp-top { display: flex; justify-content: space-between; align-items: center; min-height: 20px; gap: 10px; }
-.comp-expr { color: #64748b; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.comp-mem { background: #ccfbf1; color: #0f766e; font-weight: 800; font-size: 11px; padding: 2px 9px; border-radius: 999px; }
-.comp-disp { text-align: right; font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 6px; overflow-x: auto; white-space: nowrap; }
+/* ---------- module launcher — SQUARE buttons, exactly 8 per row ---------- */
+.mod-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 14px; margin: 0 0 16px; }
+a.mod { aspect-ratio: 1 / 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; text-decoration: none;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  padding: 10px 8px; color: #0f172a; font-weight: 700; font-size: 13.5px;
+  text-align: center; box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+  transition: transform .15s, border-color .15s, background .15s, color .15s; }
+a.mod:hover { transform: translateY(-3px); border-color: #0d9488;
+  background: #f0fdfa; color: #0f766e; }
+a.mod:active { transform: translateY(0); }
+.mod-ico { font-size: 32px; line-height: 1; }
+.mod-label { line-height: 1.25; padding: 0 6px; }
+.mod-sub { display: block; color: #94a3b8; font-size: 10.5px; font-weight: 700;
+  margin-top: 3px; }
+a.mod:hover .mod-sub { color: #0d9488; }
 
-.comp-pad-card { padding: 14px; max-width: 480px; margin-top: 14px; user-select: none; }
-.comp-memrow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-.comp-memrow button { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; padding: 7px 0; font-size: 12px; font-weight: 800; color: #475569; cursor: pointer; }
-.comp-memrow button:hover { border-color: #0d9488; color: #0d9488; }
-
-.comp-pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.comp-pad button { border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; padding: 14px 0; font-size: 18px; font-weight: 700; color: #0f172a; cursor: pointer; font-variant-numeric: tabular-nums; }
-.comp-pad button:hover { background: #f0fdfa; border-color: #0d9488; }
-.comp-pad button:active { transform: scale(.97); }
-.comp-pad button:focus-visible { outline: 2px solid #0d9488; outline-offset: 1px; }
-.comp-pad .k-fn { background: #f8fafc; color: #475569; }
-.comp-pad .k-op { background: #f0fdfa; color: #0f766e; font-weight: 800; }
-.comp-pad .k-eq { background: #0d9488; border-color: #0d9488; color: #fff; font-weight: 800; }
-.comp-pad .k-eq:hover { background: #0f766e; }
-
-/* ---------- tape ---------- */
-.comp-tape-card { max-width: 480px; margin-top: 14px; padding: 16px 18px; }
-.comp-tape-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.comp-tape-head h2 { font-size: 15px; }
-.tape-clear { border: 1px solid #cbd5e1; background: #fff; color: #475569; font-size: 12px; font-weight: 700; border-radius: 7px; padding: 5px 10px; cursor: pointer; }
-.tape-clear:hover { border-color: #b91c1c; color: #b91c1c; }
-.comp-tape { max-height: 260px; overflow-y: auto; }
-.tape-row { display: flex; justify-content: space-between; gap: 12px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid #f1f5f9; padding: 8px 2px; font-size: 14px; cursor: pointer; font-variant-numeric: tabular-nums; }
-.tape-row:hover { background: #f0fdfa; }
-.tape-row .e { color: #64748b; }
-.tape-row .r { font-weight: 800; }
-.tape-empty { color: #94a3b8; font-size: 13.5px; padding: 10px 0; }
-
-@media (max-width: 640px) {
-  .comp-disp { font-size: 28px; }
-  .comp-pad button { padding: 13px 0; }
+/* same tile language as the rest of the app on narrow screens */
+@media (max-width: 1100px) { .mod-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .mod-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  a.mod { gap: 6px; font-size: 12px; }
+  .mod-ico { font-size: 24px; }
+  .mod-sub { font-size: 9.5px; margin-top: 2px; }
 }
 
 /* print — clean paper output */
@@ -58,13 +47,3 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   .wrap { max-width: none; padding: 0; }
   .card { box-shadow: none; }
 }
-
-/* ---------- Convertor launch button (Task 24) ---------- */
-.conv-launch-row { margin: 0 0 16px; }
-.conv-launch { display: flex; align-items: center; gap: 14px; max-width: 480px;
-  text-decoration: none; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-  padding: 14px 18px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
-.conv-launch:hover { border-color: #0d9488; background: #f0fdfa; }
-.conv-ico { font-size: 26px; line-height: 1; }
-.conv-txt b { display: block; color: #0f172a; font-size: 15.5px; }
-.conv-txt i { display: block; font-style: normal; color: #64748b; font-size: 13px; margin-top: 2px; }
