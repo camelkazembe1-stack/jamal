@@ -1,7 +1,22 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8">
-<title>PDF Unlock — JAMALI Convertor</title>
-<meta http-equiv="refresh" content="0; url=./106">
-</head><body>
-<p>This tool moved to its own page. <a href="./106">Open PDF Unlock</a>.</p>
-</body></html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tool — JAMALI Convertor</title>
+<link rel="stylesheet" href="/convertor/64.css">
+<!-- the slug is captured INLINE, before the deferred scripts run:
+     sidebar.js cleans the address bar, which would wipe a query string -->
+<script>window.JAMALI_TOOL_SLUG = location.pathname.split("/")[1] || "";</script>
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/convertor/63">&larr; Convertor</a>
+  <div id="tool-page"></div>
+</main>
+<script src="/convertor/tools.js" defer></script>
+<script type="module" src="/convertor/64.js"></script>
+</body>
+</html>
