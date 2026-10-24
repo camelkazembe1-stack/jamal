@@ -1,8 +1,8 @@
 JAMALI
 
-Plain, honest bookkeeping for a small trading business.
+Plain, honest bookkeeping for a small trading business, plus a 256 tool file and data converter.
 
-A static, zero build web app: the books, journals, ledgers, registers and reports a small business actually needs, all driven by one append only transaction journal. Record a transaction once, and every other page derives from it.
+A static, zero build web app: the books, journals, ledgers, registers and reports a small business actually needs, all driven by one append only transaction journal. Record a transaction once, and every other page derives from it. On top of the books sits the Convertor: 256 real, working file and data tools, every one on its own page in its own folder.
 
 Live at https://jamali-lime.vercel.app
 
@@ -15,9 +15,9 @@ Record once, read everywhere: cash books, journals, ledger, trial balance and sc
 
 Append only journal: Firestore rules forbid updating or deleting a transaction, so the books cannot be silently rewritten.
 
-52 live pages: cash books, 8 journals, ledgers, 20 registers and documents, 14 reports and schedules.
+54 bookkeeping pages, plus the Convertor: a hub of 256 square buttons, each opening a real working tool page, all client side.
 
-Works on the phone: the sidebar folds into a burger at 800px, and every page is checked at 390px.
+A collapsible family tree sidebar on every page: branches open and close with a tap, the active page highlights itself, and the whole tree folds into a burger drawer on the phone.
 
 Zero build step: vanilla HTML, CSS and JS (ES modules), served as is.
 
@@ -30,46 +30,67 @@ Auth: Firebase Authentication, Google sign in with a popup.
 
 Database: Cloud Firestore.
 
-Hosting: Vercel, static, with clean URLs like /petty-cash/7.
+Hosting: Vercel, static, with clean URLs like /petty-cash/7 and /text-to-pdf/65.
 
 FirebaseJS: version 10.12.2, loaded from the gstatic CDN.
+
+Converter libraries: loaded per tool from the jsDelivr CDN (pdf-lib, pdf.js, jsPDF, SheetJS, mammoth, JSZip, PptxGenJS, lamejs, tesseract.js and friends), with built in pure JavaScript writers for DOCX, ODT, EPUB, TAR, gzip and more. Every tool runs entirely in the browser: nothing uploads anywhere, and a tool that hits a real browser limit says so on its page instead of producing a wrong file.
 
 
 USING THE APP
 
 Open the site and sign in with your Google account (index.html).
 
-Business is the control room. From there open Add Transaction or View File.
+Business is the control room. From there open Add Transaction or View File. Home also carries a Computer tile.
 
 Add Transaction walks you through it: pick a type (IN, OUT, NEUTRAL or CONTRA), pick the transaction, fill the form, save. Bank charges are stored as their own separate record automatically, so the bank columns stay exact.
 
-View File is the library: every book, register and report is one click away. The dark sidebar on every page mirrors the same family tree, deeper pages are indented, and the address bar always stays clean at the domain root.
+View File is the library: every book, register and report is one click away.
+
+Computer is the tools launcher: square tiles only, and today one tile, Convertor, which opens the hub of all 256 tools. Search the hub, tap a square button, and the tool opens on its own page.
+
+The dark sidebar on every page mirrors the family tree: Business folds out to Add Transaction and View File, View File folds out to every book, register and report, and Computer folds out to Convertor and all 256 tools. Nodes with children show a small arrow: v opens a branch, ^ closes it, and the path to the page you are on opens by itself. The address bar always stays clean at the domain root.
 
 
 ARCHITECTURE
 
 One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js. Pages are addressed without the extension, for example /petty-cash/7.
 
-Navigation. sidebar.js sits on every page: a 220px fixed family tree with the active page highlighted. It cleans the address bar so the URL stays at the domain root, and on screens of 800px or below the sidebar slides away behind a burger button with a tap to close overlay.
+Navigation. menu.js holds the family tree as data: one line per page with label, icon, folder, page number and depth. sidebar.js is the frozen renderer: it draws the collapsible tree from that data, highlights the active page, opens the path to it, cleans the address bar, and slides away behind a burger button at 800px or below. sidebar.js holds no page data and calls no file, so a new page never touches it.
 
-Styling. Every folder ships its own stylesheet. The shared bases, journals/journal.css and records/records.css, carry the design system. Each page's own css imports its base, adds the page's title accent colour and cleans up printing (sidebar, buttons and filters hidden, white paper background). The look: light slate background, white cards with a 14px radius, sky blue accents, dark navy sidebar.
+Loading order. Every content page links the shared base css and its own css, then loads menu.js and sidebar.js, menu first, both deferred, and finally its own js.
+
+Styling. Every folder ships its own stylesheet. The shared bases, journals/journal.css and records/records.css, carry the design system. Each page's own css imports its base, adds the page's title accent colour and cleans up printing (sidebar, buttons and filters hidden, white paper background). The look: light slate background, white cards with a 14px radius, teal accents for the Computer family, dark navy sidebar.
+
+Square tile language. The launchers (home, business, view file, computer) and the Convertor hub all use the same square tile grids: equal squares, 8 per row on desktop, 4 on tablets, 3 on phones, aspect ratio 1 to 1.
 
 The engines behind the pages are listed in the file guide below.
 
 
+HOW CHANGES ARRIVE (THE ONE FILE RULE)
+
+Every working session delivers exactly ONE downloadable bash file, named jamali-taskNN-something.sh. It contains ALL of that session's changes as full file overwrites (the file is written anew with cat, never deleted, never patched in place), plus a verification tail that must end with ALL PASS.
+
+Put the downloaded file inside ~/jamali and run it: bash jamali-taskNN-something.sh
+
+Then ship it: git add -A, git commit, git push. Vercel deploys every push.
+
+The file is idempotent: run it once or ten times, the result is the same.
+
+
 THE REPO, FILE BY FILE
 
-Every page folder carries the same three files: N.html, N.css and N.js. Below, every file and folder has its number and one plain line about what it is for, and one blank line separates each entry. Folders are explained by what they are for, not by what sits inside them.
+Every page folder carries the same three files: N.html, N.css and N.js. Below, every file and folder has its number and one plain line about what it is for, and one blank line separates each entry. For the bookkeeping pages the entry number is the page number. Folders are explained by what they are for, not by what sits inside them.
 
-The pages, one folder each, 1 to 54:
+The bookkeeping pages, one folder each, entries 1 to 54:
 
-1. home - the landing page after sign in: greeting, news and the jump off point.
+1. home - the landing page after sign in: greeting and two tiles, Business and Computer.
 
 2. business - the control room: opens Add Transaction and View File.
 
 3. add-transaction - the journal entry engine: every transaction is recorded here, once.
 
-4. view-file - the library: a tile launcher for every book, register and report.
+4. view-file - the library: a tile launcher for every book, register and report, plus Computer.
 
 5. all-transactions - the full journal: every recorded transaction, filterable in one table.
 
@@ -97,7 +118,7 @@ The pages, one folder each, 1 to 54:
 
 17. debtors-book - what customers owe JAMALI: a running balance per customer.
 
-18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down (c/d, b/d). Also home of the shared postings.js engine.
+18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down. Also home of the shared postings.js engine.
 
 19. bills receivable (folder pending) - bills drawn on customers, tracked to settlement. The bills collection is already in the security rules.
 
@@ -171,39 +192,55 @@ The pages, one folder each, 1 to 54:
 
 54. suspense-account - the temporary parking spot: it clears at zero.
 
-The shared files and engines, 55 to 60:
+Pages 55 to 61 are reserved for the wider report suite and are not in the tree yet.
 
-55. index.html - the front door: Google sign in, and where signed out visitors land.
+The tools family:
 
-56. firebase.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
+62. computer - the tools launcher: square tiles only, today the Convertor tile with its 256 tools line. The old calculator was retired to git history, so the page is a pure launcher.
 
-57. sidebar.js - the family tree navigation shared by every page: the sidebar, the active page highlight, the mobile burger and the address bar cleanup.
+63. convertor - the Convertor hub: all 256 tools as same size square buttons, 8 per row, in 14 families, with a live search and a star on the 14 essential tools.
 
-58. journals - the engine folder (journal.js and journal.css) that renders the eight journals, pages 7 to 14.
+64. convertor not found page - the friendly fallback when a tool address does not exist.
 
-59. records - the engine folder (records.js and records.css) behind the register pages 21 to 40, and the design base for the report pages too.
+65. the tool folders (pages 65 to 320) - one folder per tool, named after the tool (text-to-pdf, pdf-merge, excel-to-pdf and so on), each holding that tool's own real working page. Page number = tool id + 64. The 5 labels that repeat carry a 2 at the end of their slug.
 
-60. reports - the engine folder (reports.js) that generates the reports and schedules, pages 41 to 54. Views only, no data entry.
+The shared files and engines:
 
-At the root of the repo, 61 to 69:
+66. index.html - the front door: Google sign in, and where signed out visitors land.
 
-61. firestore.rules - the guard dog. Decides who may read or write each collection: the journal stays append only, registers can be created and settled but never deleted, everything needs a signed in user, and anything not matched is denied.
+67. firebase.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
 
-62. vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root.
+68. menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered. Adding a page is one line here, nothing else.
 
-63. README.md - this guide.
+69. sidebar.js - the frozen tree renderer shared by every page: draws the collapsible sidebar from the menu.js data, active highlight, mobile burger, address bar cleanup. Holds no page data and calls no file, so it is never rewritten.
 
-64. scripts - the folder of home grown operational tooling.
+70. journals - the engine folder (journal.js and journal.css) that renders the eight journals, pages 7 to 14.
 
-65. scripts/jamali-rate-limited-push.sh - the gentle deployer. Pushes git changes rate limited, so deployments stay steady instead of bursty.
+71. records - the engine folder (records.js and records.css) behind the register pages 21 to 40, and the design base for the report pages too.
 
-66. systemd/user - the folder of user level systemd units that keep the deploy rhythm running on their own.
+72. reports - the engine folder (reports.js) that generates the reports and schedules, pages 41 to 54. Views only, no data entry.
 
-67. systemd/user/jamali-rate-limited-push.service - runs the push script as a service.
+73. convertor tools.js - the Convertor registry: the 14 families and all 256 tools with id, label, slug and page number. The hub grid and the sidebar children both read it, so buttons and tree can never drift apart. slugs.txt and pages.txt sit beside it for the folder building loops.
 
-68. systemd/user/jamali-rate-limited-push.timer - fires that service on a schedule.
+At the root of the repo:
 
-69. public - the entire app, the web root Vercel serves. Every page folder and every shared file listed above lives here.
+74. firestore.rules - the guard dog. Decides who may read or write each collection: the journal stays append only, registers can be created and settled but never deleted, everything needs a signed in user, and anything not matched is denied.
+
+75. vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root.
+
+76. README.md - this guide.
+
+77. scripts - the folder of home grown operational tooling.
+
+78. scripts/jamali-rate-limited-push.sh - the gentle deployer. Pushes git changes rate limited, so deployments stay steady instead of bursty.
+
+79. systemd/user - the folder of user level systemd units that keep the deploy rhythm running on their own.
+
+80. systemd/user/jamali-rate-limited-push.service - runs the push script as a service.
+
+81. systemd/user/jamali-rate-limited-push.timer - fires that service on a schedule.
+
+82. public - the entire app, the web root Vercel serves. Every page folder and every shared file listed above lives here.
 
 
 DATA MODEL
@@ -291,6 +328,8 @@ DEPLOYMENT AND SYNCING
 
 Vercel serves the public folder at the domain root with clean URLs: /petty-cash/7 becomes petty-cash/7.html. Every git push deploys, and since the output is static the builds are instant.
 
+Changes arrive the way the one file rule above describes: run the downloaded bash file, commit, push.
+
 Rate limited pushes: scripts/jamali-rate-limited-push.sh pushes the repo gently, and the systemd service and timer run it on a schedule, keeping deployment steady instead of bursty.
 
 
@@ -302,26 +341,30 @@ python3 -m http.server 8080 (or npx serve)
 
 then open http://localhost:8080
 
+A plain local server has no clean URL rewriting, so open pages with their .html ending, for example /computer/62.html.
+
 Sign in and data need the real Firebase project: pages without a session bounce back to the start page by design. To develop offline, point public/firebase.js at a mock module that fakes auth and onSnapshot.
 
 
 ADDING A NEW PAGE
 
-Create the folder inside public and add N.html, N.css and N.js. The html links the shared base css, its own css, sidebar.js and its own js.
+Create the folder inside public and add N.html, N.css and N.js. The html links the shared base css and its own css, loads menu.js and sidebar.js (menu first, both deferred), then its own js.
 
-Register the page in sidebar.js under PAGES with its label, icon, folder, page number and depth. The sidebar and the active highlight come free.
+Add ONE line to menu.js with the label, icon, folder, page number and depth. The sidebar tree, the open and close arrows and the active highlight all come free. Page numbers are never reused: the next free page number is 321, and 55 to 61 stay reserved for the report suite.
 
-Add its tile to the View File launcher grid, in view-file/4.html.
+Add its tile to the View File launcher grid in view-file/4.html, or a square tile on Computer for a tools module.
 
-New collection? Extend firestore.rules, keep delete forbidden, then deploy: firebase deploy --only firestore:rules
+New collection? Extend firestore.rules, keep delete forbidden, then deploy the rules.
+
+Adding a Convertor tool: append one entry to convertor/tools.js, one line to slugs.txt and pages.txt with the next page number, and build the folder with its three files. Hub, search and sidebar pick it up automatically.
 
 Every folder ships html, css and js. No exceptions.
 
 
 STATUS AND ROADMAP
 
-Shipped: core pages 1 to 5, cash books 6 and 15, journals 7 to 14, ledgers 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 54. 52 pages, all live.
+Shipped: home 1, business 2, add transaction 3, view file 4, all transactions 5, cash books 6 and 15, journals 7 to 14, creditors, debtors and ledger 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 54, the Computer launcher 62, the Convertor hub 63 and all 256 tools live on their own pages 65 to 320.
 
-Next up: the wider report suite, sales, purchases and cash analyses, profitability, budgets and ratios. Bills receivable and payable (19, 20) are provisioned, folders pending.
+Next up: the bills receivable and payable folders (19, 20, provisioned), the wider report suite on the reserved pages 55 to 61, and further converter catalogue phases whenever you call for them.
 
-Last updated: 23 October 2026.
+Last updated: 24 October 2026.
