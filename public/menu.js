@@ -61,5 +61,4 @@ window.JAMALI_MENU = [
     { label: "Bank Reconciliation", icon: "🏧", folder: "bank-reconciliation", n: 53, d: 3 },
     { label: "Suspense Account", icon: "🌀", folder: "suspense-account", n: 54, d: 3 },
     { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 1 },
-    { label: "Convertor", icon: "🔄", folder: "convertor", n: 63, d: 2 },
 ];
