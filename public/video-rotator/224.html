@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Rotator — JAMALI Convertor</title>
+<link rel="stylesheet" href="/video-rotator/224.css">
+
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/convertor/63">&larr; Convertor</a>
+  <div class="t-head"><h1>Video Rotator</h1></div>
+  <div class="t-chips">
+    <span class="t-chip t-fam">🎬 Video Tools</span>
+    <span class="t-chip">Tool #160 of 256</span>
+    <span class="t-chip">/video-rotator/224</span>
+  </div>
+<div class="t-note">The transcode runs in real time — a 2-minute video takes about 2 minutes.
+Keep this tab visible while it records.</div><div class="t-panel">
+  <div class="t-drop" id="drop">Drop the file here or click to choose<small id="drop-hint">Video file</small></div>
+  <input type="file" id="file" accept="video/*,.mp4,.webm,.mov" hidden>
+  <div class="t-row"><button class="t-btn" id="run">Run</button></div>
+  <p class="t-msg" id="t-msg"></p>
+  <ul class="t-files" id="files"></ul>
+</div><div class="t-panel">
+  <div class="t-grow"><label class="t-lab" for="deg">Turn</label><select class="t-sel" id="deg">
+    <option value="90">90° clockwise</option><option value="180">180°</option><option value="270">90° counter-clockwise</option></select></div>
+  <div class="t-row"><button class="t-btn" id="run">Rotate</button></div>
+  <p class="t-msg" id="t-msg"></p>
+</div>
+  <div class="t-links"><a class="t-btn" href="/convertor/63">All Convertor tools</a>
+  <a class="t-btn ghost" href="/computer/62">Computer</a></div>
+</main>
+<script src="/video-rotator/224.js" defer></script>
+</body>
+</html>

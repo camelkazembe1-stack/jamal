@@ -1,0 +1,66 @@
+/* JAMALI — page 315 · Decimal to Octal (Convertor tool #251, Number and Data Formats).
+   The tool's own stylesheet. Base design system via the import below;
+   the tool widget kit and this tool's widgets are inlined underneath. */
+@import url("/records/records.css");
+
+/* page accent — Convertor teal */
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #0d9488; }
+
+.t-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.t-head h1 { margin-bottom: 0; }
+.t-star { color: #d97706; font-size: 18px; }
+.t-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px; }
+.t-chip { background: #f1f5f9; color: #475569; font-size: 12px; font-weight: 800;
+  border-radius: 999px; padding: 5px 12px; }
+.t-chip.t-fam { background: #ccfbf1; color: #0f766e; }
+.t-links { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Convertor tool widget kit (Task 25) ---------- */
+.t-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .06); padding: 16px 18px; margin-bottom: 14px; max-width: 880px; }
+.t-lab { display: block; font-size: 12px; font-weight: 800; color: #475569; margin: 0 0 5px; }
+.t-in, .t-out, .t-sel { border: 1px solid #cbd5e1; border-radius: 9px; padding: 9px 11px;
+  font-size: 14px; width: 100%; background: #fff; }
+.t-in:focus, .t-out:focus, .t-sel:focus { outline: 2px solid #99f6e4; border-color: #0d9488; }
+.t-out { background: #f8fafc; }
+textarea.t-in, textarea.t-out { min-height: 150px; resize: vertical;
+  font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.t-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 12px 0 4px; }
+.t-grow { flex: 1 1 170px; }
+.t-btn { display: inline-block; text-decoration: none; font-size: 13.5px; font-weight: 800;
+  padding: 9px 16px; border-radius: 9px; border: 1px solid #0d9488; background: #0d9488;
+  color: #fff; cursor: pointer; }
+.t-btn:hover { background: #0f766e; }
+.t-btn.ghost { background: #fff; color: #0f766e; }
+.t-btn.ghost:hover { background: #f0fdfa; }
+.t-btn:disabled { opacity: .55; cursor: default; }
+.t-msg { font-size: 13.5px; font-weight: 700; color: #475569; min-height: 18px; margin: 10px 0 4px; }
+.t-msg.ok { color: #047857; }
+.t-msg.warn { color: #92400e; }
+.t-msg.err { color: #b91c1c; }
+.t-drop { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px 16px; text-align: center;
+  color: #64748b; font-size: 13.5px; font-weight: 700; background: #f8fafc; cursor: pointer; }
+.t-drop:hover, .t-drop.over { border-color: #0d9488; background: #f0fdfa; color: #0f766e; }
+.t-drop small { display: block; font-weight: 600; margin-top: 4px; }
+.t-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.t-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; }
+.t-files { list-style: none; margin: 10px 0 0; padding: 0; }
+.t-files li { display: flex; justify-content: space-between; gap: 10px; font-size: 13px;
+  font-weight: 600; color: #475569; padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
+.t-files li button { border: 1px solid #cbd5e1; background: #fff; color: #0f766e; font-size: 12px;
+  font-weight: 800; padding: 4px 10px; border-radius: 7px; cursor: pointer; }
+.t-files li button:hover { border-color: #0d9488; }
+.t-kv { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.t-kv th, .t-kv td { text-align: left; font-size: 13px; padding: 7px 10px; border-bottom: 1px solid #f1f5f9; }
+.t-kv th { color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; background: #f8fafc; }
+.t-prev { max-width: 300px; max-height: 300px; border: 1px solid #e2e8f0; border-radius: 10px;
+  background: #fff; display: block; }
+.t-note { margin: 0 0 14px; background: #fef3c7; color: #92400e; font-size: 13px; font-weight: 700;
+  border-radius: 9px; padding: 9px 12px; max-width: 880px; }
+.t-dl { margin-top: 8px; }
+.t-diff ins { background: #d1fae5; color: #065f46; text-decoration: none; display: block; }
+.t-diff del { background: #fee2e2; color: #991b1b; display: block; }
+.t-diff span.ctx { color: #475569; display: block; }
+@media (max-width: 640px) { .t-grid2, .t-grid3 { grid-template-columns: 1fr; } }

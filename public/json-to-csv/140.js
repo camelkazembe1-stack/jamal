@@ -1,0 +1,68 @@
+/* JAMALI — page 140 · JSON to CSV — the tool's own engine.
+   Convertor tool #76 (Spreadsheet and Data Tools). Everything runs in the browser on this
+   page — files are processed locally and never leave the device.
+   array of objects / array of arrays -> RFC-4180 CSV*/
+(function () {
+"use strict";
+  function $(id) { return document.getElementById(id); }
+  function st(msg, cls) { var el = $("t-msg"); if (!el) return;
+    el.textContent = msg; el.className = "t-msg" + (cls ? " " + cls : ""); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function fb(n) { var u = ["B", "KB", "MB", "GB", "TB"], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (i ? n.toFixed(n < 10 ? 2 : 1) : n) + " " + u[i]; }
+  function dl(blob, name) { var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  function ab(file) { return new Promise(function (res, rej) { var r = new FileReader();
+    r.onload = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
+    r.readAsArrayBuffer(file); }); }
+  function rtxt(file) { return new Promise(function (res, rej) { var r = new FileReader();
+    r.onload = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
+    r.readAsText(file); }); }
+  function oneFile(inputId) { var f = $(inputId).files[0];
+    if (!f) { st("Choose a file first.", "warn"); return null; } return f; }
+  function allFiles(inputId) { var f = $(inputId).files;
+    if (!f.length) { st("Choose at least one file.", "warn"); return null; } return f; }
+  function libFail(name) { st("This tool's engine library (" + name +
+    ") loads from the internet and could not be reached. Reconnect and reload the page.", "warn"); }
+  function u8(abuf) { return new Uint8Array(abuf); }
+
+  var DL_NAME = "data.csv";
+  $("copy").onclick = function () {
+    var t = $("out").value; if (!t) { st("Nothing to copy yet.", "warn"); return; }
+    navigator.clipboard && navigator.clipboard.writeText(t).then(function () { st("Copied to the clipboard.", "ok"); },
+      function () { $("out").select(); document.execCommand("copy"); st("Copied.", "ok"); });
+  };
+  $("dl-txt").onclick = function () {
+    var t = $("out").value; if (!t) { st("Nothing to download yet.", "warn"); return; }
+    dl(new Blob([t], { type: "text/plain;charset=utf-8" }), DL_NAME);
+    st("Saved " + DL_NAME + " (" + fb(t.length) + " of text).", "ok");
+  };
+
+    function cell(v) {
+      v = v == null ? "" : String(v);
+      if (/[",\n\r]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+      return v;
+    }
+  $("run").onclick = function () {
+    var t = $("in").value;
+    if (!t.trim()) { st("Paste some JSON first.", "warn"); return; }
+    try {
+      var v = JSON.parse(t), rows;
+      if (Array.isArray(v) && v.length && typeof v[0] === "object" && !Array.isArray(v[0])) {
+        var keys = [];
+        v.forEach(function (o) { Object.keys(o).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); }); });
+        rows = [keys].concat(v.map(function (o) { return keys.map(function (k) { return o[k]; }); }));
+      } else if (Array.isArray(v)) rows = v.map(function (r) { return Array.isArray(r) ? r : [r]; });
+      else if (v && typeof v === "object") rows = Object.keys(v).map(function (k) { return [k, v[k]]; });
+      else { st("Give me an array or an object.", "warn"); return; }
+      var out = rows.map(function (r) { return r.map(cell).join(","); }).join("\n");
+      $("out").value = out;
+      st(rows.length + " rows written.", "ok");
+    } catch (e) { st("Invalid JSON: " + e.message, "err"); }
+  };
+
+})();

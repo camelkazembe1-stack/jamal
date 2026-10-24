@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Delete Pages — JAMALI Convertor</title>
+<link rel="stylesheet" href="/pdf-delete-pages/100.css">
+
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/convertor/63">&larr; Convertor</a>
+  <div class="t-head"><h1>PDF Delete Pages</h1></div>
+  <div class="t-chips">
+    <span class="t-chip t-fam">📕 PDF Tools</span>
+    <span class="t-chip">Tool #36 of 256</span>
+    <span class="t-chip">/pdf-delete-pages/100</span>
+  </div>
+<div class="t-panel">
+  <div class="t-drop" id="drop">Drop the file here or click to choose<small id="drop-hint">PDF file (.pdf)</small></div>
+  <input type="file" id="file" accept=".pdf,application/pdf" hidden>
+  <div class="t-row"><button class="t-btn" id="run">Run</button><div class="t-grow"><label class="t-lab" for="ranges">Pages</label><input class="t-in" id="ranges" placeholder="e.g. 1-3, 5, 8-10"></div></div>
+  <p class="t-msg" id="t-msg"></p>
+  <ul class="t-files" id="files"></ul>
+</div>
+  <div class="t-links"><a class="t-btn" href="/convertor/63">All Convertor tools</a>
+  <a class="t-btn ghost" href="/computer/62">Computer</a></div>
+</main>
+<script src="/pdf-delete-pages/100.js" defer></script>
+</body>
+</html>
