@@ -54,7 +54,7 @@ The dark sidebar on every page mirrors the family tree: Business folds out to Ad
 
 ARCHITECTURE
 
-One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js. Pages are addressed without the extension, for example /petty-cash/7.
+One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js. Pages are addressed without the extension, for example /petty-cash/7. Two loose exceptions sit directly at the public root: 3.html and 6.html, working copies of pages 3 and 6 that the file guide below explains.
 
 Navigation. menu.js holds the family tree as data: one line per page with label, icon, folder, page number and depth. sidebar.js is the frozen renderer: it draws the collapsible tree from that data, highlights the active page, opens the path to it, cleans the address bar, and slides away behind a burger button at 800px or below. sidebar.js holds no page data and calls no file, so a new page never touches it.
 
@@ -206,41 +206,43 @@ The tools family:
 
 The shared files and engines:
 
-66. index.html - the front door: Google sign in, and where signed out visitors land.
+66. the loose root pages 3.html and 6.html - two leftovers from before the one folder per page convention, sitting directly at the public root instead of inside folders: 3.html is a working copy of Add Transaction and 6.html a working copy of the Double Column Cash Book. Both load their stylesheet and script from the page folders and carry the full sidebar, so the addresses /3 and /6 open the same pages as /add-transaction/3 and /cash-book/6. They stay so nothing that links to them breaks.
 
-67. firebase.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
+67. index.html - the front door: Google sign in, and where signed out visitors land.
 
-68. menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered. Adding a page is one line here, nothing else.
+68. firebase.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
 
-69. sidebar.js - the frozen tree renderer shared by every page: draws the collapsible sidebar from the menu.js data, active highlight, mobile burger, address bar cleanup. Holds no page data and calls no file, so it is never rewritten.
+69. menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered. Adding a page is one line here, nothing else.
 
-70. journals - the engine folder (journal.js and journal.css) that renders the eight journals, pages 7 to 14.
+70. sidebar.js - the frozen tree renderer shared by every page: draws the collapsible sidebar from the menu.js data, active highlight, mobile burger, address bar cleanup. Holds no page data and calls no file, so it is never rewritten.
 
-71. records - the engine folder (records.js and records.css) behind the register pages 21 to 40, and the design base for the report pages too.
+71. journals - the engine folder (journal.js and journal.css) that renders the eight journals, pages 7 to 14.
 
-72. reports - the engine folder (reports.js) that generates the reports and schedules, pages 41 to 54. Views only, no data entry.
+72. records - the engine folder (records.js and records.css) behind the register pages 21 to 40, and the design base for the report pages too.
 
-73. convertor tools.js - the Convertor registry: the 14 families and all 256 tools with id, label, slug and page number. The hub grid and the sidebar children both read it, so buttons and tree can never drift apart. slugs.txt and pages.txt sit beside it for the folder building loops.
+73. reports - the engine folder (reports.js) that generates the reports and schedules, pages 41 to 54. Views only, no data entry.
+
+74. convertor tools.js - the Convertor registry: the 14 families and all 256 tools with id, label, slug and page number. The hub grid and the sidebar children both read it, so buttons and tree can never drift apart. slugs.txt and pages.txt sit beside it for the folder building loops.
 
 At the root of the repo:
 
-74. firestore.rules - the guard dog. Decides who may read or write each collection: the journal stays append only, registers can be created and settled but never deleted, everything needs a signed in user, and anything not matched is denied.
+75. firestore.rules - the guard dog. Decides who may read or write each collection: the journal stays append only, registers can be created and settled but never deleted, everything needs a signed in user, and anything not matched is denied.
 
-75. vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root.
+76. vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root.
 
-76. README.md - this guide.
+77. README.md - this guide.
 
-77. scripts - the folder of home grown operational tooling.
+78. scripts - the folder of home grown operational tooling.
 
-78. scripts/jamali-rate-limited-push.sh - the gentle deployer. Pushes git changes rate limited, so deployments stay steady instead of bursty.
+79. scripts/jamali-rate-limited-push.sh - the gentle deployer. Pushes git changes rate limited, so deployments stay steady instead of bursty.
 
-79. systemd/user - the folder of user level systemd units that keep the deploy rhythm running on their own.
+80. systemd/user - the folder of user level systemd units that keep the deploy rhythm running on their own.
 
-80. systemd/user/jamali-rate-limited-push.service - runs the push script as a service.
+81. systemd/user/jamali-rate-limited-push.service - runs the push script as a service.
 
-81. systemd/user/jamali-rate-limited-push.timer - fires that service on a schedule.
+82. systemd/user/jamali-rate-limited-push.timer - fires that service on a schedule.
 
-82. public - the entire app, the web root Vercel serves. Every page folder and every shared file listed above lives here.
+83. public - the entire app, the web root Vercel serves. Every page folder and every shared file listed above lives here.
 
 
 DATA MODEL
