@@ -1,8 +1,8 @@
 JAMALI
 
-Plain, honest bookkeeping for a small trading business, plus a 256 tool file and data converter.
+Plain, honest bookkeeping for a small trading business, a Health desk for the hospital, and a 256 tool file and data converter.
 
-A static, zero build web app: the books, journals, ledgers, registers and reports a small business actually needs, all driven by one append only transaction journal. Record a transaction once, and every other page derives from it. On top of the books sits the Convertor: 256 real, working file and data tools, every one on its own page in its own folder.
+A static, zero build web app: the books, journals, ledgers, registers and reports a small business actually needs, all driven by one append only transaction journal. Record a transaction once, and every other page derives from it. On top of the books sits the Convertor: 256 real, working file and data tools, every one on its own page in its own folder. Beside the books, the Health desk registers victims at the hospital door and triages them by urgency.
 
 Live at https://jamali-lime.vercel.app
 
@@ -16,6 +16,8 @@ Record once, read everywhere: cash books, journals, ledger, trial balance and sc
 Append only journal: Firestore rules forbid updating or deleting a transaction, so the books cannot be silently rewritten.
 
 61 bookkeeping pages, plus the Convertor: a hub of 256 square buttons, each opening a real working tool page, all client side.
+
+Health: victim registration that issues the Registration ID only after a clean save, and a triage desk that keeps every urgency assessment linked to its victim. Emergency treatment is never delayed by an incomplete form.
 
 A collapsible family tree sidebar on every page: branches open and close with a tap, the active page highlights itself, and the whole tree folds into a burger drawer on the phone.
 
@@ -41,7 +43,7 @@ USING THE APP
 
 Open the site and sign in with your Google account (index.html).
 
-Business is the control room. From there open Add Transaction or View File. Home also carries a Computer tile.
+Business is the control room. From there open Add Transaction or View File. Home also carries Computer and Health tiles.
 
 Add Transaction walks you through it: pick a type (IN, OUT, NEUTRAL or CONTRA), pick the transaction, fill the form, save. Bank charges are stored as their own separate record automatically, so the bank columns stay exact.
 
@@ -49,7 +51,9 @@ View File is the library: every book, register and report is one click away.
 
 Computer is the tools launcher: square tiles only, and today one tile, Convertor, which opens the hub of all 256 tools. Search the hub, tap a square button, and the tool opens on its own page.
 
-The dark sidebar on every page mirrors the family tree: Business folds out to Add Transaction and View File, View File folds out to every book, register and report, and Computer folds out to Convertor and all 256 tools. Nodes with children show a small arrow: v opens a branch, ^ closes it, and the path to the page you are on opens by itself. The address bar always stays clean at the domain root.
+Health is the medical wing. The Health tile on Home opens the Health page, which carries two buttons: Registration and Triage. Registration records a victim at the hospital door, unidentified victims included, and issues the Registration ID only after the form saves. Triage then assesses how urgently the victim needs care and keeps the full assessment history linked to the registration record. Registration flows to triage, and triage flows to the nurse or doctor consultation, according to the victim's needs.
+
+The dark sidebar on every page mirrors the family tree: Business folds out to Add Transaction and View File, View File folds out to every book, register and report, and Computer folds out to Convertor and all 256 tools, and Health folds out to Registration and Triage. Nodes with children show a small arrow: v opens a branch, ^ closes it, and the path to the page you are on opens by itself. The address bar always stays clean at the domain root.
 
 
 ARCHITECTURE
@@ -86,7 +90,7 @@ Every page folder carries the same three files: N.html, N.css and N.js. Below, e
 
 The bookkeeping pages, one folder each, entries 1 to 61:
 
-1. home - the landing page after sign in: greeting and two tiles, Business and Computer.
+1. home - the landing page after sign in: three square tiles, Business, Computer and Health.
 
 2. business - the control room: opens Add Transaction and View File.
 
@@ -218,6 +222,14 @@ The tools family:
 
 65. the tool folders (pages 65 to 320) - one folder per tool, named after the tool (text-to-pdf, pdf-merge, excel-to-pdf and so on), each holding that tool's own real working page. Page number = tool id + 64. The 5 labels that repeat carry a 2 at the end of their slug.
 
+The Health family:
+
+321. health - the Health hub, the doorway to the medical wing: two square buttons, Registration and Triage, in the same tile language as every launcher.
+
+322. victim-registration - victim registration at the hospital door: sixteen fields laid out three per row, the age computed from the date of birth, arrival time recorded automatically, referral and payment captured, and the registering staff member remembered on the device. The Registration ID, four digits and four letters (for example 4827ABCD), is issued only after the form saves. Unidentified victims register without a name and receive a temporary identification ID. Emergency treatment is never delayed by an incomplete form.
+
+323. triage - the triage desk: the assessment that follows registration and decides how urgently the victim needs care. Twelve items, from the Registration ID link, symptoms and vital signs (temperature, pulse, respiratory rate, blood pressure and oxygen saturation) to consciousness, the 0 to 10 pain scale, the priority under the hospital's approved triage protocol, visible injuries, allergies, existing conditions, notes and the assessing healthcare worker. Every assessment keeps its history and is linked to the victim's registration record. Triage orders the care; it does not replace the doctor's diagnosis or the nurse's consultation.
+
 The shared files and engines:
 
 66. the loose root pages 3.html and 6.html - two leftovers from before the one folder per page convention, sitting directly at the public root instead of inside folders: 3.html is a working copy of Add Transaction and 6.html a working copy of the Double Column Cash Book. Both load their stylesheet and script from the page folders and carry the full sidebar, so the addresses /3 and /6 open the same pages as /add-transaction/3 and /cash-book/6. They stay so nothing that links to them breaks.
@@ -307,6 +319,10 @@ suspense: feeds the suspense account (54).
 
 bills: feeds bills receivable and payable (19, 20, folders pending).
 
+healthRegistrations: one document per registered victim (page 322), carrying the Registration ID, the sixteen intake fields and, for unidentified victims, the temporary identification ID.
+
+healthTriage: one document per triage assessment (page 323), linked to its victim by the Registration ID and carrying symptoms, vital signs, consciousness, pain, priority and the assessor.
+
 The report pages 55 to 61 add no collection of their own: they read transactions, invoices and notes and generate every figure at read time.
 
 
@@ -317,6 +333,8 @@ Nothing is public. Every collection requires a signed in user.
 The transactions journal is append only: create and read only. Update and delete are forbidden by rule, so the journal cannot be rewritten.
 
 Register collections allow create, read and update, for settlements and status edits. Delete is always false.
+
+The Health collections, healthRegistrations and healthTriage, are append only: create and read only, like the journal.
 
 Catch all deny: any document not matched above is unreadable and unwritable.
 
@@ -368,7 +386,7 @@ ADDING A NEW PAGE
 
 Create the folder inside public and add N.html, N.css and N.js. The html links the shared base css and its own css, loads menu.js and sidebar.js (menu first, both deferred), then its own js.
 
-Add ONE line to menu.js with the label, icon, folder, page number and depth. The sidebar tree, the open and close arrows and the active highlight all come free. Page numbers are never reused: the next free page number is 321.
+Add ONE line to menu.js with the label, icon, folder, page number and depth. The sidebar tree, the open and close arrows and the active highlight all come free. Page numbers are never reused: the next free page number is 324.
 
 Add its tile to the View File launcher grid in view-file/4.html, or a square tile on Computer for a tools module.
 
@@ -381,7 +399,7 @@ Every folder ships html, css and js. No exceptions.
 
 STATUS AND ROADMAP
 
-Shipped: home 1, business 2, add transaction 3, view file 4, all transactions 5, cash books 6 and 15, journals 7 to 14, creditors, debtors and ledger 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 61, the Computer launcher 62, the Convertor hub 63 and all 256 tools live on their own pages 65 to 320.
+Shipped: home 1, business 2, add transaction 3, view file 4, all transactions 5, cash books 6 and 15, journals 7 to 14, creditors, debtors and ledger 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 61, the Computer launcher 62, the Convertor hub 63 and all 256 tools live on their own pages 65 to 320, and the Health wing, hub 321, victim registration 322 and triage 323.
 
 Next up: the bills receivable and payable folders (19, 20, provisioned), the remaining reports of the 24 report wave, and further converter catalogue phases whenever you call for them.
 

@@ -1,0 +1,80 @@
+/* JAMALI — page 322 · Victim Registration (Health)
+   Own stylesheet for this folder — every JAMALI folder ships html + css + js.
+   Base design system lives in /records/records.css (imported below).
+   Family accent: emerald. Sixteen intake fields on a 3-per-row grid. */
+@import url("/records/records.css");
+
+/* the hidden attribute always wins, even over display rules above */
+[hidden] { display: none !important; }
+
+/* page accent — Health */
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #059669; }
+
+/* the emergency banner — this page is built around it */
+.urgent-note { display: flex; align-items: center; gap: 10px;
+  background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+  font-weight: 700; font-size: 13.5px; border-radius: 12px;
+  padding: 11px 14px; margin-bottom: 14px; }
+
+/* staff select + the little add button (history kept on the device) */
+.staff-row { display: flex; gap: 8px; }
+.staff-row select { flex: 1; min-width: 0; }
+.staff-add { flex: 0 0 38px; border: 1px solid #cbd5e1; background: #fff;
+  color: #059669; font-size: 17px; font-weight: 800; border-radius: 8px;
+  cursor: pointer; line-height: 1; }
+.staff-add:hover { border-color: #059669; background: #ecfdf5; }
+
+/* unidentified victim checkbox cell */
+.unid-box { display: flex; gap: 9px; align-items: flex-start;
+  font-weight: 600; font-size: 12.5px; color: #475569; line-height: 1.45;
+  padding-top: 4px; cursor: pointer; }
+.unid-box input[type="checkbox"] { width: 17px; height: 17px; flex: 0 0 auto;
+  margin-top: 1px; accent-color: #059669; cursor: pointer; }
+
+/* priority badges (same language as records.css status badges) */
+.st-critical { background: #fee2e2; color: #b91c1c; }
+.st-high     { background: #ffedd5; color: #c2410c; }
+.st-medium   { background: #fef3c7; color: #92400e; }
+.st-low      { background: #d1fae5; color: #047857; }
+.st-none     { background: #f1f5f9; color: #94a3b8; }
+.temp-tag { display: inline-block; background: #fef3c7; color: #92400e;
+  font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 2px 8px;
+  margin-left: 6px; vertical-align: middle; }
+
+/* ---------- saved step ---------- */
+.done-card { padding: 40px 22px; text-align: center; max-width: 640px; margin: 0 auto; }
+.done-icon { width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%;
+  background: #dcfce7; color: #15803d; font-size: 30px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; }
+.done-card .sub { margin-bottom: 16px; }
+.id-box { display: inline-flex; flex-direction: column; gap: 4px;
+  background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px;
+  padding: 14px 30px; margin: 0 0 10px; min-width: 280px; }
+.id-k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: #047857; font-weight: 800; }
+.id-v { font-size: 27px; font-weight: 900; letter-spacing: .14em;
+  color: #065f46; font-variant-numeric: tabular-nums; }
+.id-box.temp { background: #fffbeb; border-color: #fde68a; }
+.id-box.temp .id-k { color: #92400e; }
+.id-box.temp .id-v { color: #78350f; letter-spacing: .08em; }
+.done-actions { display: flex; gap: 12px; justify-content: center;
+  margin-top: 16px; flex-wrap: wrap; }
+.ghost-btn { padding: 12px 18px; border-radius: 12px; border: 1px solid #cbd5e1;
+  background: #fff; font-weight: 700; font-size: 14px; cursor: pointer;
+  font-family: inherit; color: inherit; }
+.ghost-btn:hover { border-color: #059669; }
+.cta-btn { display: inline-block; padding: 12px 18px; border-radius: 12px;
+  background: linear-gradient(135deg, #059669, #34d399); color: #fff;
+  text-decoration: none; font-weight: 800; font-size: 14px; }
+
+/* print — clean paper output */
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .urgent-note,
+  .form-actions, .staff-add, .count-line { display: none !important; }
+  body.jamali-has-sidebar { margin-left: 0 !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+  .card { box-shadow: none; }
+}
