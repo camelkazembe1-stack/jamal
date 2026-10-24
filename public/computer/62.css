@@ -58,3 +58,13 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   .wrap { max-width: none; padding: 0; }
   .card { box-shadow: none; }
 }
+
+/* ---------- Convertor launch button (Task 24) ---------- */
+.conv-launch-row { margin: 0 0 16px; }
+.conv-launch { display: flex; align-items: center; gap: 14px; max-width: 480px;
+  text-decoration: none; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  padding: 14px 18px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
+.conv-launch:hover { border-color: #0d9488; background: #f0fdfa; }
+.conv-ico { font-size: 26px; line-height: 1; }
+.conv-txt b { display: block; color: #0f172a; font-size: 15.5px; }
+.conv-txt i { display: block; font-style: normal; color: #64748b; font-size: 13px; margin-top: 2px; }
