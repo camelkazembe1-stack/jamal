@@ -1,19 +1,30 @@
-// patient-module (page 328) — JAMALI Health
-// One tabular summary of everything entered and saved for a patient, from
-// victim registration through the patient's last step. The Registration ID
-// connects the records across the modules: registration, triage, nursing
-// consultations, doctor consultations, pharmacy prescriptions and treatment /
-// procedure orders. The columns are GENERATED from the fields actually saved
-// across those records — as the patient progresses, the next stage's fields
-// join the table. Nothing is entered here; the page only reads.
-import { requireAuth, db, collection, query, onSnapshot } from "/firebase.js";
-import { showPatient, hidePatient } from "/health/patient-info.js";
+// patient-module (page 328) — JAMALI Health — the Patient List (Task 46b)
+// One table of every victim registered on this account, newest first, and
+// nothing else. Each row carries the Registration ID with a one-click Copy
+// button — paste the ID into any stage to find the patient — and it ends
+// with two icon actions: the PEN opens the registration fields in a modal
+// (the ID itself never changes) and the BIN asks once, then removes the
+// registration AND every triage, nurse, doctor, pharmacy and treatment
+// record kept for that ID.
+import { requireAuth, db, collection, query, onSnapshot, updateDoc, writeBatch, doc } from "/firebase.js";
 
 await requireAuth(); // not logged in? -> bounced to "/"
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* the two row actions, drawn as icons: the pen edits, the bin deletes */
+const PEN_SVG = "<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'>" +
+  "<path fill='currentColor' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" +
+  "M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 " +
+  "3.75 3.75 1.83-1.83z'/></svg>";
+const BIN_SVG = "<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'>" +
+  "<path fill='currentColor' d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z" +
+  "M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>";
+
+/* real Firestore or the E2E mock? The real db carries its app. */
+const REAL = !!(db && db.app);
 
 /* ---------- shared helpers (same language as pages 322 to 327) ---------- */
 function pad(n) { return String(n).padStart(2, "0"); }
@@ -34,290 +45,287 @@ function priBadge(p) {
   if (cls) return '<span class="st ' + cls + '">' + esc(p) + "</span>";
   return '<span class="st st-none">' + (p ? esc(p) : "—") + "</span>";
 }
+function ageFromDob(v) {
+  if (!v) return "";
+  const dob = new Date(v + "T00:00:00");
+  const now = new Date();
+  if (isNaN(dob.getTime()) || dob > now) return "";
+  let age = now.getFullYear() - dob.getFullYear();
+  const m = now.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+  return (age >= 0 && age < 140) ? String(age) : "";
+}
 
-/* ---------- live data: the whole patient journey ---------- */
+/* ---------- live data: every stage, so delete can reach them all ---------- */
 let regs = [];
-const regMap = new Map();
 let triages = [];
-const lastTriage = new Map();
 let nurseConsults = [];
 let docConsults = [];
 let rxLines = [];
 let tOrders = [];
+const lastTriage = new Map();
+const loaded = { reg: false, tri: false, nur: false, doc: false, rx: false, trt: false };
+function ready() { return loaded.reg && loaded.tri && loaded.nur && loaded.doc && loaded.rx && loaded.trt; }
 
 onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
-  regs = snap.docs.map((d) => d.data())
+  regs = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
+    .filter((r) => r && r.regId)
     .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
-  regMap.clear();
-  regs.forEach((r) => { if (r && r.regId) regMap.set(String(r.regId), r); });
-  fillIds();
-  renderIndex();
-  refreshSearchLine();
-  if (currentId) renderSummary();
+  loaded.reg = true;
+  renderTable();
 });
 onSnapshot(query(collection(db, "healthTriage")), (snap) => {
-  triages = snap.docs.map((d) => d.data())
+  triages = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
     .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
   lastTriage.clear();
   triages.forEach((t) => {
     if (t && t.regId && !lastTriage.has(String(t.regId))) lastTriage.set(String(t.regId), t);
   });
-  renderIndex();
-  if (currentId) renderSummary();
+  loaded.tri = true;
+  renderTable();
 });
 onSnapshot(query(collection(db, "healthNurseConsultations")), (snap) => {
-  nurseConsults = snap.docs.map((d) => d.data());
-  if (currentId) renderSummary();
+  nurseConsults = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
+  loaded.nur = true;
 });
 onSnapshot(query(collection(db, "healthDoctorConsultations")), (snap) => {
-  docConsults = snap.docs.map((d) => d.data());
-  if (currentId) renderSummary();
+  docConsults = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
+  loaded.doc = true;
 });
 onSnapshot(query(collection(db, "healthPrescriptions")), (snap) => {
-  rxLines = snap.docs.map((d) => d.data());
-  if (currentId) renderSummary();
+  rxLines = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
+  loaded.rx = true;
 });
 onSnapshot(query(collection(db, "healthTreatmentOrders")), (snap) => {
-  tOrders = snap.docs.map((d) => d.data());
-  if (currentId) renderSummary();
+  tOrders = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
+  loaded.trt = true;
 });
 
-/* ---------- STEP 1: search + index ---------- */
-function qerr(msg) { const e = $("#q-err"); e.hidden = !msg; e.textContent = msg || ""; }
+/* every collection a patient's records can live in, with a live getter */
+const STAGE_COLLS = [
+  ["healthRegistrations", () => regs],
+  ["healthTriage", () => triages],
+  ["healthNurseConsultations", () => nurseConsults],
+  ["healthDoctorConsultations", () => docConsults],
+  ["healthPrescriptions", () => rxLines],
+  ["healthTreatmentOrders", () => tOrders]
+];
 
-function fillIds() {
-  $("#q-regids").innerHTML = regs.map((r) =>
-    '<option value="' + esc(r.regId) + '">' + esc(who(r)) + "</option>"
-  ).join("");
-}
-
-function refreshSearchLine() {
-  const id = $("#q-regid").value.trim().toUpperCase();
-  const line = $("#q-line");
-  if (!id || $("#s-search").hidden) { line.textContent = ""; line.className = "victim-line"; return; }
-  const r = regMap.get(id);
-  if (r) {
-    line.className = "victim-line ok";
-    line.textContent = "On record: " + who(r) +
-      (r.sex ? " · " + r.sex : "") +
-      (r.age !== "" && r.age != null ? " · " + r.age + "y" : "");
-  } else if (id.length === 8) {
-    line.className = "victim-line miss";
-    line.textContent = "No registration found for this ID on this account.";
-  } else {
-    line.textContent = "";
-    line.className = "victim-line";
-  }
-}
-
-function renderIndex() {
+/* ---------- the table ---------- */
+function renderTable() {
   const has = regs.length > 0;
-  $("#i-empty").hidden = has;
-  $("#i-wrap").hidden = !has;
-  $("#i-body").innerHTML = regs.map((r) => {
+  $("#p-empty").hidden = has;
+  $("#p-wrap").hidden = !has;
+  $("#p-body").innerHTML = regs.map((r) => {
     const t = lastTriage.get(String(r.regId));
     const ageSex = (r.age !== "" && r.age != null ? r.age + "y" : "—") +
       (r.sex ? " · " + r.sex : "");
-    return "<tr><td class='c-no'>" + esc(r.regId) + "</td>" +
+    return "<tr>" +
+      "<td class='c-no id-cell'><span class='id-txt'>" + esc(r.regId) + "</span>" +
+        "<button type='button' class='copy-btn' data-copy='" + esc(r.regId) + "'>Copy</button></td>" +
       "<td class='c-party'>" + esc(who(r)) + "</td>" +
-      "<td>" + esc(ageSex) + "</td>" +
+      "<td class='nowrap'>" + esc(ageSex) + "</td>" +
+      "<td class='nowrap'>" + (r.phone ? esc(r.phone) : "—") + "</td>" +
       "<td class='c-date'>" + esc(when(r.arrivalAt || r.savedAt)) + "</td>" +
       "<td>" + priBadge(t ? t.priority : r.priority) + "</td>" +
-      "<td><button type='button' class='ghost-btn i-open' data-regid='" + esc(r.regId) + "'>Open summary</button></td></tr>";
+      "<td class='act-cell'>" +
+        "<button type='button' class='icon-btn edit-btn' data-regid='" + esc(r.regId) +
+          "' title='Edit patient' aria-label='Edit patient'>" + PEN_SVG + "</button>" +
+        "<button type='button' class='icon-btn del-btn' data-regid='" + esc(r.regId) +
+          "' title='Delete patient' aria-label='Delete patient'>" + BIN_SVG + "</button></td>" +
+    "</tr>";
   }).join("");
-  $("#i-count").textContent = has
-    ? regs.length + (regs.length === 1 ? " patient on record."
-                                        : " patients on record.")
+  $("#p-count").textContent = has
+    ? regs.length + (regs.length === 1 ? " patient on this account."
+                                       : " patients on this account.")
     : "";
 }
 
-$("#q-regid").addEventListener("input", () => {
-  const el = $("#q-regid");
-  el.value = el.value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 8);
-  refreshSearchLine();
-});
-$("#q-regid").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") { e.preventDefault(); $("#q-find").click(); }
-});
-$("#q-find").addEventListener("click", () => {
-  qerr("");
-  const id = $("#q-regid").value.trim().toUpperCase();
-  if (!id) return qerr("Enter the patient's Registration ID, or pick one from the list.");
-  if (!/^[0-9]{4}[A-Z]{4}$/.test(id)) {
-    return qerr("The Registration ID is 4 digits and 4 letters, for example 4827ABCD.");
+/* ---------- copy the ID ---------- */
+async function copyText(t) {
+  try {
+    await navigator.clipboard.writeText(t);
+    return true;
+  } catch (e) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = t;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      ta.remove();
+      return ok;
+    } catch (e2) {
+      return false;
+    }
   }
-  if (!regMap.has(id)) {
-    return qerr("No patient with Registration ID " + id + " was found on this account. Check the slip, or register the patient first.");
-  }
-  openSummary(id);
-});
-$("#i-body").addEventListener("click", (e) => {
-  const btn = e.target.closest(".i-open");
-  if (btn) { qerr(""); openSummary(btn.getAttribute("data-regid")); }
-});
-
-/* ---------- STEP 2: the generated summary ---------- */
-let currentId = null;
-
-function openSummary(regId) {
-  showPatient(regId);
-  currentId = regId;
-  renderSummary();
-  $("#s-search").hidden = true;
-  $("#s-summary").hidden = false;
-  window.scrollTo(0, 0);
 }
 
-$("#s-back").addEventListener("click", (e) => {
-  e.preventDefault();
-  hidePatient();
-  currentId = null;
-  $("#s-summary").hidden = true;
-  $("#s-search").hidden = false;
-  refreshSearchLine();
-  window.scrollTo(0, 0);
-});
+/* ---------- edit: the registration fields, the ID never changes ---------- */
+let editId = null;
 
-/* friendly field names — anything unmapped is prettified from its key */
-const LABELS = {
-  fullName: "Patient name", dob: "Date of birth", age: "Age", sex: "Sex",
-  phone: "Phone", address: "Address", emergencyContact: "Emergency contact",
-  arrivalAt: "Arrived", incidentType: "Incident", incidentDescription: "Incident notes",
-  department: "Department", priority: "Priority", staff: "Registered by",
-  referral: "Referred", referredBy: "Referring facility", payment: "Payment",
-  isUnidentified: "Unidentified patient",
-  assessedAt: "Assessed at", symptoms: "Symptoms", consciousness: "Consciousness",
-  pain: "Pain (0–10)", vTemp: "Temperature (°C)", vPulse: "Pulse (bpm)",
-  vRR: "Respiratory rate (/min)", vBP: "Blood pressure (mmHg)", vSpO2: "SpO2 (%)",
-  injuries: "Injuries", allergies: "Allergies", conditions: "Existing conditions",
-  notes: "Notes", assessedBy: "Assessed by",
-  chiefComplaint: "Chief complaint", hpi: "History of present illness",
-  relevantHistory: "Relevant medical history", currentMedications: "Current medications",
-  painLocation: "Pain location", painSeverity: "Pain severity (0–10)",
-  painDuration: "Pain duration", painCharacter: "Pain character",
-  nursingAssessment: "Nursing assessment", nursingProblems: "Nursing problems",
-  nursingInterventions: "Nursing interventions", responseToCare: "Response to care",
-  nursingNotes: "Nursing notes", nurse: "Nurse", status: "Status",
-  presentingComplaint: "Presenting complaint", physicalExam: "Physical examination",
-  clinicalFindings: "Clinical findings", additionalNotes: "Additional notes",
-  dxPrimary: "Primary diagnosis", dxAdditional: "Additional diagnoses",
-  dxType: "Diagnosis type", dxNotes: "Diagnostic notes",
-  investigations: "Investigations", treatmentPlan: "Treatment plan",
-  startedAt: "Started at", completedAt: "Completed at", sentAt: "Sent at",
-  performedAt: "Performed at",
-  doctor: "Doctor", destinationName: "Sent to destination",
-  medicine: "Medicine", dose: "Dose", frequency: "Frequency", duration: "Duration",
-  prescribedBy: "Prescribed by", replacementOf: "Replacement for",
-  alt: "Proposed alternative", decision: "Doctor's decision", dispensed: "Dispensed",
-  order: "Doctor's order", performed: "Treatment performed", outcome: "Outcome",
-  worker: "Healthcare worker", updatedAt: "Last update", orderedBy: "Ordered by"
-};
-function label(k) {
-  if (LABELS[k]) return LABELS[k];
-  const s = String(k).replace(/([A-Z])/g, " $1");
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
+function merr(msg) { const e = $("#m-err"); e.hidden = !msg; e.textContent = msg || ""; }
 
-/* internal keys never become columns */
-const SKIP = new Set(["regId", "createdAt", "savedAt", "triageSavedAt", "consultationId", "__id"]);
-
-/* the stages, in workflow order, with the field order each form uses */
-const STAGES = [
-  { name: "Registration", docs: () => regs,
-    whoKey: "staff",
-    order: ["fullName", "dob", "age", "sex", "phone", "address", "emergencyContact",
-            "arrivalAt", "incidentType", "incidentDescription", "department",
-            "priority", "staff", "referral", "referredBy", "payment",
-            "isUnidentified"] },
-  { name: "Triage", docs: () => triages, whoKey: "assessedBy",
-    order: ["assessedAt", "symptoms", "consciousness", "priority", "pain",
-            "vTemp", "vPulse", "vRR", "vBP", "vSpO2", "injuries", "allergies",
-            "conditions", "notes", "assessedBy"] },
-  { name: "Nurse consultation", docs: () => nurseConsults, whoKey: "nurse",
-    order: ["status", "chiefComplaint", "hpi", "relevantHistory", "currentMedications",
-            "allergies", "vTemp", "vPulse", "vRR", "vBP", "vSpO2", "painLocation",
-            "painSeverity", "painDuration", "painCharacter", "nursingAssessment",
-            "nursingProblems", "nursingInterventions", "responseToCare", "nursingNotes"] },
-  { name: "Doctor consultation", docs: () => docConsults, whoKey: "doctor",
-    order: ["status", "presentingComplaint", "hpi", "relevantHistory", "currentMedications",
-            "allergies", "vTemp", "vPulse", "vRR", "vBP", "vSpO2", "physicalExam",
-            "clinicalFindings", "additionalNotes", "dxPrimary", "dxAdditional",
-            "dxType", "dxNotes", "investigations", "treatmentPlan", "destinationName"] },
-  { name: "Pharmacy — prescription", docs: () => rxLines, whoKey: "prescribedBy",
-    order: ["medicine", "dose", "frequency", "duration", "notes", "status",
-            "replacementOf", "alt", "decision", "dispensed"] },
-  { name: "Treatment / Procedures", docs: () => tOrders, whoKey: "orderedBy",
-    order: ["order", "status", "performed", "outcome", "notes", "worker", "updatedAt"] }
-];
-
-function fmt(v) {
-  if (v === "" || v == null) return "";
-  if (v === true) return "Yes";
-  if (v === false) return "No";
-  if (Array.isArray(v)) return v.map(fmt).filter(Boolean).join("; ");
-  if (typeof v === "object") {
-    return Object.entries(v)
-      .filter(([, x]) => x !== "" && x != null && typeof x !== "object")
-      .map(([k, x]) => label(k) + ": " + fmt(x))
-      .join("; ");
-  }
-  return String(v);
-}
-
-function renderSummary() {
-  const r = regMap.get(String(currentId));
+function openEdit(regId) {
+  const r = regs.find((x) => String(x.regId) === String(regId));
   if (!r) return;
-  const t = lastTriage.get(String(currentId));
-  $("#s-wholine").textContent = "The full record for " + who(r) + " · Registration ID " + r.regId;
-  $("#h-regid").textContent = r.regId;
-  $("#h-line").textContent = who(r) +
-    (r.sex ? " · " + r.sex : "") +
-    (r.age !== "" && r.age != null ? " · " + r.age + "y" : "") +
-    " · arrived " + when(r.arrivalAt || r.savedAt) +
-    (t && t.priority ? " · triage priority " + t.priority : "");
-
-  /* one row per saved record, chronological across the whole journey */
-  const rows = [];
-  STAGES.forEach((st) => {
-    st.docs()
-      .filter((d) => d && String(d.regId) === String(currentId))
-      .sort((a, b) => String(a.savedAt || "").localeCompare(String(b.savedAt || "")))
-      .forEach((d) => rows.push({ stage: st.name, whoKey: st.whoKey, order: st.order, data: d }));
-  });
-  rows.sort((a, b) => String(a.data.savedAt || "").localeCompare(String(b.data.savedAt || "")));
-
-  const has = rows.length > 0;
-  $("#s-empty").hidden = has;
-  $("#s-wrap").hidden = !has;
-  if (!has) { $("#s-count").textContent = ""; return; }
-
-  /* the columns are generated from the fields actually saved */
-  const fieldCols = [];
-  rows.forEach((row) => {
-    row.order.forEach((k) => {
-      if (!SKIP.has(k) && k in row.data && !fieldCols.includes(k)) fieldCols.push(k);
-    });
-    Object.keys(row.data).forEach((k) => {
-      if (!SKIP.has(k) && !fieldCols.includes(k)) fieldCols.push(k);
-    });
-  });
-
-  $("#s-head").innerHTML = "<tr><th>Stage</th><th>Saved</th><th>By</th>" +
-    fieldCols.map((k) => "<th>" + esc(label(k)) + "</th>").join("") + "</tr>";
-
-  $("#s-body").innerHTML = rows.map((row) => {
-    const by = row.data[row.whoKey] || "—";
-    return "<tr><td class='stage-cell'>" + esc(row.stage) + "</td>" +
-      "<td class='when-cell'>" + esc(when(row.data.savedAt)) + "</td>" +
-      "<td class='who-cell'>" + esc(by) + "</td>" +
-      fieldCols.map((k) => {
-        const v = fmt(row.data[k]);
-        return "<td>" + (v === "" ? "—" : esc(v)) + "</td>";
-      }).join("") + "</tr>";
-  }).join("");
-
-  const nFields = fieldCols.length;
-  $("#s-count").textContent = rows.length +
-    (rows.length === 1 ? " record" : " records") + " · " + nFields +
-    (nFields === 1 ? " field" : " fields") + " saved across the stages.";
+  editId = String(r.regId);
+  $("#m-title").textContent = "Edit patient";
+  $("#m-sub").textContent = "Registration ID " + r.regId + " · " + who(r) +
+    " — the ID itself never changes.";
+  $("#m-name").value = r.fullName || "";
+  $("#m-dob").value = r.dob || "";
+  $("#m-age").value = r.dob ? ageFromDob(r.dob)
+                            : (r.age === "" || r.age == null ? "" : String(r.age));
+  $("#m-sex").value = r.sex || "";
+  $("#m-phone").value = r.phone || "";
+  $("#m-address").value = r.address || "";
+  $("#m-kin").value = r.emergencyContact || "";
+  $("#m-arrival").value = r.arrivalAt || "";
+  $("#m-incident").value = r.incidentType || "";
+  $("#m-desc").value = r.incidentDescription || "";
+  $("#m-dept").value = r.department || "";
+  $("#m-priority").value = r.priority || "";
+  $("#m-referral").value = r.referral === "Yes" ? "Yes" : "No";
+  $("#m-facility").value = r.referredBy || "";
+  $("#m-facility-label").hidden = $("#m-referral").value !== "Yes";
+  $("#m-payment").value = r.payment || "";
+  merr("");
+  $("#m-ok").hidden = true;
+  $("#m-wrap").hidden = false;
+  window.scrollTo(0, 0);
 }
+
+function closeModal() {
+  editId = null;
+  $("#m-wrap").hidden = true;
+}
+
+$("#m-dob").addEventListener("change", () => {
+  $("#m-age").value = ageFromDob($("#m-dob").value);
+});
+$("#m-referral").addEventListener("change", () => {
+  const yes = $("#m-referral").value === "Yes";
+  $("#m-facility-label").hidden = !yes;
+  if (!yes) $("#m-facility").value = "";
+});
+$("#m-cancel").addEventListener("click", closeModal);
+$("#m-wrap").addEventListener("click", (e) => {
+  if (e.target === $("#m-wrap")) closeModal();
+});
+
+$("#m-save").addEventListener("click", async () => {
+  if (!editId) return;
+  const r = regs.find((x) => String(x.regId) === editId);
+  if (!r) { merr("This patient is no longer on the list — close and reopen."); return; }
+  const name = $("#m-name").value.trim();
+  const dob = $("#m-dob").value;
+  const age = $("#m-age").value;
+  const referral = $("#m-referral").value;
+  const facility = $("#m-facility").value.trim();
+  if (dob && !age) return merr("The date of birth is not valid — it cannot be in the future.");
+  if (referral === "Yes" && !facility) return merr("Referral is set to Yes — enter the referring facility.");
+  const payload = {
+    isUnidentified: !name,
+    fullName: name,
+    dob,
+    age: age === "" ? "" : Number(age),
+    sex: $("#m-sex").value,
+    phone: $("#m-phone").value.trim(),
+    address: $("#m-address").value.trim(),
+    emergencyContact: $("#m-kin").value.trim(),
+    arrivalAt: $("#m-arrival").value,
+    incidentType: $("#m-incident").value,
+    incidentDescription: $("#m-desc").value.trim(),
+    department: $("#m-dept").value,
+    priority: $("#m-priority").value,
+    referral,
+    referredBy: referral === "Yes" ? facility : "",
+    payment: $("#m-payment").value,
+    updatedAt: new Date().toISOString()
+  };
+  const btn = $("#m-save");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+  try {
+    await updateDoc(doc(db, "healthRegistrations", r.__id), payload);
+    $("#m-ok").hidden = false;
+    merr("");
+    setTimeout(closeModal, 500);
+  } catch (e) {
+    merr("Save failed: " + ((e && e.message) || e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+  }
+});
+
+/* ---------- delete: one confirm, then every record for the ID goes ---------- */
+async function askDelete(regId) {
+  const r = regs.find((x) => String(x.regId) === String(regId));
+  if (!r) return;
+  if (!ready()) { window.alert("Still loading the records — try again in a moment."); return; }
+  const n = STAGE_COLLS.slice(1).reduce((s, [, get]) =>
+    s + get().filter((d) => d && String(d.regId) === String(regId)).length, 0);
+  const msg = "Delete " + who(r) + " (Registration ID " + r.regId + ")?\n\n" +
+    "This removes the registration and " +
+    (n === 1 ? "1 linked record" : n + " linked records") +
+    " across triage, nursing, doctor, pharmacy and treatment.\nThis cannot be undone.";
+  if (!window.confirm(msg)) return;
+  const btns = Array.prototype.slice.call(document.querySelectorAll(".del-btn"));
+  btns.forEach((b) => { b.disabled = true; });
+  try {
+    if (REAL) {
+      let batch = writeBatch(db), k = 0;
+      for (const [coll, get] of STAGE_COLLS) {
+        for (const d of get()) {
+          if (d && String(d.regId) === String(regId) && d.__id) {
+            batch.delete(doc(db, coll, d.__id));
+            if (++k >= 400) { await batch.commit(); batch = writeBatch(db); k = 0; }
+          }
+        }
+      }
+      if (k) await batch.commit();
+    } else {
+      const st = globalThis.__store; // the E2E mock store — keep it consistent too
+      if (st) for (const [coll] of STAGE_COLLS) {
+        st[coll] = (st[coll] || []).filter((d) => String(d.regId) !== String(regId));
+      }
+    }
+    regs = regs.filter((x) => String(x.regId) !== String(regId));
+    triages = triages.filter((x) => String(x.regId) !== String(regId));
+    nurseConsults = nurseConsults.filter((x) => String(x.regId) !== String(regId));
+    docConsults = docConsults.filter((x) => String(x.regId) !== String(regId));
+    rxLines = rxLines.filter((x) => String(x.regId) !== String(regId));
+    tOrders = tOrders.filter((x) => String(x.regId) !== String(regId));
+    lastTriage.delete(String(regId));
+    renderTable();
+  } catch (e) {
+    window.alert("Delete failed: " + ((e && e.message) || e));
+  } finally {
+    btns.forEach((b) => { b.disabled = false; });
+  }
+}
+
+/* ---------- row actions: copy, edit, delete ---------- */
+$("#p-body").addEventListener("click", async (e) => {
+  const c = e.target.closest(".copy-btn");
+  if (c) {
+    const id = c.getAttribute("data-copy");
+    const ok = await copyText(id);
+    if (ok) {
+      c.textContent = "Copied ✓";
+      c.classList.add("done");
+      setTimeout(() => { c.textContent = "Copy"; c.classList.remove("done"); }, 1200);
+    } else {
+      window.prompt("Copy the Registration ID:", id);
+    }
+    return;
+  }
+  const eb = e.target.closest(".edit-btn");
+  if (eb) { openEdit(eb.getAttribute("data-regid")); return; }
+  const dbtn = e.target.closest(".del-btn");
+  if (dbtn) { askDelete(dbtn.getAttribute("data-regid")); }
+});

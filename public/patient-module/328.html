@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Patient Module — JAMALI Health</title>
+<title>Patient List — JAMALI Health</title>
 <link rel="stylesheet" href="/records/records.css">
 <link rel="stylesheet" href="/patient-module/328.css">
 <script src="/menu.js" defer></script>
@@ -12,79 +12,137 @@
 <body>
 <main class="wrap">
 
-  <!-- STEP 1 · search and the patient index -->
-  <section id="s-search">
+  <!-- the whole page: one table of every victim -->
+  <section id="s-list">
     <a class="back" href="/health/321">&larr; Health</a>
-    <h1>Patient Module</h1>
-    <p class="sub">One tabular summary of everything entered and saved for a patient, from victim registration through the patient's last step. The Registration ID connects the records; the columns are generated from the fields actually saved.</p>
-
-    <div class="flow-ribbon">Registration <span class="arr">&rarr;</span> Triage <span class="arr">&rarr;</span> Nurse Consultation <span class="arr">&rarr;</span> Doctor Consultation <span class="arr">&rarr;</span> Pharmacy / Treatment <span class="arr">&rarr;</span> <b>Patient Module</b></div>
-
-    <div class="card add-card">
-      <h2>Find a patient</h2>
-      <div class="search-row">
-        <input id="q-regid" list="q-regids" placeholder="Registration ID, e.g. 4827ABCD" autocomplete="off">
-        <datalist id="q-regids"></datalist>
-        <button class="btn-primary" id="q-find" type="button">Find Patient</button>
-      </div>
-      <p class="victim-line" id="q-line"></p>
-      <p class="form-err" id="q-err" hidden></p>
-    </div>
-
-    <div class="card" id="idx-card">
-      <h2>All patients</h2>
-      <div class="empty" id="i-empty">
-        <div class="empty-icon">🗂️</div>
-        <div class="empty-title">No patients registered yet</div>
-        <div class="empty-sub">Every registered patient appears here, newest first. Open one to see the full tabular summary of everything saved so far.</div>
-      </div>
-      <div class="table-wrap" id="i-wrap" hidden>
-        <table class="bk">
-          <thead>
-            <tr><th>Registration ID</th><th>Patient</th><th>Age / Sex</th><th>Arrived</th><th>Triage priority</th><th></th></tr>
-          </thead>
-          <tbody id="i-body"></tbody>
-        </table>
-      </div>
-      <p class="count-line" id="i-count"></p>
-    </div>
-  </section>
-
-  <!-- STEP 2 · the patient's full tabular summary -->
-  <section id="s-summary" hidden>
-    <a class="back" href="#" id="s-back">&larr; Back to the patients</a>
-    <h1>Patient Module</h1>
-    <p class="sub" id="s-wholine"></p>
-
-    <div class="flow-ribbon">Registration <span class="arr">&rarr;</span> Triage <span class="arr">&rarr;</span> Nurse Consultation <span class="arr">&rarr;</span> Doctor Consultation <span class="arr">&rarr;</span> Pharmacy / Treatment <span class="arr">&rarr;</span> <b>Patient Module</b></div>
-
-    <div class="card head-card">
-      <div class="id-row">
-        <span class="id-k">Registration ID</span>
-        <span class="id-v" id="h-regid"></span>
-      </div>
-      <p class="victim-line ok" id="h-line"></p>
-    </div>
+    <h1>Patient List</h1>
+    <p class="sub">Every victim registered on this account, newest first. Copy the Registration ID with the button beside it — the pen and the bin at the end of a row edit or delete that patient and everything saved for them.</p>
 
     <div class="card">
-      <h2>The patient's record &mdash; every field, every stage</h2>
-      <p class="mini-note" style="margin-bottom:10px">One row per saved record, in the order it was saved. The columns are generated from the fields actually entered and saved across the modules, so the table grows as the patient moves through the workflow. Reading across one row shows that record in full.</p>
-      <div class="empty" id="s-empty">
+      <h2>All patients</h2>
+      <div class="empty" id="p-empty">
         <div class="empty-icon">🗂️</div>
-        <div class="empty-title">Nothing saved yet</div>
-        <div class="empty-sub">Records appear here as the stages save them.</div>
+        <div class="empty-title">No patients registered yet</div>
+        <div class="empty-sub">Register victims on the Registration page — every one of them then appears here, newest first.</div>
       </div>
-      <div class="table-wrap sum-wrap" id="s-wrap" hidden>
-        <table class="bk sum">
-          <thead id="s-head"></thead>
-          <tbody id="s-body"></tbody>
+      <div class="table-wrap" id="p-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Registration ID</th><th>Patient</th><th>Age · Sex</th><th>Phone</th><th>Arrived</th><th>Priority</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="p-body"></tbody>
         </table>
       </div>
-      <p class="count-line" id="s-count"></p>
+      <p class="count-line" id="p-count"></p>
     </div>
   </section>
 
 </main>
+
+<!-- the edit modal -->
+<div class="modal-ovl" id="m-wrap" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h2 id="m-title">Edit patient</h2>
+    <p class="mini-note" id="m-sub"></p>
+    <div class="m-grid">
+
+      <label>Full Name
+        <input id="m-name" type="text" placeholder="Victim's full name">
+      </label>
+      <label>Date of Birth
+        <input id="m-dob" type="date">
+      </label>
+      <label>Age (automatic)
+        <input id="m-age" type="text" readonly placeholder="—">
+      </label>
+      <label>Sex
+        <select id="m-sex">
+          <option value="">— Select —</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </label>
+
+      <label>Phone Number
+        <input id="m-phone" type="tel" placeholder="e.g. 0712 345 678">
+      </label>
+      <label>Address and Location
+        <input id="m-address" type="text" placeholder="Village, street, landmark">
+      </label>
+      <label>Emergency Contact / Next of Kin
+        <input id="m-kin" type="text" placeholder="Contact name and phone">
+      </label>
+      <label>Arrival Date &amp; Time
+        <input id="m-arrival" type="datetime-local">
+      </label>
+
+      <label>Incident Type
+        <select id="m-incident">
+          <option value="">— Select —</option>
+          <option>Road Accident</option>
+          <option>Physical Assault</option>
+          <option>Burn</option>
+          <option>Fall</option>
+          <option>Poisoning</option>
+          <option>Workplace Accident</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Incident Description
+        <textarea id="m-desc" rows="2" placeholder="Brief description of what happened"></textarea>
+      </label>
+      <label>Hospital Department
+        <select id="m-dept">
+          <option value="">— Select —</option>
+          <option>Emergency Department</option>
+          <option>Outpatient Department (OPD)</option>
+          <option>Inpatient Department</option>
+          <option>Surgery</option>
+          <option>Maternity</option>
+          <option>Intensive Care Unit (ICU)</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Emergency Priority
+        <select id="m-priority">
+          <option value="">— Select —</option>
+          <option>Critical</option>
+          <option>High</option>
+          <option>Medium</option>
+          <option>Low</option>
+        </select>
+      </label>
+
+      <label>Referral Information
+        <select id="m-referral">
+          <option>No</option>
+          <option>Yes</option>
+        </select>
+      </label>
+      <label>Insurance / Payment
+        <select id="m-payment">
+          <option value="">— Select —</option>
+          <option>Insurance</option>
+          <option>Cash</option>
+          <option>Other</option>
+        </select>
+      </label>
+
+      <label id="m-facility-label" hidden>Referring Facility
+        <input id="m-facility" type="text" placeholder="Name of the referring facility">
+      </label>
+
+    </div>
+
+    <p class="form-err" id="m-err" hidden></p>
+    <p class="form-ok" id="m-ok" hidden>Saved — the list is updated.</p>
+    <div class="form-actions">
+      <button class="btn-primary" id="m-save" type="button">Save Changes</button>
+      <button class="btn-ghost" id="m-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="/patient-module/328.js"></script>
 </body>
 </html>

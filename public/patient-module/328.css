@@ -1,11 +1,11 @@
-/* JAMALI — page 328 · Patient Module (Health)
+/* JAMALI — page 328 · Patient List (Health)
    Own stylesheet for this folder — every JAMALI folder ships html + css + js.
    Base design system lives in /records/records.css (imported below).
-   Family accent: emerald. Same search, index and card language as the other
-   Health pages, plus the wide generated summary table. */
+   Family accent: emerald. One table of every victim, an edit modal, and
+   copy / edit / delete actions. Task 46: the page is the list, nothing else. */
 @import url("/records/records.css");
 
-/* the hidden attribute always wins, even over display rules above */
+/* the hidden attribute always wins, even over display rules below */
 [hidden] { display: none !important; }
 
 /* page accent — Health */
@@ -13,43 +13,30 @@ h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #059669; }
 
-/* the workflow ribbon */
-.flow-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;
-  font-size: 13px; font-weight: 600; border-radius: 12px;
-  padding: 10px 14px; margin-bottom: 12px; }
-.flow-ribbon b { font-weight: 800; }
-.flow-ribbon .arr { color: #059669; font-weight: 800; }
+/* the Registration ID cell: the ID and its copy button */
+.id-cell { white-space: nowrap; }
+.id-txt { font-weight: 800; letter-spacing: .08em;
+  font-variant-numeric: tabular-nums; margin-right: 8px; color: #065f46; }
+.copy-btn { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 8px;
+  padding: 4px 9px; font-size: 11.5px; font-weight: 800; cursor: pointer;
+  font-family: inherit; color: #334155; }
+.copy-btn:hover { border-color: #059669; color: #065f46; }
+.copy-btn.done { background: #d1fae5; border-color: #059669; color: #065f46; }
 
-/* the Registration ID search row: input + Find Patient */
-.search-row { display: flex; gap: 10px; align-items: stretch; }
-.search-row input { flex: 1; min-width: 0; border: 1px solid #cbd5e1;
-  border-radius: 10px; padding: 12px 14px; font-size: 16px; font-weight: 700;
-  letter-spacing: .12em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
-.search-row input:focus { outline: 2px solid #bae6fd; border-color: #0ea5e9; }
-.victim-line { font-size: 12.5px; font-weight: 700; min-height: 16px; margin: 8px 0 0; }
-.victim-line.ok { color: #047857; }
-.victim-line.miss { color: #b91c1c; }
+/* the actions cell: the pen edits, the bin deletes */
+.act-cell { white-space: nowrap; }
+.icon-btn { width: 34px; height: 34px; display: inline-flex; align-items: center;
+  justify-content: center; border-radius: 10px; border: 1px solid #cbd5e1;
+  background: #fff; cursor: pointer; color: #475569; margin-right: 6px;
+  padding: 0; vertical-align: middle; }
+.icon-btn svg { display: block; }
+.icon-btn:hover { border-color: #059669; color: #059669; background: #ecfdf5; }
+.icon-btn.del-btn { color: #b91c1c; }
+.icon-btn.del-btn:hover { border-color: #b91c1c; background: #fef2f2; }
+.icon-btn:disabled { opacity: .55; cursor: wait; }
 
-/* the patient header card */
-.head-card { text-align: center; }
-.id-row { display: inline-flex; flex-direction: column; gap: 4px;
-  background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px;
-  padding: 12px 28px; min-width: 260px; }
-.id-k { font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
-  color: #047857; font-weight: 800; }
-.id-v { font-size: 25px; font-weight: 900; letter-spacing: .14em;
-  color: #065f46; font-variant-numeric: tabular-nums; }
-.head-card .victim-line { margin-top: 10px; }
-
-/* the generated summary table */
-.sum-wrap { overflow-x: auto; }
-table.sum th { text-align: left; white-space: nowrap; font-size: 11.5px;
-  letter-spacing: .04em; text-transform: uppercase; color: #475569; }
-table.sum td { vertical-align: top; font-size: 13px; }
-table.sum td.stage-cell { font-weight: 800; color: #065f46; white-space: nowrap; }
-table.sum td.when-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
-table.sum td.who-cell { white-space: nowrap; color: #475569; }
+.nowrap { white-space: nowrap; }
+td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* priority badges (same language as the triage page) */
 .st-critical { background: #fee2e2; color: #b91c1c; }
@@ -62,19 +49,39 @@ table.sum td.who-cell { white-space: nowrap; color: #475569; }
 
 .mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
 
-/* action buttons inside tables */
-.ghost-btn { padding: 8px 12px; border-radius: 10px; border: 1px solid #cbd5e1;
-  background: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
-  font-family: inherit; color: inherit; }
-.ghost-btn:hover { border-color: #059669; }
+/* the saved note inside the edit modal */
+.form-ok { font-size: 13px; font-weight: 800; color: #047857; margin: 10px 0 0; }
+
+/* the edit modal */
+.modal-ovl { position: fixed; inset: 0; background: rgba(15, 23, 42, .55);
+  z-index: 1200; display: flex; align-items: flex-start; justify-content: center;
+  padding: 24px 12px; overflow-y: auto; }
+.modal-card { background: #fff; border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(2, 6, 23, .35);
+  width: 100%; max-width: 760px; padding: 20px 22px 18px; }
+.modal-card h2 { margin: 0; }
+.modal-card .mini-note { margin: 6px 0 0; }
+.m-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px; margin-top: 14px; }
+.m-grid label { display: flex; flex-direction: column; gap: 5px;
+  font-size: 12.5px; font-weight: 700; color: #334155; }
+.m-grid input, .m-grid select, .m-grid textarea {
+  border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px;
+  font-size: 14px; font-family: inherit; background: #fff; color: #0f172a; }
+.m-grid input:focus, .m-grid select:focus, .m-grid textarea:focus {
+  outline: 2px solid #a7f3d0; border-color: #059669; }
+.modal-card .form-actions { margin-top: 14px; }
 
 /* narrow screens */
-@media (max-width: 640px) { .search-row { flex-direction: column; } }
+@media (max-width: 760px) {
+  .m-grid { grid-template-columns: 1fr; }
+  .modal-ovl { padding: 12px 8px; }
+}
 
 /* print — clean paper output */
 @media print {
-  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .flow-ribbon,
-  .count-line, .search-row { display: none !important; }
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .count-line,
+  .modal-ovl, .act-cell, .copy-btn { display: none !important; }
   body.jamali-has-sidebar { margin-left: 0 !important; }
   body { background: #fff; }
   .wrap { max-width: none; padding: 0; }
