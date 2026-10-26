@@ -1,0 +1,105 @@
+/* JAMALI — page 327 · Treatment / Procedures (Health)
+   Own stylesheet for this folder — every JAMALI folder ships html + css + js.
+   Base design system lives in /records/records.css (imported below).
+   Family accent: emerald. Same panel, search, queue and form language as the
+   other Health pages, plus the treatment status chips and the order banner. */
+@import url("/records/records.css");
+
+/* the hidden attribute always wins, even over display rules above */
+[hidden] { display: none !important; }
+
+/* page accent — Health */
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #059669; }
+
+/* the workflow ribbon */
+.flow-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;
+  font-size: 13px; font-weight: 600; border-radius: 12px;
+  padding: 10px 14px; margin-bottom: 12px; }
+.flow-ribbon b { font-weight: 800; }
+.flow-ribbon .arr { color: #059669; font-weight: 800; }
+
+/* the emergency banner */
+.urgent-note { display: flex; align-items: center; gap: 10px;
+  background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+  font-weight: 700; font-size: 13.5px; border-radius: 12px;
+  padding: 11px 14px; margin-bottom: 14px; }
+
+/* the Registration ID search row: input + Find Patient */
+.search-row { display: flex; gap: 10px; align-items: stretch; }
+.search-row input { flex: 1; min-width: 0; border: 1px solid #cbd5e1;
+  border-radius: 10px; padding: 12px 14px; font-size: 16px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.search-row input:focus { outline: 2px solid #bae6fd; border-color: #0ea5e9; }
+.victim-line { font-size: 12.5px; font-weight: 700; min-height: 16px; margin: 8px 0 0; }
+.victim-line.ok { color: #047857; }
+.victim-line.miss { color: #b91c1c; }
+
+/* patient panel — read only, key then value */
+.rec-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 16px; }
+.rec-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: 8px 12px; min-width: 0; }
+.rec-k { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+  color: #64748b; font-weight: 800; margin-bottom: 2px; }
+.rec-v { font-size: 14px; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
+.rec-item.wide { grid-column: span 4; }
+.rec-note { grid-column: span 4; font-size: 13px; font-weight: 600;
+  color: #92400e; background: #fffbeb; border: 1px solid #fde68a;
+  border-radius: 10px; padding: 10px 12px; }
+
+/* the selected order banner above the form */
+.order-note { background: #eef2ff; border: 1px solid #c7d2fe; color: #312e81;
+  font-weight: 700; font-size: 13.5px; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 12px; }
+.order-note .o-by { display: block; font-size: 11.5px; font-weight: 600; color: #6366f1; margin-top: 3px; }
+
+/* the closed-record note */
+.locked-note { background: #f8fafc; border: 1px dashed #cbd5e1; color: #64748b;
+  font-weight: 600; font-size: 13px; border-radius: 10px;
+  padding: 10px 14px; margin-top: 12px; }
+
+/* treatment status chips */
+.st-pending  { background: #e0f2fe; color: #075985; }
+.st-progress { background: #fef3c7; color: #92400e; }
+.st-done     { background: #d1fae5; color: #047857; }
+.st-notdone  { background: #fee2e2; color: #b91c1c; }
+.st { display: inline-block; border-radius: 999px; padding: 3px 10px;
+  font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+
+/* priority badges (same language as the triage page) */
+.st-critical { background: #fee2e2; color: #b91c1c; }
+.st-high     { background: #ffedd5; color: #c2410c; }
+.st-medium   { background: #fef3c7; color: #92400e; }
+.st-low      { background: #d1fae5; color: #047857; }
+.st-none     { background: #f1f5f9; color: #94a3b8; }
+
+.mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
+.mini-note b { color: #065f46; }
+.span2 { grid-column: span 2; }
+.opt { color: #94a3b8; font-weight: 600; font-size: 12px; }
+.cell-sub { display: block; font-size: 11.5px; font-weight: 600; color: #64748b; margin-top: 2px; }
+.save-ok { color: #047857; font-weight: 700; font-size: 13px; min-height: 16px; margin: 0 0 6px; }
+
+/* action buttons inside tables */
+.ghost-btn { padding: 8px 12px; border-radius: 10px; border: 1px solid #cbd5e1;
+  background: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
+  font-family: inherit; color: inherit; }
+.ghost-btn:hover { border-color: #059669; }
+
+/* narrow screens */
+@media (max-width: 900px) { .vitals-grid, .rec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rec-item.wide, .rec-note { grid-column: span 2; }
+  .span2 { grid-column: auto; } }
+@media (max-width: 640px) { .search-row { flex-direction: column; } }
+
+/* print — clean paper output */
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .urgent-note,
+  .flow-ribbon, .form-actions, .count-line, .search-row { display: none !important; }
+  body.jamali-has-sidebar { margin-left: 0 !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+  .card { box-shadow: none; }
+}

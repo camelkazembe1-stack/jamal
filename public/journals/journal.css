@@ -1,0 +1,44 @@
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: #f1f5f9; color: #0f172a; }
+.wrap { padding: 28px 34px; max-width: 1100px; margin: 0 auto; }
+.back { display: inline-block; color: #64748b; text-decoration: none; font-weight: 700; font-size: 13.5px; margin-bottom: 14px; }
+.back:hover { color: #0ea5e9; }
+h1 { font-size: 24px; margin-bottom: 6px; }
+.sub { color: #64748b; font-size: 14px; margin-bottom: 18px; }
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
+
+/* journals (pages 7-14) */
+.table-wrap { overflow-x: auto; }
+table.journal { width: 100%; border-collapse: collapse; min-width: 520px; }
+thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; padding: 11px 14px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+thead th.amt, tbody td.j-amount, tfoot td.j-amount { text-align: right; }
+
+tbody td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: #f8fafc; }
+.j-date { white-space: nowrap; color: #475569; }
+.j-name { font-weight: 700; }
+.j-nm { color: #334155; }
+.j-amount { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+tfoot td { padding: 11px 14px; font-size: 14px; }
+tfoot .total-row td { border-top: 2px solid #0f172a; font-weight: 800; background: #f8fafc; }
+tfoot .total-row .j-amount { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+/* general journal (page 12): two-sided DR / CR */
+table.journal.gj { min-width: 880px; }
+thead tr.sides th { text-align: center; font-size: 13px; letter-spacing: .18em; padding: 12px 14px; }
+.side-dr { background: #dcfce7; color: #15803d; }
+.side-cr { background: #fee2e2; color: #b91c1c; }
+table.gj th:nth-child(4), table.gj td:nth-child(4) { border-right: 2px solid #cbd5e1; }
+
+/* empty state */
+.empty { padding: 46px 20px; text-align: center; }
+.empty-icon { font-size: 34px; margin-bottom: 10px; }
+.empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }
+.empty-sub { color: #64748b; font-size: 14px; }
+.empty-sub a { color: #0ea5e9; font-weight: 700; text-decoration: none; }
+.empty-sub a:hover { text-decoration: underline; }
+
+.count-line { color: #94a3b8; font-size: 12.5px; margin-top: 12px; }
+@media (max-width: 640px) { .wrap { padding: 20px 14px; } }

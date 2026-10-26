@@ -1,0 +1,84 @@
+/* JAMALI — page 141 · CSV to XML — the tool's own engine.
+   Convertor tool #77 (Spreadsheet and Data Tools). Everything runs in the browser on this
+   page — files are processed locally and never leave the device.
+   header row becomes element names, one <row> per data row*/
+(function () {
+"use strict";
+  function $(id) { return document.getElementById(id); }
+  function st(msg, cls) { var el = $("t-msg"); if (!el) return;
+    el.textContent = msg; el.className = "t-msg" + (cls ? " " + cls : ""); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function fb(n) { var u = ["B", "KB", "MB", "GB", "TB"], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (i ? n.toFixed(n < 10 ? 2 : 1) : n) + " " + u[i]; }
+  function dl(blob, name) { var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+  function ab(file) { return new Promise(function (res, rej) { var r = new FileReader();
+    r.onload = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
+    r.readAsArrayBuffer(file); }); }
+  function rtxt(file) { return new Promise(function (res, rej) { var r = new FileReader();
+    r.onload = function () { res(r.result); }; r.onerror = function () { rej(r.error); };
+    r.readAsText(file); }); }
+  function oneFile(inputId) { var f = $(inputId).files[0];
+    if (!f) { st("Choose a file first.", "warn"); return null; } return f; }
+  function allFiles(inputId) { var f = $(inputId).files;
+    if (!f.length) { st("Choose at least one file.", "warn"); return null; } return f; }
+  function libFail(name) { st("This tool's engine library (" + name +
+    ") loads from the internet and could not be reached. Reconnect and reload the page.", "warn"); }
+  function u8(abuf) { return new Uint8Array(abuf); }
+
+  var DL_NAME = "data.xml";
+  $("copy").onclick = function () {
+    var t = $("out").value; if (!t) { st("Nothing to copy yet.", "warn"); return; }
+    navigator.clipboard && navigator.clipboard.writeText(t).then(function () { st("Copied to the clipboard.", "ok"); },
+      function () { $("out").select(); document.execCommand("copy"); st("Copied.", "ok"); });
+  };
+  $("dl-txt").onclick = function () {
+    var t = $("out").value; if (!t) { st("Nothing to download yet.", "warn"); return; }
+    dl(new Blob([t], { type: "text/plain;charset=utf-8" }), DL_NAME);
+    st("Saved " + DL_NAME + " (" + fb(t.length) + " of text).", "ok");
+  };
+
+    function parseCsv(text, delim) {
+      var rows = [[]], f = "", q = false;
+      for (var i = 0; i < text.length; i++) {
+        var ch = text[i];
+        if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+        else if (ch === '"') q = true;
+        else if (ch === delim) { rows[rows.length - 1].push(f); f = ""; }
+        else if (ch === "\n" || ch === "\r") {
+          if (ch === "\r" && text[i + 1] === "\n") i++;
+          rows[rows.length - 1].push(f); f = ""; rows.push([]);
+        } else f += ch;
+      }
+      rows[rows.length - 1].push(f);
+      while (rows.length && rows[rows.length - 1].length === 1 && rows[rows.length - 1][0] === "") rows.pop();
+      return rows;
+    }
+    function tag(h, i) {
+      var t = h.trim().replace(/[^A-Za-z0-9_.-]/g, "_").replace(/^([^A-Za-z_])/, "f$1");
+      return t || ("field" + (i + 1));
+    }
+
+  $("run").onclick = function () {
+    var t = $("in").value;
+    if (!t.trim()) { st("Paste some CSV first.", "warn"); return; }
+    var delim = $("delim").value === "\t" ? "\t" : $("delim").value;
+    var rows = parseCsv(t, delim);
+    if (rows.length < 2) { st("Need a header row plus at least one data row.", "warn"); return; }
+    var names = rows[0].map(tag);
+    var out = '<?xml version="1.0" encoding="UTF-8"?>\n<records>\n';
+    rows.slice(1).forEach(function (r) {
+      out += "  <row>\n";
+      names.forEach(function (nm, i) { out += "    <" + nm + ">" + esc(r[i] == null ? "" : r[i]) + "</" + nm + ">\n"; });
+      out += "  </row>\n";
+    });
+    out += "</records>";
+    $("out").value = out;
+    st((rows.length - 1) + " records with " + names.length + " fields each.", "ok");
+  };
+
+})();
