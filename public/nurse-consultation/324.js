@@ -232,7 +232,16 @@ function item(k, v, wide) {
     '</div><div class="rec-v">' + v + "</div></div>";
 }
 
+/* JAMALI-NO-SKIP (task 51): the nursing consultation is step 3 — Triage (step 2) must be on record first */
+function stepGate(regId) {
+  if (!lastTriage.has(String(regId))) {
+    return "This patient cannot skip a step — no Triage is on record yet. Complete Triage on page 323 (Triage) first, then come back to the nurse.";
+  }
+  return "";
+}
 function openPatient(regId) {
+  const blocked = stepGate(regId);
+  if (blocked) { qerr(blocked); return; }
   showPatient(regId);
   current = regMap.get(regId);
   if (!current) return;

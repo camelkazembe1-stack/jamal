@@ -223,6 +223,10 @@ $("#t-save").addEventListener("click", async () => {
   if (!/^[0-9]{4}[A-Z]{4}$/.test(regId)) {
     return err("Enter the victim's Registration ID — 4 digits and 4 letters, for example 4827ABCD.");
   }
+  /* JAMALI-NO-SKIP (task 51): triage is step 2 — registration (step 1) must be on record first */
+  if (!regMap.has(regId)) {
+    return err("No registration found for " + regId + ". A patient cannot skip a step — register the patient on page 322 (Victim Registration) first, then triage here.");
+  }
   const g = (s) => $(s).value.trim();
   const data = {
     regId,

@@ -119,8 +119,16 @@ onSnapshot(query(collection(db, "healthTreatmentOrders")), (snap) => {
   renderList();
   refreshSearchLine();
   if (currentId) renderPatient();
-}, (e) => herr("healthTreatmentOrders", e));
-window.__p47.listeners = 3;
+}, (e) => herr("healthPrescriptions", e));
+
+/* JAMALI-NO-SKIP (task 51): the doctor's consultations, to enforce the step order */
+let docConsults = [];
+onSnapshot(query(collection(db, "healthDoctorConsultations")), (snap) => {
+  docConsults = snap.docs.map((d) => d.data())
+    .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
+  if (currentId) renderPatient();
+}, (e) => herr("healthDoctorConsultations", e));
+window.__p47.listeners = 4;
 
 /* ---------- status chips ---------- */
 function chip(status) {
@@ -218,7 +226,18 @@ $("#l-body").addEventListener("click", (e) => {
 let currentId = null;
 let selOrderId = null;
 
+/* JAMALI-NO-SKIP (task 51): treatment & procedures is step 5b — the Doctor Consultation (step 4) must be completed first */
+function stepGate(regId) {
+  const done = docConsults.some((c) => String(c.regId) === String(regId) &&
+    (c.status === "completed" || c.status === "sent"));
+  if (!done) {
+    return "This patient cannot skip a step — the Doctor Consultation is not completed yet. Complete the doctor stage on page 325 (Doctor Consultation) first, then come to Treatment & Procedures.";
+  }
+  return "";
+}
 function openPatient(regId, orderId) {
+  const blocked = stepGate(regId);
+  if (blocked) { qerr(blocked); return; }
   showPatient(regId);
   currentId = regId;
   selOrderId = orderId || null;
