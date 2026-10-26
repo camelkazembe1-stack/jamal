@@ -335,4 +335,8 @@ window.JAMALI_MENU = [
     { label: "Registration", icon: "📝", folder: "victim-registration", n: 322, d: 2 },
     { label: "Triage", icon: "🚑", folder: "triage", n: 323, d: 2 },
     { label: "Nurse Consultation", icon: "💉", folder: "nurse-consultation", n: 324, d: 2 },
+    { label: "Doctor Consultation", icon: "🩺", folder: "doctor-consultation", n: 325, d: 2 },
+    { label: "Pharmacy", icon: "💊", folder: "pharmacy", n: 326, d: 2 },
+    { label: "Treatment / Procedures", icon: "🩹", folder: "treatment-procedures", n: 327, d: 2 },
+    { label: "Patient Module", icon: "🗂️", folder: "patient-module", n: 328, d: 2 },
 ];

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treatment / Procedures — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/treatment-procedures/327.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- STEP 1 · search and the treatment queue -->
+  <section id="s-search">
+    <a class="back" href="/health/321">&larr; Health</a>
+    <h1>Treatment / Procedures</h1>
+    <p class="sub">The treatment desk receives patients sent by the doctor for a treatment or procedure. Enter the patient's Registration ID and the doctor's order appears &mdash; perform it, record it, and the history stays with the patient.</p>
+
+    <div class="flow-ribbon">Doctor Consultation <span class="arr">&rarr;</span> <b>Treatment / Procedures</b> <span class="arr">&rarr;</span> Back to the doctor</div>
+
+    <div class="urgent-note">🚨 Emergency treatment must not be delayed while completing documentation. If the patient is deteriorating, escalate care immediately.</div>
+
+    <div class="card add-card">
+      <h2>Find a patient</h2>
+      <div class="search-row">
+        <input id="q-regid" list="q-regids" placeholder="Registration ID, e.g. 4827ABCD" autocomplete="off">
+        <datalist id="q-regids"></datalist>
+        <button class="btn-primary" id="q-find" type="button">Find Patient</button>
+      </div>
+      <p class="victim-line" id="q-line"></p>
+      <p class="form-err" id="q-err" hidden></p>
+    </div>
+
+    <div class="card" id="list-card">
+      <h2>Treatment queue &mdash; orders waiting</h2>
+      <div class="empty" id="l-empty">
+        <div class="empty-icon">🩹</div>
+        <div class="empty-title">No treatments waiting</div>
+        <div class="empty-sub">When a doctor completes a consultation with treatment or procedure orders, they appear here ordered by triage priority, until each one is completed or marked not completed. Enter a Registration ID above to see a patient's orders directly.</div>
+      </div>
+      <div class="table-wrap" id="l-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Priority</th><th>Registration ID</th><th>Patient</th><th>Doctor's order</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="l-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="l-count"></p>
+    </div>
+  </section>
+
+  <!-- STEP 2 · the patient's orders and the treatment record -->
+  <section id="s-patient" hidden>
+    <a class="back" href="#" id="p-back">&larr; Back to the queue</a>
+    <h1>Treatment / Procedures</h1>
+    <p class="sub" id="p-wholine"></p>
+
+    <div class="flow-ribbon">Doctor Consultation <span class="arr">&rarr;</span> <b>Treatment / Procedures</b> <span class="arr">&rarr;</span> Back to the doctor</div>
+
+    <div class="card">
+      <h2>Patient</h2>
+      <div class="rec-grid" id="p-reg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Doctor's orders &mdash; every order on record</h2>
+      <p class="mini-note" style="margin-bottom:10px">The original order is preserved exactly as the doctor wrote it. Open an order to perform and record the treatment.</p>
+      <div class="empty" id="p-empty">
+        <div class="empty-icon">🩹</div>
+        <div class="empty-title">No orders for this patient</div>
+        <div class="empty-sub">When a doctor completes a consultation with treatment or procedure orders, they appear here.</div>
+      </div>
+      <div class="table-wrap" id="p-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Doctor's order</th><th>Ordered</th><th>Status</th><th>Last update</th><th></th></tr>
+          </thead>
+          <tbody id="p-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card add-card" id="form-card" hidden>
+      <h2>Perform a treatment</h2>
+      <div class="order-note" id="f-order"></div>
+
+      <p class="save-ok" id="f-ok" hidden></p>
+      <p class="form-err" id="f-err" hidden></p>
+
+      <div id="f-editable">
+        <div class="form-grid">
+          <label class="span2">Treatment performed <span class="opt">(what was actually done)</span>
+            <textarea id="f-performed" rows="3" placeholder="Wound cleaned and dressed, injection given, nebulization carried out..."></textarea>
+          </label>
+          <label class="span2">Outcome <span class="opt">(the patient's response, when applicable)</span>
+            <textarea id="f-outcome" rows="2" placeholder="How the patient responded"></textarea>
+          </label>
+          <label class="span2">Notes
+            <textarea id="f-notes" rows="2" placeholder="Additional relevant information — for example why a treatment could not be completed"></textarea>
+          </label>
+          <label>Treatment status
+            <select id="f-status">
+              <option value="pending">Pending — not started</option>
+              <option value="in-progress">In progress</option>
+              <option value="completed">Completed</option>
+              <option value="not-completed">Not completed</option>
+            </select>
+          </label>
+        </div>
+        <p class="mini-note">Recorded automatically &mdash; healthcare worker: <b id="f-worker"></b> · last update: <span id="f-updated">—</span></p>
+        <div class="form-actions">
+          <button class="btn-primary" id="f-save" type="button">Save Treatment Record</button>
+        </div>
+      </div>
+
+      <div id="f-locked" hidden>
+        <div class="rec-grid" id="f-record"></div>
+        <p class="locked-note">This record is closed &mdash; a completed or not-completed treatment is never rewritten. If the patient needs more treatment, the doctor orders it at the next consultation.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/treatment-procedures/327.js"></script>
+</body>
+</html>

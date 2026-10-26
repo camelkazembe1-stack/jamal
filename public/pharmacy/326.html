@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharmacy — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/pharmacy/326.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- STEP 1 · search and the pharmacy worklist -->
+  <section id="s-search">
+    <a class="back" href="/health/321">&larr; Health</a>
+    <h1>Pharmacy</h1>
+    <p class="sub">The pharmacy desk receives the doctor's prescriptions, checks each medicine, proposes a safe alternative when one is unavailable, and records what is actually dispensed &mdash; against the patient's Registration ID.</p>
+
+    <div class="flow-ribbon">Doctor Consultation <span class="arr">&rarr;</span> <b>Pharmacy</b> <span class="arr">&rarr;</span> Dispense</div>
+
+    <div class="card add-card">
+      <h2>Find a patient</h2>
+      <div class="search-row">
+        <input id="q-regid" list="q-regids" placeholder="Registration ID, e.g. 4827ABCD" autocomplete="off">
+        <datalist id="q-regids"></datalist>
+        <button class="btn-primary" id="q-find" type="button">Find Patient</button>
+      </div>
+      <p class="victim-line" id="q-line"></p>
+      <p class="form-err" id="q-err" hidden></p>
+    </div>
+
+    <div class="card" id="list-card">
+      <h2>Prescriptions to handle</h2>
+      <div class="empty" id="l-empty">
+        <div class="empty-icon">💊</div>
+        <div class="empty-title">No prescriptions waiting</div>
+        <div class="empty-sub">Prescribed medicines appear here as soon as a doctor completes a consultation, and stay until they are dispensed, replaced or sent outside the pharmacy. Enter a Registration ID above to see a patient's prescriptions directly.</div>
+      </div>
+      <div class="table-wrap" id="l-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Registration ID</th><th>Patient</th><th>Medicine</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="l-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="l-count"></p>
+    </div>
+  </section>
+
+  <!-- STEP 2 · the patient's prescriptions -->
+  <section id="s-patient" hidden>
+    <a class="back" href="#" id="p-back">&larr; Back to the worklist</a>
+    <h1>Pharmacy</h1>
+    <p class="sub" id="p-wholine"></p>
+
+    <div class="flow-ribbon">Doctor Consultation <span class="arr">&rarr;</span> <b>Pharmacy</b> <span class="arr">&rarr;</span> Dispense</div>
+
+    <div class="card">
+      <h2>Patient</h2>
+      <div class="rec-grid" id="p-reg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Prescriptions &mdash; every line on record</h2>
+      <p class="mini-note" style="margin-bottom:10px">If the prescribed medicine is unavailable, propose an alternative. The request waits for the doctor's decision: accepted alternatives can be dispensed; a rejected line is either re-prescribed by the doctor or sent outside the pharmacy.</p>
+      <div class="empty" id="p-empty">
+        <div class="empty-icon">💊</div>
+        <div class="empty-title">No prescriptions for this patient</div>
+        <div class="empty-sub">When a doctor completes a consultation with prescribed medicines, the lines appear here.</div>
+      </div>
+      <div class="table-wrap" id="p-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Medicine</th><th>Prescribed</th><th>Status</th><th>Decision &amp; dispensing</th><th></th></tr>
+          </thead>
+          <tbody id="p-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/pharmacy/326.js"></script>
+</body>
+</html>
