@@ -28,17 +28,11 @@ service cloud.firestore {
     match /bankrec/{id}         { allow create, read, update, delete: if request.auth != null; }
     match /suspense/{id}        { allow create, read, update, delete: if request.auth != null; }
 
-    // HEALTH: victim registration (322), triage (323), the nursing
-    // consultations (324), the doctor consultations (325), the
-    // destination list and the prescriptions (325-326) and the
-    // treatment / procedure orders (327).
+    // HEALTH: victim registration (page 322), triage (page 323) and the
+    // nursing consultations (page 324).
     match /healthRegistrations/{id} { allow create, read, update, delete: if request.auth != null; }
     match /healthTriage/{id}        { allow create, read, update, delete: if request.auth != null; }
     match /healthNurseConsultations/{id} { allow create, read, update, delete: if request.auth != null; }
-    match /healthDoctorConsultations/{id} { allow create, read, update, delete: if request.auth != null; }
-    match /healthDestinations/{id} { allow create, read, update, delete: if request.auth != null; }
-    match /healthPrescriptions/{id} { allow create, read, update, delete: if request.auth != null; }
-    match /healthTreatmentOrders/{id} { allow create, read, update, delete: if request.auth != null; }
 
     // EVERYTHING ELSE: closed. A collection not named above is refused,
     // so a new page needs its rule added here first.
