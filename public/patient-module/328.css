@@ -49,6 +49,15 @@ td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
 
+/* the red load-error banner: every failure is visible, none swallowed */
+.p-err { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca;
+  background: #fef2f2; color: #b91c1c; border-radius: 10px; font-size: 13px;
+  font-weight: 700; }
+.p-err .p-err-hint { display: block; margin-top: 4px; font-weight: 600; color: #7f1d1d; }
+
+/* the boot status line: proves the build and shows where the boot stopped */
+.p-boot { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: #64748b; }
+
 /* the saved note inside the edit modal */
 .form-ok { font-size: 13px; font-weight: 800; color: #047857; margin: 10px 0 0; }
 
@@ -81,7 +90,7 @@ td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* print — clean paper output */
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .count-line,
-  .modal-ovl, .act-cell, .copy-btn { display: none !important; }
+  .p-boot, .p-err, .modal-ovl, .act-cell, .copy-btn { display: none !important; }
   body.jamali-has-sidebar { margin-left: 0 !important; }
   body { background: #fff; }
   .wrap { max-width: none; padding: 0; }

@@ -12,6 +12,9 @@
 <body>
 <main class="wrap">
 
+  <p class="h-boot" id="h-boot" hidden></p>
+  <p class="h-err" id="h-err" hidden></p>
+
   <!-- STEP 1 · search and the treatment queue -->
   <section id="s-search">
     <a class="back" href="/health/321">&larr; Health</a>
@@ -124,6 +127,51 @@
   </section>
 
 </main>
+<style>
+#h-boot,#h-err{max-width:920px;margin:0 auto 14px;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.55}
+#h-boot{background:#fff7e0;color:#6b4e00;border:1px solid #e8d48a}
+#h-err{background:#fdecec;color:#8a1f1f;border:1px solid #f2b8b5}
+</style>
+<script>
+/* Task 47 - boot line, page painters and the 12-second watchdog. The same
+   contract as the Patient List (build 46d): a silent failure names itself. */
+(function () {
+  var boot = document.getElementById("h-boot");
+  if (boot) { boot.hidden = false; boot.textContent = "Treatment / Procedures \u00b7 build 47 \u00b7 connecting\u2026"; }
+  window.__p47 = { page: "327", build: "47", t0: Date.now() };
+})();
+function __jamaliHerr(msg) {
+  var box = document.getElementById("h-err");
+  var boot = document.getElementById("h-boot");
+  if (boot) boot.hidden = true;
+  if (!box || !box.hidden) return;
+  box.hidden = false;
+  box.textContent = "Page error \u2014 " + msg;
+}
+window.addEventListener("error", function (e) {
+  if (!e || !e.message) return; /* resource errors carry no message */
+  __jamaliHerr(e.message);
+}, true);
+window.addEventListener("unhandledrejection", function (e) {
+  var r = e && e.reason;
+  __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+});
+setTimeout(function () {
+  var boot = document.getElementById("h-boot");
+  var s = window.__p47 || {};
+  if (!boot || boot.hidden) return; /* answered - nothing to report */
+  var bits = [];
+  bits.push("build " + (s.build || "47") + " script " +
+    ((s.ran === true || s.listeners > 0) ? "ran" : "DID NOT run"));
+  bits.push("sign-in check " + (s.auth === true ? "passed" : "not passed"));
+  bits.push("listeners " + (s.listeners || 0) + "/" + (s.need || 0));
+  bits.push(s.answered === true ? "Firestore answered" : "Firestore never answered");
+  if (s.errs && s.errs.length) bits.push("errors: " + s.errs.join(" | "));
+  __jamaliHerr("Still quiet after 12 seconds \u2014 " + bits.join(" \u00b7 ") +
+    ". If the script DID NOT run, the deployed JS is stale or broken: " +
+    "re-run the task file, git push, then hard refresh with Ctrl+Shift+R.");
+}, 12000);
+</script>
 <script type="module" src="/treatment-procedures/327.js"></script>
 </body>
 </html>

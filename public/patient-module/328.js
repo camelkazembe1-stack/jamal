@@ -1,18 +1,32 @@
-// patient-module (page 328) — JAMALI Health — the Patient List (Task 46b)
+// patient-module (page 328) — JAMALI Health — the Patient List (Task 46d)
 // One table of every victim registered on this account, newest first, and
 // nothing else. Each row carries the Registration ID with a one-click Copy
 // button — paste the ID into any stage to find the patient — and it ends
 // with two icon actions: the PEN opens the registration fields in a modal
 // (the ID itself never changes) and the BIN asks once, then removes the
 // registration AND every triage, nurse, doctor, pharmacy and treatment
-// record kept for that ID.
+// record kept for that ID. No failure can hide any more: every listener
+// carries an error callback, the page shows its build and boot progress,
+// and if the live listener never answers, a one-shot read is tried once.
 import { requireAuth, db, collection, query, onSnapshot, updateDoc, writeBatch, doc } from "/firebase.js";
-
-await requireAuth(); // not logged in? -> bounced to "/"
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* the boot diagnostic: the inline script in 328.html reads this after 12
+   seconds if the table is still empty, so a silent failure names itself.
+   It stands BEFORE the top-level await on purpose: everything the error
+   paths touch must exist before the module can ever suspend. */
+window.__p46 = { build: "46d", auth: false, listeners: 0, regDocs: -1, errs: [] };
+
+try {
+  await requireAuth(); // not logged in? -> bounced to "/"
+  window.__p46.auth = true;
+} catch (e) {
+  loadErr("the sign-in check", e);
+  throw e;
+}
 
 /* the two row actions, drawn as icons: the pen edits, the bin deletes */
 const PEN_SVG = "<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'>" +
@@ -67,13 +81,46 @@ const lastTriage = new Map();
 const loaded = { reg: false, tri: false, nur: false, doc: false, rx: false, trt: false };
 function ready() { return loaded.reg && loaded.tri && loaded.nur && loaded.doc && loaded.rx && loaded.trt; }
 
+/* ---------- visible load errors: never swallow a failure again ----------
+   If any collection cannot be read (rules, network, project), the page now
+   paints a red banner carrying the exact error code instead of failing in
+   silence with an empty table. */
+function loadErr(coll, e) {
+  const box = document.getElementById("p-err");
+  const boot = document.getElementById("p-boot");
+  if (boot) boot.hidden = true;
+  if (window.__p46) window.__p46.errs.push(coll + ": " +
+    String((e && (e.code || e.message)) || "unknown error"));
+  if (!box) return;
+  const code = String((e && (e.code || e.message)) || "unknown error");
+  box.hidden = false;
+  box.innerHTML = "<strong>Could not read " + esc(coll) + "</strong> \u2014 " + esc(code) +
+    (code.indexOf("permission-denied") >= 0
+      ? "<br><span class='p-err-hint'>Fix: open the Firebase console \u2192 Firestore Database \u2192 Rules, " +
+        "paste the rules from the repo file firestore.rules and press Publish, then refresh.</span>"
+      : "");
+}
+
+/* the boot line answered: with rows the line goes, with zero it stays and
+   says so — an empty account is a fact, not a failure */
+function bootAnswered(n) {
+  window.__p46.regDocs = n;
+  const b = document.getElementById("p-boot");
+  if (!b) return;
+  if (n > 0) { b.hidden = true; return; }
+  b.hidden = false;
+  b.textContent = "Firestore answered \u2014 0 registration documents on this account yet. " +
+    "Register a victim on the Registration page and it appears here.";
+}
+
 onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
   regs = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
     .filter((r) => r && r.regId)
     .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
   loaded.reg = true;
+  bootAnswered(snap.docs.length);
   renderTable();
-});
+}, (e) => loadErr("healthRegistrations", e));
 onSnapshot(query(collection(db, "healthTriage")), (snap) => {
   triages = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
     .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
@@ -83,23 +130,46 @@ onSnapshot(query(collection(db, "healthTriage")), (snap) => {
   });
   loaded.tri = true;
   renderTable();
-});
+}, (e) => loadErr("healthTriage", e));
 onSnapshot(query(collection(db, "healthNurseConsultations")), (snap) => {
   nurseConsults = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
   loaded.nur = true;
-});
+}, (e) => loadErr("healthNurseConsultations", e));
 onSnapshot(query(collection(db, "healthDoctorConsultations")), (snap) => {
   docConsults = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
   loaded.doc = true;
-});
+}, (e) => loadErr("healthDoctorConsultations", e));
 onSnapshot(query(collection(db, "healthPrescriptions")), (snap) => {
   rxLines = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
   loaded.rx = true;
-});
+}, (e) => loadErr("healthPrescriptions", e));
 onSnapshot(query(collection(db, "healthTreatmentOrders")), (snap) => {
   tOrders = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
   loaded.trt = true;
-});
+}, (e) => loadErr("healthTreatmentOrders", e));
+window.__p46.listeners = 6;
+
+/* the fallback: if the live listener never answers and never errors, try a
+   one-shot read once, six seconds in, instead of waiting in silence */
+setTimeout(() => {
+  if (loaded.reg || window.__p46.errs.length) return;
+  import("/firebase.js").then((m) => {
+    if (typeof m.getDocs !== "function") {
+      loadErr("healthRegistrations (fallback)",
+        new Error("the live listener never answered and this firebase.js has no getDocs"));
+      return undefined;
+    }
+    return m.getDocs(query(collection(db, "healthRegistrations"))).then((s) => {
+      regs = s.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
+        .filter((r) => r && r.regId)
+        .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
+      loaded.reg = true;
+      bootAnswered(s.docs.length);
+      window.__p46.recovered = true;
+      renderTable();
+    });
+  }).catch((e) => loadErr("healthRegistrations (fallback)", e));
+}, 6000);
 
 /* every collection a patient's records can live in, with a live getter */
 const STAGE_COLLS = [
@@ -112,11 +182,18 @@ const STAGE_COLLS = [
 ];
 
 /* ---------- the table ---------- */
+function el(id) {
+  const n = document.getElementById(id);
+  if (!n) loadErr("the page structure", new Error("missing element #" + id +
+    " \u2014 the deployed 328.html does not match this 328.js; re-run the task file, push, hard refresh"));
+  return n;
+}
+
 function renderTable() {
   const has = regs.length > 0;
-  $("#p-empty").hidden = has;
-  $("#p-wrap").hidden = !has;
-  $("#p-body").innerHTML = regs.map((r) => {
+  el("p-empty").hidden = has;
+  el("p-wrap").hidden = !has;
+  el("p-body").innerHTML = regs.map((r) => {
     const t = lastTriage.get(String(r.regId));
     const ageSex = (r.age !== "" && r.age != null ? r.age + "y" : "—") +
       (r.sex ? " · " + r.sex : "");
@@ -135,7 +212,7 @@ function renderTable() {
           "' title='Delete patient' aria-label='Delete patient'>" + BIN_SVG + "</button></td>" +
     "</tr>";
   }).join("");
-  $("#p-count").textContent = has
+  el("p-count").textContent = has
     ? regs.length + (regs.length === 1 ? " patient on this account."
                                        : " patients on this account.")
     : "";

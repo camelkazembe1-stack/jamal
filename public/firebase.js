@@ -1,5 +1,10 @@
 // JAMALI — shared Firebase module (auth + firestore)
 // index.html uses it for Google login, inner pages use requireAuth()
+// Task 50: the export carries updateDoc, deleteDoc, getDocs and setDoc
+// (the fix first shipped by task 47). Five pages (324, 325, 326, 327,
+// 328) import updateDoc — one missing name in this file used to stop
+// their whole script at the import line: no listener bound, no table
+// drawn, no Find answer, no response.
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -15,6 +20,10 @@ import {
   collection,
   doc,
   addDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  setDoc,
   writeBatch,
   query,
   where,
@@ -49,7 +58,7 @@ export { onAuthStateChanged, signInWithPopup, signOut };
 export {
   getFirestore, collection, doc, addDoc, writeBatch,
   query, where, orderBy, onSnapshot,
-  serverTimestamp, Timestamp
+  serverTimestamp, Timestamp, updateDoc, deleteDoc, getDocs, setDoc
 };
 
 // Guard for inner pages: resolve with the user, or bounce to index.html

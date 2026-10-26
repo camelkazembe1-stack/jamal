@@ -12,9 +12,50 @@
 // One in-progress consultation per patient at a time.
 // EMERGENCY RULE: documentation never delays urgent care.
 import { requireAuth, auth, db, collection, query, addDoc, updateDoc, doc, onSnapshot, serverTimestamp } from "/firebase.js";
-import { showPatient, hidePatient } from "/health/patient-info.js";
+/* patient chip - non-fatal since Task 47: if /health/patient-info.js cannot
+   load (a missing or stale file), the page loses only the floating chip,
+   never the find, the forms or the saves. */
+let showPatient = function () {}, hidePatient = function () {};
+try {
+  const pi = await import("/health/patient-info.js");
+  if (pi && typeof pi.showPatient === "function") showPatient = pi.showPatient;
+  if (pi && typeof pi.hidePatient === "function") hidePatient = pi.hidePatient;
+} catch (e) { /* chip unavailable - everything else keeps working */ }
 
-await requireAuth(); // not logged in? -> bounced to "/"
+/* boot diagnostics (Task 47 - the same contract as the Patient List, build
+   46d): every collection listener carries an error callback and every
+   failure paints itself on the page instead of dying in silence. */
+window.__p47 = Object.assign(window.__p47 || {}, {
+  page: "324", build: "47", ran: true, auth: false,
+  listeners: 0, need: 3, answered: false, errs: []
+});
+function herr(coll, e) {
+  const code = String((e && (e.code || e.message)) || "unknown error");
+  if (window.__p47) window.__p47.errs.push(coll + ": " + code);
+  const boot = document.getElementById("h-boot");
+  if (boot) boot.hidden = true;
+  const box = document.getElementById("h-err");
+  if (!box) return;
+  box.hidden = false;
+  box.textContent = "Could not read " + coll + " \u2014 " + code +
+    (code.indexOf("permission-denied") >= 0
+      ? " \u00b7 Fix: Firebase console \u2192 Firestore Database \u2192 Rules, " +
+        "paste the rules from the repo file firestore.rules and press Publish, then refresh."
+      : "");
+}
+function bootDone() {
+  if (window.__p47) window.__p47.answered = true;
+  const b = document.getElementById("h-boot");
+  if (b) b.hidden = true;
+}
+
+try {
+  await requireAuth(); // not logged in? -> bounced to "/"
+  window.__p47.auth = true;
+} catch (e) {
+  herr("the sign-in check", e);
+  throw e;
+}
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
@@ -65,7 +106,8 @@ onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
   fillIds();
   renderQueue();
   refreshSearchLine();
-});
+  bootDone();
+}, (e) => herr("healthRegistrations", e));
 
 onSnapshot(query(collection(db, "healthTriage")), (snap) => {
   triages = snap.docs.map((d) => d.data())
@@ -76,14 +118,15 @@ onSnapshot(query(collection(db, "healthTriage")), (snap) => {
   });
   renderQueue();
   refreshSearchLine();
-});
+}, (e) => herr("healthTriage", e));
 
 onSnapshot(query(collection(db, "healthNurseConsultations")), (snap) => {
   consults = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
     .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
   renderQueue();
   refreshSearchLine();
-});
+}, (e) => herr("healthNurseConsultations", e));
+window.__p47.listeners = 3;
 
 /* ---------- STEP 1: search + queue ---------- */
 function qerr(msg) { const e = $("#q-err"); e.hidden = !msg; e.textContent = msg || ""; }

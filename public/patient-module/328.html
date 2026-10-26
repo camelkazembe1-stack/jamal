@@ -17,6 +17,8 @@
     <a class="back" href="/health/321">&larr; Health</a>
     <h1>Patient List</h1>
     <p class="sub">Every victim registered on this account, newest first. Copy the Registration ID with the button beside it — the pen and the bin at the end of a row edit or delete that patient and everything saved for them.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
 
     <div class="card">
       <h2>All patients</h2>
@@ -143,6 +145,52 @@
   </div>
 </div>
 
+<script>
+/* boot line + page-level painters + the 12-second watchdog (Task 46d).
+   The boot line proves which build the browser is running and shows where
+   the boot stopped, so a silent empty table can never hide its cause. */
+(function () {
+  var boot = document.getElementById("p-boot");
+  if (boot) {
+    boot.hidden = false;
+    boot.textContent = "Patient List \u00b7 build 46d \u00b7 connecting\u2026";
+  }
+  window.__p46html = { build: "46d", t0: Date.now() };
+})();
+/* paints any page-level failure (module import, auth, unexpected) into the banner */
+function __jamaliPerr(msg) {
+  var box = document.getElementById("p-err");
+  if (!box || !box.hidden) return;
+  box.hidden = false;
+  box.textContent = "Page error \u2014 " + msg;
+}
+window.addEventListener("error", function (e) {
+  if (!e || !e.message) return; /* resource errors carry no message */
+  __jamaliPerr(e.message);
+}, true);
+window.addEventListener("unhandledrejection", function (e) {
+  var r = e && e.reason;
+  __jamaliPerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+});
+/* the watchdog: if after 12 seconds nothing has answered, say exactly
+   where the boot stopped — before the module, at sign-in, at the
+   listeners, or at Firestore itself */
+setTimeout(function () {
+  var boot = document.getElementById("p-boot");
+  var s = window.__p46 || {};
+  if (!boot || boot.hidden || s.regDocs >= 0) return; /* answered - nothing to report */
+  var bits = [];
+  bits.push("build " + (s.build || "46d") + " script " +
+    ((s.auth === true || s.listeners > 0) ? "ran" : "DID NOT run"));
+  bits.push("sign-in check " + (s.auth === true ? "passed" : "not passed"));
+  bits.push("listeners " + (s.listeners || 0) + "/6");
+  bits.push("Firestore " + (s.regDocs >= 0 ? "answered " + s.regDocs + " document(s)" : "never answered"));
+  if (s.errs && s.errs.length) bits.push("errors: " + s.errs.join(" | "));
+  __jamaliPerr("Still empty after 12 seconds \u2014 " + bits.join(" \u00b7 ") +
+    ". If the script DID NOT run, the deployed 328.js is stale or broken: " +
+    "re-run the task file, git push, then hard refresh with Ctrl+Shift+R.");
+}, 12000);
+</script>
 <script type="module" src="/patient-module/328.js"></script>
 </body>
 </html>
