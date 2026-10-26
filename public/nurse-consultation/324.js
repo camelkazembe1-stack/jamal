@@ -12,6 +12,7 @@
 // One in-progress consultation per patient at a time.
 // EMERGENCY RULE: documentation never delays urgent care.
 import { requireAuth, auth, db, collection, query, addDoc, updateDoc, doc, onSnapshot, serverTimestamp } from "/firebase.js";
+import { showPatient, hidePatient } from "/health/patient-info.js";
 
 await requireAuth(); // not logged in? -> bounced to "/"
 
@@ -34,7 +35,7 @@ function todayStr() {
 function nowISO() { return new Date().toISOString(); }
 function who(r) {
   return r.isUnidentified
-    ? "Unidentified" + (r.tempId ? " (" + r.tempId + ")" : "")
+    ? "Unidentified"
     : (r.fullName || "Unnamed");
 }
 function priBadge(p) {
@@ -189,6 +190,7 @@ function item(k, v, wide) {
 }
 
 function openPatient(regId) {
+  showPatient(regId);
   current = regMap.get(regId);
   if (!current) return;
   openConsult = consults.find((c) => String(c.regId) === regId && c.status === "in-progress") || null;
@@ -196,7 +198,7 @@ function openPatient(regId) {
 
   /* registration panel — read only */
   const ident = current.isUnidentified
-    ? "Unidentified" + (current.tempId ? " — temporary ID " + esc(current.tempId) : "")
+    ? "Unidentified"
     : esc(current.fullName || "Unnamed");
   $("#c-reg").innerHTML =
     item("Patient", ident) +
@@ -271,6 +273,7 @@ function openPatient(regId) {
 
 $("#c-back").addEventListener("click", (e) => {
   e.preventDefault();
+  hidePatient();
   $("#s-consult").hidden = true;
   $("#s-search").hidden = false;
   refreshSearchLine();

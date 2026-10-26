@@ -5,6 +5,7 @@
 // Twelve items per assessment. Every assessment links to its registration by
 // Registration ID and stays in the history below the form.
 import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/firebase.js";
+import { showPatient, hidePatient } from "/health/patient-info.js";
 
 await requireAuth(); // not logged in? -> bounced to "/"
 
@@ -80,7 +81,7 @@ onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
 
 function who(r) {
   return r.isUnidentified
-    ? "Unidentified" + (r.tempId ? " (" + r.tempId + ")" : "")
+    ? "Unidentified"
     : (r.fullName || "Unnamed");
 }
 
@@ -93,9 +94,10 @@ function fillRegIds() {
 function refreshVictimLine() {
   const id = $("#t-regid").value.trim().toUpperCase();
   const line = $("#t-victim");
-  if (!id) { line.textContent = ""; line.className = "victim-line"; return; }
+  if (!id) { line.textContent = ""; line.className = "victim-line"; hidePatient(); return; }
   const r = regMap.get(id);
   if (r) {
+    showPatient(id);
     line.className = "victim-line ok";
     line.textContent = who(r) +
       (r.sex ? " · " + r.sex : "") +
@@ -104,6 +106,7 @@ function refreshVictimLine() {
   } else if (id.length === 8) {
     line.className = "victim-line miss";
     line.textContent = "No registration found for this ID on this account.";
+    hidePatient();
   } else {
     line.textContent = "";
     line.className = "victim-line";

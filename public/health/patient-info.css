@@ -1,0 +1,58 @@
+/* JAMALI Health - the patient chip and the past-records panel (Task 45).
+   One victim, one ID, one history. The chip sits in the top right corner of
+   every stage page; the i button opens every record kept for that ID. */
+#pi-chip { position: fixed; top: 12px; right: 14px; z-index: 900; display: flex;
+  align-items: center; gap: 8px; background: #ffffff; border: 1px solid #e2e8f0;
+  border-radius: 999px; padding: 7px 8px 7px 14px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .14); max-width: min(92vw, 440px); }
+#pi-chip .pi-who { font-weight: 800; color: #0f172a; font-size: 13.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px; }
+#pi-chip .pi-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; color: #0369a1; background: #e0f2fe; border-radius: 6px;
+  padding: 2px 7px; font-weight: 700; letter-spacing: .4px; white-space: nowrap; }
+#pi-chip .pi-i { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid #0369a1; color: #0369a1; background: #ffffff; font-weight: 800;
+  font-size: 12.5px; line-height: 1; cursor: pointer; font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif; }
+#pi-chip .pi-i:hover { background: #0369a1; color: #ffffff; }
+
+/* the hidden attribute must always win over the display rules above */
+#pi-chip[hidden], #pi-panel[hidden] { display: none; }
+
+#pi-panel { position: fixed; inset: 0; z-index: 1100; }
+#pi-panel .pi-backdrop { position: absolute; inset: 0; background: rgba(15, 23, 42, .55); }
+#pi-panel .pi-sheet { position: absolute; top: 3vh; left: 50%; transform: translateX(-50%);
+  width: min(720px, 94vw); max-height: 94vh; background: #f8fafc; border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .35); display: flex; flex-direction: column;
+  overflow: hidden; }
+.pi-head { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 14px 18px; background: #0f172a; color: #ffffff; }
+.pi-head-who { font-weight: 800; font-size: 16px; }
+.pi-head-sub { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+.pi-close { background: transparent; border: 1px solid #475569; color: #e2e8f0;
+  border-radius: 8px; width: 32px; height: 32px; font-size: 15px; cursor: pointer;
+  flex: 0 0 auto; }
+.pi-close:hover { background: #1e293b; }
+.pi-body { overflow-y: auto; padding: 14px 18px 20px; }
+.pi-stage { margin-bottom: 18px; }
+.pi-stage h3 { font-size: 13.5px; font-weight: 800; color: #0f172a; margin: 0 0 4px;
+  display: flex; align-items: center; gap: 8px; }
+.pi-count { font-size: 11.5px; font-weight: 700; color: #0369a1; background: #e0f2fe;
+  border-radius: 999px; padding: 1px 8px; }
+.pi-rec { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 10px 14px; margin: 8px 0 0; }
+.pi-rec-when { font-size: 11.5px; font-weight: 700; color: #94a3b8;
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.pi-row { display: flex; gap: 10px; padding: 4px 0; border-bottom: 1px dashed #f1f5f9;
+  font-size: 13px; }
+.pi-row:last-child { border-bottom: 0; }
+.pi-k { flex: 0 0 38%; color: #64748b; font-weight: 600; }
+.pi-v { flex: 1; color: #0f172a; font-weight: 600; overflow-wrap: anywhere; }
+.pi-empty, .pi-loading { color: #94a3b8; font-size: 12.5px; font-style: italic; margin: 6px 0 0; }
+
+@media (max-width: 640px) {
+  #pi-chip { top: 8px; right: 10px; padding: 5px 6px 5px 10px; }
+  #pi-chip .pi-who { max-width: 34vw; font-size: 12px; }
+  #pi-chip .pi-id { font-size: 11px; }
+  .pi-k { flex-basis: 44%; }
+}

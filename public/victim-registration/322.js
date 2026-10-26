@@ -2,8 +2,8 @@
 // Sixteen intake fields, three per row. The Registration ID — 4 digits then 4
 // letters, for example 4827ABCD — is generated ONLY when the form passes
 // validation and the document saves successfully. Unidentified victims
-// register without a name and also get a temporary identification ID
-// (TMP-XXXX, sharing the Registration ID's digits).
+// register without a name — the Registration ID is the one and only
+// identifier (temporary IDs were removed in Task 45).
 // EMERGENCY RULE: nothing blocks a save except a completely empty form —
 // emergency treatment must never wait for registration details.
 import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/firebase.js";
@@ -111,7 +111,7 @@ function renderRecent() {
   $("#recent-card").hidden = rows.length === 0;
   $("#recent-body").innerHTML = rows.slice(0, 8).map((r) => {
     const who = r.isUnidentified
-      ? "Unidentified" + (r.tempId ? ' <span class="temp-tag">' + esc(r.tempId) + "</span>" : "")
+      ? "Unidentified"
       : esc(r.fullName || "Unnamed");
     return "<tr><td class='c-no'>" + esc(r.regId || "—") + "</td>" +
       "<td class='c-party'>" + who + "</td>" +
@@ -165,12 +165,10 @@ $("#save-btn").addEventListener("click", async () => {
   if (referral === "Yes" && !facility) return err("Referral is set to Yes — enter the referring facility.");
 
   const regId = makeRegId();
-  const tempId = unidentified ? "TMP-" + regId.slice(0, 4) : "";
   const docData = {
     regId,
     isUnidentified: unidentified,
     fullName: name,
-    tempId,
     dob,
     age: age === "" ? "" : Number(age),
     sex: v("#in-sex"),
@@ -197,10 +195,8 @@ $("#save-btn").addEventListener("click", async () => {
     await addDoc(collection(db, "healthRegistrations"), docData);
     if (staff) rememberStaff(staff);
     $("#done-regid").textContent = regId;
-    $("#done-temp").textContent = tempId || "—";
-    $("#done-temp-box").hidden = !unidentified;
     $("#done-note").textContent = unidentified
-      ? "Registered without a name. The temporary identification ID sits beside the Registration ID — both quote at triage."
+      ? "Registered without a name. The Registration ID alone identifies this victim — quote it at every stage."
       : "The record is saved. Quote the Registration ID at triage and at every next step.";
     $("#step-form").hidden = true;
     $("#step-done").hidden = false;
