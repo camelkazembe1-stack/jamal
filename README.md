@@ -2,7 +2,7 @@ JAMALI
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital, and a 256 tool file and data converter.
 
-A static, zero build web app: the books, journals, ledgers, registers and reports a small business actually needs, all driven by one transaction journal. Record a transaction once, and every other page derives from it. On top of the books sits the Convertor: 256 real, working file and data tools, every one on its own page in its own folder. Beside the books, the Health desk registers victims at the hospital door, triages them by urgency, prepares them for the doctor at the nurse consultation and follows the patient through the doctor consultation, the pharmacy, the treatment desk and the patient module.
+A static, zero build web app: the books, journals, ledgers, registers and reports a small business actually needs, all driven by one transaction journal. Record a transaction once, and every other page derives from it. On top of the books sits the Convertor: 256 real, working file and data tools, every one on its own page in its own folder. Beside the books, the Health desk registers victims at the hospital door and triages them by urgency.
 
 Live at https://jamali-lime.vercel.app
 
@@ -17,7 +17,7 @@ Full edit rights: every collection gives a signed in user create, read, update a
 
 61 bookkeeping pages, plus the Convertor: a hub of 256 square buttons, each opening a real working tool page, all client side.
 
-Health: victim registration that issues the Registration ID only after a clean save, a triage desk that keeps every urgency assessment linked to its victim, a nurse consultation desk that hands the doctor a completed nursing record, a doctor consultation desk that assesses, diagnoses, prescribes, orders treatments and sends the patient to a destination of the facility's own choosing, a pharmacy that dispenses the prescriptions and proposes alternatives through the doctor, a treatment desk that performs and records the ordered treatments, and a patient module that gathers every saved field into one tabular summary. Emergency treatment is never delayed by an incomplete form.
+Health: victim registration that issues the Registration ID only after a clean save, and a triage desk that keeps every urgency assessment linked to its victim. Emergency treatment is never delayed by an incomplete form.
 
 A collapsible family tree sidebar on every page: branches open and close with a tap, the active page highlights itself, and the whole tree folds into a burger drawer on the phone.
 
@@ -51,9 +51,9 @@ View File is the library: every book, register and report is one click away.
 
 Computer is the tools launcher: square tiles only, and today one tile, Convertor, which opens the hub of all 256 tools. Search the hub, tap a square button, and the tool opens on its own page.
 
-Health is the medical wing. The Health tile on Home opens the Health page, which carries seven buttons: Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient Module. Registration records a victim at the hospital door, unidentified victims included, and issues the Registration ID only after the form saves. Triage then assesses how urgently the victim needs care and keeps the full assessment history linked to the registration record. The nurse consultation pulls the patient by Registration ID, reviews what registration and triage already recorded, and documents the nursing assessment and care. The doctor consultation reads the completed nursing record, assesses and diagnoses the patient, records the prescriptions and the treatment orders, and sends the patient to a destination the facility chose itself - the pharmacy dispenses the prescriptions and proposes alternatives through the doctor when a medicine is unavailable, the treatment desk performs the ordered treatments, and the patient module gathers every saved field into one tabular summary. Registration flows to triage, triage flows to the nurse consultation, the nurse flows to the doctor, and the doctor sends the patient on, according to the patient's needs.
+Health is the medical wing. The Health tile on Home opens the Health page, which carries two buttons: Registration and Triage. Registration records a victim at the hospital door, unidentified victims included, and issues the Registration ID only after the form saves. Triage then assesses how urgently the victim needs care and keeps the full assessment history linked to the registration record. Registration flows to triage, and triage flows to the nurse or doctor consultation, according to the victim's needs.
 
-The dark sidebar on every page mirrors the family tree: Business folds out to Add Transaction and View File, View File folds out to every book, register and report, and Computer folds out to Convertor and all 256 tools, and Health folds out to Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient Module. Nodes with children show a small arrow: v opens a branch, ^ closes it, and the path to the page you are on opens by itself. The address bar always stays clean at the domain root.
+The dark sidebar on every page mirrors the family tree: Business folds out to Add Transaction and View File, View File folds out to every book, register and report, and Computer folds out to Convertor and all 256 tools, and Health folds out to Registration and Triage. Nodes with children show a small arrow: v opens a branch, ^ closes it, and the path to the page you are on opens by itself. The address bar always stays clean at the domain root.
 
 
 ARCHITECTURE
@@ -96,7 +96,7 @@ jamali/
 |-- public  (entry 83 - the whole app, the web root)
 |   |-- index.html, firebase.js, menu.js, sidebar.js  (entries 67 to 70)
 |   |-- 3.html, 6.html  (entry 66 - the two loose pages)
-|   `-- 329 page and engine folders  (entries 1 to 65, 71 to 73 and 321 to 328)
+|   `-- 324 page and engine folders  (entries 1 to 65, 71 to 73 and 321 to 323)
 |       `-- for example text-to-pdf: 65.html, 65.css, 65.js  (entry 65 lists all 256)
 |-- README.md  (entry 77 - this guide)
 |-- scripts  (entries 78 and 79 - the rate limited push script)
@@ -521,22 +521,11 @@ Family 14 of 14, Number and Data Formats (16 tools, pages 305 to 320):
 320, data-format-converter - Data Format Converter: converts between CSV, JSON, XML and friends in one place. Files: 320.html, 320.css, 320.js.
 
 The Health family:
-321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient Module, in the same tile language as every launcher. Files: 321.html, 321.css, 321.js.
+321. health - the Health hub, the doorway to the medical wing: two square buttons, Registration and Triage, in the same tile language as every launcher. Files: 321.html, 321.css, 321.js.
 
 322. victim-registration - victim registration at the hospital door: sixteen fields laid out three per row, the age computed from the date of birth, arrival time recorded automatically, referral and payment captured, and the registering staff member remembered on the device. The Registration ID, four digits and four letters (for example 4827ABCD), is issued only after the form saves. Unidentified victims register without a name and receive a temporary identification ID. Emergency treatment is never delayed by an incomplete form. Files: 322.html, 322.css, 322.js.
 
 323. triage - the triage desk: the assessment that follows registration and decides how urgently the victim needs care. Twelve items, from the Registration ID link, symptoms and vital signs (temperature, pulse, respiratory rate, blood pressure and oxygen saturation) to consciousness, the 0 to 10 pain scale, the priority under the hospital's approved triage protocol, visible injuries, allergies, existing conditions, notes and the assessing healthcare worker. Every assessment keeps its history and is linked to the victim's registration record. Triage orders the care; it does not replace the doctor's diagnosis or the nurse's consultation. Files: 323.html, 323.css, 323.js.
-
-324. nurse-consultation - the nurse's desk, the stage between triage and the doctor: the nurse enters the patient's Registration ID and the page finds the patient, shows everything already recorded at registration and triage as read only history, and lays out the nursing assessment - chief complaint, history of the present illness, relevant history, current medications, allergies, current vital signs, the pain assessment (location, severity, duration and character) and the nurse's clinical findings, nursing problems, interventions, the response to care and nursing notes. The nurse on record comes from the signed in account and the times are recorded automatically. The queue lists today's triaged patients still waiting for nursing assessment, ordered by triage priority and then arrival, with direct entry beside it for walk-ins and return visits. A consultation saves as in progress and is completed explicitly; one consultation per patient is open at a time; the completed record belongs to the doctor and is never rewritten - a correction is a new consultation. Emergency treatment is never delayed by documentation. Files: 324.html, 324.css, 324.js.
-
-
-325. doctor-consultation - the doctor's desk, the stage that reads the completed nursing record: the doctor enters the patient's Registration ID and the page finds the patient, shows the registration, triage and nursing records as read only history, and lays out the medical assessment (presenting complaint, history of the present illness, relevant history, current medications, allergies, current vital signs, physical examination, clinical findings, additional notes), the diagnosis with its type - working or provisional, or confirmed - the investigations requested, the treatment plan, the prescriptions for the pharmacy and the orders for the treatment desk. The doctor's queue lists the patients whose nursing consultation is completed and who are not yet sent on, ordered by triage priority and then arrival, with direct entry beside it; the pharmacy's alternative-medicine requests wait on the same page to be accepted, or rejected with a replacement medicine, or sent outside the pharmacy. A consultation saves as in progress and is completed explicitly; completing it sends the prescriptions to the pharmacy and the orders to the treatment desk. The doctor then chooses where the patient goes next from the facility's own destination list - a destination typed once is saved for reuse, duplicates are refused, and sending records where the patient went and when. The doctor on record comes from the signed in account. Files: 325.html, 325.css, 325.js.
-
-326. pharmacy - the pharmacy desk: prescriptions arrive from the doctor consultation one medicine per line, and the worklist shows every line still to handle - to dispense, waiting for the doctor's decision, or accepted - beside a direct search by Registration ID that shows the patient's full prescription history. The pharmacist checks availability and either dispenses, recording exactly what was given, by whom and when, or proposes an alternative medicine when the prescribed one is unavailable; the proposal waits for the doctor on page 325, an accepted alternative can be dispensed, and a rejected line is re-prescribed by the doctor or sent outside the pharmacy. Availability is the pharmacist's judgement - stock management is not part of this module. Files: 326.html, 326.css, 326.js.
-
-327. treatment-procedures - the treatment desk: the patient arrives with the Registration ID only and the doctor's orders are retrieved from the database - wound dressing, injections, nebulization, minor procedures. The queue lists the open orders by triage priority and then arrival; opening an order shows the original instruction exactly as the doctor wrote it, and the form records the treatment performed, the outcome, the notes and the status - pending, in progress, completed, not completed - with the healthcare worker and the times recorded automatically. A treatment cannot be marked completed without recording what was done, and a completed or not-completed record is closed; the history of every order stays with the patient for the doctor's next decision. Files: 327.html, 327.css, 327.js.
-
-328. patient-module - one tabular summary of everything entered and saved for a patient, from victim registration through the patient's last step: registration, triage, the nursing consultations, the doctor consultations, the pharmacy prescriptions and the treatment orders, connected by the Registration ID. One row per saved record in the order it was saved, with the stage, the time and the person who saved it; the columns are generated from the fields actually saved across the records, so the table grows as the patient moves through the workflow and every field carries its saved value. An index of all registered patients stands beside the direct search. Nothing is entered here - the page only reads. Files: 328.html, 328.css, 328.js.
 
 The shared files and engines:
 66. the loose root pages 3.html and 6.html - two leftovers from before the one folder per page convention, sitting directly at the public root instead of inside folders: 3.html is a working copy of Add Transaction and 6.html a working copy of the Double Column Cash Book. Both load their stylesheet and engine from the page folders, and they load the shared sidebar script but not menu.js, so the family tree has no data on these two old addresses and the sidebar there stays empty - the full tree lives on /add-transaction/3 and /cash-book/6. They stay so nothing that links to them breaks.
@@ -558,7 +547,7 @@ The shared files and engines:
 74. convertor tools.js - the Convertor registry: the 14 families and all 256 tools with id, label, slug and page number. The hub grid and the sidebar children both read it, so buttons and tree can never drift apart. slugs.txt and pages.txt sit beside it for the folder building loops.
 
 At the root of the repo:
-75. firestore.rules - the guard dog. Decides who may read or write each collection: every one of the 26 collections gives a signed in user create, read, update and delete, and anything not matched is denied. The full rights were opened on the user's order of 25 October 2026; before that day the journal was append only and delete stayed closed.
+75. firestore.rules - the guard dog. Decides who may read or write each collection: every one of the 21 collections gives a signed in user create, read, update and delete, and anything not matched is denied. The full rights were opened on the user's order of 25 October 2026; before that day the journal was append only and delete stayed closed.
 
 76. vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root.
 
@@ -574,11 +563,11 @@ At the root of the repo:
 
 82. systemd/user/jamali-rate-limited-push.timer - fires that service on a schedule.
 
-83. public - the entire app, the web root Vercel serves. Six standalone files sit directly at its root: index.html, firebase.js, menu.js and sidebar.js (entries 67 to 70) and the two loose pages 3.html and 6.html (entry 66). Under them live 329 folders: the 59 bookkeeping page folders (entries 1 to 61, with the bills folders 19 and 20 still pending), computer and convertor (62 and 63, which also hosts the not-found page 64), the 256 tool folders (entry 65), the four engine folders journals, records, reports and reports2 (entries 71 to 73), and the eight Health folders (321 to 328). That is 995 files under public, every one of them named in this guide.
+83. public - the entire app, the web root Vercel serves. Six standalone files sit directly at its root: index.html, firebase.js, menu.js and sidebar.js (entries 67 to 70) and the two loose pages 3.html and 6.html (entry 66). Under them live 324 folders: the 59 bookkeeping page folders (entries 1 to 61, with the bills folders 19 and 20 still pending), computer and convertor (62 and 63, which also hosts the not-found page 64), the 256 tool folders (entry 65), the four engine folders journals, records, reports and reports2 (entries 71 to 73), and the three Health folders (321 to 323). That is 980 files under public, every one of them named in this guide.
 
 84. .git - git's own filing cabinet, not part of the app and never served: the config, the commit history, the branches and stashes under refs, the hooks, the logs, and the object store where every saved snapshot chunk sits inside a two character hash folder (the hundreds of two letter folders the tree shows). Nothing in here is edited by hand and no delivery ever touches it; deleting it would erase the project's whole history.
 
-That is the whole tree: 1001 project files, 995 of them under public, and every one of them is named above. The only thing this guide summarises instead of listing is the inside of .git (entry 84), because git manages that content itself and it changes on every commit.
+That is the whole tree: 986 project files, 980 of them under public, and every one of them is named above. The only thing this guide summarises instead of listing is the inside of .git (entry 84), because git manages that content itself and it changes on every commit.
 
 
 DATA MODEL
@@ -633,16 +622,6 @@ healthRegistrations: one document per registered victim (page 322), carrying the
 
 healthTriage: one document per triage assessment (page 323), linked to its victim by the Registration ID and carrying symptoms, vital signs, consciousness, pain, priority and the assessor.
 
-healthNurseConsultations: one document per nursing consultation (page 324), linked to its patient by the Registration ID and carrying the twelve assessment fields, the current vital signs, the nurse taken from the signed in account and the consultation's status, in progress or completed.
-
-healthDoctorConsultations: one document per doctor consultation (page 325), linked to its patient by the Registration ID and carrying the medical assessment, the diagnosis and its type, the investigations, the treatment plan, the doctor taken from the signed in account and the consultation's status - in progress, completed, or sent with the destination's name and the time it was sent.
-
-healthDestinations: one document per destination on the facility's own list (page 325), created the first time a doctor sends a patient somewhere new and offered for selection from then on, with case-insensitive duplicate protection.
-
-healthPrescriptions: one document per prescribed medicine (written on page 325, worked on page 326), carrying the medicine, dose, frequency and duration, the prescribing doctor, and the line's status - to dispense, alternative proposed, accepted, dispensed, rejected or outside the pharmacy - with the alternative proposal, the doctor's decision and the dispensing record where they apply.
-
-healthTreatmentOrders: one document per treatment or procedure order (written on page 325, worked on page 327), carrying the original order text exactly as the doctor wrote it, the status - pending, in progress, completed, not completed - and the treatment performed, the outcome, the notes and the healthcare worker who recorded them.
-
 The report pages 55 to 61 add no collection of their own: they read transactions, invoices and notes and generate every figure at read time.
 
 
@@ -650,7 +629,7 @@ SECURITY
 
 Nothing is public. Every collection requires a signed in user.
 
-Every one of the 26 collections allows a signed in user to create, read, update and delete: the full edit and delete rights were opened in the rules on the user's order of 25 October 2026. Before that day the journal was append only and delete stayed closed on every register.
+Every one of the 21 collections allows a signed in user to create, read, update and delete: the full edit and delete rights were opened in the rules on the user's order of 25 October 2026. Before that day the journal was append only and delete stayed closed on every register.
 
 Any collection not named in the rules matches the closing deny-all and is refused, so a new page needs its rule added first.
 
@@ -704,9 +683,9 @@ ADDING A NEW PAGE
 
 Create the folder inside public and add N.html, N.css and N.js. The html links the shared base css and its own css, loads menu.js and sidebar.js (menu first, both deferred), then its own js.
 
-Add ONE line to menu.js with the label, icon, folder, page number and depth. The sidebar tree, the open and close arrows and the active highlight all come free. Page numbers are never reused: the next free page number is 329.
+Add ONE line to menu.js with the label, icon, folder, page number and depth. The sidebar tree, the open and close arrows and the active highlight all come free. Page numbers are never reused: the next free page number is 324.
 
-Numbers still without a folder today: 19 and 20, the two pending bills folders above, and every number from 329 up. Every other number from 1 to 328 stands on a real folder.
+Numbers still without a folder today: 19 and 20, the two pending bills folders above, and every number from 324 up. Every other number from 1 to 323 stands on a real folder.
 
 Add its tile to the View File launcher grid in view-file/4.html, or a square tile on Computer for a tools module.
 
@@ -719,8 +698,8 @@ Every folder ships html, css and js. No exceptions.
 
 STATUS AND ROADMAP
 
-Shipped: home 1, business 2, add transaction 3, view file 4, all transactions 5, cash books 6 and 15, journals 7 to 14, creditors, debtors and ledger 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 61, the Computer launcher 62, the Convertor hub 63 and all 256 tools live on their own pages 65 to 320, and the Health wing, hub 321, victim registration 322, triage 323, nurse consultation 324, doctor consultation 325, pharmacy 326, treatment / procedures 327 and patient module 328.
+Shipped: home 1, business 2, add transaction 3, view file 4, all transactions 5, cash books 6 and 15, journals 7 to 14, creditors, debtors and ledger 16 to 18, registers and documents 21 to 40, reports and schedules 41 to 61, the Computer launcher 62, the Convertor hub 63 and all 256 tools live on their own pages 65 to 320, and the Health wing, hub 321, victim registration 322 and triage 323.
 
-Next up: stock management for the pharmacy and the bills receivable and payable folders (19, 20, provisioned), the remaining reports of the 24 report wave, and further converter catalogue phases whenever you call for them.
+Next up: the bills receivable and payable folders (19, 20, provisioned), the remaining reports of the 24 report wave, and further converter catalogue phases whenever you call for them.
 
-Last updated: 26 October 2026.
+Last updated: 25 October 2026.
