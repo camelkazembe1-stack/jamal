@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Renamer — JAMALI Convertor</title>
+<link rel="stylesheet" href="/file-renamer/277.css">
+
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/convertor/63">&larr; Convertor</a>
+  <div class="t-head"><h1>File Renamer</h1></div>
+  <div class="t-chips">
+    <span class="t-chip t-fam">🧰 File Utilities</span>
+    <span class="t-chip">Tool #213 of 256</span>
+    <span class="t-chip">/file-renamer/277</span>
+  </div>
+<div class="t-panel">
+  <div class="t-drop" id="drop">Drop the file here or click to choose<small id="drop-hint">File to rename</small></div>
+  <input type="file" id="file" accept="" hidden>
+  <div class="t-row"><button class="t-btn" id="run">Run</button></div>
+  <p class="t-msg" id="t-msg"></p>
+  <ul class="t-files" id="files"></ul>
+</div><div class="t-panel">
+  <div class="t-grid2">
+    <div><label class="t-lab" for="nn">New name (without extension)</label><input class="t-in" id="nn" placeholder="e.g. invoice-october"></div>
+    <div><label class="t-lab" for="ke">Extension</label><select class="t-sel" id="ke">
+      <option value="1">Keep original extension</option><option value="0">Drop it</option></select></div>
+  </div>
+  <div class="t-row"><button class="t-btn" id="run">Rename &amp; download</button></div>
+  <p class="t-msg" id="t-msg"></p>
+</div>
+  <div class="t-links"><a class="t-btn" href="/convertor/63">All Convertor tools</a>
+  <a class="t-btn ghost" href="/computer/62">Computer</a></div>
+</main>
+<script src="/file-renamer/277.js" defer></script>
+</body>
+</html>

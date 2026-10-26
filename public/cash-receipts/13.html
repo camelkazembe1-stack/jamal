@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cash Receipts Journal — JAMALI</title>
+<link rel="stylesheet" href="/journals/journal.css">
+  <link rel="stylesheet" href="/cash-receipts/13.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/view-file/4">&larr; View File</a>
+  <h1>Cash Receipts Journal</h1>
+  <p class="sub">Money received by the business &mdash; customer payments, cash income and other receipts (Flow Method = <b>Cash</b> or <b>Bank</b>).</p>
+
+  <div class="card table-card" id="table-card">
+    <div class="table-wrap">
+      <table class="journal">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="amt">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="j-body"></tbody>
+        <tfoot id="j-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card empty" id="empty-state" hidden>
+    <div class="empty-icon">&#128181;</div>
+    <p class="empty-title">No receipts yet</p>
+    <p class="empty-sub">Money in with Flow Method <b>Cash</b> or <b>Bank</b> appears here instantly.</p>
+  </div>
+
+  <p class="count-line" id="count-line"></p>
+</main>
+<script type="module" src="/cash-receipts/13.js"></script>
+</body>
+</html>

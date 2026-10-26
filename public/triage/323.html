@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Triage — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/triage/323.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- STEP 1 · the assessment -->
+  <section id="step-form">
+    <a class="back" href="/health/321">&larr; Health</a>
+    <h1>Triage</h1>
+    <p class="sub">The stage after registration: assess the victim's condition and decide how urgently medical attention is needed. Triage orders the care &mdash; it does not replace the doctor's diagnosis or the nurse's consultation.</p>
+
+    <div class="flow-ribbon">Registration <span class="arr">&rarr;</span> <b>Triage</b> <span class="arr">&rarr;</span> Nurse or Doctor consultation, according to the victim's needs</div>
+
+    <div class="urgent-note">🚨 Emergency treatment must not be delayed while completing this form.</div>
+
+    <div class="card add-card">
+      <div class="form-grid">
+
+        <label>Registration ID
+          <input id="t-regid" list="regids" placeholder="e.g. 4827ABCD" autocomplete="off">
+          <datalist id="regids"></datalist>
+          <span class="victim-line" id="t-victim"></span>
+        </label>
+        <label>Assessment Date &amp; Time (automatic)
+          <input id="t-when" type="datetime-local" readonly>
+        </label>
+        <label>Symptoms and Complaints
+          <textarea id="t-symptoms" rows="2" placeholder="What the victim is experiencing"></textarea>
+        </label>
+
+      </div>
+
+      <div class="vitals-card">
+        <h3>Vital Signs</h3>
+        <div class="vitals-grid">
+          <label>Temperature (&deg;C)
+            <input id="t-temp" type="number" inputmode="decimal" step="0.1" min="25" max="45" placeholder="36.8">
+          </label>
+          <label>Pulse Rate (bpm)
+            <input id="t-pulse" type="number" inputmode="numeric" min="0" placeholder="72">
+          </label>
+          <label>Respiratory Rate (/min)
+            <input id="t-rr" type="number" inputmode="numeric" min="0" placeholder="16">
+          </label>
+          <label>Blood Pressure (mmHg)
+            <input id="t-bp" type="text" inputmode="numeric" placeholder="120/80">
+          </label>
+          <label title="Oxygen saturation">SpO₂ (%)
+            <input id="t-spo2" type="number" inputmode="numeric" min="0" max="100" placeholder="98">
+          </label>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <label>Level of Consciousness
+          <select id="t-conscious">
+            <option value="">— Select —</option>
+            <option>Alert</option>
+            <option>Responds to voice</option>
+            <option>Responds to pain only</option>
+            <option>Unresponsive</option>
+          </select>
+        </label>
+        <label>Pain Level (0 to 10)
+          <span class="pain-row">
+            <input id="t-pain" type="range" min="0" max="10" step="1" value="0">
+            <output id="t-pain-out">0</output>
+          </span>
+        </label>
+        <label>Emergency Priority
+          <select id="t-priority">
+            <option value="">— Select —</option>
+            <option>Critical</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+          <span class="mini-note">Set by the hospital's approved triage protocol.</span>
+        </label>
+
+        <label>Visible Injuries or Condition
+          <textarea id="t-injuries" rows="2" placeholder="Injuries or abnormalities observed"></textarea>
+        </label>
+        <label>Allergies
+          <input id="t-allergies" type="text" placeholder="Known allergies, if any">
+        </label>
+        <label>Existing Medical Conditions
+          <input id="t-conditions" type="text" placeholder="Relevant medical history, if any">
+        </label>
+
+        <label class="span2">Triage Notes
+          <textarea id="t-notes" rows="2" placeholder="Additional observations from the assessment"></textarea>
+        </label>
+        <label>Assessed By
+          <span class="staff-row">
+            <select id="t-staff"></select>
+            <button type="button" class="staff-add" id="t-staff-add" title="Add a healthcare worker to this device's list">＋</button>
+          </span>
+        </label>
+
+      </div>
+
+      <p class="form-err" id="t-err" hidden></p>
+      <div class="form-actions">
+        <button class="btn-primary" id="t-save" type="button">Save Triage Assessment</button>
+        <button class="btn-ghost" id="t-clear" type="button">Clear Form</button>
+      </div>
+    </div>
+
+    <div class="card people-card" id="t-history-card">
+      <h2>Triage history</h2>
+      <div class="empty" id="t-empty">
+        <div class="empty-icon">🚑</div>
+        <div class="empty-title">No assessments yet</div>
+        <div class="empty-sub">The first assessment saved on this account will appear here, linked to its registration.</div>
+      </div>
+      <div class="table-wrap" id="t-table-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>When</th><th>Registration ID</th><th>Victim</th><th>Priority</th><th>Consciousness</th><th>Pain</th><th>Vitals</th><th>Assessed By</th></tr>
+          </thead>
+          <tbody id="t-history"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="t-count"></p>
+    </div>
+  </section>
+
+  <!-- STEP 2 · saved -->
+  <section id="step-done" hidden>
+    <div class="card done-card">
+      <div class="done-icon">&#10003;</div>
+      <h1>Triage Saved</h1>
+      <p class="sub" id="done-note"></p>
+      <div class="id-box">
+        <span class="id-k">Linked Registration ID</span>
+        <span class="id-v" id="done-regid"></span>
+      </div>
+      <div class="done-actions">
+        <button class="ghost-btn" id="again-btn" type="button">Assess Another</button>
+        <a class="cta-btn" href="/victim-registration/322">Register a Victim</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/triage/323.js"></script>
+</body>
+</html>

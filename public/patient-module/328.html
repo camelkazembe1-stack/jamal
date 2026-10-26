@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient Module — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-module/328.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- STEP 1 · search and the patient index -->
+  <section id="s-search">
+    <a class="back" href="/health/321">&larr; Health</a>
+    <h1>Patient Module</h1>
+    <p class="sub">One tabular summary of everything entered and saved for a patient, from victim registration through the patient's last step. The Registration ID connects the records; the columns are generated from the fields actually saved.</p>
+
+    <div class="flow-ribbon">Registration <span class="arr">&rarr;</span> Triage <span class="arr">&rarr;</span> Nurse Consultation <span class="arr">&rarr;</span> Doctor Consultation <span class="arr">&rarr;</span> Pharmacy / Treatment <span class="arr">&rarr;</span> <b>Patient Module</b></div>
+
+    <div class="card add-card">
+      <h2>Find a patient</h2>
+      <div class="search-row">
+        <input id="q-regid" list="q-regids" placeholder="Registration ID, e.g. 4827ABCD" autocomplete="off">
+        <datalist id="q-regids"></datalist>
+        <button class="btn-primary" id="q-find" type="button">Find Patient</button>
+      </div>
+      <p class="victim-line" id="q-line"></p>
+      <p class="form-err" id="q-err" hidden></p>
+    </div>
+
+    <div class="card" id="idx-card">
+      <h2>All patients</h2>
+      <div class="empty" id="i-empty">
+        <div class="empty-icon">🗂️</div>
+        <div class="empty-title">No patients registered yet</div>
+        <div class="empty-sub">Every registered patient appears here, newest first. Open one to see the full tabular summary of everything saved so far.</div>
+      </div>
+      <div class="table-wrap" id="i-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Registration ID</th><th>Patient</th><th>Age / Sex</th><th>Arrived</th><th>Triage priority</th><th></th></tr>
+          </thead>
+          <tbody id="i-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="i-count"></p>
+    </div>
+  </section>
+
+  <!-- STEP 2 · the patient's full tabular summary -->
+  <section id="s-summary" hidden>
+    <a class="back" href="#" id="s-back">&larr; Back to the patients</a>
+    <h1>Patient Module</h1>
+    <p class="sub" id="s-wholine"></p>
+
+    <div class="flow-ribbon">Registration <span class="arr">&rarr;</span> Triage <span class="arr">&rarr;</span> Nurse Consultation <span class="arr">&rarr;</span> Doctor Consultation <span class="arr">&rarr;</span> Pharmacy / Treatment <span class="arr">&rarr;</span> <b>Patient Module</b></div>
+
+    <div class="card head-card">
+      <div class="id-row">
+        <span class="id-k">Registration ID</span>
+        <span class="id-v" id="h-regid"></span>
+      </div>
+      <p class="victim-line ok" id="h-line"></p>
+    </div>
+
+    <div class="card">
+      <h2>The patient's record &mdash; every field, every stage</h2>
+      <p class="mini-note" style="margin-bottom:10px">One row per saved record, in the order it was saved. The columns are generated from the fields actually entered and saved across the modules, so the table grows as the patient moves through the workflow. Reading across one row shows that record in full.</p>
+      <div class="empty" id="s-empty">
+        <div class="empty-icon">🗂️</div>
+        <div class="empty-title">Nothing saved yet</div>
+        <div class="empty-sub">Records appear here as the stages save them.</div>
+      </div>
+      <div class="table-wrap sum-wrap" id="s-wrap" hidden>
+        <table class="bk sum">
+          <thead id="s-head"></thead>
+          <tbody id="s-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="s-count"></p>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/patient-module/328.js"></script>
+</body>
+</html>

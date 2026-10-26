@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Victim Registration — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/victim-registration/322.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- STEP 1 · the form -->
+  <section id="step-form">
+    <a class="back" href="/health/321">&larr; Health</a>
+    <h1>Registration</h1>
+    <p class="sub">Register a victim at the hospital door. The Registration ID is issued only after the form saves.</p>
+
+    <div class="urgent-note">🚨 Emergency treatment must not be delayed because registration details are incomplete &mdash; save with whatever you have.</div>
+
+    <div class="card add-card">
+      <div class="form-grid">
+
+        <label>Full Name
+          <input id="in-name" type="text" placeholder="Victim's full name">
+        </label>
+        <label>Date of Birth
+          <input id="in-dob" type="date">
+        </label>
+        <label>Age (automatic)
+          <input id="in-age" type="text" readonly placeholder="—">
+        </label>
+
+        <label>Sex
+          <select id="in-sex">
+            <option value="">— Select —</option>
+            <option>Male</option>
+            <option>Female</option>
+          </select>
+        </label>
+        <label>Phone Number
+          <input id="in-phone" type="tel" placeholder="e.g. 0712 345 678">
+        </label>
+        <label>Address and Location
+          <input id="in-address" type="text" placeholder="Village, street, landmark">
+        </label>
+
+        <label>Emergency Contact / Next of Kin
+          <input id="in-kin" type="text" placeholder="Contact name and phone">
+        </label>
+        <label>Arrival Date &amp; Time (automatic)
+          <input id="in-arrival" type="datetime-local" readonly>
+        </label>
+        <label>Incident Type
+          <select id="in-incident">
+            <option value="">— Select —</option>
+            <option>Road Accident</option>
+            <option>Physical Assault</option>
+            <option>Burn</option>
+            <option>Fall</option>
+            <option>Poisoning</option>
+            <option>Workplace Accident</option>
+            <option>Other</option>
+          </select>
+        </label>
+
+        <label>Incident Description
+          <textarea id="in-desc" rows="2" placeholder="Brief description of what happened"></textarea>
+        </label>
+        <label>Hospital Department
+          <select id="in-dept">
+            <option value="">— Select —</option>
+            <option>Emergency Department</option>
+            <option>Outpatient Department (OPD)</option>
+            <option>Inpatient Department</option>
+            <option>Surgery</option>
+            <option>Maternity</option>
+            <option>Intensive Care Unit (ICU)</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Emergency Priority
+          <select id="in-priority">
+            <option value="">— Select —</option>
+            <option>Critical</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </label>
+
+        <label>Registering Staff Member
+          <span class="staff-row">
+            <select id="in-staff"></select>
+            <button type="button" class="staff-add" id="staff-add" title="Add a staff member to this device's list">＋</button>
+          </span>
+        </label>
+        <label>Referral Information
+          <select id="in-referral">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </label>
+        <label>Insurance / Payment
+          <select id="in-payment">
+            <option value="">— Select —</option>
+            <option>Insurance</option>
+            <option>Cash</option>
+            <option>Other</option>
+          </select>
+        </label>
+
+        <label id="f-facility" hidden>Referring Facility
+          <input id="in-facility" type="text" placeholder="Name of the referring facility">
+        </label>
+
+        <label class="unid-label">
+          <span class="unid-box">
+            <input id="in-unid" type="checkbox">
+            <span>Unidentified victim &mdash; no known name; a temporary identification ID will be assigned.</span>
+          </span>
+        </label>
+
+      </div>
+
+      <p class="form-err" id="form-err" hidden></p>
+      <div class="form-actions">
+        <button class="btn-primary" id="save-btn" type="button">Register Victim</button>
+        <button class="btn-ghost" id="clear-btn" type="button">Clear Form</button>
+      </div>
+    </div>
+
+    <div class="card people-card" id="recent-card" hidden>
+      <h2>Recent registrations</h2>
+      <div class="table-wrap">
+        <table class="bk">
+          <thead>
+            <tr><th>Registration ID</th><th>Victim</th><th>Priority</th><th>Department</th><th>Registered</th></tr>
+          </thead>
+          <tbody id="recent-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="count-line"></p>
+    </div>
+  </section>
+
+  <!-- STEP 2 · saved -->
+  <section id="step-done" hidden>
+    <div class="card done-card">
+      <div class="done-icon">&#10003;</div>
+      <h1>Victim Registered</h1>
+      <p class="sub" id="done-note"></p>
+      <div class="id-box">
+        <span class="id-k">Registration ID</span>
+        <span class="id-v" id="done-regid"></span>
+      </div>
+      <div class="id-box temp" id="done-temp-box" hidden>
+        <span class="id-k">Temporary identification ID</span>
+        <span class="id-v" id="done-temp"></span>
+      </div>
+      <div class="done-actions">
+        <button class="ghost-btn" id="again-btn" type="button">Register Another</button>
+        <a class="cta-btn" href="/triage/323">Go to Triage</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/victim-registration/322.js"></script>
+</body>
+</html>
