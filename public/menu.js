@@ -334,4 +334,5 @@ window.JAMALI_MENU = [
     { label: "Health", icon: "🏥", folder: "health", n: 321, d: 1 },
     { label: "Registration", icon: "📝", folder: "victim-registration", n: 322, d: 2 },
     { label: "Triage", icon: "🚑", folder: "triage", n: 323, d: 2 },
+    { label: "Nurse Consultation", icon: "💉", folder: "nurse-consultation", n: 324, d: 2 },
 ];
