@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-REPO="$HOME/jamali"
+REPO="$HOME/jamal"
 BRANCH="main"
 INTERVAL=60
 STATE_DIR="$HOME/.local/state/jamali"
