@@ -349,7 +349,17 @@ function item(k, v, wide) {
     '</div><div class="rec-v">' + v + "</div></div>";
 }
 
+/* JAMALI-NO-SKIP (task 51): the doctor consultation is step 4 — the nursing consultation (step 3) must be completed first */
+function stepGate(regId) {
+  const done = nurseConsults.some((c) => String(c.regId) === String(regId) && c.status === "completed");
+  if (!done) {
+    return "This patient cannot skip a step — the Nurse Consultation is not completed yet. Complete the nursing stage on page 324 (Nurse Consultation) first, then come to the doctor.";
+  }
+  return "";
+}
 function openPatient(regId) {
+  const blocked = stepGate(regId);
+  if (blocked) { qerr(blocked); return; }
   showPatient(regId);
   current = regMap.get(regId);
   if (!current) return;
