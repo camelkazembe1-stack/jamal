@@ -7,6 +7,7 @@
 // dispensed; a rejected line is re-prescribed or sent outside the pharmacy.
 // Every action records who did it and when, against the Registration ID.
 import { requireAuth, auth, db, collection, query, updateDoc, doc, onSnapshot } from "/firebase.js";
+import { showPatient, hidePatient } from "/health/patient-info.js";
 
 await requireAuth(); // not logged in? -> bounced to "/"
 
@@ -24,7 +25,7 @@ function when(iso) {
 }
 function who(r) {
   return r.isUnidentified
-    ? "Unidentified" + (r.tempId ? " (" + r.tempId + ")" : "")
+    ? "Unidentified"
     : (r.fullName || "Unnamed");
 }
 
@@ -268,6 +269,7 @@ function rerender() {
 let currentId = null;
 
 function openPatient(regId) {
+  showPatient(regId);
   currentId = regId;
   edit = { id: null, mode: null };
   renderPatient();
@@ -278,6 +280,7 @@ function openPatient(regId) {
 
 $("#p-back").addEventListener("click", (e) => {
   e.preventDefault();
+  hidePatient();
   currentId = null;
   $("#s-patient").hidden = true;
   $("#s-search").hidden = false;
@@ -295,7 +298,7 @@ function renderPatient() {
   const r = regMap.get(String(currentId));
   if (!r) return;
   const ident = r.isUnidentified
-    ? "Unidentified" + (r.tempId ? " — temporary ID " + esc(r.tempId) : "")
+    ? "Unidentified"
     : esc(r.fullName || "Unnamed");
   const t = lastTriage.get(String(currentId)) || null;
   $("#p-wholine").textContent = "Dispensing for " + who(r) + " · Registration ID " + r.regId;

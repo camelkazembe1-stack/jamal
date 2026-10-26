@@ -7,6 +7,7 @@
 // across those records — as the patient progresses, the next stage's fields
 // join the table. Nothing is entered here; the page only reads.
 import { requireAuth, db, collection, query, onSnapshot } from "/firebase.js";
+import { showPatient, hidePatient } from "/health/patient-info.js";
 
 await requireAuth(); // not logged in? -> bounced to "/"
 
@@ -24,7 +25,7 @@ function when(iso) {
 }
 function who(r) {
   return r.isUnidentified
-    ? "Unidentified" + (r.tempId ? " (" + r.tempId + ")" : "")
+    ? "Unidentified"
     : (r.fullName || "Unnamed");
 }
 function priBadge(p) {
@@ -159,6 +160,7 @@ $("#i-body").addEventListener("click", (e) => {
 let currentId = null;
 
 function openSummary(regId) {
+  showPatient(regId);
   currentId = regId;
   renderSummary();
   $("#s-search").hidden = true;
@@ -168,6 +170,7 @@ function openSummary(regId) {
 
 $("#s-back").addEventListener("click", (e) => {
   e.preventDefault();
+  hidePatient();
   currentId = null;
   $("#s-summary").hidden = true;
   $("#s-search").hidden = false;
@@ -182,7 +185,7 @@ const LABELS = {
   arrivalAt: "Arrived", incidentType: "Incident", incidentDescription: "Incident notes",
   department: "Department", priority: "Priority", staff: "Registered by",
   referral: "Referred", referredBy: "Referring facility", payment: "Payment",
-  isUnidentified: "Unidentified patient", tempId: "Temporary ID",
+  isUnidentified: "Unidentified patient",
   assessedAt: "Assessed at", symptoms: "Symptoms", consciousness: "Consciousness",
   pain: "Pain (0–10)", vTemp: "Temperature (°C)", vPulse: "Pulse (bpm)",
   vRR: "Respiratory rate (/min)", vBP: "Blood pressure (mmHg)", vSpO2: "SpO2 (%)",
@@ -225,7 +228,7 @@ const STAGES = [
     order: ["fullName", "dob", "age", "sex", "phone", "address", "emergencyContact",
             "arrivalAt", "incidentType", "incidentDescription", "department",
             "priority", "staff", "referral", "referredBy", "payment",
-            "isUnidentified", "tempId"] },
+            "isUnidentified"] },
   { name: "Triage", docs: () => triages, whoKey: "assessedBy",
     order: ["assessedAt", "symptoms", "consciousness", "priority", "pain",
             "vTemp", "vPulse", "vRR", "vBP", "vSpO2", "injuries", "allergies",

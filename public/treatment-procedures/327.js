@@ -9,6 +9,7 @@
 // the original order text is never altered.
 // EMERGENCY RULE: documentation never delays urgent care.
 import { requireAuth, auth, db, collection, query, updateDoc, doc, onSnapshot } from "/firebase.js";
+import { showPatient, hidePatient } from "/health/patient-info.js";
 
 await requireAuth(); // not logged in? -> bounced to "/"
 
@@ -26,7 +27,7 @@ function when(iso) {
 }
 function who(r) {
   return r.isUnidentified
-    ? "Unidentified" + (r.tempId ? " (" + r.tempId + ")" : "")
+    ? "Unidentified"
     : (r.fullName || "Unnamed");
 }
 function priBadge(p) {
@@ -175,6 +176,7 @@ let currentId = null;
 let selOrderId = null;
 
 function openPatient(regId, orderId) {
+  showPatient(regId);
   currentId = regId;
   selOrderId = orderId || null;
   renderPatient();
@@ -189,6 +191,7 @@ function openPatient(regId, orderId) {
 
 $("#p-back").addEventListener("click", (e) => {
   e.preventDefault();
+  hidePatient();
   currentId = null;
   selOrderId = null;
   $("#s-patient").hidden = true;
@@ -207,7 +210,7 @@ function renderPatient() {
   const r = regMap.get(String(currentId));
   if (!r) return;
   const ident = r.isUnidentified
-    ? "Unidentified" + (r.tempId ? " — temporary ID " + esc(r.tempId) : "")
+    ? "Unidentified"
     : esc(r.fullName || "Unnamed");
   const t = lastTriage.get(String(currentId)) || null;
   $("#p-wholine").textContent = "Treating " + who(r) + " · Registration ID " + r.regId;
