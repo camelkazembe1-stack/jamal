@@ -47,7 +47,7 @@ const RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 
 /* the nurse on record comes from the signed in account, never typed */
 const NURSE = String((auth && auth.currentUser && (auth.currentUser.email || auth.currentUser.uid)) || "unknown");
- $("#c-nurse").textContent = NURSE;
+$("#c-nurse").textContent = NURSE;
 
 /* ---------- live data: registrations, triage, consultations ---------- */
 let regs = [];
@@ -153,15 +153,15 @@ function renderQueue() {
     : "";
 }
 
- $("#q-regid").addEventListener("input", () => {
+$("#q-regid").addEventListener("input", () => {
   const el = $("#q-regid");
   el.value = el.value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 8);
   refreshSearchLine();
 });
- $("#q-regid").addEventListener("keydown", (e) => {
+$("#q-regid").addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); $("#q-find").click(); }
 });
- $("#q-find").addEventListener("click", () => {
+$("#q-find").addEventListener("click", () => {
   qerr("");
   const id = $("#q-regid").value.trim().toUpperCase();
   if (!id) return qerr("Enter the patient's Registration ID, or pick one from the list.");
@@ -173,7 +173,7 @@ function renderQueue() {
   }
   openPatient(id);
 });
- $("#q-body").addEventListener("click", (e) => {
+$("#q-body").addEventListener("click", (e) => {
   const btn = e.target.closest(".q-open");
   if (btn) { qerr(""); openPatient(btn.getAttribute("data-regid")); }
 });
@@ -269,7 +269,7 @@ function openPatient(regId) {
   window.scrollTo(0, 0);
 }
 
- $("#c-back").addEventListener("click", (e) => {
+$("#c-back").addEventListener("click", (e) => {
   e.preventDefault();
   $("#s-consult").hidden = true;
   $("#s-search").hidden = false;
@@ -278,7 +278,7 @@ function openPatient(regId) {
 });
 
 /* pain slider */
- $("#n-pain").addEventListener("input", () => {
+$("#n-pain").addEventListener("input", () => {
   $("#n-pain-out").textContent = $("#n-pain").value;
 });
 
@@ -390,10 +390,10 @@ async function saveConsult(complete) {
   }
 }
 
- $("#n-progress").addEventListener("click", () => saveConsult(false));
- $("#n-complete").addEventListener("click", () => saveConsult(true));
+$("#n-progress").addEventListener("click", () => saveConsult(false));
+$("#n-complete").addEventListener("click", () => saveConsult(true));
 
- $("#d-queue").addEventListener("click", () => {
+$("#d-queue").addEventListener("click", () => {
   openConsult = null;
   current = null;
   $("#s-done").hidden = true;

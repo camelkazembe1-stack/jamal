@@ -6,7 +6,7 @@
 @import url("/records/records.css");
 
 /* the hidden attribute always wins, even over display rules above */
-#HIDDEN# { display: none !important; }
+[hidden] { display: none !important; }
 
 /* page accent — Health */
 h1 { position: relative; padding-left: 15px; }
