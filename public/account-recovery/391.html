@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forgot Password — JAMALI</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { min-height:100vh; display:flex; align-items:center; justify-content:center;
+         background:linear-gradient(135deg,#0f172a,#1e293b); color:#e2e8f0; padding:20px; }
+  .card { background:#111827; border:1px solid #1f2937; border-radius:18px; padding:38px 36px;
+          width:100%; max-width:430px; box-shadow:0 24px 60px rgba(0,0,0,.45); }
+  h1 { font-size:20px; text-align:center; margin-bottom:6px; }
+  h1 span { color:#38bdf8; }
+  .sub { font-size:13.5px; color:#94a3b8; text-align:center; margin-bottom:20px; }
+  label { display:block; font-size:13px; color:#94a3b8; margin:12px 0 5px; }
+  input { width:100%; background:#0b1220; color:#e2e8f0; border:1px solid #334155; border-radius:10px;
+          padding:11px 13px; font-size:15px; outline:none; }
+  input:focus { border-color:#38bdf8; }
+  button.wide { width:100%; margin-top:18px; background:linear-gradient(135deg,#38bdf8,#0ea5e9); color:#06121f;
+                border:0; border-radius:12px; padding:13px 16px; font-size:15px; font-weight:800; cursor:pointer; }
+  button.wide:disabled { opacity:.6; cursor:wait; }
+  .next { margin-top:16px; text-align:center; font-size:13px; color:#94a3b8; }
+  .next a { color:#38bdf8; cursor:pointer; text-decoration:none; font-weight:700; }
+  .status { margin-top:14px; font-size:13px; color:#f87171; min-height:18px; text-align:center; }
+  .status.ok { color:#4ade80; }
+  a.back { display:block; margin-top:18px; text-align:center; font-size:13px; color:#64748b; text-decoration:none; }
+  a.back:hover { color:#38bdf8; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Forgot <span>Password</span></h1>
+    <p class="sub">Prove it is you with your phone number, then set a new password.</p>
+
+    <section id="step-verify">
+      <label for="fp-username">Username</label>
+      <input id="fp-username" type="text" autocomplete="username" placeholder="Your username">
+      <label for="fp-phone">Phone number</label>
+      <input id="fp-phone" type="tel" placeholder="The phone number on the account">
+      <button class="wide" id="fp-btn" type="button">Submit</button>
+    </section>
+
+    <section id="step-new" class="hidden">
+      <label for="fp-new1">New password</label>
+      <input id="fp-new1" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+      <label for="fp-new2">Repeat the new password</label>
+      <input id="fp-new2" type="password" autocomplete="new-password" placeholder="Same again">
+      <button class="wide" id="fp-save" type="button">Save New Password</button>
+    </section>
+
+    <p class="status" id="status"></p>
+    <p class="next">Cannot remember the phone number? <a id="go-forgot-phone">Forgot Phone Number?</a></p>
+    <a class="back" href="/">&larr; Back to Login</a>
+  </div>
+
+  <script type="module">
+    import { auth, provider, signInWithPopup, db, doc, getDoc, updateDoc } from "/firebase.js";
+
+    const SALT = "JAMALI::v1::";
+    const $ = (id) => document.getElementById(id);
+    const status = $("status");
+    function say(m, ok) { status.textContent = m || ""; status.className = "status" + (ok ? " ok" : ""); }
+    function sha(v) {
+      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
+        .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
+    }
+
+    const carried = new URLSearchParams(location.search).get("u");
+    if (carried) $("fp-username").value = carried;
+
+    $("go-forgot-phone").addEventListener("click", () => {
+      const u = $("fp-username").value.trim();
+      location.href = "/account-recovery/392" + (u ? "?u=" + encodeURIComponent(u) : "");
+    });
+
+    let verifiedId = null;
+
+    $("fp-btn").addEventListener("click", async () => {
+      const btn = $("fp-btn");
+      const username = $("fp-username").value.trim();
+      const phone = $("fp-phone").value.trim();
+      if (!username) { say("Enter your username."); return; }
+      if (!phone) { say("Enter your phone number."); return; }
+      btn.disabled = true; say("");
+
+      try {
+        if (!auth.currentUser) await signInWithPopup(auth, provider);
+
+        const id = username.toLowerCase();
+        const accSnap = await getDoc(doc(db, "systemAccounts", id));
+        if (!accSnap.exists()) { say("No account with this username."); btn.disabled = false; return; }
+        const acc = accSnap.data();
+        if (acc.googleUid !== auth.currentUser.uid) {
+          say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
+        }
+
+        const credSnap = await getDoc(doc(db, "systemCredentials", id));
+        if (!credSnap.exists()) { say("Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
+        if (credSnap.data().phone !== phone) { say("That phone number does not match the account."); btn.disabled = false; return; }
+
+        verifiedId = id;
+        $("step-verify").classList.add("hidden");
+        $("step-new").classList.remove("hidden");
+        say("Phone verified. Now choose a new password.", true);
+        btn.disabled = false;
+      } catch (err) {
+        say("Could not verify: " + (err.message || err.code));
+        btn.disabled = false;
+      }
+    });
+
+    $("fp-save").addEventListener("click", async () => {
+      const btn = $("fp-save");
+      const p1 = $("fp-new1").value, p2 = $("fp-new2").value;
+      if (!verifiedId) { say("Verify your phone number first."); return; }
+      if (p1.length < 6) { say("Password must be at least 6 characters."); return; }
+      if (p1 !== p2) { say("The two passwords do not match."); return; }
+      btn.disabled = true; say("");
+
+      try {
+        const passHash = await sha(p1);
+        await updateDoc(doc(db, "systemCredentials", verifiedId), { passHash: passHash });
+        say("Password saved. Go back and login with your username and token.", true);
+        $("step-new").classList.add("hidden");
+        btn.disabled = false;
+      } catch (err) {
+        say("Could not save the password: " + (err.message || err.code));
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
-// JAMALI — shared connection module (task 55: centralized SERVER architecture)
+// JAMALI — shared connection module (task 55: centralized SERVER architecture,
+// task 56: system session helpers join the surface)
 // ----------------------------------------------------------------------------
 // This file used to hold the Firebase configuration, the SDK imports and the
 // database connection itself. That connection now lives in the SERVER folder:
@@ -43,7 +44,10 @@ import {
   arrayRemove,
   increment,
   deleteField,
-  requireAuth
+  requireAuth,
+  SYSTEM_SESSION_KEY,
+  readSystemSession,
+  clearSystemSession
 } from "/SERVER/linker.js";
 
 export {
@@ -77,5 +81,8 @@ export {
   arrayRemove,
   increment,
   deleteField,
-  requireAuth
+  requireAuth,
+  SYSTEM_SESSION_KEY,
+  readSystemSession,
+  clearSystemSession
 };

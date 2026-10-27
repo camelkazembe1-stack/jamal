@@ -23,14 +23,18 @@
 //   organization moves to a different server, only SERVER/server.js
 //   changes — the modules and this linker keep their exact surface.
 //
-// FOR EXISTING PAGES:
-//   The old shared module public/firebase.js is now a thin compatibility
-//   layer that re-exports the names below. Every page keeps working
-//   unchanged — but the connection now flows through here.
+// TASK 56 — THE TWO-KEY MODEL:
+//   key to the HOUSE  = the Google sign-in (real authentication, unchanged)
+//   keys to the ROOMS = the system account (stored data: role, grants).
+//   requireAuth() now enforces BOTH: a signed-in Google user with a valid
+//   account session, and — for non-administrators — access to the folder
+//   (module area) the page belongs to. Direct links to ungranted areas
+//   bounce to the start page. Session lives in sessionStorage under
+//   "JAMALI_SYSTEM_SESSION"; the homepage (index.html) writes it at login.
 //
-// FOR NEW CODE:
-//   Import from this file (or from /firebase.js — same names), or use the
-//   high-level JamalLinker helpers at the bottom.
+// FOR EXISTING PAGES:
+//   public/firebase.js is a thin compatibility layer that re-exports the
+//   names below. Every page keeps working unchanged.
 //
 // STATIC HOSTING NOTE: this file also lives at public/SERVER/linker.js —
 // an exact byte-for-byte mirror, because Vercel serves public/ only.
@@ -74,13 +78,70 @@ export const arrayRemove = server.firestore.arrayRemove;
 export const increment = server.firestore.increment;
 export const deleteField = server.firestore.deleteField;
 
-// --- guard for inner pages (same behaviour the pages always had) -------------
-// Resolves with the user, or bounces a signed-out visitor to the start page.
+// ---------------------------------------------------------------------------
+// SYSTEM SESSION — the room keys (task 56). Written by index.html at account
+// login; every page enforces it through requireAuth().
+// ---------------------------------------------------------------------------
+export const SYSTEM_SESSION_KEY = "JAMALI_SYSTEM_SESSION";
+
+// Folders any signed-in user may open without an explicit grant. The
+// system-administration folder is open to administrators only.
+const ALWAYS_OPEN = ["home", "account-recovery"];
+
+export function readSystemSession() {
+  try {
+    const raw = sessionStorage.getItem(SYSTEM_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function clearSystemSession() {
+  try { sessionStorage.removeItem(SYSTEM_SESSION_KEY); } catch (e) {}
+}
+
+// Which module folder does this page live in? ("/triage/323" -> "triage")
+function currentFolder() {
+  const parts = location.pathname.split("/").filter(Boolean);
+  return parts.length ? parts[0] : "";
+}
+
+// May the session holder open this folder? Administrators open everything.
+function folderAllowed(folder, session) {
+  if (!session) return false;
+  if (session.role === "admin") return true;
+  if (folder === "system-admin") return false;
+  if (ALWAYS_OPEN.indexOf(folder) !== -1) return true;
+  return Array.isArray(session.grants) && session.grants.indexOf(folder) !== -1;
+}
+
+// --- guard for inner pages (house key + room keys + direct-link guard) -------
+// Resolves with the Google user only when: the user is signed in to Google,
+// holds a valid account session for that identity, and (for non-admins) the
+// page's folder is among the modules/submodules granted to the account.
+// Signed-out visitors and ungranted direct links bounce to the start page,
+// which is the Login / Create Account screen.
 export function requireAuth() {
   return new Promise((resolve) => {
     server.authApi.onAuthStateChanged(server.auth, (user) => {
-      if (user) resolve(user);
-      else location.replace("/");
+      if (!user) {
+        clearSystemSession();
+        location.replace("/?need=house");
+        return;
+      }
+      const s = readSystemSession();
+      if (!s || s.uid !== user.uid) {
+        clearSystemSession();
+        location.replace("/?need=account");
+        return;
+      }
+      const folder = currentFolder();
+      if (!folderAllowed(folder, s)) {
+        location.replace("/?denied=" + encodeURIComponent(folder || "system"));
+        return;
+      }
+      resolve(user);
     });
   });
 }
@@ -105,6 +166,13 @@ export const JamalLinker = {
     },
     signOut() { return server.authApi.signOut(server.auth); },
     requireAuth
+  },
+
+  // System session (room keys)
+  session: {
+    read: readSystemSession,
+    clear: clearSystemSession,
+    folderAllowed: (folder) => folderAllowed(folder, readSystemSession())
   },
 
   // Database — convenience wrappers (collection name + plain data in/out)

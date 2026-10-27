@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Account Administration — JAMALI</title>
+<link rel="stylesheet" href="/system-admin/380.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section class="head">
+    <a class="back" href="/home/1">&larr; Home</a>
+    <h1>Account Administration</h1>
+    <p class="sub">Approve account requests, decide who enters which room, and customize pages. Administrators see everything; every other account starts with everything hidden.</p>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" id="tab-requests" type="button">Account Requests <span class="badge" id="req-badge" hidden>0</span></button>
+    <button class="tab" id="tab-users" type="button">Users &amp; Access</button>
+    <button class="tab" id="tab-pages" type="button">Page Fields</button>
+  </nav>
+
+  <!-- ================= TAB 1 · ACCOUNT REQUESTS ================= -->
+  <section class="panel" id="panel-requests">
+    <div class="card">
+      <h2>Pending account requests</h2>
+      <p class="hint">People who created an account and are waiting for your approval.</p>
+      <div class="table-wrap">
+        <table class="bk">
+          <thead><tr><th>Username</th><th>Staff position</th><th>Requested</th><th>Decision</th></tr></thead>
+          <tbody id="req-body"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="req-empty" hidden>No pending requests.</p>
+    </div>
+
+    <div class="card">
+      <h2>Rejected accounts</h2>
+      <p class="hint">A rejected account can still be approved later if you change your mind.</p>
+      <div class="table-wrap">
+        <table class="bk">
+          <thead><tr><th>Username</th><th>Staff position</th><th>Decision</th></tr></thead>
+          <tbody id="rej-body"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="rej-empty" hidden>No rejected accounts.</p>
+    </div>
+  </section>
+
+  <!-- ================= TAB 2 · USERS & ACCESS ================= -->
+  <section class="panel" id="panel-users" hidden>
+    <div class="card">
+      <h2>Choose a user</h2>
+      <p class="hint">Approved accounts. Select one, then tick the rooms it may enter.</p>
+      <select id="user-select"><option value="">— Select a user —</option></select>
+      <p class="who-line" id="user-who" hidden></p>
+    </div>
+
+    <div class="card" id="grants-card" hidden>
+      <h2>Modules and submodules this user can access</h2>
+      <p class="hint">Unticked = hidden everywhere, including by direct link. Ticking a whole area (for example Health) grants its hub page; tick the individual rooms below it one by one.</p>
+      <div id="grants-tree"></div>
+      <p class="save-line"><button class="btn-primary" id="grants-save" type="button">Save Access</button>
+      <span class="ok-note" id="grants-ok" hidden>Saved.</span></p>
+    </div>
+  </section>
+
+  <!-- ================= TAB 3 · PAGE FIELDS ================= -->
+  <section class="panel" id="panel-pages" hidden>
+    <div class="card">
+      <h2>Choose a page</h2>
+      <p class="hint">You can hide EXISTING fields and give them default values. New fields cannot be created here.</p>
+      <select id="page-select"></select>
+    </div>
+
+    <div class="card" id="fields-card" hidden>
+      <h2 id="fields-title">Fields</h2>
+      <p class="hint">Hidden fields disappear from the page for other users (the administrator always sees the full form). Defaults fill in when the form opens and after it is cleared.</p>
+      <div class="table-wrap">
+        <table class="bk fields-table">
+          <thead><tr><th>Field</th><th>Hidden</th><th>Default value</th></tr></thead>
+          <tbody id="fields-body"></tbody>
+        </table>
+      </div>
+      <p class="save-line"><button class="btn-primary" id="fields-save" type="button">Save Page Settings</button>
+      <span class="ok-note" id="fields-ok" hidden>Saved.</span></p>
+    </div>
+  </section>
+
+  <p class="form-err" id="err" hidden></p>
+</main>
+
+<script type="module" src="/system-admin/380.js"></script>
+</body>
+</html>

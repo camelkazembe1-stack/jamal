@@ -12,7 +12,7 @@
   }
   .card {
     background: #111827; border: 1px solid #1f2937; border-radius: 18px;
-    padding: 44px 38px; width: 100%; max-width: 420px; text-align: center;
+    padding: 40px 38px; width: 100%; max-width: 440px;
     box-shadow: 0 24px 60px rgba(0,0,0,.45);
   }
   .logo {
@@ -21,62 +21,298 @@
     display: flex; align-items: center; justify-content: center;
     font-weight: 900; font-size: 22px; color: #fff; letter-spacing: 1px;
   }
-  h1 { font-size: 22px; line-height: 1.35; margin-bottom: 10px; }
+  h1 { font-size: 21px; line-height: 1.35; margin-bottom: 8px; text-align: center; }
   h1 span { color: #38bdf8; }
-  .sub { font-size: 14.5px; color: #94a3b8; margin-bottom: 28px; }
-  .google-btn {
-    width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
-    background: #fff; color: #1f2937; border: 0; border-radius: 12px;
-    padding: 13px 16px; font-size: 15px; font-weight: 600; cursor: pointer; transition: .2s;
+  .sub { font-size: 14px; color: #94a3b8; margin-bottom: 22px; text-align: center; }
+  label { display: block; font-size: 13px; color: #94a3b8; margin: 12px 0 5px; }
+  input {
+    width: 100%; background: #0b1220; color: #e2e8f0; border: 1px solid #334155;
+    border-radius: 10px; padding: 11px 13px; font-size: 15px; outline: none;
   }
-  .google-btn:hover { background: #f1f5f9; transform: translateY(-1px); }
-  .google-btn:disabled { opacity: .6; cursor: wait; transform: none; }
-  .status { margin-top: 16px; font-size: 13px; color: #f87171; min-height: 18px; }
-  .foot { margin-top: 26px; font-size: 12px; color: #475569; }
+  input:focus { border-color: #38bdf8; }
+  button.wide {
+    width: 100%; margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #06121f; border: 0; border-radius: 12px;
+    padding: 13px 16px; font-size: 15px; font-weight: 800; cursor: pointer; transition: .2s;
+  }
+  button.wide:hover { filter: brightness(1.07); transform: translateY(-1px); }
+  button.wide:disabled { opacity: .6; cursor: wait; transform: none; }
+  .swap { margin-top: 16px; text-align: center; font-size: 13.5px; color: #94a3b8; }
+  .swap a { color: #38bdf8; cursor: pointer; text-decoration: none; font-weight: 700; }
+  .links { margin-top: 14px; text-align: center; font-size: 12.5px; color: #64748b; }
+  .links a { color: #94a3b8; cursor: pointer; text-decoration: none; }
+  .links a:hover { color: #38bdf8; }
+  .status { margin-top: 14px; font-size: 13px; color: #f87171; min-height: 18px; text-align: center; }
+  .status.ok { color: #4ade80; }
+  .google-note { margin-top: 10px; font-size: 12px; color: #64748b; text-align: center; }
+  .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
+  .hidden { display: none; }
+  .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
 </style>
 </head>
 <body>
   <div class="card">
     <div class="logo">JA</div>
     <h1>Welcome to <span>Jamal MultiSystem Management</span></h1>
-    <p class="sub">Please login to save and secure your data</p>
+    <p class="sub" id="sub-line">Login to your account, or create one.</p>
 
-    <button class="google-btn" id="google-btn">
-      <svg width="20" height="20" viewBox="0 0 48 48">
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-      </svg>
-      Continue with Google
-    </button>
+    <!-- ============ LOGIN (username + token) ============ -->
+    <section id="panel-login">
+      <label for="li-username">Username</label>
+      <input id="li-username" type="text" autocomplete="username" placeholder="Your username">
+      <label for="li-token">Four-digit token</label>
+      <div class="token-row"><input id="li-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <button class="wide" id="login-btn" type="button">Login</button>
+      <p class="swap">No account yet? <a id="go-create">Create Account</a></p>
+      <p class="links">
+        <a id="go-forgot-token">Forgot Token?</a> &nbsp;·&nbsp;
+        <a id="go-forgot-password">Forgot Password?</a> &nbsp;·&nbsp;
+        <a id="go-forgot-phone">Forgot Phone Number?</a>
+      </p>
+      <p class="google-note">Your Google sign-in is the key to the house — you will be asked for it if needed.</p>
+    </section>
+
+    <!-- ============ CREATE ACCOUNT ============ -->
+    <section id="panel-create" class="hidden">
+      <label for="ca-username">Username</label>
+      <input id="ca-username" type="text" placeholder="Choose a username">
+      <label for="ca-password">Password</label>
+      <input id="ca-password" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+      <label for="ca-phone">Phone number</label>
+      <input id="ca-phone" type="tel" placeholder="e.g. 0780526437">
+      <label for="ca-position">Staff position</label>
+      <input id="ca-position" type="text" placeholder="e.g. Receptionist, Nurse, Accountant">
+      <label for="ca-token">Four-digit token</label>
+      <div class="token-row"><input id="ca-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <button class="wide" id="create-btn" type="button">Create Account</button>
+      <p class="swap">Already registered? <a id="go-login">Back to Login</a></p>
+    </section>
 
     <p class="status" id="status"></p>
     <p class="foot">JAMALI MultiSystem Management © <span id="year"></span></p>
   </div>
 
   <script type="module">
-    import { auth, provider, onAuthStateChanged, signInWithPopup } from "/firebase.js";
+    import {
+      auth, provider, onAuthStateChanged, signInWithPopup,
+      db, collection, query, where, limit, getDocs,
+      doc, getDoc, writeBatch, serverTimestamp
+    } from "/firebase.js";
+
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    const btn = document.getElementById("google-btn");
-    const status = document.getElementById("status");
+    // ------------------------------------------------------------------
+    // constants shared with the recovery pages and the security rules
+    // ------------------------------------------------------------------
+    const SALT = "JAMALI::v1::";
+    const ADMIN_USERNAME = "jamal kazembe";
+    const ADMIN_PASS_HASH  = "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af";
+    const ADMIN_TOKEN_HASH = "3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1";
+    const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
 
-    // Already logged in? Go straight to home page
-    onAuthStateChanged(auth, (user) => { if (user) location.replace("/home/1"); });
+    const $ = (id) => document.getElementById(id);
+    const status = $("status");
 
-    btn.addEventListener("click", async () => {
-      btn.disabled = true;
-      status.textContent = "";
+    function say(msg, ok) {
+      status.textContent = msg || "";
+      status.className = "status" + (ok ? " ok" : "");
+    }
+    function sha(v) {
+      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
+        .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
+    }
+    function norm(u) { return u.trim().toLowerCase(); }
+
+    // ------------------------------------------------------------------
+    // panels
+    // ------------------------------------------------------------------
+    function showPanel(which) {
+      $("panel-login").classList.toggle("hidden", which !== "login");
+      $("panel-create").classList.toggle("hidden", which !== "create");
+      say("");
+    }
+    $("go-create").addEventListener("click", () => showPanel("create"));
+    $("go-login").addEventListener("click", () => showPanel("login"));
+
+    // recovery chain — the username travels with the link
+    $("go-forgot-token").addEventListener("click", () => {
+      const u = $("li-username").value.trim();
+      location.href = "/account-recovery/390" + (u ? "?u=" + encodeURIComponent(u) : "");
+    });
+    $("go-forgot-password").addEventListener("click", () => {
+      const u = $("li-username").value.trim();
+      location.href = "/account-recovery/391" + (u ? "?u=" + encodeURIComponent(u) : "");
+    });
+    $("go-forgot-phone").addEventListener("click", () => {
+      const u = $("li-username").value.trim();
+      location.href = "/account-recovery/392" + (u ? "?u=" + encodeURIComponent(u) : "");
+    });
+
+    // ------------------------------------------------------------------
+    // house key (Google) — unchanged authentication, asked for only when needed
+    // ------------------------------------------------------------------
+    async function ensureHouse() {
+      if (auth.currentUser) return auth.currentUser;
+      const res = await signInWithPopup(auth, provider);
+      return res.user;
+    }
+
+    // ------------------------------------------------------------------
+    // system session (the room keys) — written here, read by requireAuth
+    // ------------------------------------------------------------------
+    function writeSession(account, user) {
+      const s = {
+        uid: user.uid,
+        username: account.usernameDisplay || account.id,
+        position: account.position || "",
+        role: account.role || (account.position === "admin" ? "admin" : "user"),
+        grants: Array.isArray(account.grants) ? account.grants : [],
+        at: Date.now()
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+      return s;
+    }
+
+    function handleDeniedAndNeed() {
+      const q = new URLSearchParams(location.search);
+      if (q.get("denied")) {
+        say("You do not have access to the \"" + q.get("denied") + "\" area. Ask the administrator to grant it.");
+      } else if (q.get("need") === "house") {
+        say("Please sign in first.");
+      } else if (q.get("need") === "account") {
+        say("Login with your username and token to continue.");
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // LOGIN
+    // ------------------------------------------------------------------
+    $("login-btn").addEventListener("click", async () => {
+      const btn = $("login-btn");
+      const username = $("li-username").value.trim();
+      const token = $("li-token").value.trim();
+      if (!username) { say("Enter your username."); return; }
+      if (!/^[0-9]{4}$/.test(token)) { say("Enter your four-digit token."); return; }
+      btn.disabled = true; say("");
+
       try {
-        await signInWithPopup(auth, provider);
-        location.href = "/home/1";   // success → home page
+        const user = await ensureHouse();
+
+        // ---- administrator bootstrap: the first ever login claims the admin ----
+        if (norm(username) === ADMIN_USERNAME) {
+          const admins = await getDocs(collection(db, "systemAdmins"));
+          if (admins.empty) {
+            const tokHash = await sha(token);
+            if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); btn.disabled = false; return; }
+            const id = norm(ADMIN_USERNAME);
+            const batch = writeBatch(db);
+            batch.set(doc(db, "systemSetup", "claim"), {
+              googleUid: user.uid, passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+            });
+            batch.set(doc(db, "systemAdmins", user.uid), {
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+            });
+            batch.set(doc(db, "systemAccounts", id), {
+              usernameLower: id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin",
+              status: "approved", googleUid: user.uid, grants: [], at: serverTimestamp()
+            });
+            batch.set(doc(db, "systemCredentials", id), {
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, phone: "0780526437", googleUid: user.uid
+            });
+            await batch.commit();
+            writeSession({ id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
+            location.href = "/home/1";
+            return;
+          }
+        }
+
+        // ---- normal account login ----
+        const id = norm(username);
+        const snap = await getDoc(doc(db, "systemAccounts", id));
+        if (!snap.exists()) { say("No account with this username."); btn.disabled = false; return; }
+        const acc = snap.data();
+
+        if (acc.status === "pending") { say("Please wait for admin approval."); btn.disabled = false; return; }
+        if (acc.status === "rejected") { say("This account was not approved. Ask the administrator."); btn.disabled = false; return; }
+        if (acc.googleUid && acc.googleUid !== user.uid) {
+          say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
+        }
+
+        const credSnap = await getDoc(doc(db, "systemCredentials", id));
+        if (!credSnap.exists()) { say("Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
+        const tokHash = await sha(token);
+        if (credSnap.data().tokenHash !== tokHash) { say("Wrong token."); btn.disabled = false; return; }
+
+        writeSession({ id, ...acc }, user);
+        location.href = "/home/1";
       } catch (err) {
-        status.textContent = "Login failed: " + (err.message || err.code);
+        say("Login failed: " + (err.message || err.code));
         btn.disabled = false;
       }
     });
+
+    // ------------------------------------------------------------------
+    // CREATE ACCOUNT
+    // ------------------------------------------------------------------
+    $("create-btn").addEventListener("click", async () => {
+      const btn = $("create-btn");
+      const username = $("ca-username").value.trim();
+      const password = $("ca-password").value;
+      const phone = $("ca-phone").value.trim();
+      const position = $("ca-position").value.trim();
+      const token = $("ca-token").value.trim();
+
+      if (username.length < 3) { say("Username must be at least 3 characters."); return; }
+      if (password.length < 6) { say("Password must be at least 6 characters."); return; }
+      if (phone.replace(/[^0-9]/g, "").length < 9) { say("Enter a valid phone number."); return; }
+      if (!position) { say("Enter your staff position."); return; }
+      if (!/^[0-9]{4}$/.test(token)) { say("Choose a four-digit token."); return; }
+      btn.disabled = true; say("");
+
+      try {
+        const user = await ensureHouse();
+        const id = norm(username);
+        if (id === ADMIN_USERNAME) { say("This username is reserved."); btn.disabled = false; return; }
+
+        const dup = await getDocs(query(collection(db, "systemAccounts"), where("usernameLower", "==", id), limit(1)));
+        if (!dup.empty) { say("That username is already taken."); btn.disabled = false; return; }
+
+        const passHash = await sha(password);
+        const tokHash = await sha(token);
+        const batch = writeBatch(db);
+        batch.set(doc(db, "systemAccounts", id), {
+          usernameLower: id, usernameDisplay: username, position: position, role: "user",
+          status: "pending", googleUid: user.uid, grants: [], at: serverTimestamp()
+        });
+        batch.set(doc(db, "systemCredentials", id), {
+          passHash: passHash, tokenHash: tokHash, phone: phone, googleUid: user.uid
+        });
+        await batch.commit();
+
+        showPanel("login");
+        $("li-username").value = username;
+        say("Your account has been created. Please wait for admin approval.", true);
+        btn.disabled = false;
+      } catch (err) {
+        say("Could not create the account: " + (err.message || err.code));
+        btn.disabled = false;
+      }
+    });
+
+    // ------------------------------------------------------------------
+    // entry state: fully signed in (house + account session) -> home;
+    // otherwise stay here — this page IS the Login / Create Account screen
+    // ------------------------------------------------------------------
+    onAuthStateChanged(auth, (user) => {
+      if (!user) return;
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      if (!raw) { handleDeniedAndNeed(); return; }
+      try {
+        const s = JSON.parse(raw);
+        if (s.uid === user.uid) location.replace("/home/1");
+        else { sessionStorage.removeItem(SESSION_KEY); handleDeniedAndNeed(); }
+      } catch (e) { sessionStorage.removeItem(SESSION_KEY); handleDeniedAndNeed(); }
+    });
   </script>
-  <script src="/sidebar.js" defer></script>
 </body>
 </html>
