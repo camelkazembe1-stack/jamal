@@ -25,7 +25,46 @@
 
     <div class="urgent-note">🚨 Emergency treatment must not be delayed while completing documentation. If the patient is deteriorating, escalate care immediately.</div>
 
-    <div class="card add-card">
+        <div class="card" id="qa-card">
+      <h2>Queue &amp; announcements</h2>
+      <div class="qa-counts">
+        <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Patients waiting</span></div>
+        <div class="qa-count"><span class="qa-num" id="qa-done">0</span><span class="qa-k">Completed today</span></div>
+      </div>
+      <div class="qa-panels">
+        <div class="qa-panel" id="qa-current-box">
+          <div class="qa-k">Current patient</div>
+          <div class="qa-id" id="qa-current-id">&mdash;</div>
+          <div class="qa-sub" id="qa-current-sub"></div>
+        </div>
+        <div class="qa-panel">
+          <div class="qa-k">Next patient</div>
+          <div class="qa-id" id="qa-next-id">&mdash;</div>
+          <div class="qa-sub" id="qa-next-sub"></div>
+          <div class="qa-sub" id="qa-dest-line"></div>
+          <div class="qa-btns">
+            <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce patient</button>
+            <button type="button" class="ghost-btn" id="qa-start" disabled>Open next patient</button>
+          </div>
+          <p class="mini-note" id="qa-note"></p>
+        </div>
+      </div>
+      <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+      <div class="qa-settings" id="qa-settings" hidden>
+        <p class="mini-note">The announcement reads the patient's ID and these details aloud. They are saved for this module and used on every device.</p>
+        <div class="qa-form">
+          <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Triage"></label>
+          <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Nurse MWAJUMA"></label>
+          <label>Office number<input id="qa-office" type="text" placeholder="e.g. Doctor's Office 02"></label>
+          <label>Room number<input id="qa-room" type="text" placeholder="e.g. Nurse Room 03"></label>
+        </div>
+        <p class="form-err" id="qa-err" hidden></p>
+        <p class="save-ok" id="qa-ok" hidden></p>
+        <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+      </div>
+    </div>
+
+<div class="card add-card">
       <h2>Find a patient</h2>
       <div class="search-row">
         <input id="q-regid" list="q-regids" placeholder="Registration ID, e.g. 4827ABCD" autocomplete="off">
@@ -194,13 +233,31 @@
 #h-boot,#h-err{max-width:920px;margin:0 auto 14px;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.55}
 #h-boot{background:#fff7e0;color:#6b4e00;border:1px solid #e8d48a}
 #h-err{background:#fdecec;color:#8a1f1f;border:1px solid #f2b8b5}
+
+/* task 53 - queue & announcements */
+#qa-card .qa-counts{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 14px}
+.qa-count{display:flex;flex-direction:column;min-width:130px;padding:10px 14px;border:1px solid #e3e0d6;border-radius:10px;background:#faf9f4}
+.qa-num{font-size:26px;font-weight:700;line-height:1.1}
+.qa-count .qa-k{font-size:12px;color:#6b675c;margin-top:2px}
+.qa-panels{display:flex;gap:14px;flex-wrap:wrap}
+.qa-panel{flex:1 1 240px;border:1px solid #e3e0d6;border-radius:10px;padding:12px 14px;background:#fff}
+.qa-panel .qa-k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#6b675c}
+.qa-id{font-size:22px;font-weight:700;letter-spacing:.04em;margin:4px 0 2px}
+.qa-panel.qa-none{opacity:.8}
+.qa-sub{font-size:13px;color:#4b473c;margin:2px 0}
+.qa-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.qa-actions{margin-top:12px}
+.qa-settings{border-top:1px dashed #ddd8c9;margin-top:12px;padding-top:12px}
+.qa-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:8px 0}
+.qa-form label{display:block;font-size:13px;color:#4b473c}
+.qa-form input{width:100%;margin-top:4px;padding:8px 10px;border:1px solid #d8d3c4;border-radius:8px;font:inherit;background:#fff}
 </style>
 <script>
 /* Task 47 - boot line, page painters and the 12-second watchdog. The same
    contract as the Patient List (build 46d): a silent failure names itself. */
 (function () {
   var boot = document.getElementById("h-boot");
-  if (boot) { boot.hidden = false; boot.textContent = "Nurse Consultation \u00b7 build 47 \u00b7 connecting\u2026"; }
+  if (boot) { boot.hidden = false; boot.textContent = "Nurse Consultation \u00b7 build 53 \u00b7 connecting\u2026"; }
   window.__p47 = { page: "324", build: "47", t0: Date.now() };
 })();
 function __jamaliHerr(msg) {
