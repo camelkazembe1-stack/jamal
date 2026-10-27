@@ -1,10 +1,11 @@
 rules_version = '2';
 
 // =====================================================================
-// JAMALI — firestore.rules — the guard dog (Task 48, the full refresh)
+// JAMALI — firestore.rules — the guard dog (Task 52, the full refresh)
 // Every collection the project uses gives a signed in user create, read,
 // update and delete — the standing order of 25 October 2026, reprinted
-// here in full. Anything not matched below is denied by default.
+// here in full with the six Ward Management and Patient Admission
+// collections added. Anything not matched below is denied by default.
 //
 // The project's live collections, named by scanning every page's code:
 //   transactions                — the one journal the whole business reads
@@ -15,6 +16,12 @@ rules_version = '2';
 //   healthPrescriptions         — Pharmacy (326)
 //   healthTreatmentOrders       — Treatment / Procedures (327)
 //   healthDestinations          — the facility's destination list (325)
+//   healthWards                 — Ward Registration (331)
+//   healthBeds                  — Bed Management (332)
+//   healthBedAssignments        — Bed Assignment (334) / Transfers (335)
+//   healthBedTransfers          — Ward & Bed Transfers (335)
+//   healthBedMaintenance        — Cleaning & Maintenance (336)
+//   healthAdmissions            — Patient Admission (341-343)
 // =====================================================================
 
 service cloud.firestore {
@@ -51,6 +58,41 @@ service cloud.firestore {
     }
 
     match /healthDestinations/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    // ---- Health: wards, beds and placement (Task 52) ----
+    match /healthWards/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    match /healthBeds/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    match /healthBedAssignments/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    match /healthBedTransfers/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    match /healthBedMaintenance/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    // ---- Health: admissions (Task 52) ----
+    match /healthAdmissions/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+
+    // ---- Health: queue announcement settings (Task 53) ----
+    // One document per service stage (triage, nurse, doctor, pharmacy,
+    // treatment): the department, staff name, office and room the speaker
+    // announcement reads aloud.
+    match /healthQueueConfig/{docId} {
       allow create, read, update, delete: if request.auth != null;
     }
 

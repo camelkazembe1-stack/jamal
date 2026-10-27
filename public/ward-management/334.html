@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bed Assignment — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-assign">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Patient-to-Bed Assignment</h1>
+    <p class="sub">Connect an <b>existing</b> patient to an available bed. Only beds marked <b>Available</b> are listed, a patient can hold only one active placement, and every assignment is remembered. Bed placement is not the same as admission &mdash; the admission record (page 341) manages the stay; this page records where the patient lies.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <p class="emg-note">🚨 Emergency rule: urgent care is never delayed by a bed assignment. Treat first &mdash; when no suitable bed is free, the dashboard (333) shows the true situation and the emergency procedure of the facility applies. An occupied bed is never shown as available.</p>
+
+    <div class="card add-card">
+      <h2>1 · Find the patient</h2>
+      <p class="mini-note" style="margin-top:4px;">Search by Registration ID or by name &mdash; the patient must already exist in the Patient List. No new patient record is ever created here.</p>
+      <div class="find-row" style="margin-top:8px;">
+        <input id="g-q" type="text" placeholder="Registration ID (e.g. 8695SLAJ) or patient name…">
+        <button class="find-btn" id="g-find" type="button">Find</button>
+      </div>
+      <div class="cand-list" id="g-cands"></div>
+      <div class="sel-panel" id="g-sel" hidden></div>
+    </div>
+
+    <div class="card add-card" id="g-bedcard">
+      <h2>2 · Choose the bed</h2>
+      <div class="form-grid">
+        <label>Ward
+          <select id="g-ward">
+            <option value="">— Choose a ward —</option>
+          </select>
+        </label>
+        <label>Available bed
+          <select id="g-bed">
+            <option value="">— Choose a ward first —</option>
+          </select>
+        </label>
+        <label>Staff member responsible *
+          <input id="g-staff" type="text" placeholder="Your name">
+        </label>
+        <label class="span-3" style="grid-column:span 3;">Note (optional)
+          <input id="g-note" type="text" placeholder="e.g. post-operative, needs oxygen point">
+        </label>
+      </div>
+      <p class="mini-note" id="g-link" hidden style="margin-top:8px;"></p>
+      <p class="form-err" id="g-ferr" hidden></p>
+      <p class="form-ok" id="g-fok" hidden></p>
+      <div class="form-actions">
+        <button class="btn-primary" id="g-assign" type="button">Assign Bed</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>3 · Current placements</h2>
+      <div class="empty" id="g-empty">
+        <div class="empty-icon">👥</div>
+        <div class="empty-title">No active placements</div>
+        <div class="empty-sub">Every bed assignment made on this account appears here while it is active.</div>
+      </div>
+      <div class="table-wrap" id="g-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Patient</th><th>Registration ID</th><th>Ward · Bed</th><th>Assigned</th><th>By</th><th>Admission</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="g-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="g-count"></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- the release modal -->
+<div class="modal-ovl" id="r-wrap" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h2>Release bed</h2>
+    <p class="mini-note" id="r-sub"></p>
+    <div class="m-grid">
+      <label>Reason for releasing
+        <select id="r-reason">
+          <option>Discharge</option>
+          <option>Correction</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Staff member responsible *
+        <input id="r-staff" type="text" placeholder="Your name">
+      </label>
+    </div>
+    <p class="mini-note" style="margin-top:8px;">The bed returns to <b>Available</b> and the assignment is preserved in the history with its release date. If the patient still has an open admission, the admission stays open &mdash; discharge is recorded on the Admission Details page (343).</p>
+    <p class="form-err" id="r-err" hidden></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="r-go" type="button">Release Bed</button>
+      <button class="btn-ghost" id="r-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/ward-management/334.js"></script>
+</body>
+</html>

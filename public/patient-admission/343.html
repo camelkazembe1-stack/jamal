@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admission Details — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-admission/adm.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-details">
+    <a class="back" href="/patient-admission/340">&larr; Patient Admission</a>
+    <h1>Admission Details &amp; History</h1>
+    <p class="sub">Open one admission and see everything attached to it: the patient it belongs to, the clinical information, the ward and bed it currently occupies through the existing Ward Management records, and the full status trail. Previous admissions of the same patient stay below, never overwritten.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card add-card">
+      <h2>Open an admission</h2>
+      <div class="find-row" style="margin-top:8px;">
+        <input id="d-q" type="text" placeholder="Admission number (e.g. ADM-20261027-AK3M)…">
+        <button class="find-btn" id="d-open" type="button">Open</button>
+      </div>
+      <p class="mini-note" id="d-none" hidden style="margin-top:8px;"></p>
+    </div>
+
+    <div class="card" style="padding:16px 20px;" id="d-card" hidden>
+      <h2 id="d-title">Admission</h2>
+      <p class="mini-note" id="d-sub"></p>
+
+      <div class="sec-h">A · Patient information</div>
+      <div id="d-pat"></div>
+
+      <div class="sec-h">B · Admission information</div>
+      <div id="d-adm"></div>
+
+      <div class="sec-h">C · Clinical information</div>
+      <div id="d-cli"></div>
+
+      <div class="sec-h">D · Ward and bed</div>
+      <div id="d-ward"></div>
+      <div class="sec-h" style="margin-top:10px;">Placement history of this patient</div>
+      <div class="table-wrap" id="d-asswrap" hidden>
+        <table class="bk">
+          <thead><tr><th>Ward · Bed</th><th>Assigned</th><th>Released</th><th>Status</th><th>By</th></tr></thead>
+          <tbody id="d-assbody"></tbody>
+        </table>
+      </div>
+      <div class="sec-h" style="margin-top:10px;">Transfers of this patient</div>
+      <div class="table-wrap" id="d-trwrap" hidden>
+        <table class="bk">
+          <thead><tr><th>From</th><th>To</th><th>When</th><th>Reason</th></tr></thead>
+          <tbody id="d-trbody"></tbody>
+        </table>
+      </div>
+
+      <div class="sec-h">E · Record information</div>
+      <div id="d-rec"></div>
+
+      <div class="sec-h">Status trail</div>
+      <ul class="trail" id="d-trail"></ul>
+
+      <p class="form-err" id="d-ferr" hidden></p>
+      <div class="form-actions" style="margin-top:14px;">
+        <input id="d-staff" type="text" placeholder="Your name (for status changes)" style="border:1px solid #cbd5e1; border-radius:9px; padding:9px 12px; font-size:13.5px;">
+        <button class="btn-primary" id="d-confirm" type="button" hidden>Confirm Admission</button>
+        <button class="btn-warn" id="d-discharge" type="button" hidden>Record Discharge</button>
+        <button class="btn-ghost danger" id="d-canceladm" type="button" hidden>Cancel Admission</button>
+        <button class="btn-ghost" id="d-edit" type="button">Edit Permitted Details</button>
+        <a class="btn-ghost" id="d-plink" href="/patient-module/328" style="text-decoration:none;">View Patient List</a>
+      </div>
+      <p class="mini-note" style="margin-top:8px;">Transfers are made on Ward Management &rarr; Transfers (335) &mdash; they mark this admission <b>Transferred</b> without closing it. Discharge here frees the patient&rsquo;s bed and closes the admission; the separate Patient Discharge workflow can take over from this status.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px;" id="d-hcard" hidden>
+      <h2>Admission history of this patient</h2>
+      <p class="mini-note" style="margin-top:4px;">Every admission is its own record — previous admissions are never overwritten when the patient is admitted again.</p>
+      <div class="empty" id="d-hempty">
+        <div class="empty-icon">📜</div>
+        <div class="empty-title">No other admissions</div>
+        <div class="empty-sub">This is the patient's first admission on record.</div>
+      </div>
+      <div class="table-wrap" id="d-hwrap" hidden>
+        <table class="bk">
+          <thead><tr><th>Admission No.</th><th>Date · Time</th><th>Type</th><th>Diagnosis</th><th>Status</th><th>Discharged</th><th></th></tr></thead>
+          <tbody id="d-hbody"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="d-hcount"></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- the edit modal -->
+<div class="modal-ovl" id="e-wrap" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h2>Edit permitted details</h2>
+    <p class="mini-note" id="e-sub"></p>
+    <div class="m-grid">
+      <label>Admission Date
+        <input id="e-date" type="date">
+      </label>
+      <label>Admission Time
+        <input id="e-time" type="time">
+      </label>
+      <label>Admission Type
+        <select id="e-type">
+          <option>Emergency</option>
+          <option>Planned</option>
+        </select>
+      </label>
+      <label>Admitting Doctor
+        <input id="e-doctor" type="text">
+      </label>
+      <label style="grid-column:span 2;">Reason for Admission
+        <textarea id="e-reason" rows="2"></textarea>
+      </label>
+      <label style="grid-column:span 2;">Diagnosis
+        <input id="e-diagnosis" type="text">
+      </label>
+      <label style="grid-column:span 2;">Clinical Notes
+        <textarea id="e-notes" rows="2"></textarea>
+      </label>
+    </div>
+    <p class="form-err" id="e-err" hidden></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="e-save" type="button">Save Changes</button>
+      <button class="btn-ghost" id="e-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/patient-admission/343.js"></script>
+</body>
+</html>

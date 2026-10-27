@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admission List — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-admission/adm.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-list">
+    <a class="back" href="/patient-admission/340">&larr; Patient Admission</a>
+    <h1>Admission List</h1>
+    <p class="sub">Every admission on this account, newest first, drawn live from the database &mdash; nothing here is sample data. Open a record for the full details, confirm a pending admission, or cancel one that did not proceed. The Ward and Bed columns read the existing Ward Management records.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card" style="padding:16px 20px;">
+      <div class="find-row" style="margin-top:4px;">
+        <input id="l-q" type="text" placeholder="Search by admission number, patient number or name…">
+        <select id="l-status" style="border:1px solid #cbd5e1; border-radius:9px; padding:9px 12px; font-size:13.5px;">
+          <option value="">All statuses</option>
+          <option>Pending</option>
+          <option>Admitted</option>
+          <option>Transferred</option>
+          <option>Discharged</option>
+          <option>Cancelled</option>
+        </select>
+        <select id="l-type" style="border:1px solid #cbd5e1; border-radius:9px; padding:9px 12px; font-size:13.5px;">
+          <option value="">All types</option>
+          <option>Emergency</option>
+          <option>Planned</option>
+        </select>
+        <input id="l-from" type="date" title="From admission date" style="border:1px solid #cbd5e1; border-radius:9px; padding:9px 12px; font-size:13.5px;">
+        <input id="l-to" type="date" title="To admission date" style="border:1px solid #cbd5e1; border-radius:9px; padding:9px 12px; font-size:13.5px;">
+        <button class="ghost-btn" id="l-clear" type="button">Clear Filters</button>
+      </div>
+      <p class="mini-note" style="margin:8px 0 0;">Status actions need your name: <input id="l-staff" type="text" placeholder="Your name" style="border:1px solid #cbd5e1; border-radius:7px; padding:5px 8px; font-size:12.5px; width:160px;"></p>
+
+      <div class="empty" id="l-empty">
+        <div class="empty-icon">🗒️</div>
+        <div class="empty-title">No admissions yet</div>
+        <div class="empty-sub">Admit an existing patient on the New Admission page (341) — the record appears here immediately.</div>
+      </div>
+      <div class="table-wrap" id="l-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>#</th><th>Admission No.</th><th>Patient No.</th><th>Patient</th><th>Date · Time</th><th>Type</th><th>Diagnosis</th><th>Doctor</th><th>Ward</th><th>Bed</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="l-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="l-count"></p>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/patient-admission/342.js"></script>
+</body>
+</html>

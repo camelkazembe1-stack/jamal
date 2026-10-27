@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient Admission — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-admission/adm.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Patient Admission</h1>
+  <p class="sub">Record hospital admissions for <b>existing</b> patients &mdash; from the admission decision until the admission is completed, cancelled or handed over to discharge. Admissions link to the patient records and to the ward and bed records that already exist; nothing here registers a patient twice or rebuilds the ward system.</p>
+
+  <div class="mod-grid">
+    <a class="mod" href="/patient-admission/341">
+      <span class="mod-ico">📝</span>
+      <span class="mod-label">New Admission<span class="mod-sub">admit an existing patient</span></span>
+    </a>
+    <a class="mod" href="/patient-admission/342">
+      <span class="mod-ico">🗒️</span>
+      <span class="mod-label">Admission List<span class="mod-sub">search &amp; filter admissions</span></span>
+    </a>
+    <a class="mod" href="/patient-admission/343">
+      <span class="mod-ico">🔎</span>
+      <span class="mod-label">Admission Details<span class="mod-sub">open · confirm · discharge</span></span>
+    </a>
+    <a class="mod" href="/ward-management/334">
+      <span class="mod-ico">🛏️</span>
+      <span class="mod-label">Ward &amp; Bed Assignment<span class="mod-sub">opens Ward Management</span></span>
+    </a>
+  </div>
+
+  <div class="card" style="padding:16px 20px;">
+    <h2>How admission works</h2>
+    <p class="mini-note" style="margin-top:6px;">
+      Find the patient from the Patient List (never register them again), record the date, time,
+      reason and the clinician&rsquo;s diagnosis, choose Emergency or Planned, then save &mdash; as
+      <b>Pending</b> when the process has started, or <b>Admitted</b> once confirmed. The admission
+      appears in the Admission List immediately. When a bed is needed, the assignment reuses the
+      existing Ward Management records; a transfer later moves the patient while the same admission
+      stays open, and discharge closes it. Every previous admission of a patient stays in the
+      history, never overwritten.
+    </p>
+  </div>
+
+  <p class="emg-note">🚨 Emergency rule: treatment always comes first. No registration, admission
+  paperwork or bed assignment may delay urgent care &mdash; save the emergency admission with what
+  you know and let the records follow the patient.</p>
+</main>
+<script type="module" src="/patient-admission/340.js"></script>
+</body>
+</html>

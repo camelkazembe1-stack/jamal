@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward Register — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-reg">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Ward Register</h1>
+    <p class="sub">Every registered ward with its live occupancy, counted from the bed records. Search by ward code, name or type. This register is read-only &mdash; changes are made on Ward Registration (331), and the numbers follow the beds automatically.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>All wards</h2>
+      <div class="find-row" style="margin-top:10px;">
+        <input id="r-q" type="text" placeholder="Search by ward code, name or type…">
+      </div>
+      <div class="empty" id="r-empty">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No wards registered yet</div>
+        <div class="empty-sub">Register the first ward on Ward Registration (331) — it appears here immediately.</div>
+      </div>
+      <div class="table-wrap" id="r-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Ward Code</th><th>Ward Name</th><th>Type</th><th>Building · Floor</th><th>Licensed Capacity</th><th>Beds</th><th>Occupied</th><th>Usable</th><th>Occupancy</th><th>Ward Status</th></tr>
+          </thead>
+          <tbody id="r-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="r-count"></p>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/ward-management/337.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bed &amp; Transfer History — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-hist">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Bed &amp; Transfer History</h1>
+    <p class="sub">Three searchable registers: what beds exist, who is or was placed where, and every move ever made. Completed assignments and transfers are preserved as their own records &mdash; nothing here is overwritten when a patient moves on.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card" style="padding:16px 20px;">
+      <div class="tabs">
+        <button type="button" class="tab on" data-tab="beds">Bed Register</button>
+        <button type="button" class="tab" data-tab="assign">Bed Assignment Register</button>
+        <button type="button" class="tab" data-tab="transfer">Transfer Register</button>
+      </div>
+      <div class="find-row" style="margin-top:4px;">
+        <input id="v-q" type="text" placeholder="Search by patient, bed number, ward code or staff…">
+      </div>
+
+      <!-- tab 1 · bed register -->
+      <div id="v-pane-beds">
+        <div class="empty" id="v1-empty">
+          <div class="empty-icon">🛏️</div>
+          <div class="empty-title">No beds registered yet</div>
+          <div class="empty-sub">Register wards (331) and beds (332) — the bed register fills itself.</div>
+        </div>
+        <div class="table-wrap" id="v1-wrap" hidden>
+          <table class="bk">
+            <thead>
+              <tr><th>Bed Number</th><th>Ward</th><th>Bed Type</th><th>Status</th><th>Current Patient</th></tr>
+            </thead>
+            <tbody id="v1-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- tab 2 · assignment register -->
+      <div id="v-pane-assign" hidden>
+        <div class="empty" id="v2-empty">
+          <div class="empty-icon">👥</div>
+          <div class="empty-title">No assignments on record yet</div>
+          <div class="empty-sub">Every placement made on Bed Assignment (334) is preserved here — active and released.</div>
+        </div>
+        <div class="table-wrap" id="v2-wrap" hidden>
+          <table class="bk">
+            <thead>
+              <tr><th>Patient</th><th>Registration ID</th><th>Ward · Bed</th><th>Assigned</th><th>Released</th><th>Status</th><th>By</th></tr>
+            </thead>
+            <tbody id="v2-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- tab 3 · transfer register -->
+      <div id="v-pane-transfer" hidden>
+        <div class="empty" id="v3-empty">
+          <div class="empty-icon">🔄</div>
+          <div class="empty-title">No transfers on record yet</div>
+          <div class="empty-sub">Every completed move from the Transfers page (335) is preserved here.</div>
+        </div>
+        <div class="table-wrap" id="v3-wrap" hidden>
+          <table class="bk">
+            <thead>
+              <tr><th>Patient</th><th>From</th><th>To</th><th>Transfer Date</th><th>Reason</th><th>Status</th></tr>
+            </thead>
+            <tbody id="v3-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="count-line" id="v-count"></p>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/ward-management/338.js"></script>
+</body>
+</html>

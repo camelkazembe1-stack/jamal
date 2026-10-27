@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cleaning &amp; Maintenance — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-maint">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Cleaning &amp; Maintenance</h1>
+    <p class="sub">Keeps unusable beds out of the assignment lists. A bed reported here leaves the <b>Available</b> pool immediately and only returns to service through this page &mdash; so a bed that needs cleaning or maintenance can never be assigned as ready for use. An occupied bed cannot be reported: release the patient first.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card add-card">
+      <h2>Report a bed</h2>
+      <div class="form-grid">
+        <label>Ward
+          <select id="m-ward">
+            <option value="">— Choose a ward —</option>
+          </select>
+        </label>
+        <label>Bed (not occupied, not already reported)
+          <select id="m-bed">
+            <option value="">— Choose a ward first —</option>
+          </select>
+        </label>
+        <label>State to report
+          <select id="m-state">
+            <option>Cleaning Required</option>
+            <option>Maintenance Required</option>
+            <option>Out of Service</option>
+          </select>
+        </label>
+        <label style="grid-column:span 3;">Reason *
+          <textarea id="m-reason" rows="2" placeholder="e.g. terminal cleaning after discharge, broken side rail, mattress tear"></textarea>
+        </label>
+        <label>Reported by *
+          <input id="m-staff" type="text" placeholder="Your name">
+        </label>
+      </div>
+      <p class="form-err" id="m-ferr" hidden></p>
+      <p class="form-ok" id="m-fok" hidden></p>
+      <div class="form-actions">
+        <button class="btn-primary" id="m-report" type="button">Report Bed</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>Beds under attention</h2>
+      <div class="empty" id="u-empty">
+        <div class="empty-icon">🧹</div>
+        <div class="empty-title">Nothing to clean or fix</div>
+        <div class="empty-sub">Every bed reported here appears with its next step until it is returned to service.</div>
+      </div>
+      <div class="table-wrap" id="u-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Bed</th><th>Ward</th><th>Status</th><th>Reason</th><th>Reported</th><th>Last change</th><th>Next step</th></tr>
+          </thead>
+          <tbody id="u-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="u-count"></p>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>Maintenance history</h2>
+      <div class="empty" id="y-empty">
+        <div class="empty-icon">📜</div>
+        <div class="empty-title">No reports yet</div>
+        <div class="empty-sub">Reports stay here after the bed returns to service — they are never overwritten.</div>
+      </div>
+      <div class="table-wrap" id="y-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Bed</th><th>Ward</th><th>Reason</th><th>Reported</th><th>By</th><th>Returned to service</th><th>Final state</th></tr>
+          </thead>
+          <tbody id="y-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="y-count"></p>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/ward-management/336.js"></script>
+</body>
+</html>
