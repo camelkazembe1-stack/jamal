@@ -7,6 +7,7 @@
    is guaranteed). index.html (sign-in) loads neither. */
 window.JAMALI_MENU = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
+    { label: "Account Administration", icon: "🛡️", folder: "system-admin", n: 380, d: 0 },
     { label: "Business", icon: "🏢", folder: "business", n: 2, d: 1 },
     { label: "Add Transaction", icon: "🧾", folder: "add-transaction", n: 3, d: 2 },
     { label: "View File", icon: "📄", folder: "view-file", n: 4, d: 2 },
