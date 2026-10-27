@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward Occupancy — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-occ">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Ward Occupancy</h1>
+    <p class="sub">The live situation across all wards, counted from the bed records &mdash; never typed in. Usable beds exclude those out of service; the occupancy percentage is occupied &divide; usable. A bed that needs cleaning or maintenance can never appear in an assignment list, so what this page shows is what can truly be used.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="k">Wards</div><div class="v" id="d-wards">0</div></div>
+      <div class="stat-card"><div class="k">Beds</div><div class="v" id="d-beds">0</div></div>
+      <div class="stat-card"><div class="k">Occupied</div><div class="v warn" id="d-occ">0</div></div>
+      <div class="stat-card"><div class="k">Available</div><div class="v ok" id="d-avail">0</div></div>
+      <div class="stat-card"><div class="k">Reserved</div><div class="v" id="d-resv">0</div></div>
+      <div class="stat-card"><div class="k">Cleaning / Maint.</div><div class="v" id="d-unusable">0</div></div>
+      <div class="stat-card"><div class="k">Out of Service</div><div class="v" id="d-oos">0</div></div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>Ward occupancy</h2>
+      <div class="empty" id="o-empty">
+        <div class="empty-icon">📊</div>
+        <div class="empty-title">Nothing to count yet</div>
+        <div class="empty-sub">Register wards (331) and beds (332) first — the counts here follow the bed records automatically.</div>
+      </div>
+      <div class="table-wrap" id="o-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Ward</th><th>Type</th><th>Status</th><th>Beds</th><th>Occupied</th><th>Available</th><th>Reserved</th><th>Not Usable</th><th>Usable</th><th>Occupancy</th></tr>
+          </thead>
+          <tbody id="o-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="o-count"></p>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/ward-management/333.js"></script>
+</body>
+</html>

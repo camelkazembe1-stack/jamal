@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward Management — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Ward Management</h1>
+  <p class="sub">Wards, beds, occupancy, assignments, transfers, cleaning and the registers &mdash; the placement half of the medical wing. Occupancy is always counted from the bed records, never typed in. Emergency treatment always comes first; no form here holds up care.</p>
+
+  <div class="mod-grid">
+    <a class="mod" href="/ward-management/331">
+      <span class="mod-ico">🏥</span>
+      <span class="mod-label">Ward Registration<span class="mod-sub">register &amp; edit wards</span></span>
+    </a>
+    <a class="mod" href="/ward-management/332">
+      <span class="mod-ico">🛏️</span>
+      <span class="mod-label">Bed Management<span class="mod-sub">register &amp; manage beds</span></span>
+    </a>
+    <a class="mod" href="/ward-management/333">
+      <span class="mod-ico">📊</span>
+      <span class="mod-label">Occupancy<span class="mod-sub">availability &amp; counts</span></span>
+    </a>
+    <a class="mod" href="/ward-management/334">
+      <span class="mod-ico">👥</span>
+      <span class="mod-label">Bed Assignment<span class="mod-sub">place a patient</span></span>
+    </a>
+    <a class="mod" href="/ward-management/335">
+      <span class="mod-ico">🔄</span>
+      <span class="mod-label">Transfers<span class="mod-sub">move patients safely</span></span>
+    </a>
+    <a class="mod" href="/ward-management/336">
+      <span class="mod-ico">🧹</span>
+      <span class="mod-label">Cleaning &amp; Maintenance<span class="mod-sub">keep beds usable</span></span>
+    </a>
+    <a class="mod" href="/ward-management/337">
+      <span class="mod-ico">📋</span>
+      <span class="mod-label">Ward Register<span class="mod-sub">all wards · occupancy</span></span>
+    </a>
+    <a class="mod" href="/ward-management/338">
+      <span class="mod-ico">📜</span>
+      <span class="mod-label">Bed &amp; Transfer History<span class="mod-sub">beds · assignments · moves</span></span>
+    </a>
+  </div>
+
+  <div class="card" style="padding:16px 20px;">
+    <h2>How the ward half works</h2>
+    <p class="mini-note" style="margin-top:6px;">
+      Register the ward first (331), then put its beds on the map (332). The occupancy dashboard (333)
+      counts every bed by its status &mdash; a bed is assignable only while it is marked Available.
+      Bed Assignment (334) connects an <b>existing</b> patient to a free bed &mdash; it never creates a
+      second patient record. Transfers (335) free the old bed and fill the new one in one atomic move,
+      and the history is preserved. Cleaning &amp; Maintenance (336) keeps unusable beds out of the
+      assignment lists until they are ready. The registers (337, 338) remember every placement and
+      every move, including the completed ones.
+    </p>
+    <p class="mini-note" style="margin-top:8px;">
+      Patient Admission (page 340) reuses this half: an admission links the patient&rsquo;s stay to the
+      ward and bed records kept here &mdash; the two halves never duplicate each other.
+    </p>
+  </div>
+</main>
+<script type="module" src="/ward-management/330.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bed Management — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-beds">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Bed Management</h1>
+    <p class="sub">Beds belong to wards &mdash; every occupancy number in this module is counted from these bed records, never typed in. Bed numbers must be unique inside a ward, and a bed can only hold one patient at a time: assignment only ever lists beds marked <b>Available</b>.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card add-card">
+      <h2>Register beds</h2>
+      <div class="find-row" style="margin-top:10px;">
+        <label class="mini-note" for="b-ward" style="font-size:12.5px;">Ward</label>
+        <select id="b-ward" style="flex:0 1 340px; border:1px solid #cbd5e1; border-radius:9px; padding:9px 12px; font-size:14px;">
+          <option value="">— Choose a ward —</option>
+        </select>
+      </div>
+      <div class="form-grid" id="b-addrow" hidden>
+        <label>Bed Number *
+          <input id="b-num" type="text" placeholder="e.g. G-01 (unique in this ward)">
+        </label>
+        <label>Bed Type
+          <select id="b-type">
+            <option>Standard</option>
+            <option>Electric</option>
+            <option>Paediatric</option>
+            <option>Cot</option>
+            <option>ICU</option>
+            <option>Bariatric</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Initial Status
+          <select id="b-status">
+            <option>Available</option>
+            <option>Reserved</option>
+            <option>Out of Service</option>
+          </select>
+        </label>
+      </div>
+      <p class="form-err" id="b-ferr" hidden></p>
+      <p class="form-ok" id="b-fok" hidden>Bed registered.</p>
+      <div class="form-actions" id="b-addactions" hidden>
+        <button class="btn-primary" id="b-add" type="button">Register Bed</button>
+        <button class="btn-ghost" id="b-clear" type="button">Clear</button>
+      </div>
+      <p class="mini-note" id="b-wardnote" style="margin-top:8px;" hidden></p>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2 id="b-listtitle">Beds</h2>
+      <p class="count-line" id="b-count" style="margin-top:4px;"></p>
+      <div class="empty" id="b-empty">
+        <div class="empty-icon">🛏️</div>
+        <div class="empty-title">No beds to show</div>
+        <div class="empty-sub">Choose a ward above — if it has no beds yet, register the first one.</div>
+      </div>
+      <div class="bed-grid" id="b-grid" hidden></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- the edit-bed modal -->
+<div class="modal-ovl" id="m-wrap" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h2>Edit bed</h2>
+    <p class="mini-note" id="m-sub"></p>
+    <div class="m-grid">
+      <label>Bed Number
+        <input id="m-num" type="text">
+      </label>
+      <label>Bed Type
+        <select id="m-type">
+          <option>Standard</option>
+          <option>Electric</option>
+          <option>Paediatric</option>
+          <option>Cot</option>
+          <option>ICU</option>
+          <option>Bariatric</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label class="span-2" style="grid-column:span 2;">Status
+        <select id="m-status">
+          <option>Available</option>
+          <option>Reserved</option>
+          <option>Cleaning Required</option>
+          <option>Cleaning in Progress</option>
+          <option>Maintenance Required</option>
+          <option>Out of Service</option>
+        </select>
+      </label>
+      <label style="grid-column:span 2;">Notes
+        <textarea id="m-notes" rows="2" placeholder="Optional — e.g. window side, oxygen point"></textarea>
+      </label>
+    </div>
+    <p class="form-err" id="m-err" hidden></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="m-save" type="button">Save Changes</button>
+      <button class="btn-ghost" id="m-del" type="button">Delete Bed</button>
+      <button class="btn-ghost" id="m-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/ward-management/332.js"></script>
+</body>
+</html>

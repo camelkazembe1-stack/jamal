@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Admission — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-admission/adm.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-new">
+    <a class="back" href="/patient-admission/340">&larr; Patient Admission</a>
+    <h1>New Admission</h1>
+    <p class="sub">Admit an <b>existing</b> patient: find them from the Patient List, record the admission details, and save. The admission links to the registration that already exists &mdash; no second patient record is ever created &mdash; and the admission number is generated for you.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <p class="emg-note">🚨 Emergency admission? Choose <b>Emergency</b>, enter the patient, the date, the time and the reason, then <b>Save &amp; Confirm</b> &mdash; the diagnosis and the rest of the paperwork can follow the patient. Treatment is never delayed by this form.</p>
+
+    <div class="card add-card">
+      <h2>1 · Find the patient</h2>
+      <p class="mini-note" style="margin-top:4px;">Search by Registration ID or by name — the patient must already exist in the Patient List (322).</p>
+      <div class="find-row" style="margin-top:8px;">
+        <input id="n-q" type="text" placeholder="Registration ID (e.g. 8695SLAJ) or patient name…">
+        <button class="find-btn" id="n-find" type="button">Find</button>
+      </div>
+      <div class="cand-list" id="n-cands"></div>
+      <div class="sel-panel" id="n-sel" hidden></div>
+    </div>
+
+    <div class="card add-card" id="n-formcard">
+      <h2>2 · Admission details</h2>
+      <div class="form-grid">
+        <label>Admission Number
+          <input id="n-num" type="text" readonly placeholder="Generated when saved">
+        </label>
+        <label>Admission Date *
+          <input id="n-date" type="date">
+        </label>
+        <label>Admission Time *
+          <input id="n-time" type="time">
+        </label>
+        <label>Admission Type *
+          <select id="n-type">
+            <option value="">— Select —</option>
+            <option>Emergency</option>
+            <option>Planned</option>
+          </select>
+        </label>
+        <label class="span-2" style="grid-column:span 2;">Admitting Doctor
+          <input id="n-doctor" type="text" list="n-doctors" placeholder="Name of the responsible doctor">
+          <datalist id="n-doctors"></datalist>
+        </label>
+        <label class="span-3" style="grid-column:span 3;">Reason for Admission *
+          <textarea id="n-reason" rows="2" placeholder="Why the patient needs inpatient care"></textarea>
+        </label>
+        <label class="span-3" style="grid-column:span 3;">Diagnosis
+          <input id="n-diagnosis" type="text" placeholder="Recorded by the responsible clinician — never invented here">
+        </label>
+        <label class="span-3" style="grid-column:span 3;">Clinical Notes
+          <textarea id="n-notes" rows="2" placeholder="Optional — any additional information about this admission"></textarea>
+        </label>
+        <label>Created By *
+          <input id="n-staff" type="text" placeholder="Your name">
+        </label>
+      </div>
+      <p class="form-err" id="n-ferr" hidden></p>
+      <p class="form-ok" id="n-fok" hidden></p>
+      <div class="form-actions">
+        <button class="btn-primary" id="n-confirm" type="button">Save &amp; Confirm Admission</button>
+        <button class="btn-ghost" id="n-save" type="button">Save as Pending</button>
+        <button class="btn-ghost" id="n-clear" type="button">Clear Form</button>
+      </div>
+      <p class="mini-note" style="margin-top:8px;"><b>Pending</b> = the admission process has started but is not confirmed yet. <b>Admitted</b> = confirmed — the patient is recorded as an inpatient. A bed can be assigned afterwards from Ward Management; the success line below opens it with the patient preselected.</p>
+    </div>
+
+    <div class="card" style="padding:16px 20px;" id="n-done" hidden>
+      <h2 id="n-done-title">Admission saved</h2>
+      <p class="save-note" id="n-done-line" style="margin-top:6px;"></p>
+      <div class="form-actions">
+        <a class="btn-primary" id="n-gobed" href="/ward-management/334" style="text-decoration:none;">Assign a Bed Now &rarr;</a>
+        <a class="btn-ghost" href="/patient-admission/342" style="text-decoration:none;">Open the Admission List</a>
+        <button class="btn-ghost" id="n-again" type="button">Admit Another Patient</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/patient-admission/341.js"></script>
+</body>
+</html>

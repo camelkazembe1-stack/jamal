@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward Registration — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-reg">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Ward Registration</h1>
+    <p class="sub">Register the facility&rsquo;s wards, keep their details current, and activate or deactivate them. A ward cannot be deactivated while patients are still placed in it &mdash; move or release them first. Occupancy is counted from the bed records, never typed in here.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card add-card">
+      <h2>Register a ward</h2>
+      <div class="form-grid">
+        <label>Ward Name *
+          <input id="w-name" type="text" placeholder="e.g. General Ward">
+        </label>
+        <label>Ward Code
+          <input id="w-code" type="text" placeholder="e.g. GW-01 (auto if left empty)">
+        </label>
+        <label>Ward Type *
+          <select id="w-type">
+            <option value="">— Select —</option>
+            <option>General</option>
+            <option>Maternity</option>
+            <option>Paediatric</option>
+            <option>Surgical</option>
+            <option>Medical</option>
+            <option>Intensive Care Unit (ICU)</option>
+            <option>Private</option>
+            <option>Isolation</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Location / Building
+          <input id="w-building" type="text" placeholder="e.g. Block A">
+        </label>
+        <label>Floor
+          <input id="w-floor" type="text" placeholder="e.g. Ground / 2">
+        </label>
+        <label>Licensed Capacity (reference)
+          <input id="w-capacity" type="number" min="0" step="1" placeholder="e.g. 20">
+        </label>
+        <label>Responsible Nurse / Ward Supervisor
+          <input id="w-supervisor" type="text" placeholder="Name of the responsible staff">
+        </label>
+      </div>
+      <p class="form-err" id="w-ferr" hidden></p>
+      <p class="form-ok" id="w-fok" hidden>Ward registered — it appears in the list below.</p>
+      <div class="form-actions">
+        <button class="btn-primary" id="w-save" type="button">Register Ward</button>
+        <button class="btn-ghost" id="w-clear" type="button">Clear Form</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>All wards</h2>
+      <div class="find-row" style="margin-top:10px;">
+        <input id="w-q" type="text" placeholder="Search by ward name, code or type…">
+      </div>
+      <div class="empty" id="w-empty">
+        <div class="empty-icon">🏥</div>
+        <div class="empty-title">No wards registered yet</div>
+        <div class="empty-sub">Register the first ward above — then put its beds on the map in Bed Management.</div>
+      </div>
+      <div class="table-wrap" id="w-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Code</th><th>Ward</th><th>Type</th><th>Building · Floor</th><th>Capacity</th><th>Beds</th><th>Occupied</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="w-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="w-count"></p>
+    </div>
+  </section>
+
+</main>
+
+<!-- the edit-ward modal -->
+<div class="modal-ovl" id="m-wrap" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <h2>Edit ward</h2>
+    <p class="mini-note" id="m-sub"></p>
+    <div class="m-grid">
+      <label>Ward Name
+        <input id="m-name" type="text">
+      </label>
+      <label>Ward Code
+        <input id="m-code" type="text">
+      </label>
+      <label>Ward Type
+        <select id="m-type">
+          <option value="">— Select —</option>
+          <option>General</option>
+          <option>Maternity</option>
+          <option>Paediatric</option>
+          <option>Surgical</option>
+          <option>Medical</option>
+          <option>Intensive Care Unit (ICU)</option>
+          <option>Private</option>
+          <option>Isolation</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Location / Building
+        <input id="m-building" type="text">
+      </label>
+      <label>Floor
+        <input id="m-floor" type="text">
+      </label>
+      <label>Licensed Capacity (reference)
+        <input id="m-capacity" type="number" min="0" step="1">
+      </label>
+      <label>Responsible Nurse / Ward Supervisor
+        <input id="m-supervisor" type="text">
+      </label>
+    </div>
+    <p class="form-err" id="m-err" hidden></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="m-save" type="button">Save Changes</button>
+      <button class="btn-ghost" id="m-cancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/ward-management/331.js"></script>
+</body>
+</html>

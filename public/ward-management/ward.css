@@ -1,0 +1,186 @@
+/* JAMALI — ward-management · shared stylesheet for pages 330 to 338
+   Base design system lives in /records/records.css (imported below).
+   Family accent: emerald, the Health wing colour. This file carries the
+   pieces every ward page needs: boot line, error banner, status badges,
+   the bed grid, the dashboard stat cards and the edit modals. */
+@import url("/records/records.css");
+
+/* the hidden attribute always wins, even over display rules below */
+[hidden] { display: none !important; }
+
+/* page accent — Health */
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #059669; }
+
+/* the boot status line and the red load-error banner (task 46d language) */
+.p-boot { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: #64748b; }
+.p-err { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca;
+  background: #fef2f2; color: #b91c1c; border-radius: 10px; font-size: 13px;
+  font-weight: 700; }
+.p-err .p-err-hint { display: block; margin-top: 4px; font-weight: 600; color: #7f1d1d; }
+
+.mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
+
+/* ---------- status badges (one language across all ward pages) ---------- */
+.st { display: inline-block; border-radius: 999px; padding: 3px 10px;
+  font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+.st-avail   { background: #d1fae5; color: #047857; }   /* Available */
+.st-occ     { background: #fee2e2; color: #b91c1c; }   /* Occupied */
+.st-resv    { background: #fef3c7; color: #92400e; }   /* Reserved */
+.st-clean   { background: #ecfccb; color: #4d7c0f; }   /* Cleaning Required / In Progress */
+.st-maint   { background: #ffedd5; color: #c2410c; }   /* Maintenance Required */
+.st-oos     { background: #e2e8f0; color: #475569; }   /* Out of Service */
+.st-ready   { background: #d1fae5; color: #047857; }   /* Ready for Use */
+.st-active  { background: #d1fae5; color: #047857; }   /* Active ward / assignment */
+.st-inactive{ background: #f1f5f9; color: #94a3b8; }   /* Inactive ward */
+.st-released{ background: #f1f5f9; color: #94a3b8; }   /* Released assignment */
+.st-pending { background: #fef3c7; color: #92400e; }
+.st-high    { background: #ffedd5; color: #c2410c; }
+.st-medium  { background: #fef3c7; color: #92400e; }
+.st-low     { background: #d1fae5; color: #047857; }
+.st-none    { background: #f1f5f9; color: #94a3b8; }
+
+/* ---------- hub tiles (page 330) — the 321 square-tile language ---------- */
+.mod-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 14px; margin: 0 0 16px; }
+.mod-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+a.mod { aspect-ratio: 1 / 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; text-decoration: none;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  padding: 10px 8px; color: #0f172a; font-weight: 700; font-size: 13.5px;
+  text-align: center; box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+  transition: transform .15s, border-color .15s, background .15s, color .15s; }
+a.mod:hover { transform: translateY(-3px); border-color: #059669;
+  background: #ecfdf5; color: #047857; }
+a.mod:active { transform: translateY(0); }
+.mod-ico { font-size: 32px; line-height: 1; }
+.mod-label { line-height: 1.25; padding: 0 6px; }
+.mod-sub { display: block; color: #94a3b8; font-size: 10.5px; font-weight: 700;
+  margin-top: 3px; }
+a.mod:hover .mod-sub { color: #059669; }
+@media (max-width: 1100px) { .mod-grid, .mod-grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .mod-grid, .mod-grid.four { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  a.mod { gap: 6px; font-size: 12px; }
+  .mod-ico { font-size: 24px; }
+  .mod-sub { font-size: 9.5px; margin-top: 2px; }
+}
+
+/* ---------- find-a-patient row (pages 334) ---------- */
+.find-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.find-row input { flex: 1 1 260px; border: 1px solid #cbd5e1; border-radius: 9px;
+  padding: 9px 12px; font-size: 14px; }
+.find-btn { border: 1px solid #059669; background: #ecfdf5; color: #047857;
+  font-weight: 800; font-size: 13.5px; padding: 9px 18px; border-radius: 9px;
+  cursor: pointer; }
+.find-btn:hover { background: #d1fae5; }
+.cand-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.cand { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  border: 1px solid #e2e8f0; background: #fff; border-radius: 10px;
+  padding: 8px 12px; cursor: pointer; font-size: 13.5px; font-family: inherit; }
+.cand:hover { border-color: #059669; background: #ecfdf5; }
+.cand b { font-weight: 800; }
+.cand .c-id { font-weight: 800; letter-spacing: .06em; color: #065f46;
+  font-variant-numeric: tabular-nums; }
+.sel-panel { margin-top: 12px; border: 1px solid #a7f3d0; background: #ecfdf5;
+  border-radius: 10px; padding: 10px 14px; font-size: 13.5px; }
+.sel-panel b { font-weight: 800; }
+
+/* ---------- dashboard stat cards (page 333) ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px; margin: 0 0 18px; }
+.stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 12px 14px; box-shadow: 0 4px 14px rgba(15, 23, 42, .05); }
+.stat-card .k { font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .07em; color: #64748b; }
+.stat-card .v { font-size: 24px; font-weight: 800; margin-top: 4px;
+  font-variant-numeric: tabular-nums; }
+.stat-card .v.warn { color: #b91c1c; }
+.stat-card .v.ok { color: #047857; }
+@media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- the bed grid (page 332) ---------- */
+.bed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px; margin-top: 12px; }
+.bed-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  padding: 10px 12px; box-shadow: 0 4px 14px rgba(15, 23, 42, .05);
+  border-left-width: 5px; }
+.bed-card.b-avail   { border-left-color: #10b981; }
+.bed-card.b-occ     { border-left-color: #ef4444; }
+.bed-card.b-resv    { border-left-color: #f59e0b; }
+.bed-card.b-clean   { border-left-color: #84cc16; }
+.bed-card.b-maint   { border-left-color: #f97316; }
+.bed-card.b-oos     { border-left-color: #94a3b8; }
+.bed-no { font-size: 16px; font-weight: 800; letter-spacing: .04em; }
+.bed-type { font-size: 11.5px; color: #64748b; font-weight: 700; }
+.bed-patient { margin-top: 6px; font-size: 12.5px; font-weight: 700; color: #0f172a; }
+.bed-act { margin-top: 8px; display: flex; gap: 6px; }
+
+/* ---------- small buttons ---------- */
+.ghost-btn { border: 1px solid #cbd5e1; background: #fff; color: #334155;
+  font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 7px;
+  cursor: pointer; white-space: nowrap; font-family: inherit; }
+.ghost-btn:hover { border-color: #059669; color: #047857; }
+.ghost-btn.danger { color: #b91c1c; }
+.ghost-btn.danger:hover { border-color: #b91c1c; background: #fef2f2; }
+.ghost-btn:disabled { opacity: .55; cursor: wait; }
+.icon-btn { width: 32px; height: 32px; display: inline-flex; align-items: center;
+  justify-content: center; border-radius: 9px; border: 1px solid #cbd5e1;
+  background: #fff; cursor: pointer; color: #475569; margin-right: 6px;
+  padding: 0; vertical-align: middle; }
+.icon-btn:hover { border-color: #059669; color: #059669; background: #ecfdf5; }
+.icon-btn.del-btn { color: #b91c1c; }
+.icon-btn.del-btn:hover { border-color: #b91c1c; background: #fef2f2; }
+.icon-btn:disabled { opacity: .55; cursor: wait; }
+.pen-svg, .bin-svg { display: block; }
+
+/* ---------- the emergency note ---------- */
+.emg-note { margin: 10px 0 16px; padding: 10px 14px; border: 1px solid #fde68a;
+  background: #fffbeb; color: #92400e; border-radius: 10px; font-size: 13px;
+  font-weight: 700; }
+
+/* ---------- modal (edit forms) ---------- */
+.modal-ovl { position: fixed; inset: 0; background: rgba(15, 23, 42, .45);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 40px 16px; overflow: auto; z-index: 60; }
+.modal-card { background: #fff; border-radius: 16px; padding: 20px 22px;
+  width: min(760px, 100%); box-shadow: 0 20px 50px rgba(15, 23, 42, .25); }
+.modal-card h2 { font-size: 18px; margin-bottom: 4px; }
+.m-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px; margin: 14px 0 2px; }
+.m-grid label { font-size: 12px; font-weight: 700; color: #475569;
+  display: flex; flex-direction: column; gap: 5px; }
+.m-grid input, .m-grid select, .m-grid textarea { border: 1px solid #cbd5e1;
+  border-radius: 8px; padding: 8px 10px; font-size: 14px; width: 100%;
+  background: #fff; font-family: inherit; }
+.m-grid input:focus, .m-grid select:focus, .m-grid textarea:focus {
+  outline: 2px solid #a7f3d0; border-color: #059669; }
+.form-err { color: #b91c1c; font-size: 13px; font-weight: 600; margin-top: 10px; }
+.form-ok { color: #047857; font-size: 13px; font-weight: 700; margin-top: 10px; }
+.form-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.btn-primary { background: #059669; color: #fff; border: 0; font-weight: 800;
+  padding: 9px 18px; border-radius: 9px; cursor: pointer; font-size: 14px;
+  font-family: inherit; }
+.btn-primary:disabled { opacity: .55; cursor: wait; }
+.btn-ghost { background: #fff; color: #475569; border: 1px solid #cbd5e1;
+  font-weight: 700; padding: 9px 16px; border-radius: 9px; cursor: pointer;
+  font-size: 14px; font-family: inherit; }
+.save-note { color: #047857; font-size: 13px; font-weight: 700; margin-top: 10px; }
+
+/* ---------- detail sections (ward register, history) ---------- */
+.sec-h { font-size: 13px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; color: #475569; margin: 18px 0 8px; }
+.nowrap { white-space: nowrap; }
+td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pct-cell { font-weight: 800; font-variant-numeric: tabular-nums; }
+tr.row-inactive td { color: #94a3b8; }
+
+/* print — clean paper output */
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .find-row,
+  .form-actions, .emg-note { display: none !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+}

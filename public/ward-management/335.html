@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ward &amp; Bed Transfers — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/ward-management/ward.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="s-transfer">
+    <a class="back" href="/ward-management/330">&larr; Ward Management</a>
+    <h1>Ward &amp; Bed Transfers</h1>
+    <p class="sub">Move a placed patient to another bed or ward. The previous bed is freed and the destination bed is filled in <b>one atomic move</b>; the destination must be available and suitable before the transfer completes. The history is preserved and the patient record is never duplicated &mdash; a transfer is not a new admission.</p>
+    <p class="p-boot" id="p-boot" hidden></p>
+    <p class="p-err" id="p-err" hidden></p>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>1 · Pick the patient to move</h2>
+      <div class="empty" id="t-empty">
+        <div class="empty-icon">🔄</div>
+        <div class="empty-title">Nobody to move</div>
+        <div class="empty-sub">Only patients with an active bed placement (334) can be transferred.</div>
+      </div>
+      <div class="table-wrap" id="t-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Patient</th><th>Registration ID</th><th>Current ward · Bed</th><th>Placed</th><th>By</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="t-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="t-count"></p>
+    </div>
+
+    <div class="card add-card" id="t-card" hidden>
+      <h2>2 · Destination</h2>
+      <div class="sel-panel" id="t-dpatient" style="margin:0 0 12px;"></div>
+      <div class="form-grid">
+        <label>Destination ward
+          <select id="t-ward">
+            <option value="">— Choose a ward —</option>
+          </select>
+        </label>
+        <label>Available destination bed
+          <select id="t-bed">
+            <option value="">— Choose a ward first —</option>
+          </select>
+        </label>
+        <label>Authorized staff member *
+          <input id="t-staff" type="text" placeholder="Your name">
+        </label>
+        <label style="grid-column:span 3;">Reason for transfer *
+          <textarea id="t-reason" rows="2" placeholder="e.g. closer nursing observation, isolation, ward specialisation"></textarea>
+        </label>
+      </div>
+      <p class="form-err" id="t-ferr" hidden></p>
+      <p class="form-ok" id="t-fok" hidden></p>
+      <div class="form-actions">
+        <button class="btn-primary" id="t-go" type="button">Complete Transfer</button>
+        <button class="btn-ghost" id="t-cancel" type="button">Cancel Move</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>Transfer history</h2>
+      <div class="empty" id="h-empty">
+        <div class="empty-icon">📜</div>
+        <div class="empty-title">No transfers recorded yet</div>
+        <div class="empty-sub">Every completed move is preserved here — completed transfers are never overwritten.</div>
+      </div>
+      <div class="table-wrap" id="h-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>Patient</th><th>From</th><th>To</th><th>When</th><th>Reason</th><th>Authorized by</th></tr>
+          </thead>
+          <tbody id="h-body"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="h-count"></p>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/ward-management/335.js"></script>
+</body>
+</html>

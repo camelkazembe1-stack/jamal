@@ -5,6 +5,10 @@
 // 328) import updateDoc — one missing name in this file used to stop
 // their whole script at the import line: no listener bound, no table
 // drawn, no Find answer, no response.
+// Task 52: the export grows additively for Ward Management (330-338)
+// and Patient Admission (340-343) — getDoc, arrayUnion, arrayRemove,
+// increment, limit and deleteField join the block. Every name the older
+// pages import is still exported exactly as before; nothing is removed.
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -23,14 +27,20 @@ import {
   updateDoc,
   deleteDoc,
   getDocs,
+  getDoc,
   setDoc,
   writeBatch,
   query,
   where,
   orderBy,
+  limit,
   onSnapshot,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  arrayUnion,
+  arrayRemove,
+  increment,
+  deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -59,6 +69,9 @@ export {
   getFirestore, collection, doc, addDoc, writeBatch,
   query, where, orderBy, onSnapshot,
   serverTimestamp, Timestamp, updateDoc, deleteDoc, getDocs, setDoc
+};
+export {
+  getDoc, limit, arrayUnion, arrayRemove, increment, deleteField
 };
 
 // Guard for inner pages: resolve with the user, or bounce to index.html
