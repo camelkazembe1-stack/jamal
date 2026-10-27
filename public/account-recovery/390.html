@@ -64,6 +64,14 @@
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
+    // task 56b: plain-words guidance when the firestore.rules are not published
+    function friendly(err) {
+      const code = err && err.code ? String(err.code) : "";
+      if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
+        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then try again.";
+      }
+      return (err && err.message) ? err.message : code;
+    }
 
     // the username travels forward automatically
     const carried = new URLSearchParams(location.search).get("u");
@@ -109,7 +117,7 @@
         say("Token replaced.", true);
         btn.disabled = false;
       } catch (err) {
-        say("Could not reset the token: " + (err.message || err.code));
+        say("Could not reset the token: " + friendly(err));
         btn.disabled = false;
       }
     });

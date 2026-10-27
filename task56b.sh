@@ -22,10 +22,13 @@
 #   - system-page-config.js + one additive line in 322.html: applies the
 #     administrator's hidden fields and defaults (admin always sees all).
 #   - firestore.rules: 5 new collections (systemAccounts, systemCredentials,
-#     systemAdmins, systemSetup, systemPageConfig) = 24 match blocks.
+#     systemAdmins, systemSetup, systemPageConfig) = 24 match blocks, with
+#     the 56b administrator-claim escape (hash-literal verified).
 #   - menu.js: one self-healing entry (Account Administration).
 #   - SERVER/server.js + public/firebase.js re-shipped unchanged (idempotent
 #     with task 55 — safe in any run order).
+#   - 56b: login/create/recovery screens explain "Missing or insufficient
+#     permissions" in plain words (rules not published) instead of raw code.
 #
 # Idempotent and self-healing: safe to run again. NO existing page is
 # rewritten — every module keeps its code; the guard sits in the linker.
@@ -724,6 +727,16 @@ cat > "public/index.html" << 'T56_INDEX'
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
     function norm(u) { return u.trim().toLowerCase(); }
+    // task 56b: "Missing or insufficient permissions" almost always means the
+    // firestore.rules file was never published in the Firebase console — say
+    // so in plain words instead of the raw Firebase error.
+    function friendly(err) {
+      const code = err && err.code ? String(err.code) : "";
+      if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
+        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then login again.";
+      }
+      return (err && err.message) ? err.message : code;
+    }
 
     // ------------------------------------------------------------------
     // panels
@@ -814,9 +827,13 @@ cat > "public/index.html" << 'T56_INDEX'
             batch.set(doc(db, "systemAdmins", user.uid), {
               passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
             });
+            // task 56b: the profile write carries the hash literals so the
+            // security rules can verify the claim themselves (they could not
+            // before — the batch was rejected with permission-denied).
             batch.set(doc(db, "systemAccounts", id), {
               usernameLower: id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin",
-              status: "approved", googleUid: user.uid, grants: [], at: serverTimestamp()
+              status: "approved", googleUid: user.uid, grants: [],
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
             });
             batch.set(doc(db, "systemCredentials", id), {
               passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, phone: "0780526437", googleUid: user.uid
@@ -848,7 +865,7 @@ cat > "public/index.html" << 'T56_INDEX'
         writeSession({ id, ...acc }, user);
         location.href = "/home/1";
       } catch (err) {
-        say("Login failed: " + (err.message || err.code));
+        say("Login failed: " + friendly(err));
         btn.disabled = false;
       }
     });
@@ -896,7 +913,7 @@ cat > "public/index.html" << 'T56_INDEX'
         say("Your account has been created. Please wait for admin approval.", true);
         btn.disabled = false;
       } catch (err) {
-        say("Could not create the account: " + (err.message || err.code));
+        say("Could not create the account: " + friendly(err));
         btn.disabled = false;
       }
     });
@@ -1861,6 +1878,14 @@ cat > "public/account-recovery/390.html" << 'T56_R390'
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
+    // task 56b: plain-words guidance when the firestore.rules are not published
+    function friendly(err) {
+      const code = err && err.code ? String(err.code) : "";
+      if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
+        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then try again.";
+      }
+      return (err && err.message) ? err.message : code;
+    }
 
     // the username travels forward automatically
     const carried = new URLSearchParams(location.search).get("u");
@@ -1906,7 +1931,7 @@ cat > "public/account-recovery/390.html" << 'T56_R390'
         say("Token replaced.", true);
         btn.disabled = false;
       } catch (err) {
-        say("Could not reset the token: " + (err.message || err.code));
+        say("Could not reset the token: " + friendly(err));
         btn.disabled = false;
       }
     });
@@ -1983,6 +2008,14 @@ cat > "public/account-recovery/391.html" << 'T56_R391'
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
+    // task 56b: plain-words guidance when the firestore.rules are not published
+    function friendly(err) {
+      const code = err && err.code ? String(err.code) : "";
+      if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
+        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then try again.";
+      }
+      return (err && err.message) ? err.message : code;
+    }
 
     const carried = new URLSearchParams(location.search).get("u");
     if (carried) $("fp-username").value = carried;
@@ -2023,7 +2056,7 @@ cat > "public/account-recovery/391.html" << 'T56_R391'
         say("Phone verified. Now choose a new password.", true);
         btn.disabled = false;
       } catch (err) {
-        say("Could not verify: " + (err.message || err.code));
+        say("Could not verify: " + friendly(err));
         btn.disabled = false;
       }
     });
@@ -2043,7 +2076,7 @@ cat > "public/account-recovery/391.html" << 'T56_R391'
         $("step-new").classList.add("hidden");
         btn.disabled = false;
       } catch (err) {
-        say("Could not save the password: " + (err.message || err.code));
+        say("Could not save the password: " + friendly(err));
         btn.disabled = false;
       }
     });
@@ -2248,12 +2281,29 @@ service cloud.firestore {
     // ---- account profiles: usernames, positions, approval, grants ----
     // No secrets live here. Any signed in user may resolve a username;
     // only the administrator may approve, reject or edit grants.
+    //
+    // Task 56b fix: the administrator bootstrap claim writes the profile
+    // as approved/admin in the same batch that creates systemAdmins — the
+    // old rule (pending/user only) rejected that write, so the very first
+    // administrator login died with "Missing or insufficient permissions".
+    // The claim escape below fires ONLY for the exact seeded profile,
+    // proven by the rules-level hash literals, and only while the setup
+    // marker does not exist yet. .get(field, "") keeps every branch
+    // error-free for payloads that lack the extra fields.
     match /systemAccounts/{docId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.googleUid == request.auth.uid
-        && request.resource.data.status == "pending"
-        && request.resource.data.role == "user";
+      allow create: if request.auth != null && (
+        (request.resource.data.get("googleUid", "") == request.auth.uid
+          && request.resource.data.get("status", "") == "pending"
+          && request.resource.data.get("role", "") == "user")
+        || (request.resource.data.get("googleUid", "") == request.auth.uid
+          && request.resource.data.get("usernameLower", "") == "jamal kazembe"
+          && request.resource.data.get("status", "") == "approved"
+          && request.resource.data.get("role", "") == "admin"
+          && request.resource.data.get("passHash", "") == "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af"
+          && request.resource.data.get("tokenHash", "") == "3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1"
+          && !exists(/databases/$(database)/documents/systemSetup/claim))
+      );
       allow update: if isSystemAdmin();
       allow delete: if isSystemAdmin();
     }
@@ -2385,6 +2435,15 @@ grep -q '3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1' fires
 chk $? "firestore.rules holds the claim hash literals"
 grep -q 'resource.data.googleUid == request.auth.uid' firestore.rules
 chk $? "credentials are bound to their own Google identity"
+# -- 10b - task 56b: the claim escape + the payload it verifies -----------------
+grep -q '== "jamal kazembe"' firestore.rules
+chk $? "rules open the administrator bootstrap claim (56b)"
+grep -q 'passHash: ADMIN_PASS_HASH' public/index.html
+chk $? "the claim payload carries the hash literals for the rules check (56b)"
+grep -q 'insufficient permissions' public/index.html && grep -q 'firestore.rules' public/index.html
+chk $? "the start page explains unpublished rules in plain words (56b)"
+grep -q 'friendly(err)' public/account-recovery/390.html && grep -q 'friendly(err)' public/account-recovery/391.html
+chk $? "the recovery pages explain unpublished rules in plain words (56b)"
 
 # -- 11 - the export sweep (every page import vs the shim export list) ---------
 exports="$( { sed -n 's/^export const \([A-Za-z_][A-Za-z0-9_]*\).*/\1/p' public/firebase.js
@@ -2451,9 +2510,12 @@ if [ "$fail" -eq 0 ]; then
   echo "   room keys  = system account (approval, grants, page settings)"
   echo ""
   echo " NOW, IN THIS ORDER:"
-  echo "   1. git add -A && git commit && git push   (Vercel deploys)"
-  echo "   2. Publish the rules: Firebase console -> Firestore -> Rules ->"
-  echo "      paste firestore.rules -> Publish (required for accounts to work)"
+  echo "   1. Publish the rules FIRST — this is what caused 'Login failed:"
+  echo "      Missing or insufficient permissions':"
+  echo "      Firebase console -> Firestore Database -> Rules ->"
+  echo "      delete everything there -> paste the FULL contents of the file"
+  echo "      firestore.rules from this project folder -> Publish."
+  echo "   2. git add -A && git commit && git push   (Vercel deploys)"
   echo "   3. Open the site: you will see ONLY Login and Create Account."
   echo "   4. FIRST RUN — the ADMINISTRATOR signs in first:"
   echo "      Google sign-in -> username: jamal kazembe -> token: 1720 -> Login."
@@ -2472,6 +2534,8 @@ if [ "$fail" -eq 0 ]; then
   echo " NOTES:"
   echo "   - every existing user must create an account and be approved —"
   echo "     that is the new system working as specified."
+  echo "   - if a login still says permission-denied after publishing, wait a"
+  echo "     minute (rules take a moment to spread) and hard-refresh."
   echo "   - direct links to ungranted areas bounce to the start page."
   echo "   - passwords/tokens are stored only as salted SHA-256 hashes."
   echo "   - after editing SERVER/ files: cp SERVER/*.js public/SERVER/"

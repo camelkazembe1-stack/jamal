@@ -122,6 +122,16 @@
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
     function norm(u) { return u.trim().toLowerCase(); }
+    // task 56b: "Missing or insufficient permissions" almost always means the
+    // firestore.rules file was never published in the Firebase console — say
+    // so in plain words instead of the raw Firebase error.
+    function friendly(err) {
+      const code = err && err.code ? String(err.code) : "";
+      if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
+        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then login again.";
+      }
+      return (err && err.message) ? err.message : code;
+    }
 
     // ------------------------------------------------------------------
     // panels
@@ -212,9 +222,13 @@
             batch.set(doc(db, "systemAdmins", user.uid), {
               passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
             });
+            // task 56b: the profile write carries the hash literals so the
+            // security rules can verify the claim themselves (they could not
+            // before — the batch was rejected with permission-denied).
             batch.set(doc(db, "systemAccounts", id), {
               usernameLower: id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin",
-              status: "approved", googleUid: user.uid, grants: [], at: serverTimestamp()
+              status: "approved", googleUid: user.uid, grants: [],
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
             });
             batch.set(doc(db, "systemCredentials", id), {
               passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, phone: "0780526437", googleUid: user.uid
@@ -246,7 +260,7 @@
         writeSession({ id, ...acc }, user);
         location.href = "/home/1";
       } catch (err) {
-        say("Login failed: " + (err.message || err.code));
+        say("Login failed: " + friendly(err));
         btn.disabled = false;
       }
     });
@@ -294,7 +308,7 @@
         say("Your account has been created. Please wait for admin approval.", true);
         btn.disabled = false;
       } catch (err) {
-        say("Could not create the account: " + (err.message || err.code));
+        say("Could not create the account: " + friendly(err));
         btn.disabled = false;
       }
     });

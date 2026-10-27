@@ -133,12 +133,29 @@ service cloud.firestore {
     // ---- account profiles: usernames, positions, approval, grants ----
     // No secrets live here. Any signed in user may resolve a username;
     // only the administrator may approve, reject or edit grants.
+    //
+    // Task 56b fix: the administrator bootstrap claim writes the profile
+    // as approved/admin in the same batch that creates systemAdmins — the
+    // old rule (pending/user only) rejected that write, so the very first
+    // administrator login died with "Missing or insufficient permissions".
+    // The claim escape below fires ONLY for the exact seeded profile,
+    // proven by the rules-level hash literals, and only while the setup
+    // marker does not exist yet. .get(field, "") keeps every branch
+    // error-free for payloads that lack the extra fields.
     match /systemAccounts/{docId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.googleUid == request.auth.uid
-        && request.resource.data.status == "pending"
-        && request.resource.data.role == "user";
+      allow create: if request.auth != null && (
+        (request.resource.data.get("googleUid", "") == request.auth.uid
+          && request.resource.data.get("status", "") == "pending"
+          && request.resource.data.get("role", "") == "user")
+        || (request.resource.data.get("googleUid", "") == request.auth.uid
+          && request.resource.data.get("usernameLower", "") == "jamal kazembe"
+          && request.resource.data.get("status", "") == "approved"
+          && request.resource.data.get("role", "") == "admin"
+          && request.resource.data.get("passHash", "") == "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af"
+          && request.resource.data.get("tokenHash", "") == "3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1"
+          && !exists(/databases/$(database)/documents/systemSetup/claim))
+      );
       allow update: if isSystemAdmin();
       allow delete: if isSystemAdmin();
     }
