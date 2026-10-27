@@ -1,0 +1,61 @@
+# SERVER CONNECTION AUDIT — task 55
+# (regenerated on every run of jamali-task55-server-linker.sh)
+
+== 1. Modules routed through SERVER/linker.js (via the /firebase.js shim) ==
+public/add-transaction/3.js
+public/all-transactions/5.js
+public/business/2.js
+public/cash-book/6.js
+public/cash-book-single/15.js
+public/creditors-book/16.js
+public/debtors-book/17.js
+public/doctor-consultation/325.js
+public/health/patient-info.js
+public/home/1.js
+public/index.html
+public/journals/journal.js
+public/laboratory/360.js
+public/laboratory/361.js
+public/laboratory/362.js
+public/laboratory/363.js
+public/ledger/18.js
+public/nurse-consultation/324.js
+public/patient-admission/341.js
+public/patient-admission/342.js
+public/patient-admission/343.js
+public/patient-discharge/350.js
+public/patient-discharge/351.js
+public/patient-discharge/352.js
+public/patient-discharge/353.js
+public/patient-module/328.js
+public/pharmacy/326.js
+public/radiology/370.js
+public/radiology/371.js
+public/radiology/372.js
+public/radiology/373.js
+public/records/records.js
+public/reports2/reports2.js
+public/reports/reports.js
+public/treatment-procedures/327.js
+public/triage/323.js
+public/victim-registration/322.js
+public/view-file/4.js
+public/ward-management/331.js
+public/ward-management/332.js
+public/ward-management/333.js
+public/ward-management/334.js
+public/ward-management/335.js
+public/ward-management/336.js
+public/ward-management/337.js
+public/ward-management/338.js
+
+== 2. Files holding a DIRECT database/server connection ==
+NONE — the architecture rule holds.
+
+== 3. Connection chain after task 55 ==
+pages -> /firebase.js (compat shim) -> /SERVER/linker.js -> /SERVER/server.js -> Firebase connector -> Cloud Firestore + Google auth
+
+== 4. Excluded from the scan ==
+public/mock/    — offline development fake (no real connection)
+public/SERVER/  — the sanctioned connection point itself (served mirror of SERVER/)
+firestore.rules — security rules, not a connection
