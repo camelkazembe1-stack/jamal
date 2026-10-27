@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Lab Request — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/laboratory/lab.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/laboratory/360">&larr; Laboratory</a>
+  <h1>New Lab Request</h1>
+  <p class="sub">Request laboratory tests for an <b>existing</b> patient. The request links to the patient's Registration ID &mdash; a second patient record is never created &mdash; and the requesting department and clinician are recorded so the results find their way back.</p>
+
+  <!-- STEP 1 · pick the patient -->
+  <section class="card add-card">
+    <h2>1 · Find the patient</h2>
+    <div class="find-row">
+      <input id="r-q" type="text" placeholder="Registration ID (e.g. 4827ABCD) or the patient's name">
+      <button class="find-btn" id="r-find" type="button">Find</button>
+    </div>
+    <div class="cand-list" id="r-cands"></div>
+    <div class="sel-panel" id="r-sel" hidden></div>
+  </section>
+
+  <!-- STEP 2 · the request -->
+  <section class="card add-card" id="r-formcard" hidden>
+    <h2>2 · The tests being requested</h2>
+    <div class="form-grid">
+      <label>Requesting department
+        <input id="r-dept" type="text" placeholder="e.g. Doctor Consultation"></label>
+      <label>Requesting clinician
+        <input id="r-clinician" type="text" placeholder="e.g. Dr. Hassan"></label>
+      <label>Priority
+        <select id="r-priority">
+          <option value="Routine" selected>Routine</option>
+          <option value="Urgent">Urgent</option>
+        </select></label>
+      <label class="span-3">Clinical information from the requesting clinician
+        <textarea id="r-info" rows="2" placeholder="Why these tests are needed"></textarea></label>
+    </div>
+    <div class="sec-h">Requested tests</div>
+    <div id="r-picks"></div>
+    <div class="pick-row">
+      <input id="r-custom" type="text" placeholder="Other test — type a name and press Add" style="flex:1 1 260px;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:13.5px">
+      <button class="btn-ghost" id="r-addcustom" type="button">Add</button>
+    </div>
+    <p class="form-err" id="r-ferr" hidden></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="r-save" type="button">Save Lab Request</button>
+      <button class="btn-ghost" id="r-clear" type="button">Clear</button>
+    </div>
+  </section>
+
+  <!-- success panel -->
+  <section class="card" id="r-done" hidden>
+    <h2>Lab request saved</h2>
+    <p id="r-done-line" class="sel-panel"></p>
+    <p class="mini-note">The specimen can now be collected on the Lab Workbench. The request appears on the Lab Request List and in the laboratory queue.</p>
+    <div class="form-actions">
+      <a class="btn-primary" id="r-gowork" href="#">Open it on the workbench</a>
+      <button class="btn-ghost" id="r-again" type="button">Create another request</button>
+    </div>
+  </section>
+</main>
+</body>
+</html>

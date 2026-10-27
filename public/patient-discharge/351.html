@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start Discharge — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-discharge/dis.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/patient-discharge/350">&larr; Patient Discharge</a>
+  <h1>Start Discharge</h1>
+  <p class="sub">Open a discharge process for a patient who is <b>currently admitted</b>. Starting the process never discharges anyone by itself &mdash; the responsible clinician must authorize it, the checklist must be completed, and the final confirmation on the details page ends the stay.</p>
+
+  <div class="emg-note">🚨 Emergency care must never wait for this form. If the patient needs urgent attention, treat them first.</div>
+
+  <!-- STEP 1 · pick the admitted patient -->
+  <section class="card add-card">
+    <h2>1 · Find the admitted patient</h2>
+    <p class="mini-note">Only patients whose admission is <b>Admitted</b> or <b>Transferred</b> are listed. A registered outpatient does not appear here — discharge ends an <b>inpatient stay</b>, not a registration.</p>
+    <div class="find-row">
+      <input id="s-q" type="text" placeholder="Patient ID, name, or admission number (e.g. ADM-…)">
+      <button class="find-btn" id="s-find" type="button">Find</button>
+    </div>
+    <div class="cand-list" id="s-cands"></div>
+    <div class="sel-panel" id="s-sel" hidden></div>
+  </section>
+
+  <!-- STEP 2 · the discharge form -->
+  <section class="card add-card" id="s-formcard" hidden>
+    <h2>2 · The discharge record</h2>
+    <div class="form-grid">
+      <label>Discharge reason <span class="mini-note">(why the stay ends)</span>
+        <input id="s-reason" type="text" placeholder="e.g. Recovered — discharged home"></label>
+      <label>Responsible clinician
+        <input id="s-clinician" type="text" placeholder="e.g. Dr. Hassan"></label>
+      <label>Discharge decision
+        <select id="s-decision">
+          <option value="Pending Review" selected>Pending Review — awaiting authorization</option>
+          <option value="Approved for Discharge">Approved for Discharge — clinician has authorized</option>
+        </select></label>
+      <label class="span-3">Notes
+        <textarea id="s-notes" rows="2" placeholder="Anything the discharge desk should know"></textarea></label>
+      <label>Recorded By
+        <input id="s-staff" type="text" placeholder="Your name"></label>
+    </div>
+    <p class="form-err" id="s-ferr" hidden></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="s-save" type="button">Start Discharge Process</button>
+      <button class="btn-ghost" id="s-clear" type="button">Clear</button>
+    </div>
+  </section>
+
+  <!-- success panel -->
+  <section class="card" id="s-done" hidden>
+    <h2>Discharge process opened</h2>
+    <p id="s-done-line" class="sel-panel"></p>
+    <p class="mini-note">The process is now on the Discharge List. Authorization, the checklist and the final confirmation happen on the details page — nothing has been discharged yet.</p>
+    <div class="form-actions">
+      <a class="btn-primary" id="s-godetail" href="#">Open the discharge details</a>
+      <button class="btn-ghost" id="s-again" type="button">Start another discharge</button>
+    </div>
+  </section>
+</main>
+</body>
+</html>

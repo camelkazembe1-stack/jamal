@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imaging Workbench — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/radiology/rad.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/radiology/370">&larr; Radiology</a>
+  <h1>Imaging Workbench</h1>
+  <p class="sub">One request at a time: perform the procedure, write the findings, and let an authorized person verify and finalize the report. An urgent finding must be acknowledged by name, and every correction is kept in the report's history.</p>
+
+  <div class="find-row card" style="padding:12px 16px">
+    <input id="w-q" type="text" placeholder="Request number (IMG-…), patient ID or name">
+    <button class="find-btn" id="w-open" type="button">Open</button>
+    <span class="mini-note" id="w-none"></span>
+  </div>
+
+  <section class="card" id="w-card" hidden>
+    <h2 id="w-title">Request</h2>
+
+    <div class="sec-h">Request</div>
+    <div id="w-info"></div>
+
+    <div class="sec-h">Procedures &amp; reports</div>
+    <p class="mini-note">Record the staff member and the room for each procedure. A procedure that cannot be performed is recorded as such, with the reason — never silently dropped. The findings become a report only when an authorized person verifies it.</p>
+    <div id="w-procs"></div>
+
+    <div class="sec-h">Urgent findings</div>
+    <div id="w-urgent"></div>
+    <div class="form-grid" id="w-uform" hidden>
+      <label>Urgent finding (what was seen)
+        <input id="w-u-note" type="text" placeholder="e.g. suspicious shadow — needs review today"></label>
+      <label>Notified to (clinician / department)
+        <input id="w-u-to" type="text" placeholder="e.g. Dr. Hassan · Doctor Consultation"></label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-danger" id="w-uflag" type="button" hidden>Flag urgent finding &amp; record notification</button>
+      <button class="btn-ghost" id="w-uack" type="button" hidden>Record acknowledgement</button>
+    </div>
+
+    <div class="sec-h">Request status</div>
+    <div class="form-actions" id="w-statusbtns">
+      <button class="btn-primary" id="w-startproc" type="button" hidden>Start procedure</button>
+      <button class="btn-primary" id="w-completereq" type="button" hidden>Complete request</button>
+      <button class="btn-danger" id="w-cancelreq" type="button" hidden>Cancel request</button>
+    </div>
+    <p class="mini-note" id="w-statusnote"></p>
+
+    <div class="sec-h">Record trail</div>
+    <div id="w-rec"></div>
+    <ul class="trail" id="w-trail"></ul>
+
+    <p class="form-err" id="w-ferr" hidden></p>
+    <div class="form-actions" style="margin-top:6px">
+      <label class="mini-note">Staff name for actions
+        <input id="w-staff" type="text" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:14px;margin-left:8px"></label>
+    </div>
+  </section>
+</main>
+</body>
+</html>

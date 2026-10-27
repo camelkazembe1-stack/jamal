@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discharge List — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-discharge/dis.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/patient-discharge/350">&larr; Patient Discharge</a>
+  <h1>Discharge List</h1>
+  <p class="sub">The discharge register — current processes, completed discharges and cancelled or deferred requests, kept separately so a finished stay is never mistaken for one still in progress.</p>
+
+  <div class="tabs" id="l-tabs">
+    <button class="tab on" data-tab="active" type="button">Active processes</button>
+    <button class="tab" data-tab="completed" type="button">Completed</button>
+    <button class="tab" data-tab="closed" type="button">Cancelled &amp; deferred</button>
+    <button class="tab" data-tab="all" type="button">All</button>
+  </div>
+
+  <div class="card">
+    <div class="find-row">
+      <input id="l-q" type="text" placeholder="Search: discharge no (DIS-…), patient ID / name, admission no (ADM-…)">
+      <button class="find-btn" id="l-find" type="button">Search</button>
+      <select id="l-status" style="border:1px solid #cbd5e1;border-radius:9px;padding:9px 12px;font-size:13.5px">
+        <option value="">All statuses</option>
+        <option>Pending Authorization</option>
+        <option>Approved</option>
+        <option>In Progress</option>
+        <option>Awaiting Medication</option>
+        <option>Awaiting Instructions</option>
+        <option>Ready for Departure</option>
+        <option>Discharged</option>
+        <option>Deferred</option>
+        <option>Cancelled</option>
+      </select>
+    </div>
+    <p class="mini-note" id="l-count" style="margin-top:8px"></p>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="l-table" hidden>
+        <thead>
+          <tr>
+            <th>Discharge No</th><th>Patient</th><th>Admission</th>
+            <th>Ward · Bed</th><th>Started</th><th>Status</th><th>Decision</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="l-body"></tbody>
+      </table>
+    </div>
+    <p class="mini-note" id="l-empty" hidden>No discharge records in this view yet.</p>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imaging Requests — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/radiology/rad.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/radiology/370">&larr; Radiology</a>
+  <h1>Imaging Requests &amp; Appointments</h1>
+  <p class="sub">The imaging register: open, scheduled, completed and cancelled requests, with the appointment scheduled, rescheduled or missed &mdash; every change carrying its reason.</p>
+
+  <div class="tabs" id="l-tabs">
+    <button class="tab on" data-tab="open" type="button">Open requests</button>
+    <button class="tab" data-tab="scheduled" type="button">Scheduled</button>
+    <button class="tab" data-tab="completed" type="button">Completed</button>
+    <button class="tab" data-tab="cancelled" type="button">Cancelled</button>
+    <button class="tab" data-tab="all" type="button">All</button>
+  </div>
+
+  <div class="card">
+    <div class="find-row">
+      <input id="l-q" type="text" placeholder="Search: request no (IMG-…), patient ID / name, clinician">
+      <button class="find-btn" id="l-find" type="button">Search</button>
+      <select id="l-status" style="border:1px solid #cbd5e1;border-radius:9px;padding:9px 12px;font-size:13.5px">
+        <option value="">All statuses</option>
+        <option>Requested</option>
+        <option>Scheduled</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+        <option>Cancelled</option>
+      </select>
+    </div>
+    <p class="mini-note" id="l-count" style="margin-top:8px"></p>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="l-table" hidden>
+        <thead>
+          <tr>
+            <th>Request No</th><th>Patient</th><th>Department · Clinician</th>
+            <th>Procedures</th><th>Priority</th><th>Appointment</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="l-body"></tbody>
+      </table>
+    </div>
+    <p class="mini-note" id="l-empty" hidden>No imaging requests in this view yet.</p>
+  </div>
+
+  <!-- the appointment editor -->
+  <section class="card" id="a-card" hidden>
+    <h2 id="a-title">Appointment</h2>
+    <div class="form-grid">
+      <label>Appointment date
+        <input id="a-date" type="date"></label>
+      <label>Appointment time
+        <input id="a-time" type="time"></label>
+      <label>Imaging room / equipment
+        <input id="a-room" type="text" placeholder="e.g. X-ray Room 01"></label>
+      <label class="span-3">Reason for scheduling / rescheduling / cancellation
+        <input id="a-reason" type="text" placeholder="e.g. patient asked for a later time"></label>
+    </div>
+    <p class="form-err" id="a-ferr" hidden></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="a-save" type="button">Save appointment</button>
+      <button class="btn-warn" id="a-missed" type="button">Mark as missed</button>
+      <button class="btn-danger" id="a-cancel" type="button">Cancel appointment</button>
+      <button class="btn-ghost" id="a-close" type="button">Close</button>
+    </div>
+    <p class="mini-note" id="a-now"></p>
+  </section>
+</main>
+</body>
+</html>
