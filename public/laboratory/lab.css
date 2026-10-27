@@ -1,0 +1,206 @@
+/* JAMALI — laboratory · shared stylesheet for pages 360 to 363
+   Base design system lives in /records/records.css (imported below).
+   Family accent: emerald, the Health wing colour. Carries the pieces every
+   laboratory page needs: boot line, error banner, status badges, candidate
+   lists, the test table, result inputs and the verification trail. */
+@import url("/records/records.css");
+
+/* the hidden attribute always wins, even over display rules below */
+[hidden] { display: none !important; }
+
+/* page accent — Health */
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #059669; }
+
+/* the boot status line and the red load-error banner (task 46d language) */
+.p-boot { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: #64748b; }
+.p-err { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca;
+  background: #fef2f2; color: #b91c1c; border-radius: 10px; font-size: 13px;
+  font-weight: 700; }
+.p-err .p-err-hint { display: block; margin-top: 4px; font-weight: 600; color: #7f1d1d; }
+
+.mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
+
+/* ---------- status badges (the laboratory language) ---------- */
+.st { display: inline-block; border-radius: 999px; padding: 3px 10px;
+  font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+.st-requested  { background: #fef3c7; color: #92400e; }
+.st-collected  { background: #e0f2fe; color: #075985; }
+.st-testing    { background: #ede9fe; color: #5b21b6; }
+.st-completed  { background: #d1fae5; color: #047857; }
+.st-cancelled  { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; }
+.st-await      { background: #fef3c7; color: #92400e; }
+.st-received   { background: #e0f2fe; color: #075985; }
+.st-rejected   { background: #fee2e2; color: #b91c1c; }
+.st-recollect  { background: #ffedd5; color: #c2410c; }
+.st-verified   { background: #d1fae5; color: #047857; }
+.st-unverified { background: #ffedd5; color: #c2410c; }
+.st-abnormal   { background: #fee2e2; color: #b91c1c; }
+.st-critical   { background: #fee2e2; color: #b91c1c; }
+.st-none       { background: #f1f5f9; color: #94a3b8; }
+
+/* ---------- hub tiles (page 360) — the 321 square-tile language ---------- */
+.mod-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px; margin: 0 0 16px; }
+a.mod { aspect-ratio: 1 / 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; text-decoration: none;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  padding: 10px 8px; color: #0f172a; font-weight: 700; font-size: 13.5px;
+  text-align: center; box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+  transition: transform .15s, border-color .15s, background .15s, color .15s; }
+a.mod:hover { transform: translateY(-3px); border-color: #059669;
+  background: #ecfdf5; color: #047857; }
+a.mod:active { transform: translateY(0); }
+.mod-ico { font-size: 32px; line-height: 1; }
+.mod-label { line-height: 1.25; padding: 0 6px; }
+.mod-sub { display: block; color: #94a3b8; font-size: 10.5px; font-weight: 700;
+  margin-top: 3px; }
+a.mod:hover .mod-sub { color: #059669; }
+@media (max-width: 560px) {
+  .mod-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  a.mod { gap: 6px; font-size: 12px; }
+  .mod-ico { font-size: 24px; }
+  .mod-sub { font-size: 9.5px; margin-top: 2px; }
+}
+
+/* ---------- dashboard counters (page 360) ---------- */
+.dash-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px; margin: 0 0 16px; }
+.dash { border: 1px solid #e2e8f0; background: #fff; border-radius: 12px;
+  padding: 12px 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .05); }
+.dash b { display: block; font-size: 26px; line-height: 1.15; }
+.dash span { font-size: 11.5px; color: #64748b; font-weight: 700; }
+.dash.warn b { color: #b45309; } .dash.good b { color: #047857; }
+.dash.info b { color: #075985; } .dash.mute b { color: #64748b; }
+.dash.bad b { color: #b91c1c; }
+@media (max-width: 900px) { .dash-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ---------- queue panel (page 360) — the task-53 card ---------- */
+#qa-card .qa-counts{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 14px}
+.qa-count{display:flex;flex-direction:column;min-width:130px;padding:10px 14px;border:1px solid #e3e0d6;border-radius:10px;background:#faf9f4}
+.qa-num{font-size:26px;font-weight:700;line-height:1.1}
+.qa-count .qa-k{font-size:12px;color:#6b675c;margin-top:2px}
+.qa-panels{display:flex;gap:14px;flex-wrap:wrap}
+.qa-panel{flex:1 1 240px;border:1px solid #e3e0d6;border-radius:10px;padding:12px 14px;background:#fff}
+.qa-panel .qa-k{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#6b675c}
+.qa-id{font-size:22px;font-weight:700;letter-spacing:.04em;margin:4px 0 2px}
+.qa-panel.qa-none{opacity:.8}
+.qa-sub{font-size:13px;color:#4b473c;margin:2px 0}
+.qa-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.qa-actions{margin-top:12px}
+.qa-settings{margin-top:10px;border:1px dashed #cbd5e1;border-radius:10px;padding:12px 14px;background:#faf9f4}
+.qa-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px;margin-top:8px}
+.qa-form label{font-size:12px;font-weight:700;color:#475569;display:flex;flex-direction:column;gap:5px}
+.qa-form input,.qa-form select{border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit}
+@media (max-width: 700px) { .qa-form { grid-template-columns: 1fr; } }
+
+/* ---------- find-a-patient row ---------- */
+.find-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.find-row input { flex: 1 1 260px; border: 1px solid #cbd5e1; border-radius: 9px;
+  padding: 9px 12px; font-size: 14px; }
+.find-btn { border: 1px solid #059669; background: #ecfdf5; color: #047857;
+  font-weight: 800; font-size: 13.5px; padding: 9px 18px; border-radius: 9px;
+  cursor: pointer; font-family: inherit; }
+.find-btn:hover { background: #d1fae5; }
+.cand-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.cand { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  border: 1px solid #e2e8f0; background: #fff; border-radius: 10px;
+  padding: 8px 12px; cursor: pointer; font-size: 13.5px; font-family: inherit; }
+.cand:hover { border-color: #059669; background: #ecfdf5; }
+.cand b { font-weight: 800; }
+.cand .c-id { font-weight: 800; letter-spacing: .06em; color: #065f46;
+  font-variant-numeric: tabular-nums; }
+.sel-panel { margin-top: 12px; border: 1px solid #a7f3d0; background: #ecfdf5;
+  border-radius: 10px; padding: 10px 14px; font-size: 13.5px; }
+.sel-panel b { font-weight: 800; }
+
+/* ---------- form grid ---------- */
+.add-card { padding: 16px 20px; margin-bottom: 18px; }
+.form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 14px; margin: 14px 0 2px; }
+.form-grid label { font-size: 12px; font-weight: 700; color: #475569;
+  display: flex; flex-direction: column; gap: 5px; }
+.form-grid input, .form-grid select, .form-grid textarea { border: 1px solid #cbd5e1;
+  border-radius: 8px; padding: 8px 10px; font-size: 14px; width: 100%;
+  background: #fff; font-family: inherit; }
+.form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus {
+  outline: 2px solid #a7f3d0; border-color: #059669; }
+.form-grid .span-2 { grid-column: span 2; }
+.form-grid .span-3 { grid-column: span 3; }
+@media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; }
+  .form-grid .span-2, .form-grid .span-3 { grid-column: span 1; } }
+.form-err { color: #b91c1c; font-size: 13px; font-weight: 600; margin-top: 10px; }
+.form-ok { color: #047857; font-size: 13px; font-weight: 700; margin-top: 10px; }
+.form-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.btn-primary { background: #059669; color: #fff; border: 0; font-weight: 800;
+  padding: 9px 18px; border-radius: 9px; cursor: pointer; font-size: 14px;
+  font-family: inherit; }
+.btn-primary:disabled { opacity: .55; cursor: wait; }
+.btn-ghost { background: #fff; color: #475569; border: 1px solid #cbd5e1;
+  font-weight: 700; padding: 9px 16px; border-radius: 9px; cursor: pointer;
+  font-size: 14px; font-family: inherit; }
+.btn-warn { background: #fff; color: #92400e; border: 1px solid #fde68a;
+  font-weight: 800; padding: 9px 16px; border-radius: 9px; cursor: pointer;
+  font-size: 14px; font-family: inherit; }
+.btn-warn:hover { background: #fffbeb; }
+.btn-danger { background: #fff; color: #b91c1c; border: 1px solid #fecaca;
+  font-weight: 800; padding: 9px 16px; border-radius: 9px; cursor: pointer;
+  font-size: 14px; font-family: inherit; }
+.btn-danger:hover { background: #fef2f2; }
+
+/* ---------- tabs (page 362) ---------- */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.tab { border: 1px solid #cbd5e1; background: #fff; border-radius: 999px;
+  padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #475569;
+  cursor: pointer; font-family: inherit; }
+.tab:hover { border-color: #059669; color: #047857; }
+.tab.on { background: #059669; border-color: #059669; color: #fff; }
+
+/* ---------- workbench (page 363) ---------- */
+.sec-h { font-size: 13px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: .08em; color: #475569; margin: 18px 0 8px; }
+.kv { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+.kv:last-child { border-bottom: 0; }
+.kv .k { color: #475569; font-weight: 600; }
+.kv .v { font-weight: 700; text-align: right; }
+.trail { list-style: none; margin: 6px 0 0; padding: 0; }
+.trail li { padding: 7px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.trail li:last-child { border-bottom: 0; }
+.trail .t-who { color: #64748b; font-weight: 600; }
+.test-row { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;
+  margin: 0 0 12px; background: #fff; }
+.test-row .t-head { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; }
+.test-row .t-name { font-weight: 800; font-size: 14.5px; }
+.t-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px; margin: 10px 0 2px; }
+.t-grid label { font-size: 11.5px; font-weight: 700; color: #475569;
+  display: flex; flex-direction: column; gap: 4px; }
+.t-grid input, .t-grid select { border: 1px solid #cbd5e1; border-radius: 8px;
+  padding: 7px 9px; font-size: 13.5px; font-family: inherit; width: 100%; }
+@media (max-width: 800px) { .t-grid { grid-template-columns: repeat(2, 1fr); } }
+.pick-row { display: flex; align-items: center; gap: 8px; padding: 6px 0;
+  font-size: 13.5px; font-weight: 700; flex-wrap: wrap; }
+.pick-row label { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+
+/* ---------- small buttons ---------- */
+.ghost-btn { border: 1px solid #cbd5e1; background: #fff; color: #334155;
+  font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 7px;
+  cursor: pointer; white-space: nowrap; font-family: inherit; }
+.ghost-btn:hover { border-color: #059669; color: #047857; }
+.ghost-btn.danger { color: #b91c1c; }
+.ghost-btn.danger:hover { border-color: #b91c1c; background: #fef2f2; }
+.ghost-btn:disabled { opacity: .55; cursor: wait; }
+.nowrap { white-space: nowrap; }
+td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* print — clean paper output */
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .find-row,
+  .form-actions { display: none !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+}

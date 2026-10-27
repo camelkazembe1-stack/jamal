@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratory — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/laboratory/lab.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Laboratory Management</h1>
+  <p class="sub">Laboratory test requests, specimen collection, testing, results and verification &mdash; every request uses the patient's existing Patient ID, and results reach the requesting clinician under that same identity.</p>
+
+  <div class="dash-grid" id="dash">
+    <div class="dash warn"><b id="x-open">0</b><span>Open requests</span></div>
+    <div class="dash info"><b id="x-testing">0</b><span>Testing in progress</span></div>
+    <div class="dash warn"><b id="x-unverified">0</b><span>Results awaiting verification</span></div>
+    <div class="dash bad"><b id="x-critical">0</b><span>Critical results not yet acknowledged</span></div>
+    <div class="dash good"><b id="x-today">0</b><span>Completed today</span></div>
+  </div>
+
+  <!-- the laboratory queue: waiting / completed, current & next patient, speaker -->
+  <div class="card" id="qa-card">
+    <h2>Laboratory queue</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Patients waiting</span></div>
+      <div class="qa-count"><span class="qa-num" id="qa-done">0</span><span class="qa-k">Completed today</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel" id="qa-current-box">
+        <div class="qa-k">Current patient</div>
+        <div class="qa-id" id="qa-current-id">&mdash;</div>
+        <div class="qa-sub" id="qa-current-sub"></div>
+      </div>
+      <div class="qa-panel">
+        <div class="qa-k">Next patient</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub"></div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce patient</button>
+          <a class="ghost-btn" id="qa-open" hidden>Open request</a>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for the Laboratory (every other stage keeps its own). The speaker reads exactly what is saved here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Laboratory"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Lab Tech AMINA"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Laboratory Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Collection Room 02"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="mod-grid">
+    <a class="mod" href="/laboratory/361">
+      <span class="mod-ico">🧪</span>
+      <span class="mod-label">New Lab Request<span class="mod-sub">request tests for a patient</span></span>
+    </a>
+    <a class="mod" href="/laboratory/362">
+      <span class="mod-ico">🗒️</span>
+      <span class="mod-label">Lab Request List<span class="mod-sub">register &amp; search</span></span>
+    </a>
+    <a class="mod" href="/laboratory/363">
+      <span class="mod-ico">🔬</span>
+      <span class="mod-label">Lab Workbench<span class="mod-sub">specimen · testing · results</span></span>
+    </a>
+    <a class="mod" href="/patient-module/328">
+      <span class="mod-ico">📋</span>
+      <span class="mod-label">Patient List<span class="mod-sub">the patients being served</span></span>
+    </a>
+  </div>
+
+  <div class="card">
+    <h2>How the laboratory half works</h2>
+    <p class="mini-note">
+      A request is opened for an existing patient (never a second patient record). The specimen is
+      collected &mdash; or rejected, with a reason &mdash; the tests run, and each result is entered with its
+      unit and reference range. An authorized person verifies every result before it counts as released.
+      Critical results must be acknowledged: who was notified, by whom, and when. Nothing here is
+      hard-coded &mdash; every number on this page is calculated from the stored records.
+    </p>
+  </div>
+</main>
+</body>
+</html>

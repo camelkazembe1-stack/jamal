@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiology / Imaging — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/radiology/rad.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Radiology / Imaging Management</h1>
+  <p class="sub">Imaging requests, appointments, procedures, findings and verified reports &mdash; every request uses the patient's existing Patient ID, and a doctor can request an X-ray during consultation and read the finalized report here under that same identity.</p>
+
+  <div class="dash-grid" id="dash">
+    <div class="dash warn"><b id="x-open">0</b><span>Open requests</span></div>
+    <div class="dash info"><b id="x-sched">0</b><span>Scheduled appointments</span></div>
+    <div class="dash warn"><b id="x-unverified">0</b><span>Reports awaiting verification</span></div>
+    <div class="dash bad"><b id="x-urgent">0</b><span>Urgent findings not acknowledged</span></div>
+    <div class="dash good"><b id="x-today">0</b><span>Completed today</span></div>
+  </div>
+
+  <!-- the imaging queue: waiting / completed, current & next patient, speaker -->
+  <div class="card" id="qa-card">
+    <h2>Imaging queue</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Patients waiting</span></div>
+      <div class="qa-count"><span class="qa-num" id="qa-done">0</span><span class="qa-k">Completed today</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel" id="qa-current-box">
+        <div class="qa-k">Current patient</div>
+        <div class="qa-id" id="qa-current-id">&mdash;</div>
+        <div class="qa-sub" id="qa-current-sub"></div>
+      </div>
+      <div class="qa-panel">
+        <div class="qa-k">Next patient</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub"></div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce patient</button>
+          <a class="ghost-btn" id="qa-open" hidden>Open request</a>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for Radiology (every other stage keeps its own). The speaker reads exactly what is saved here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Radiology"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Radiographer YUSUF"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Radiology Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Radiology Room 03"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="mod-grid">
+    <a class="mod" href="/radiology/371">
+      <span class="mod-ico">🩻</span>
+      <span class="mod-label">New Imaging Request<span class="mod-sub">request a procedure</span></span>
+    </a>
+    <a class="mod" href="/radiology/372">
+      <span class="mod-ico">🗒️</span>
+      <span class="mod-label">Imaging Requests<span class="mod-sub">register · appointments</span></span>
+    </a>
+    <a class="mod" href="/radiology/373">
+      <span class="mod-ico">🖥️</span>
+      <span class="mod-label">Imaging Workbench<span class="mod-sub">procedure · report · verify</span></span>
+    </a>
+    <a class="mod" href="/patient-module/328">
+      <span class="mod-ico">📋</span>
+      <span class="mod-label">Patient List<span class="mod-sub">the patients being served</span></span>
+    </a>
+  </div>
+
+  <div class="card">
+    <h2>How the imaging half works</h2>
+    <p class="mini-note">
+      A request is opened for an existing patient, with the requesting department and clinician recorded.
+      Urgent requests jump ahead of routine ones in the queue. The appointment is scheduled (or rescheduled
+      or missed, each with a reason), the procedure is performed, and the findings become a report that an
+      authorized person must verify and finalize. Urgent findings must be acknowledged by name. Corrections
+      are kept in the report's history — nothing is silently overwritten.
+    </p>
+  </div>
+</main>
+</body>
+</html>

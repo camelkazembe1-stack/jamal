@@ -11,7 +11,7 @@
 // same patient are listed below and never overwritten.
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/firebase.js";
 
-window.__p52 = { page: "343", build: "52d1", auth: false, listeners: 0, docs: -1, errs: [] };
+window.__p52 = { page: "343", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
@@ -228,6 +228,7 @@ function renderAll() {
   $("#d-confirm").hidden = a.status !== "Pending";
   $("#d-canceladm").hidden = a.status !== "Pending";
   $("#d-discharge").hidden = !(a.status === "Admitted" || a.status === "Transferred");
+  $("#d-discharge").textContent = "Discharge \u00b7 open module";
   $("#d-staff").value = $("#d-staff").value || rememberedStaff();
   $("#d-plink").href = "/patient-module/328";
 
@@ -306,50 +307,18 @@ $("#d-canceladm").addEventListener("click", async () => {
   }
   btn.disabled = false;
 });
-$("#d-discharge").addEventListener("click", async () => {
+$("#d-discharge").addEventListener("click", () => {
+  /* task 54: discharge is its own module now. The button opens it — the
+     discharge decision, checklist and the final confirmation (which releases
+     the bed to cleaning) live there, so one process owns every discharge. */
   if (!current) return;
-  ferr("");
   if (!(current.status === "Admitted" || current.status === "Transferred"))
     return ferr("Only an Admitted or Transferred admission can be discharged.");
-  const staff = staffForAction(); if (!staff) return;
-  if (!confirm("Record the discharge of " + (current.patientName || "this patient") +
-      "? The active bed placement is released and the bed returns to Available.")) return;
   const btn = $("#d-discharge");
-  if (btn.disabled) return;
-  btn.disabled = true;
-  try {
-    const place = activePlacementOf(current.patientId);
-    const batch = writeBatch(db);
-    batch.update(doc(db, "healthAdmissions", current.__id), {
-      status: "Discharged",
-      updatedAt: nowISO(),
-      statusHistory: arrayUnion({ status: "Discharged", at: nowISO(), by: staff, note: "Discharge recorded" })
-    });
-    if (place) {
-      batch.update(doc(db, "healthBedAssignments", place.__id), {
-        status: "Released",
-        releasedAt: nowISO(),
-        releasedBy: staff,
-        releaseReason: "Discharge"
-      });
-      const b = bedsAll().find((x) => x.__id === String(place.bedId) ||
-        (String(x.wardId) === String(place.wardId) && x.bedNumber === place.bedNumber));
-      if (b) {
-        batch.update(doc(db, "healthBeds", b.__id), {
-          status: "Available",
-          currentPatientId: "",
-          currentPatientName: "",
-          currentAssignmentId: "",
-          updatedAt: nowISO()
-        });
-      }
-    }
-    await batch.commit();
-  } catch (e) {
-    ferr("Could not record the discharge: " + ((e && (e.code || e.message)) || e));
-  }
-  btn.disabled = false;
+  btn.textContent = "Opening the Discharge Module\u2026";
+  location.href = "/patient-discharge/351?patient=" + encodeURIComponent(current.patientId || "");
 });
+
 function bedsAll() { return window.__bedsCache || []; }
 
 /* ---------- edit permitted details ---------- */

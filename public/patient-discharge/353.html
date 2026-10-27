@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discharge Details — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/patient-discharge/dis.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/patient-discharge/350">&larr; Patient Discharge</a>
+  <h1>Discharge Details</h1>
+  <p class="sub">One discharge process, drawn entirely from the live records: authorization, checklist, medication, instructions and the final confirmation. Authorization and completion are two different things &mdash; the stay ends only when the discharge is confirmed.</p>
+
+  <div class="find-row card" style="padding:12px 16px">
+    <input id="x-q" type="text" placeholder="Discharge number (DIS-…), patient ID or name">
+    <button class="find-btn" id="x-open" type="button">Open</button>
+    <span class="mini-note" id="x-none"></span>
+  </div>
+
+  <section class="card" id="x-card" hidden>
+    <h2 id="x-title">Discharge</h2>
+
+    <div class="sec-h">Patient &amp; admission</div>
+    <div id="x-pat"></div>
+
+    <div class="sec-h">Location at the start of the discharge</div>
+    <div id="x-loc"></div>
+
+    <div class="sec-h">Authorization</div>
+    <div id="x-auth"></div>
+    <div class="form-actions" id="x-authbtns">
+      <button class="btn-primary" id="x-approve" type="button" hidden>Approve for Discharge</button>
+      <button class="btn-warn" id="x-defer" type="button" hidden>Defer</button>
+      <button class="btn-danger" id="x-notapprove" type="button" hidden>Not Approved</button>
+      <button class="btn-ghost" id="x-reopen" type="button" hidden>Reopen deferred process</button>
+    </div>
+    <p class="mini-note">Every decision records who made it and when. The clinical team authorizes the discharge — the software only writes the decision down.</p>
+
+    <div class="sec-h">Discharge checklist</div>
+    <p class="mini-note">Click a state to cycle it: Pending &rarr; Completed &rarr; Not Applicable. Items left Pending keep the process open; the last pending medication or instruction step shows as Awaiting Medication / Awaiting Instructions.</p>
+    <div id="x-checklist"></div>
+
+    <div class="sec-h">Medication (from Pharmacy — read only)</div>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="x-rxtable" hidden>
+        <thead><tr><th>Medicine</th><th>Dose</th><th>Frequency</th><th>Duration</th><th>Status</th><th>Dispensed</th></tr></thead>
+        <tbody id="x-rxbody"></tbody>
+      </table>
+    </div>
+    <p class="mini-note" id="x-rxempty" hidden>No prescriptions on record for this patient. A discharge never marks medication as dispensed — only Pharmacy does that.</p>
+    <div class="form-grid" style="margin-top:10px">
+      <label class="span-3">Medication note
+        <textarea id="x-mednote" rows="2" placeholder="e.g. discharge medication collected at Pharmacy Counter 01"></textarea></label>
+    </div>
+    <div class="form-actions"><button class="btn-ghost" id="x-medsave" type="button">Save medication note</button></div>
+
+    <div class="sec-h">Instructions &amp; follow-up</div>
+    <div class="form-grid">
+      <label class="span-3">General instructions given
+        <textarea id="x-i-general" rows="2"></textarea></label>
+      <label class="span-3">Medication instructions
+        <textarea id="x-i-medication" rows="2"></textarea></label>
+      <label>Follow-up clinic / department
+        <input id="x-i-clinic" type="text" placeholder="e.g. Outpatient Clinic"></label>
+      <label>Follow-up date &amp; time
+        <input id="x-i-when" type="text" placeholder="e.g. 2026-11-05 09:30"></label>
+      <label>Notes
+        <input id="x-i-notes" type="text"></label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-ghost" id="x-isave" type="button">Save instructions</button>
+      <button class="btn-warn" id="x-iprovided" type="button" hidden>Mark instructions as provided to patient / caregiver</button>
+    </div>
+    <p class="mini-note" id="x-iprovided-line"></p>
+
+    <div class="sec-h">Status trail</div>
+    <ul class="trail" id="x-trail"></ul>
+
+    <div class="sec-h">Record trail</div>
+    <div id="x-rec"></div>
+
+    <div class="sec-h">Final confirmation</div>
+    <p class="mini-note" id="x-confirm-note"></p>
+    <div class="form-actions">
+      <button class="btn-primary" id="x-confirm" type="button" hidden>Confirm discharge &amp; release the bed to cleaning</button>
+      <button class="btn-danger" id="x-cancelproc" type="button" hidden>Cancel this discharge process</button>
+    </div>
+    <p class="form-err" id="x-ferr" hidden></p>
+    <div class="form-actions" style="margin-top:6px">
+      <label class="mini-note">Staff name for actions
+        <input id="x-staff" type="text" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:14px;margin-left:8px"></label>
+    </div>
+  </section>
+</main>
+</body>
+</html>

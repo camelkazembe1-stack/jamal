@@ -1,10 +1,10 @@
 rules_version = '2';
 
 // =====================================================================
-// JAMALI — firestore.rules — the guard dog (Task 52, the full refresh)
+// JAMALI — firestore.rules — the guard dog (Task 54, the full refresh)
 // Every collection the project uses gives a signed in user create, read,
 // update and delete — the standing order of 25 October 2026, reprinted
-// here in full with the six Ward Management and Patient Admission
+// here in full with the Patient Discharge, Laboratory and Radiology
 // collections added. Anything not matched below is denied by default.
 //
 // The project's live collections, named by scanning every page's code:
@@ -22,6 +22,9 @@ rules_version = '2';
 //   healthBedTransfers          — Ward & Bed Transfers (335)
 //   healthBedMaintenance        — Cleaning & Maintenance (336)
 //   healthAdmissions            — Patient Admission (341-343)
+//   healthDischarges            — Patient Discharge (350-353)
+//   healthLabRequests           — Laboratory Management (360-363)
+//   healthImagingRequests       — Radiology / Imaging (370-373)
 // =====================================================================
 
 service cloud.firestore {
@@ -84,6 +87,20 @@ service cloud.firestore {
 
     // ---- Health: admissions (Task 52) ----
     match /healthAdmissions/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+    // ---- Health: discharge (Task 54) ----
+    match /healthDischarges/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    // ---- Health: laboratory (Task 54) ----
+    match /healthLabRequests/{docId} {
+      allow create, read, update, delete: if request.auth != null;
+    }
+
+    // ---- Health: radiology / imaging (Task 54) ----
+    match /healthImagingRequests/{docId} {
       allow create, read, update, delete: if request.auth != null;
     }
 

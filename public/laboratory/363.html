@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Workbench — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/laboratory/lab.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/laboratory/360">&larr; Laboratory</a>
+  <h1>Lab Workbench</h1>
+  <p class="sub">One request at a time: collect or reject the specimen, run the tests, enter the results, and let an authorized person verify them. A result only counts as released once it is verified &mdash; and a critical result must be acknowledged by name.</p>
+
+  <div class="find-row card" style="padding:12px 16px">
+    <input id="w-q" type="text" placeholder="Request number (LAB-…), patient ID or name">
+    <button class="find-btn" id="w-open" type="button">Open</button>
+    <span class="mini-note" id="w-none"></span>
+  </div>
+
+  <section class="card" id="w-card" hidden>
+    <h2 id="w-title">Request</h2>
+
+    <div class="sec-h">Request</div>
+    <div id="w-info"></div>
+
+    <div class="sec-h">Specimen</div>
+    <p class="mini-note">The specimen is tracked here: awaiting collection, collected, received, rejected (with a reason) or needing recollection. A rejected specimen blocks testing until a new one is collected.</p>
+    <div class="form-grid">
+      <label>Specimen type
+        <select id="w-sp-type">
+          <option value="">— select —</option>
+          <option>Blood</option><option>Urine</option><option>Stool</option>
+          <option>Swab</option><option>Sputum</option><option>Other</option>
+        </select></label>
+      <label>Specimen status
+        <select id="w-sp-status">
+          <option>Awaiting Collection</option>
+          <option>Collected</option>
+          <option>Received by Laboratory</option>
+          <option>Rejected</option>
+          <option>Recollection Required</option>
+        </select></label>
+      <label>Note / rejection reason
+        <input id="w-sp-note" type="text" placeholder="e.g. haemolysed sample — recollect"></label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" id="w-spsave" type="button">Save specimen record</button>
+      <button class="btn-warn" id="w-spcollect" type="button" hidden>Mark collected now</button>
+    </div>
+
+    <div class="sec-h">Tests &amp; results</div>
+    <p class="mini-note">Enter each result with its unit and reference range. Tick Abnormal when it falls outside the range, and Critical when a clinician must be told at once. Verification is a separate step — an unverified result is never treated as released.</p>
+    <div id="w-tests"></div>
+
+    <div class="sec-h">Critical result</div>
+    <div id="w-crit"></div>
+    <div class="form-grid" id="w-critform" hidden>
+      <label>Notified to (clinician / department)
+        <input id="w-crit-to" type="text" placeholder="e.g. Dr. Hassan · Doctor Consultation"></label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-danger" id="w-critflag" type="button" hidden>Flag a critical result &amp; record notification</button>
+      <button class="btn-ghost" id="w-critack" type="button" hidden>Record acknowledgement</button>
+    </div>
+
+    <div class="sec-h">Request status</div>
+    <div class="form-actions" id="w-statusbtns">
+      <button class="btn-primary" id="w-starttesting" type="button" hidden>Start testing</button>
+      <button class="btn-primary" id="w-completereq" type="button" hidden>Complete request</button>
+      <button class="btn-danger" id="w-cancelreq" type="button" hidden>Cancel request</button>
+    </div>
+    <p class="mini-note" id="w-statusnote"></p>
+
+    <div class="sec-h">Record trail</div>
+    <div id="w-rec"></div>
+    <ul class="trail" id="w-trail"></ul>
+
+    <p class="form-err" id="w-ferr" hidden></p>
+    <div class="form-actions" style="margin-top:6px">
+      <label class="mini-note">Staff name for actions
+        <input id="w-staff" type="text" style="border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:14px;margin-left:8px"></label>
+    </div>
+  </section>
+</main>
+</body>
+</html>

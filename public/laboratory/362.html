@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Request List — JAMALI Health</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/laboratory/lab.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden></p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/laboratory/360">&larr; Laboratory</a>
+  <h1>Lab Request List</h1>
+  <p class="sub">The laboratory register — open requests, completed work and cancelled requests kept separately, searched and filtered exactly as they are stored.</p>
+
+  <div class="tabs" id="l-tabs">
+    <button class="tab on" data-tab="open" type="button">Open requests</button>
+    <button class="tab" data-tab="completed" type="button">Completed</button>
+    <button class="tab" data-tab="cancelled" type="button">Cancelled</button>
+    <button class="tab" data-tab="all" type="button">All</button>
+  </div>
+
+  <div class="card">
+    <div class="find-row">
+      <input id="l-q" type="text" placeholder="Search: request no (LAB-…), patient ID / name, clinician">
+      <button class="find-btn" id="l-find" type="button">Search</button>
+      <select id="l-status" style="border:1px solid #cbd5e1;border-radius:9px;padding:9px 12px;font-size:13.5px">
+        <option value="">All statuses</option>
+        <option>Requested</option>
+        <option>Specimen Collected</option>
+        <option>Testing in Progress</option>
+        <option>Completed</option>
+        <option>Cancelled</option>
+      </select>
+    </div>
+    <p class="mini-note" id="l-count" style="margin-top:8px"></p>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="l-table" hidden>
+        <thead>
+          <tr>
+            <th>Request No</th><th>Patient</th><th>Department · Clinician</th>
+            <th>Tests</th><th>Specimen</th><th>Created</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="l-body"></tbody>
+      </table>
+    </div>
+    <p class="mini-note" id="l-empty" hidden>No lab requests in this view yet.</p>
+  </div>
+</main>
+</body>
+</html>

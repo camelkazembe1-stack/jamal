@@ -165,7 +165,7 @@ function qaStart(id) { qerr(""); openPatient(id); }
    falling back to the module's own name. No hard-coded rooms or IDs. */
 const QA_MODULE = "doctor";
 const QA_DEFAULT = "Doctor Consultation";
-let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "" };
+let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 };
 try { qaCfg = Object.assign(qaCfg, JSON.parse(localStorage.getItem("jamali_qacfg_" + QA_MODULE) || "{}")); } catch (e) {}
 let qaState = { waitingCount: 0, doneCount: 0, next: null, current: null };
 
@@ -193,9 +193,18 @@ function qaText() {
 function qaSentence(id) {
   return "Patient number " + String(id) + ", please proceed to " + qaText().dest + ".";
 }
+function qaRate() {
+  /* task 54 voice fix: the saved speed wins; a calm 0.75 is the default */
+  const r = Number(qaCfg.voiceRate);
+  return (r >= 0.5 && r <= 1.1) ? r : 0.75;
+}
 function qaSpeech(id) {
-  /* the ID is spoken letter by letter so the waiting patient hears their own */
-  return "Patient number " + String(id).split("").join(" ") + ", please proceed to " + qaText().dest + ".";
+  /* spoken letter by letter with real pauses (commas), and the whole
+     sentence is repeated so a waiting patient cannot miss their number */
+  const d = String(id).split("").join(", ");
+  const dest = qaText().dest;
+  return "Patient number " + d + ". Please proceed to " + dest +
+         ". I repeat: patient number " + d + ". Please proceed to " + dest + ".";
 }
 function qaCfgLine() {
   const t = qaText();
@@ -255,7 +264,7 @@ if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
     synth.cancel();
     const u = new SpeechSynthesisUtterance(qaSpeech(id));
     u.lang = "en-GB";
-    u.rate = 0.95;
+    u.rate = qaRate();
     const vs = synth.getVoices().filter((v) => /^en/i.test(v.lang || ""));
     if (vs.length) u.voice = vs.find((v) => /GB/i.test(v.lang || "")) || vs[0];
     synth.speak(u);
@@ -282,6 +291,7 @@ if (qaSettingsBtn && qaSettingsBox) {
       const put = (id, k) => { const el = document.getElementById(id); if (el) el.value = String(qaCfg[k] || ""); };
       put("qa-dept", "department"); put("qa-staff", "staffName");
       put("qa-office", "officeNumber"); put("qa-room", "roomNumber");
+      const sp = document.getElementById("qa-speed"); if (sp) sp.value = String(qaRate());
     }
   });
 }
@@ -292,14 +302,18 @@ if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
   if (qae) qae.hidden = true;
   if (qao) qao.hidden = true;
   const val = (id) => { const el = document.getElementById(id); return el ? el.value.trim().replace(/\s+/g, " ") : ""; };
+  const spEl = document.getElementById("qa-speed");
+  const spR = spEl ? Number(spEl.value) : NaN;
   const data = {
     department: val("qa-dept"),
     staffName: val("qa-staff"),
     officeNumber: val("qa-office"),
     roomNumber: val("qa-room"),
+    voiceRate: (spR >= 0.5 && spR <= 1.1) ? spR : 0.75,
     updatedAt: new Date().toISOString()
   };
-  if (!data.department && !data.staffName && !data.officeNumber && !data.roomNumber) {
+  const sameSpeed = Math.abs(Number(qaCfg.voiceRate || 0.75) - data.voiceRate) < 0.001;
+  if (!data.department && !data.staffName && !data.officeNumber && !data.roomNumber && sameSpeed) {
     if (qae) { qae.hidden = false; qae.textContent = "Fill at least one field — or leave the settings closed to keep the module's default."; }
     return;
   }
@@ -319,7 +333,7 @@ if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
 /* live settings — a change here is heard on every device at once */
 try {
   onSnapshot(doc(db, "healthQueueConfig", QA_MODULE), (s) => {
-    qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "" },
+    qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 },
       s.exists() ? s.data() : {});
     try { localStorage.setItem("jamali_qacfg_" + QA_MODULE, JSON.stringify(qaCfg)); } catch (e) {}
     qaRenderPanel();
