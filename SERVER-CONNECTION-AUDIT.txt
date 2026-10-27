@@ -2,6 +2,8 @@
 # (regenerated on every run of jamali-task55-server-linker.sh)
 
 == 1. Modules routed through SERVER/linker.js (via the /firebase.js shim) ==
+public/account-recovery/390.html
+public/account-recovery/391.html
 public/add-transaction/3.js
 public/all-transactions/5.js
 public/business/2.js
@@ -36,6 +38,7 @@ public/radiology/373.js
 public/records/records.js
 public/reports2/reports2.js
 public/reports/reports.js
+public/system-admin/380.js
 public/treatment-procedures/327.js
 public/triage/323.js
 public/victim-registration/322.js
