@@ -18,7 +18,13 @@
      space; clicking it opens Logout and Switch Account. Both hide the
      system and return to the start page (Login / Create Account).
    - folder links whose area the session may not open (home page tiles,
-     hub links, cross-page links) are hidden as well. */
+     hub links, cross-page links) are hidden as well.
+
+   TASK 57 — the Admin button:
+   - when the administrator is logged in, a fixed "Admin" button sits at
+     the top-right corner of every page and opens the Account
+     Administration dashboard (/system-admin/380). Everyone else never
+     sees it. */
 (function () {
 
   var SESSION_KEY = "JAMALI_SYSTEM_SESSION";
@@ -139,6 +145,10 @@
     "#jamali-acct button{display:block;width:100%;text-align:left;border:0;background:none;",
     "color:#e2e8f0;font-size:13.5px;padding:10px 14px;cursor:pointer}",
     "#jamali-acct button:hover{background:#1e293b}",
+    "#jamali-admin-btn{position:fixed;top:14px;right:14px;z-index:1001;border:0;border-radius:12px;",
+    "padding:9px 18px;font-size:13.5px;font-weight:800;cursor:pointer;color:#06121f;",
+    "background:linear-gradient(135deg,#38bdf8,#0ea5e9);box-shadow:0 10px 24px rgba(0,0,0,.35)}",
+    "#jamali-admin-btn:hover{filter:brightness(1.07)}",
     "#jamali-sidebar nav{flex:1;overflow-y:auto;padding:8px 0}",
     "#jamali-sidebar a{display:flex;align-items:center;gap:12px;padding:9px 18px;",
     "color:#94a3b8;text-decoration:none;font-size:14px;border-left:3px solid transparent}",
@@ -233,6 +243,20 @@
       location.href = "/";
     });
   });
+
+  // ---- TASK 57: the Admin button — top-right corner of every page, --------
+  // ---- administrators only. Opens the Account Administration dashboard.
+  if (session && session.role === "admin") {
+    var abtn = document.createElement("button");
+    abtn.id = "jamali-admin-btn";
+    abtn.type = "button";
+    abtn.textContent = "Admin";
+    abtn.title = "Account Administration";
+    abtn.addEventListener("click", function () {
+      location.href = "/system-admin/380";
+    });
+    document.body.appendChild(abtn);
+  }
 
   // ---- v / ^ toggles: v = children closed (click to open), ^ = open (click to close)
   function sync(btn) {

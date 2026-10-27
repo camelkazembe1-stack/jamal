@@ -31,9 +31,11 @@
     <h1>Forgot <span>Phone Number</span></h1>
     <p class="sub">The last step of the recovery chain.</p>
 
-    <label for="fph-username">Username</label>
-    <input id="fph-username" type="text" autocomplete="username" placeholder="Your username">
-    <button class="wide" id="fph-btn" type="button">Submit</button>
+    <div id="fph-form">
+      <label for="fph-username">Username</label>
+      <input id="fph-username" type="text" autocomplete="username" placeholder="Your username">
+      <button class="wide" id="fph-btn" type="button">Submit</button>
+    </div>
 
     <div class="message" id="message">
       Please go to the system administrator's office.
@@ -46,6 +48,9 @@
     const carried = new URLSearchParams(location.search).get("u");
     if (carried) document.getElementById("fph-username").value = carried;
     document.getElementById("fph-btn").addEventListener("click", function () {
+      // task 57: one step at a time — the form disappears, only the
+      // administrator-office message remains.
+      document.getElementById("fph-form").style.display = "none";
       document.getElementById("message").style.display = "block";
     });
   </script>

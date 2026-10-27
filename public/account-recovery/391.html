@@ -51,7 +51,7 @@
     </section>
 
     <p class="status" id="status"></p>
-    <p class="next">Cannot remember the phone number? <a id="go-forgot-phone">Forgot Phone Number?</a></p>
+    <p class="next" id="fp-next">Cannot remember the phone number? <a id="go-forgot-phone">Forgot Phone Number?</a></p>
     <a class="back" href="/">&larr; Back to Login</a>
   </div>
 
@@ -130,6 +130,9 @@
       try {
         const passHash = await sha(p1);
         await updateDoc(doc(db, "systemCredentials", verifiedId), { passHash: passHash });
+        // task 57: one step at a time — only the saved message and Back to
+        // Login remain on screen.
+        $("fp-next").style.display = "none";
         say("Password saved. Go back and login with your username and token.", true);
         $("step-new").classList.add("hidden");
         btn.disabled = false;
