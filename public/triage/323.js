@@ -4,7 +4,7 @@
 // care — it is not a diagnosis, and it never delays emergency treatment.
 // Twelve items per assessment. Every assessment links to its registration by
 // Registration ID and stays in the history below the form.
-import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/firebase.js";
+import { requireAuth, db, collection, query, addDoc, doc, setDoc, onSnapshot, serverTimestamp } from "/firebase.js";
 /* patient chip - non-fatal since Task 47: if /health/patient-info.js cannot
    load (a missing or stale file), the page loses only the floating chip,
    never the find, the forms or the saves. */
@@ -19,8 +19,8 @@ try {
    46d): every collection listener carries an error callback and every
    failure paints itself on the page instead of dying in silence. */
 window.__p47 = Object.assign(window.__p47 || {}, {
-  page: "323", build: "47", ran: true, auth: false,
-  listeners: 0, need: 2, answered: false, errs: []
+  page: "323", build: "53", queue: true, ran: true, auth: false,
+  listeners: 0, need: 3, answered: false, errs: []
 });
 function herr(coll, e) {
   const code = String((e && (e.code || e.message)) || "unknown error");
@@ -118,6 +118,7 @@ onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
   fillRegIds();
   refreshVictimLine();
   renderHistory();
+  qaDeriveTriage();
   bootDone();
 }, (e) => herr("healthRegistrations", e));
 
@@ -160,6 +161,7 @@ $("#t-regid").addEventListener("input", () => {
   const el = $("#t-regid");
   el.value = el.value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 8);
   refreshVictimLine();
+  qaDeriveTriage();
 });
 
 /* pain slider */
@@ -174,8 +176,229 @@ onSnapshot(query(collection(db, "healthTriage")), (snap) => {
   rows = snap.docs.map((d) => d.data())
     .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
   renderHistory();
+  qaDeriveTriage();
 }, (e) => herr("healthTriage", e));
-window.__p47.listeners = 2;
+window.__p47.listeners = 3;
+
+function qaStart(id) {
+  const el = $("#t-regid");
+  const qae = document.getElementById("qa-err");
+  if (el.value.trim() && el.value.trim().toUpperCase() !== String(id).toUpperCase()) {
+    if (qae) { qae.hidden = false; qae.textContent = "Complete or clear the assessment you are filling in first — one patient at a time."; }
+    return;
+  }
+  if (qae) qae.hidden = true;
+  el.value = String(id).toUpperCase();
+  refreshVictimLine();
+  window.scrollTo(0, 0);
+  $("#t-symptoms").focus();
+}
+/* the triage queue: patients registered today without an assessment today,
+   ordered by arrival (creation time) and then Registration ID */
+function qaDeriveTriage() {
+  const done = new Set();
+  rows.forEach((t) => {
+    if (t && t.regId && qaIsTodayLocal(t.assessedAt || t.savedAt)) done.add(String(t.regId));
+  });
+  const waiting = [];
+  regs.forEach((r) => {
+    if (!r || !r.regId) return;
+    const id = String(r.regId);
+    if (done.has(id)) return;
+    const saved = String(r.savedAt || "");
+    /* registered today — the stamp is UTC, so accept either the UTC day or
+       the patient's local day to keep the early-morning edge honest */
+    if (!qaIsToday(saved) && qaLocalDay(saved) !== qaTodayLocal()) return;
+    waiting.push({
+      regId: id,
+      sub: who(r) + (r.priority ? " \u00b7 registered " + r.priority : ""),
+      at: saved
+    });
+  });
+  waiting.sort((a, b) => String(a.at).localeCompare(String(b.at)) || a.regId.localeCompare(b.regId));
+  const fid = $("#t-regid").value.trim().toUpperCase();
+  const current = fid ? { regId: fid, sub: "Assessment open on this device" } : null;
+  qaUpdate(waiting, current, done.size);
+}
+
+
+/* =====================================================================
+   JAMALI-QUEUE (task 53) — the queue panel shared by every service stage:
+   waiting and completed counts, the current and the next patient, the
+   speaker announcement, and this module's own announcement settings.
+   Waiting counts patients waiting for THIS service only; Completed counts
+   the patients finished here today. The announcement always reads the
+   patient the panel is showing — never anybody else — and it reads the
+   destination the hospital saved for this module (healthQueueConfig),
+   falling back to the module's own name. No hard-coded rooms or IDs. */
+const QA_MODULE = "triage";
+const QA_DEFAULT = "Triage";
+let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "" };
+try { qaCfg = Object.assign(qaCfg, JSON.parse(localStorage.getItem("jamali_qacfg_" + QA_MODULE) || "{}")); } catch (e) {}
+let qaState = { waitingCount: 0, doneCount: 0, next: null, current: null };
+
+function qaSet(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+function qaTodayLocal() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function qaLocalDay(stamp) {
+  const d = new Date(stamp);
+  return isNaN(d.getTime()) ? "" : d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function qaIsToday(stamp) { return String(stamp || "").slice(0, 10) === new Date().toISOString().slice(0, 10); }
+function qaIsTodayLocal(stamp) { return String(stamp || "").slice(0, 10) === qaTodayLocal(); }
+
+/* the destination, composed from the saved settings */
+function qaText() {
+  const dept = String(qaCfg.department || "").trim();
+  const staff = String(qaCfg.staffName || "").trim();
+  const office = String(qaCfg.officeNumber || "").trim();
+  const room = String(qaCfg.roomNumber || "").trim();
+  const place = room || office;
+  return { dept, staff, office, room, place, dest: (staff || dept || QA_DEFAULT) + (place ? ", " + place : "") };
+}
+function qaSentence(id) {
+  return "Patient number " + String(id) + ", please proceed to " + qaText().dest + ".";
+}
+function qaSpeech(id) {
+  /* the ID is spoken letter by letter so the waiting patient hears their own */
+  return "Patient number " + String(id).split("").join(" ") + ", please proceed to " + qaText().dest + ".";
+}
+function qaCfgLine() {
+  const t = qaText();
+  const bits = [];
+  if (t.staff) bits.push("Staff: " + t.staff);
+  if (t.room) bits.push("Room: " + t.room);
+  if (t.office) bits.push("Office: " + t.office);
+  if (!t.staff && t.dept) bits.push("Department: " + t.dept);
+  return bits.join(" \u00b7 ");
+}
+
+function qaRenderPanel() {
+  qaSet("qa-waiting", String(qaState.waitingCount));
+  qaSet("qa-done", String(qaState.doneCount));
+  const cur = qaState.current, nxt = qaState.next;
+  const cBox = document.getElementById("qa-current-box");
+  if (cBox) cBox.classList.toggle("qa-none", !cur);
+  qaSet("qa-current-id", cur ? cur.regId : "\u2014");
+  qaSet("qa-current-sub", cur ? (cur.sub || "In Progress") : "Nobody is being served right now");
+  qaSet("qa-next-id", nxt ? nxt.regId : "\u2014");
+  qaSet("qa-next-sub", nxt ? (nxt.sub || "") : (qaState.waitingCount ? "" : "Nobody is waiting"));
+  qaSet("qa-dest-line", qaCfgLine());
+  const btn = document.getElementById("qa-announce");
+  if (btn) {
+    btn.disabled = !nxt;
+    if (nxt) btn.setAttribute("data-regid", nxt.regId); else btn.removeAttribute("data-regid");
+  }
+  const st = document.getElementById("qa-start");
+  if (st) {
+    st.disabled = !nxt;
+    if (nxt) st.setAttribute("data-regid", nxt.regId); else st.removeAttribute("data-regid");
+  }
+  qaSet("qa-note", nxt ? "Ready to announce: " + qaSentence(nxt.regId) : "");
+}
+
+/* every stage derives its own queue, then calls this */
+function qaUpdate(waitingRows, current, doneCount) {
+  qaState.waitingCount = Array.isArray(waitingRows) ? waitingRows.length : 0;
+  qaState.doneCount = doneCount || 0;
+  qaState.next = (qaState.waitingCount > 0) ? waitingRows[0] : null;
+  qaState.current = current || null;
+  qaRenderPanel();
+}
+
+/* the speaker button announces exactly the patient shown above it */
+const qaAnnounceBtn = document.getElementById("qa-announce");
+if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
+  const id = qaAnnounceBtn.getAttribute("data-regid");
+  if (!id) return;
+  const sentence = qaSentence(id);
+  try {
+    if (!("speechSynthesis" in window)) {
+      qaSet("qa-note", "This browser cannot speak — read aloud: " + sentence);
+      return;
+    }
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(qaSpeech(id));
+    u.lang = "en-GB";
+    u.rate = 0.95;
+    const vs = synth.getVoices().filter((v) => /^en/i.test(v.lang || ""));
+    if (vs.length) u.voice = vs.find((v) => /GB/i.test(v.lang || "")) || vs[0];
+    synth.speak(u);
+    qaSet("qa-note", "Announcing: " + sentence);
+  } catch (e) {
+    qaSet("qa-note", "Announcement failed (" + ((e && e.message) || e) + ") — read aloud: " + sentence);
+  }
+});
+
+/* open the next patient straight from the panel */
+const qaStartBtn = document.getElementById("qa-start");
+if (qaStartBtn) qaStartBtn.addEventListener("click", () => {
+  const id = qaStartBtn.getAttribute("data-regid");
+  if (id) qaStart(id);
+});
+
+/* this module's announcement settings */
+const qaSettingsBox = document.getElementById("qa-settings");
+const qaSettingsBtn = document.getElementById("qa-settings-btn");
+if (qaSettingsBtn && qaSettingsBox) {
+  qaSettingsBtn.addEventListener("click", () => {
+    qaSettingsBox.hidden = !qaSettingsBox.hidden;
+    if (!qaSettingsBox.hidden) {
+      const put = (id, k) => { const el = document.getElementById(id); if (el) el.value = String(qaCfg[k] || ""); };
+      put("qa-dept", "department"); put("qa-staff", "staffName");
+      put("qa-office", "officeNumber"); put("qa-room", "roomNumber");
+    }
+  });
+}
+const qaSaveBtn = document.getElementById("qa-save");
+if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
+  const qae = document.getElementById("qa-err");
+  const qao = document.getElementById("qa-ok");
+  if (qae) qae.hidden = true;
+  if (qao) qao.hidden = true;
+  const val = (id) => { const el = document.getElementById(id); return el ? el.value.trim().replace(/\s+/g, " ") : ""; };
+  const data = {
+    department: val("qa-dept"),
+    staffName: val("qa-staff"),
+    officeNumber: val("qa-office"),
+    roomNumber: val("qa-room"),
+    updatedAt: new Date().toISOString()
+  };
+  if (!data.department && !data.staffName && !data.officeNumber && !data.roomNumber) {
+    if (qae) { qae.hidden = false; qae.textContent = "Fill at least one field — or leave the settings closed to keep the module's default."; }
+    return;
+  }
+  qaSaveBtn.disabled = true;
+  try {
+    await setDoc(doc(db, "healthQueueConfig", QA_MODULE), data, { merge: true });
+    if (qao) { qao.hidden = false; qao.textContent = "Speaker settings saved — every announcement from now on uses them."; }
+  } catch (e) {
+    if (qae) {
+      qae.hidden = false;
+      qae.textContent = "Save failed: " + ((e && e.message) || e) +
+        " — if it says permission-denied, publish the rules from the repo file firestore.rules first.";
+    }
+  } finally { qaSaveBtn.disabled = false; }
+});
+
+/* live settings — a change here is heard on every device at once */
+try {
+  onSnapshot(doc(db, "healthQueueConfig", QA_MODULE), (s) => {
+    qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "" },
+      s.exists() ? s.data() : {});
+    try { localStorage.setItem("jamali_qacfg_" + QA_MODULE, JSON.stringify(qaCfg)); } catch (e) {}
+    qaRenderPanel();
+    bootDone();
+  }, (e) => {
+    const code = String((e && (e.code || e.message)) || "unknown");
+    if (window.__p47) window.__p47.errs.push("healthQueueConfig: " + code);
+    qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
+  });
+} catch (e) { /* the settings listener is optional — the queue keeps working */ }
+
 
 function priBadge(p) {
   const k = String(p || "").toLowerCase();
