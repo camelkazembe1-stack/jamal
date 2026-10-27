@@ -4,7 +4,7 @@
 
 import {
   requireAuth, readSystemSession,
-  db, collection, getDocs, doc, updateDoc, setDoc, query, where, serverTimestamp
+  db, collection, getDocs, getDoc, doc, updateDoc, setDoc, query, where, serverTimestamp
 } from "/firebase.js";
 
 const $ = (id) => document.getElementById(id);
@@ -40,9 +40,73 @@ function boot() {
       });
     });
   });
+  // task 57: the counters and the user lists behind them
+  $("stat-total").addEventListener("click", () => showUsers("total"));
+  $("stat-ready").addEventListener("click", () => showUsers("ready"));
+  $("stat-pending").addEventListener("click", () => showUsers("pending"));
+  $("users-close").addEventListener("click", () => { $("users-panel").hidden = true; });
+  loadStats();
   loadRequests();
   loadUsers();
   buildPageSelect();
+}
+
+// ---------------------------------------------------------------------
+// TASK 57 · the counters: Total Accounts / Ready / Pending.
+// Every number is counted from the stored accounts — nothing hard-coded.
+// Clicking a number shows that group's users in the panel below.
+// ---------------------------------------------------------------------
+const STATUS_LABELS = { approved: "Ready", pending: "Pending", rejected: "Rejected" };
+const USER_VIEWS = {
+  total:   { title: "All registered accounts",
+             hint: "Every account ever created, any status.",
+             filter: () => true },
+  ready:   { title: "Ready — approved accounts",
+             hint: "Accounts you have approved. Grant their access in Users & Access.",
+             filter: (a) => a.status === "approved" },
+  pending: { title: "Pending — waiting for your approval",
+             hint: "These people created an account and cannot enter until you approve them.",
+             filter: (a) => a.status === "pending" }
+};
+
+async function loadStats() {
+  try {
+    const snap = await getDocs(collection(db, "systemAccounts"));
+    const all = [];
+    snap.forEach((d) => all.push(d.data()));
+    $("stat-total-num").textContent = String(all.length);
+    $("stat-ready-num").textContent = String(all.filter((a) => a.status === "approved").length);
+    $("stat-pending-num").textContent = String(all.filter((a) => a.status === "pending").length);
+  } catch (e) { /* the counters stay as dashes until the read succeeds */ }
+}
+
+async function showUsers(kind) {
+  const view = USER_VIEWS[kind];
+  if (!view) return;
+  const body = $("users-body");
+  body.innerHTML = "";
+  $("users-panel").hidden = false;
+  $("users-title").textContent = view.title;
+  $("users-hint").textContent = view.hint;
+  let n = 0;
+  try {
+    const snap = await getDocs(collection(db, "systemAccounts"));
+    const rows = [];
+    snap.forEach((d) => { const a = d.data(); if (view.filter(a)) rows.push(a); });
+    rows.sort((x, y) => String(x.usernameDisplay || "").localeCompare(String(y.usernameDisplay || "")));
+    for (const a of rows) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td></td><td></td><td></td><td></td><td></td>";
+      tr.cells[0].textContent = a.usernameDisplay || "";
+      tr.cells[1].textContent = a.position || "";
+      tr.cells[2].textContent = STATUS_LABELS[a.status] || (a.status || "");
+      tr.cells[3].textContent = String(Array.isArray(a.grants) ? a.grants.length : 0);
+      tr.cells[4].textContent = a.at && a.at.toDate ? a.at.toDate().toLocaleDateString() : "";
+      body.appendChild(tr);
+      n++;
+    }
+  } catch (e) { fail("Could not read the accounts: " + (e.message || e.code)); }
+  $("users-empty").hidden = n > 0;
 }
 
 // ---------------------------------------------------------------------
@@ -92,6 +156,7 @@ async function decide(id, status) {
     await updateDoc(doc(db, "systemAccounts", id), { status: status, decidedAt: serverTimestamp() });
     loadRequests();
     loadUsers();
+    loadStats();
   } catch (e) { fail("Could not save the decision: " + (e.message || e.code)); }
 }
 
