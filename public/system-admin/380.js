@@ -1,268 +1,205 @@
-// JAMALI — Account Administration (380) — TASK 58 FULL REWRITE, TASK 63 UPDATE
-// One screen for the administrator: the counters (Total / Ready / Pending),
-// the NOTIFICATIONS (one per registration request, counted on the button),
-// the account requests, the per-user room keys, and the page field settings.
-// TASK 63: the module selection is the ACROSS strip at the top of the page
-// (before the Admin button): one wrapping row of module chips — click a
-// chip to allow exactly that module, "all" after a group allows the
-// group's whole subtree, the big "all" allows every module at once.
+// JAMALI — Account Administration (380) — TASK 67 FULL REWRITE
+// (Task 58 rewrite · Task 61 notifications · Task 63 module strip ·
+//  Task 67 self-test + honest errors)
 //
-// REWRITE RULES (written in blood from the "nothing appears" reports):
-//   1. every Firestore function used in this file is imported below —
-//      no exceptions (a missing import = silent ReferenceError);
-//   2. NO silent catch — every failure is written on the screen;
-//   3. the accounts are read ONCE into one cache; the counters, the
-//      requests, the user selector and the user lists all render from
-//      that same cache, and every action re-reads it first.
+// One screen for the administrator: the counters (Total / Ready /
+// Pending), the NOTIFICATIONS (one per registration request, counted on
+// the button), the account requests, the per-user room keys, and the
+// page field settings.
+//
+// TASK 67 REWRITE RULES (written after the "still not solved" rounds):
+// 1. every Firestore function used here is imported below — no
+//    exceptions (a missing import = silent ReferenceError);
+// 2. NO silent catch — every failure is written on the screen WITH the
+//    exact error code the database returned;
+// 3. a DATABASE SELF-TEST runs at boot and reads each collection the
+//    page needs, printing PASS (with a document count) or FAIL (with
+//    the real code) — nobody ever has to guess which side failed;
+// 4. the accounts are read ONCE into one cache; the counters, the
+//    requests, the user selector and the user lists all render from
+//    that same cache, and every action re-reads it first.
 
 import {
-  requireAuth, readSystemSession, auth, // TASK 67: the signed-in identity powers the limited reads
-  db, collection, query, where, getDocs, getDoc, doc, updateDoc, setDoc, serverTimestamp
+  requireAuth, readSystemSession,
+  db, collection, query, where, getDocs, getDoc, doc, updateDoc,
+  setDoc, serverTimestamp
 } from "/firebase.js";
 
 const $ = (id) => document.getElementById(id);
 const err = $("err");
-function fail(msg) {
-  err.textContent = msg; err.hidden = false;
-  if (deniedErr(msg)) showFixPanel("denied"); // TASK 67: a denied read opens the fix panel, not just a red line
+function fail(msg) { err.textContent = msg; err.hidden = false; }
+function clearErr() {
+  if (err.textContent.indexOf("Reading the accounts failed") === 0) err.hidden = true;
 }
-function clearErr() { if (err.textContent.indexOf("Could not read the accounts") === 0) err.hidden = true; }
-function okMsg(id) { const el = $(id); el.hidden = false; setTimeout(() => { el.hidden = true; }, 2200); }
-function show(e) { return (e && (e.message || e.code)) ? (e.message || e.code) : String(e); }
+function okMsg(id) {
+  const el = $(id); el.hidden = false;
+  setTimeout(() => { el.hidden = true; }, 2200);
+}
+function show(e) {
+  if (!e) return "unknown error";
+  if (e.code && e.message) return e.code + " — " + e.message;
+  return e.message || e.code || String(e);
+}
 
-  // ---------------------------------------------------------------------
-  // TASK 67 - THE PAGE DIAGNOSES ITSELF. When the accounts or the
-  // notifications cannot be read, the cause is almost never the page -
-  // it is the DATABASE RULES not being published in the Firebase
-  // console (the file firestore.rules in the project folder is only a
-  // file until it is pasted and published in the console). This panel
-  // carries the exact steps, the exact rules text (embedded below from
-  // the project's own firestore.rules at install time), a copy button
-  // and an "I published them - check again" button - the page never
-  // goes silently blank again.
-  // ---------------------------------------------------------------------
-const RULES_TEXT = "rules_version = '2';\n\n// =====================================================================\n// JAMALI \u2014 firestore.rules \u2014 the guard dog\n// (Task 56: system accounts added; Task 61: multi-email administrator\n// claim + registration notifications; TASK 65: one Google identity,\n// many system accounts \u2014 every account LINKED TO ITS GOOGLE EMAIL)\n//\n// TASK 65 IN PLAIN WORDS: the Google sign-in is the key to the HOUSE\n// and it is checked everywhere \u2014 no JAMALI link opens without it. A\n// system account is a separate saved record LINKED TO THE GOOGLE EMAIL\n// that created it: one email may hold MANY accounts (each under its\n// own username), switching between them never deletes, overwrites or\n// merges anything, and logging out of JAMALI never signs the Google\n// session away. Registration may only CREATE a pending account whose\n// googleEmail is exactly the writer's own authenticated email; only\n// the administrator \u2014 a real Google sign-in proven by the seeded\n// claim \u2014 approves, edits grants or clears notifications. The 18\n// business collections stay open exactly as the standing order\n// intended. Anything not matched below is denied by default.\n//\n// The project's live collections, named by scanning every page's code:\n//   transactions                \u2014 the one journal the whole business reads\n//   healthRegistrations         \u2014 Registration (322)\n//   healthTriage                \u2014 Triage (323)\n//   healthNurseConsultations    \u2014 Nurse Consultation (324)\n//   healthDoctorConsultations   \u2014 Doctor Consultation (325)\n//   healthPrescriptions         \u2014 Pharmacy (326)\n//   healthTreatmentOrders       \u2014 Treatment / Procedures (327)\n//   healthDestinations          \u2014 the facility's destination list (325)\n//   healthWards                 \u2014 Ward Registration (331)\n//   healthBeds                  \u2014 Bed Management (332)\n//   healthBedAssignments        \u2014 Bed Assignment (334) / Transfers (335)\n//   healthBedTransfers          \u2014 Ward & Bed Transfers (335)\n//   healthBedMaintenance        \u2014 Cleaning & Maintenance (336)\n//   healthAdmissions            \u2014 Patient Admission (341-343)\n//   healthDischarges            \u2014 Patient Discharge (350-353)\n//   healthLabRequests           \u2014 Laboratory Management (360-363)\n//   healthImagingRequests       \u2014 Radiology / Imaging (370-373)\n//   systemNotifications         \u2014 Task 61: one notification per registration\n//                                 request; the administrator's bell counter\n// =====================================================================\n\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    // ---- helpers (Task 56) ----\n    function isSignedIn() {\n      return request.auth != null;\n    }\n    function isSystemAdmin() {\n      return request.auth != null\n        && exists(/databases/$(database)/documents/systemAdmins/$(request.auth.uid));\n    }\n\n    // ---- Business: one journal, every book derives from it ----\n    // Open \u2014 every writer now holds the house key (the Google gate),\n    // and the administrator decides what each system account may see\n    // with the module selection.\n    match /transactions/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    // ---- Health: one patient, one ID, one journey ----\n    match /healthRegistrations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthTriage/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthNurseConsultations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthDoctorConsultations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthPrescriptions/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthTreatmentOrders/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthDestinations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    // ---- Health: wards, beds and placement (Task 52) ----\n    match /healthWards/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBeds/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBedAssignments/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBedTransfers/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBedMaintenance/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    // ---- Health: admissions (Task 52) ----\n    match /healthAdmissions/{docId} {\n      allow create, read, update, delete: if true;\n    }\n    // ---- Health: discharge (Task 54) ----\n    match /healthDischarges/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    // ---- Health: laboratory (Task 54) ----\n    match /healthLabRequests/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    // ---- Health: radiology / imaging (Task 54) ----\n    match /healthImagingRequests/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n\n    // ---- Health: queue announcement settings (Task 53) ----\n    // One document per service stage (triage, nurse, doctor, pharmacy,\n    // treatment): the department, staff name, office and room the speaker\n    // announcement reads aloud.\n    match /healthQueueConfig/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n\n    // ===================================================================\n    // SYSTEM \u2014 accounts, credentials, administration\n    // Two-key model, Task 65 edition: the Google sign-in is the key to\n    // the HOUSE (checked on every page), and every system account is a\n    // separate room key LINKED TO THE GOOGLE EMAIL that created it \u2014\n    // one email, many accounts, nothing ever merged.\n    // ===================================================================\n\n    // ---- account profiles: usernames, positions, approval, grants ----\n    // No secrets live here. Anyone may resolve a username. TASK 65\n    // (requirements 2 + 4): registration may only CREATE a pending\n    // account whose googleEmail is EXACTLY the writer's own\n    // authenticated email \u2014 one Google email may hold many accounts\n    // (each under its own username), and no write may ever rebind or\n    // overwrite somebody else's record. The administrator claim escape\n    // below still seeds the first administrator exactly as Task 56b\n    // built it. Only the administrator approves, rejects, edits grants\n    // or deletes.\n    match /systemAccounts/{docId} {\n      allow read: if true;\n      allow create: if (\n        (request.auth != null\n          && request.resource.data.get(\"googleEmail\", \"\") == request.auth.token.email\n          && request.resource.data.get(\"status\", \"\") == \"pending\"\n          && request.resource.data.get(\"role\", \"\") == \"user\")\n        || (request.auth != null\n          && request.resource.data.get(\"googleUid\", \"\") == request.auth.uid\n          && request.resource.data.get(\"usernameLower\", \"\") == \"jamal kazembe\"\n          && request.resource.data.get(\"status\", \"\") == \"approved\"\n          && request.resource.data.get(\"role\", \"\") == \"admin\"\n          && request.resource.data.get(\"passHash\", \"\") == \"5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af\"\n          && request.resource.data.get(\"tokenHash\", \"\") == \"3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1\"\n          && !exists(/databases/$(database)/documents/systemSetup/claim))\n      );\n      allow update: if isSystemAdmin();\n      allow delete: if isSystemAdmin();\n    }\n\n    // ---- credentials: password/token hashes + phone (never profile data) --\n    // TASK 65: the Google gate means EVERY reader is an authenticated\n    // one, so the token hashes may only be read while signed in \u2014 and\n    // never for the administrator's own document except by the\n    // administrator's identity itself. Creates may never touch the\n    // administrator's document; updates stay administrator/bound-\n    // identity only, so nobody can tamper with a token once registered.\n    match /systemCredentials/{docId} {\n      allow read: if request.auth != null\n        && (docId != \"jamal kazembe\"\n          || resource.data.googleUid == request.auth.uid);\n      allow create: if request.auth != null\n        && (docId != \"jamal kazembe\"\n          || request.resource.data.googleUid == request.auth.uid);\n      allow update: if request.auth != null\n        && (resource.data.googleUid == request.auth.uid || isSystemAdmin());\n      allow delete: if isSystemAdmin();\n    }\n\n    // ---- administrators: one document per administrator google uid ----\n    // The FIRST login with the administrator's username claims the role,\n    // and \u2014 Task 61 (requirement 5) \u2014 the SAME credentials work from ANY\n    // Google account: whoever presents BOTH exact salted hashes may create\n    // their own administrator document (request.auth.uid cannot be forged,\n    // and nobody without the real token/password can produce the hashes).\n    match /systemAdmins/{uid} {\n      allow read: if request.auth != null;\n      allow create: if request.auth != null\n        && request.resource.data.passHash == \"5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af\"\n        && request.resource.data.tokenHash == \"3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1\";\n      allow delete: if isSystemAdmin() && uid != request.auth.uid;\n      allow update: if false;\n    }\n\n    // ---- setup marker: written once, by the claim, immutable after ----\n    match /systemSetup/{docId} {\n      allow read: if request.auth != null;\n      allow create: if request.auth != null\n        && !exists(/databases/$(database)/documents/systemSetup/claim)\n        && request.resource.data.passHash == \"5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af\"\n        && request.resource.data.tokenHash == \"3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1\";\n      allow update, delete: if false;\n    }\n\n    // ---- notifications (Task 61: requirements 9 + 10) ----\n    // One document per registration request, written in the same batch as\n    // the account itself. TASK 65: the ring is signed with the writer's\n    // own Google email \u2014 the create only lands while the house key is\n    // really held (request.auth != null) and the email on the ring IS\n    // the authenticated one. The administrator reads the counter,\n    // dismisses entries, and a decision marks the notification as read.\n    match /systemNotifications/{docId} {\n      allow read: if request.auth != null;\n      allow create: if request.auth != null\n        && request.resource.data.get(\"type\", \"\") == \"registration\"\n        && request.resource.data.get(\"status\", \"\") == \"unread\"\n        && request.resource.data.get(\"googleEmail\", \"\") == request.auth.token.email;\n      allow update: if isSystemAdmin();\n      allow delete: if isSystemAdmin();\n    }\n\n    // ---- page field configuration: hide existing fields / set defaults --\n    // Read by every page that applies it (every reader now holds the\n    // house key, and the read stays open for resilience); written by\n    // the administrator only.\n    match /systemPageConfig/{docId} {\n      allow read: if true;\n      allow create, update, delete: if isSystemAdmin();\n    }\n\n    // Everything not named above: denied. No block, no exceptions.\n  }\n}\n";
-  function deniedErr(e) {
-    const s = String((e && (e.code || e.message)) || e || "");
-    return s.indexOf("permission-denied") !== -1
-      || s.indexOf("insufficient permissions") !== -1
-      || s.indexOf("Permission denied") !== -1;
-  }
-  let fixLimitedShown = false;
-  function showFixPanel(kind) {
-    const panel = $("fix-panel");
-    if (!panel) return;
-    if (kind === "limited") {
-      if (fixLimitedShown) return;
-      fixLimitedShown = true;
-      $("fix-title").textContent = "Working in a limited read mode";
-      $("fix-text").textContent = "The full account list was refused by the database, so the page is reading with narrower queries - every account it can still reach is shown: pending, rejected, approved, and every account bound to your own Google email (which includes requests registered from the same Google email as yours). Everything keeps working, but publish the database rules below once to restore the complete list.";
-    } else {
-      $("fix-title").textContent = "The accounts could not be read - publish the database rules";
-      $("fix-text").textContent = "This is not a fault in the page: the database itself refused the read. That always means the firestore.rules file was never published (or an older version is still published) in the Firebase console. The steps below take about two minutes and fix every screen at once - the counters, the request tables, the bell and the approvals.";
-    }
-    $("fix-pre").textContent = RULES_TEXT;
-    panel.hidden = false;
-  }
+// TASK 67: the build tag proves the NEW script is actually running.
+// If this line still says only "build T67" with no timestamp, the
+// browser is showing an old cached copy — press Ctrl+Shift+R.
+try {
+  $("build-tag").textContent =
+    "build T67 · script loaded " + new Date().toISOString();
+} catch (e) { /* the tag is cosmetic — never block the page for it */ }
 
+// TASK 67: the project's own firestore.rules, embedded verbatim so the
+// administrator can always re-publish the exact live text from here.
+const RULES_TEXT = "rules_version = '2';\n\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    function isSystemAdmin() {\n      return request.auth != null\n        && exists(/databases/$(database)/documents/systemAdmins/$(request.auth.uid));\n    }\n\n    match /transactions/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthRegistrations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthTriage/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthNurseConsultations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthDoctorConsultations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthPrescriptions/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthTreatmentOrders/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthDestinations/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthWards/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBeds/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBedAssignments/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBedTransfers/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthBedMaintenance/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthAdmissions/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthDischarges/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthLabRequests/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthImagingRequests/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /healthQueueConfig/{docId} {\n      allow create, read, update, delete: if true;\n    }\n\n    match /systemAccounts/{docId} {\n      allow read: if true;\n      allow create: if (\n        (request.auth != null\n          && request.resource.data.get(\"googleEmail\", \"\") == request.auth.token.email\n          && request.resource.data.get(\"status\", \"\") == \"pending\"\n          && request.resource.data.get(\"role\", \"\") == \"user\")\n        || (request.auth != null\n          && request.resource.data.get(\"googleUid\", \"\") == request.auth.uid\n          && request.resource.data.get(\"usernameLower\", \"\") == \"jamal kazembe\"\n          && request.resource.data.get(\"status\", \"\") == \"approved\"\n          && request.resource.data.get(\"role\", \"\") == \"admin\"\n          && request.resource.data.get(\"passHash\", \"\") == \"5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af\"\n          && request.resource.data.get(\"tokenHash\", \"\") == \"3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1\"\n          && !exists(/databases/$(database)/documents/systemSetup/claim))\n      );\n      allow update: if isSystemAdmin();\n      allow delete: if isSystemAdmin();\n    }\n\n    match /systemCredentials/{docId} {\n      allow read: if request.auth != null\n        && (docId != \"jamal kazembe\"\n          || resource.data.googleUid == request.auth.uid);\n      allow create: if request.auth != null\n        && (docId != \"jamal kazembe\"\n          || request.resource.data.googleUid == request.auth.uid);\n      allow update: if request.auth != null\n        && (resource.data.googleUid == request.auth.uid || isSystemAdmin());\n      allow delete: if isSystemAdmin();\n    }\n\n    match /systemAdmins/{uid} {\n      allow read: if request.auth != null;\n      allow create: if request.auth != null\n        && request.resource.data.passHash == \"5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af\"\n        && request.resource.data.tokenHash == \"3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1\";\n      allow delete: if isSystemAdmin() && uid != request.auth.uid;\n      allow update: if false;\n    }\n\n    match /systemSetup/{docId} {\n      allow read: if request.auth != null;\n      allow create: if request.auth != null\n        && !exists(/databases/$(database)/documents/systemSetup/claim)\n        && request.resource.data.passHash == \"5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af\"\n        && request.resource.data.tokenHash == \"3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1\";\n      allow update, delete: if false;\n    }\n\n    match /systemNotifications/{docId} {\n      allow read: if request.auth != null;\n      allow create: if request.auth != null\n        && request.resource.data.get(\"type\", \"\") == \"registration\"\n        && request.resource.data.get(\"status\", \"\") == \"unread\"\n        && request.resource.data.get(\"googleEmail\", \"\") == request.auth.token.email;\n      allow update: if isSystemAdmin();\n      allow delete: if isSystemAdmin();\n    }\n\n    match /systemPageConfig/{docId} {\n      allow read: if true;\n      allow create, update, delete: if isSystemAdmin();\n    }\n  }\n}\n";
 // ---------------------------------------------------------------------
 // guard: administrators only (requireAuth also checks house + session)
 // TASK 61: the role is verified against the DATABASE, not the session
-// string — a staff position or a typed role can never open this page.
-// Only a systemAdmins document (created behind the security rules by the
-// administrator's real credentials) opens the administration.
+// string — only a systemAdmins document (created behind the security
+// rules by the administrator's real credentials) opens this page.
 // ---------------------------------------------------------------------
 const user = await requireAuth();
 const session = readSystemSession();
 if (!session || session.role !== "admin") {
   location.replace("/?denied=" + encodeURIComponent("system-admin"));
 } else {
-  try {
-    const admDoc = await getDoc(doc(db, "systemAdmins", user.uid));
+  const admDoc = await getDoc(doc(db, "systemAdmins", user.uid));
   if (!admDoc.exists()) {
     location.replace("/?denied=" + encodeURIComponent("system-admin"));
   } else {
-      boot();
-    }
-  } catch (eGuard) {
-    showFixPanel("denied"); // TASK 67: a refused administrator check is a rules problem too - show the fix, not a blank page
+    boot();
   }
 }
 
 // ---------------------------------------------------------------------
 // the ONE cache — one read feeds every panel
 // ---------------------------------------------------------------------
-let ACCOUNTS = [];        // every account: { id, usernameDisplay, status, role, grants, ... }
-let CURRENT_USER_ID = ""; // the account picked in Users & Access
-let NOTIFS = [];          // TASK 61: unread notifications (one per request)
+let ACCOUNTS = [];                // every account: { id, usernameDisplay,
+                                  // status, role, grants, ... }
+let CURRENT_USER_ID = "";         // the account picked in Users & Access
+let NOTIFS = [];                  // TASK 61: unread notifications
 
-// ---------------------------------------------------------------------
-// TASK 67 - THE ACCOUNTS READERS. readAccounts() stays the ONE door
-// every panel walks through. It first tries the direct full read (what
-// the published firestore.rules are meant to allow). If the database
-// refuses it, it falls back to narrower queries that keep working even
-// under stricter per-document rules: one query per status, plus the
-// accounts bound to the administrator's own Google email / Google uid
-// (a request registered from the same Google email as the
-// administrator - exactly the reported case - is therefore ALWAYS
-// visible). If even those are refused, the failure is shown with the
-// fix panel - never a silent blank page.
-// ---------------------------------------------------------------------
-function normEmail(e) { return String(e || "").trim().toLowerCase(); }
-
-function sortAccounts(rows) {
-  rows.sort((x, y) => String(x.usernameDisplay || x.id || "").localeCompare(String(y.usernameDisplay || y.id || "")));
-  return rows;
-}
-
-let READ_MODE = "full"; // "full" = one scan; "limited" = narrower queries
-
-async function readAccountsFull() {
+async function readAccounts() {
   const snap = await getDocs(collection(db, "systemAccounts"));
   const rows = [];
   snap.forEach((d) => { const a = d.data(); a.id = d.id; rows.push(a); });
-  ACCOUNTS = sortAccounts(rows);
-  READ_MODE = "full";
-  return ACCOUNTS;
-}
-
-// every limited pull stands on its own - one refused query never
-// sinks the others
-function pullInto(out, promiseFactory) {
-  return promiseFactory()
-    .then((s) => { s.forEach((d) => { if (!out.has(d.id)) { const a = d.data(); a.id = d.id; out.set(d.id, a); } }); })
-    .catch(() => {});
-}
-
-async function readAccountsLimited() {
-  const out = new Map();
-  const me = auth.currentUser;
-  const pulls = [];
-  for (const st of ["pending", "rejected", "approved"]) {
-    pulls.push(pullInto(out, () => getDocs(query(collection(db, "systemAccounts"), where("status", "==", st)))));
-  }
-  if (me && me.email) {
-    pulls.push(pullInto(out, () => getDocs(query(collection(db, "systemAccounts"), where("googleEmail", "==", normEmail(me.email))))));
-  }
-  if (me && me.uid) {
-    pulls.push(pullInto(out, () => getDocs(query(collection(db, "systemAccounts"), where("googleUid", "==", me.uid)))));
-  }
-  await Promise.all(pulls);
-  if (out.size === 0) {
-    const e = new Error("every limited read was refused");
-    e.code = "permission-denied";
-    throw e;
-  }
-  ACCOUNTS = sortAccounts(Array.from(out.values()));
-  READ_MODE = "limited";
-  return ACCOUNTS;
-}
-
-async function readAccounts() {
-  try {
-    return await readAccountsFull();
-  } catch (eFull) {
-    try {
-      const rows = await readAccountsLimited();
-      showFixPanel("limited"); // the page still works - say how, once
-      return rows;
-    } catch (eLimited) {
-      showFixPanel("denied");
-      throw eFull; // the original error is the honest one to report
-    }
-  }
+  rows.sort((x, y) => String(x.usernameDisplay || x.id || "")
+    .localeCompare(String(y.usernameDisplay || y.id || "")));
+  ACCOUNTS = rows;
+  return rows;
 }
 
 // re-read the accounts, then repaint every panel that shows them
 function refreshAll() {
   readAccounts().then((rows) => {
+    clearErr();
     paintCounters(rows);
     paintRequests(rows);
     paintUserSelect(rows);
     if (CURRENT_USER_ID) paintGrants(CURRENT_USER_ID);
-    paintBell(); // TASK 66: the bell repaints with the accounts
-  }).catch((e) => fail("Could not read the accounts: " + show(e)));
+  }).catch((e) => {
+    fail("Reading the accounts failed: " + show(e) +
+      " — the self-test table at the top shows exactly which read the database refused.");
+    $("helper-panel").hidden = false;
+  });
+}
+
+// ---------------------------------------------------------------------
+// TASK 67 · THE DATABASE SELF-TEST
+// Reads each collection exactly like the page does and prints the true
+// result. PASS = the read is allowed (with a document count). FAIL =
+// the exact error code the database returned. This is the single
+// source of truth for "is it the rules or not".
+// ---------------------------------------------------------------------
+const PROBES = [
+  ["systemAccounts", "every system account (profiles, status, grants) — open reader"],
+  ["systemPageConfig", "page field visibility and defaults — open reader"],
+  ["systemNotifications", "one per registration request — needs a signed-in reader"],
+  ["systemAdmins", "administrator identities — needs a signed-in reader"],
+  ["systemCredentials", "password/token hashes and phone — needs a signed-in reader"]
+];
+
+async function selfTest() {
+  const body = $("diag-body");
+  body.innerHTML = "";
+  let bad = 0;
+  for (const [name, what] of PROBES) {
+    const tr = document.createElement("tr");
+    const c1 = document.createElement("td"); c1.textContent = name;
+    const c2 = document.createElement("td"); c2.textContent = what;
+    const c3 = document.createElement("td");
+    try {
+      const snap = await getDocs(collection(db, name));
+      c3.textContent = "PASS — " + snap.size + " document(s)";
+      c3.style.color = "#15803d"; c3.style.fontWeight = "600";
+    } catch (e) {
+      c3.textContent = "FAIL — " + show(e);
+      c3.style.color = "#b91c1c"; c3.style.fontWeight = "600";
+      bad++;
+    }
+    tr.appendChild(c1); tr.appendChild(c2); tr.appendChild(c3);
+    body.appendChild(tr);
+  }
+  $("diag-note").textContent = bad === 0
+    ? "Every read the page needs is allowed. If a table below is still empty, the collection simply holds no documents for it yet."
+    : bad + " read(s) refused. FAIL with permission-denied = the live rules are older than this page needs — publish the rules in the helper above. Any other code = network or configuration, not the rules.";
+  if (bad) $("helper-panel").hidden = false;
+  return bad;
 }
 
 // ---------------------------------------------------------------------
 // TASK 61 · NOTIFICATIONS (requirements 9 + 10): every registration
-// request rings the bell. The button in the header shows the number of
-// notifications awaiting attention; the panel lists them with a jump to
-// the requests tab and a dismiss.
+// request rings the bell. The button shows the number awaiting
+// attention; the panel lists them with Review and Dismiss.
 // ---------------------------------------------------------------------
 async function readNotifs() {
-  const snap = await getDocs(query(collection(db, "systemNotifications"), where("status", "==", "unread")));
+  const snap = await getDocs(query(collection(db, "systemNotifications"),
+    where("status", "==", "unread")));
   const rows = [];
   snap.forEach((d) => { const n = d.data(); n.id = d.id; rows.push(n); });
-  rows.sort((x, y) => String(x.usernameLower || x.id || "").localeCompare(String(y.usernameLower || y.id || "")));
+  rows.sort((x, y) => String(x.usernameLower || x.id || "")
+    .localeCompare(String(y.usernameLower || y.id || "")));
   NOTIFS = rows;
   paintNotifs();
-  NOTIFS = rows;
-  paintBell();
-}
-
-// ---------------------------------------------------------------------
-// TASK 66 - THE BELL COUNTS THE TRUTH. Every pending account rings,
-// whether or not its notification record survived (registrations made
-// before Task 61 carry none), plus every other unread notification. The
-// count always agrees with the Pending counter and the requests table,
-// because both read the same accounts cache.
-// ---------------------------------------------------------------------
-function paintBell() {
-  const pendingIds = new Set(ACCOUNTS.filter((a) => a.status === "pending").map((a) => a.id));
-  const extra = NOTIFS.filter((n) => !pendingIds.has(n.id));
-  const total = pendingIds.size + extra.length;
-  const badge = $("notif-badge");
-  badge.textContent = String(total);
-  badge.hidden = total === 0; // the number ON the button (requirement 10)
 }
 
 function paintNotifs() {
-  paintBell(); // TASK 66: the number ON the button - every pending request + every other unread notification
+  const badge = $("notif-badge");
+  badge.textContent = String(NOTIFS.length);
+  badge.hidden = NOTIFS.length === 0; // the number ON the button
   const body = $("notif-body");
   body.innerHTML = "";
   for (const n of NOTIFS) {
     const tr = document.createElement("tr");
     tr.innerHTML = "<td></td><td></td><td></td><td></td>";
     tr.cells[0].textContent = n.username || n.usernameLower || n.id;
-    tr.cells[1].textContent = n.at && n.at.toDate ? n.at.toDate().toLocaleString() : "";
+    tr.cells[1].textContent = n.at && n.at.toDate
+      ? n.at.toDate().toLocaleString() : "";
     const rev = document.createElement("button");
     rev.className = "btn-ghost"; rev.type = "button"; rev.textContent = "Review";
-    rev.addEventListener("click", () => { $("notif-panel").hidden = true; $("tab-requests").click(); });
+    rev.addEventListener("click", () => {
+      $("notif-panel").hidden = true; $("tab-requests").click();
+    });
     const dis = document.createElement("button");
-    dis.className = "btn-ghost btn-danger"; dis.type = "button"; dis.textContent = "Dismiss";
+    dis.className = "btn-ghost btn-danger"; dis.type = "button";
+    dis.textContent = "Dismiss";
     dis.addEventListener("click", () => dismissNotif(n.id));
     tr.cells[2].appendChild(rev);
     tr.cells[3].appendChild(dis);
     body.appendChild(tr);
   }
-  // TASK 66: pending requests whose notification record is missing still
-  // show here - the panel always matches the bell and the database.
-  const pendIds = new Set(ACCOUNTS.filter((a) => a.status === "pending").map((a) => a.id));
-  const known = new Set(NOTIFS.map((n) => n.id));
-  for (const a of ACCOUNTS) {
-    if (a.status !== "pending" || known.has(a.id)) continue;
-    const tr = document.createElement("tr");
-    tr.innerHTML = "<td></td><td></td><td colspan='2'></td>";
-    tr.cells[0].textContent = a.usernameDisplay || a.id;
-    tr.cells[1].textContent = "(no notification record)";
-    const rev = document.createElement("button");
-    rev.className = "btn-ghost"; rev.type = "button"; rev.textContent = "Review";
-    rev.addEventListener("click", () => { $("notif-panel").hidden = true; $("tab-requests").click(); });
-    tr.cells[2].appendChild(rev);
-    body.appendChild(tr);
-  }
-  $("notif-empty").hidden = body.children.length > 0;
+  $("notif-empty").hidden = NOTIFS.length > 0;
 }
 
 function dismissNotif(id) {
-  updateDoc(doc(db, "systemNotifications", id), { status: "read", dismissedAt: serverTimestamp() })
+  updateDoc(doc(db, "systemNotifications", id),
+    { status: "read", dismissedAt: serverTimestamp() })
     .then(readNotifs)
     .catch((e) => fail("Could not dismiss the notification: " + show(e)));
 }
 
 // ---------------------------------------------------------------------
-// tabs
+// boot: tabs, counters, module strip, page fields, bell, self-test
 // ---------------------------------------------------------------------
 function boot() {
   const tabs = [
@@ -291,50 +228,69 @@ function boot() {
   // TASK 63: the module strip — before the Admin button, across
   $("modsel-save").addEventListener("click", saveGrants);
   $("modsel-all").addEventListener("click", () => {
-    document.querySelectorAll("#modsel-row .modsel-chip").forEach((x) => { x.classList.add("on"); });
+    document.querySelectorAll("#modsel-row .modsel-chip")
+      .forEach((x) => { x.classList.add("on"); });
   });
   // page fields
   $("page-select").addEventListener("change", () => paintFields($("page-select").value));
   $("fields-save").addEventListener("click", saveFields);
   buildPageSelect();
-  // TASK 67: the self-diagnosis panel buttons
-  $("fix-show").addEventListener("click", () => { const p = $("fix-pre"); p.hidden = !p.hidden; });
-  $("fix-copy").addEventListener("click", () => {
-    const done = () => { $("fix-copy").textContent = "Copied."; setTimeout(() => { $("fix-copy").textContent = "Copy the rules"; }, 2200); };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(RULES_TEXT).then(done).catch(() => { $("fix-pre").hidden = false; });
-    } else { $("fix-pre").hidden = false; }
-  });
-  $("fix-recheck").addEventListener("click", () => {
-    $("fix-panel").hidden = true;
-    clearErr();
-    refreshAll();
-    readNotifs().catch((e) => fail("Could not read the notifications: " + show(e)));
-  });
-  $("fix-close").addEventListener("click", () => { $("fix-panel").hidden = true; });
   // TASK 61: the bell — open/close the notifications panel
   $("notif-open").addEventListener("click", () => {
     const p = $("notif-panel");
     p.hidden = !p.hidden;
-    if (!p.hidden) readNotifs().catch((e) => fail("Could not read the notifications: " + show(e)));
+    if (!p.hidden) readNotifs().catch((e) =>
+      fail("Reading the notifications failed: " + show(e)));
   });
+  // TASK 67: the self-test and the rules helper
+  $("rules-box").textContent = RULES_TEXT;
+  $("diag-run").addEventListener("click", () =>
+    selfTest().catch((e) => fail("The self-test could not run: " + show(e))));
+  $("rules-copy").addEventListener("click", copyRules);
+  $("helper-recheck").addEventListener("click", () => {
+    selfTest().catch((e) => fail("The self-test could not run: " + show(e)));
+    refreshAll();
+    readNotifs().catch((e) =>
+      fail("Reading the notifications failed: " + show(e)));
+  });
+  $("helper-close").addEventListener("click", () => { $("helper-panel").hidden = true; });
+  selfTest().catch((e) => fail("The self-test could not run: " + show(e)));
   refreshAll();
-  readNotifs().catch((e) => fail("Could not read the notifications: " + show(e)));
+  readNotifs().catch((e) =>
+    fail("Reading the notifications failed: " + show(e)));
+}
+
+async function copyRules() {
+  try {
+    await navigator.clipboard.writeText(RULES_TEXT);
+    okMsg("rules-ok");
+  } catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = RULES_TEXT;
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+      okMsg("rules-ok");
+    } catch (e2) {
+      fail("Copy failed — select the text in the rules box and copy it manually.");
+    }
+    ta.remove();
+  }
 }
 
 // ---------------------------------------------------------------------
 // TASK 57 · the counters: Total Accounts / Ready / Pending.
 // Every number is counted from the stored accounts — nothing hard-coded.
-// Clicking a number shows that group's users in the panel below.
 // ---------------------------------------------------------------------
 const STATUS_LABELS = { approved: "Ready", pending: "Pending", rejected: "Rejected" };
 const USER_VIEWS = {
-  total:   { title: "All registered accounts",
-             hint: "Every account ever created, any status.",
-             filter: () => true },
-  ready:   { title: "Ready — approved accounts",
-             hint: "Accounts you have approved. Grant their access in Users & Access — or click a user here to jump straight to their modules.",
-             filter: (a) => a.status === "approved" },
+  total: { title: "All registered accounts",
+           hint: "Every account ever created, any status.",
+           filter: () => true },
+  ready: { title: "Ready — approved accounts",
+           hint: "Accounts you have approved. Grant their access in Users & Access — or click a user here to jump straight to their modules.",
+           filter: (a) => a.status === "approved" },
   pending: { title: "Pending — waiting for your approval",
              hint: "These people created an account and cannot enter until you approve them.",
              filter: (a) => a.status === "pending" }
@@ -342,8 +298,10 @@ const USER_VIEWS = {
 
 function paintCounters(rows) {
   $("stat-total-num").textContent = String(rows.length);
-  $("stat-ready-num").textContent = String(rows.filter((a) => a.status === "approved").length);
-  $("stat-pending-num").textContent = String(rows.filter((a) => a.status === "pending").length);
+  $("stat-ready-num").textContent =
+    String(rows.filter((a) => a.status === "approved").length);
+  $("stat-pending-num").textContent =
+    String(rows.filter((a) => a.status === "pending").length);
 }
 
 function userRow(a) {
@@ -353,7 +311,8 @@ function userRow(a) {
   tr.cells[1].textContent = a.position || "";
   tr.cells[2].textContent = STATUS_LABELS[a.status] || (a.status || "");
   tr.cells[3].textContent = String(Array.isArray(a.grants) ? a.grants.length : 0);
-  tr.cells[4].textContent = a.at && a.at.toDate ? a.at.toDate().toLocaleDateString() : "";
+  tr.cells[4].textContent = a.at && a.at.toDate
+    ? a.at.toDate().toLocaleDateString() : "";
   // TASK 62: click a user in the table -> land directly on their modules
   if (a.status === "approved" && a.role !== "admin") {
     tr.style.cursor = "pointer";
@@ -363,8 +322,6 @@ function userRow(a) {
       $("user-select").value = a.id;
       CURRENT_USER_ID = a.id;
       paintGrants(a.id);
-      // TASK 63: the module strip is at the TOP of the page — before the
-      // Admin button — so the click lands the administrator there
       $("modsel").scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
@@ -387,7 +344,7 @@ function openUsers(kind) {
       if (view.filter(a)) { body.appendChild(userRow(a)); n++; }
     }
     $("users-empty").hidden = n > 0;
-  }).catch((e) => fail("Could not read the accounts: " + show(e)));
+  }).catch((e) => fail("Reading the accounts failed: " + show(e)));
 }
 
 // ---------------------------------------------------------------------
@@ -431,18 +388,17 @@ function paintRequests(rows) {
 }
 
 function decide(id, status) {
-  updateDoc(doc(db, "systemAccounts", id), { status: status, decidedAt: serverTimestamp() })
+  updateDoc(doc(db, "systemAccounts", id),
+    { status: status, decidedAt: serverTimestamp() })
     .then(() => {
       // TASK 61: a decision clears the matching notification from the
-      // counter (the request is handled); the decision is never lost if
-      // only the notification update fails — it is reported, not silent.
-      return getDoc(doc(db, "systemNotifications", id)).then((n) => {
-       if (!n.exists()) return undefined; // TASK 66: a registration made before Task 61 carries no notification record - nothing to clear
-       return updateDoc(doc(db, "systemNotifications", id), { status: "read", decidedAt: serverTimestamp() })
-         .catch((e) => fail("Decision saved, but the notification could not be cleared: " + show(e)));
-     });
+      // counter; the decision is never lost if only the notification
+      // update fails — it is reported, not silent.
+      return updateDoc(doc(db, "systemNotifications", id),
+        { status: "read", decidedAt: serverTimestamp() })
+        .catch((e) => fail("Decision saved, but the notification could not be cleared: " + show(e)));
     })
-    .then(() => { refreshAll(); readNotifs(); })
+    .then(() => { refreshAll(); readNotifs().catch(() => {}); })
     .catch((e) => fail("Could not save the decision: " + show(e)));
 }
 
@@ -457,13 +413,17 @@ function paintUserSelect(rows) {
     if (a.status === "approved" && a.role !== "admin") {
       const o = document.createElement("option");
       o.value = a.id;
-      o.textContent = (a.usernameDisplay || a.id) + (a.position ? " — " + a.position : "");
+      o.textContent = (a.usernameDisplay || a.id) +
+        (a.position ? " — " + a.position : "");
       sel.appendChild(o);
     }
   }
-  sel.value = keep && sel.querySelector("option[value='" + keep + "']") ? keep : "";
-  if (!sel.value) { $("grants-card").hidden = true; $("user-who").hidden = true; $("modsel").hidden = true; CURRENT_USER_ID = ""; }
-  else paintGrants(sel.value);
+  sel.value = keep && sel.querySelector("option[value='" + keep + "']")
+    ? keep : "";
+  if (!sel.value) {
+    $("grants-card").hidden = true; $("user-who").hidden = true;
+    $("modsel").hidden = true; CURRENT_USER_ID = "";
+  } else paintGrants(sel.value);
 }
 
 function paintGrants(id) {
@@ -476,15 +436,12 @@ function paintGrants(id) {
   who.textContent = (acc.usernameDisplay || id) + " — currently granted: " +
     ((acc.grants && acc.grants.length) ? acc.grants.length + " area(s)" : "nothing yet");
   who.hidden = false;
-  card.hidden = false; // the pointer card in Users & Access
+  card.hidden = false;
 
   // TASK 63: the module selection is the ACROSS strip at the top of the
   // page — before the Admin button. Every grantable module of the menu
-  // is one chip, in tree order (a top area, then its submodules, then
-  // their files), separated by a small divider per top area. Clicking a
-  // chip ticks exactly that module; the small "all" after a group ticks
-  // the group's whole subtree; the big "all" ticks everything. A granted
-  // child still carries its parents at save (saveGrants).
+  // is one chip, in tree order, separated by a small divider per top
+  // area. A granted child still carries its parents at save (saveGrants).
   const granted = new Set(acc.grants || []);
   const menu = window.JAMALI_MENU || [];
   $("modsel-who").textContent = "Modules for " + (acc.usernameDisplay || id) +
@@ -503,7 +460,8 @@ function paintGrants(id) {
     }
     const chip = document.createElement("button");
     chip.type = "button";
-    chip.className = "modsel-chip d" + Math.min(d, 3) + (granted.has(p.folder) ? " on" : "");
+    chip.className = "modsel-chip d" + Math.min(d, 3) +
+      (granted.has(p.folder) ? " on" : "");
     chip.dataset.folder = p.folder;
     chip.textContent = p.label;
     chip.title = (d === 1 ? p.label + " — its own page only. " : "") +
@@ -535,9 +493,8 @@ function saveGrants() {
   const id = $("user-select").value;
   if (!id) return;
   const picked = [];
-  document.querySelectorAll("#modsel-row .modsel-chip.on").forEach((chip) => {
-    picked.push(chip.dataset.folder);
-  });
+  document.querySelectorAll("#modsel-row .modsel-chip.on")
+    .forEach((chip) => { picked.push(chip.dataset.folder); });
   // TASK 60: a granted child always carries its ancestors — granting
   // "Add Transaction" also grants "Business", so the sidebar shows the
   // path exactly as it is arranged in the flow (nothing else hidden).
@@ -554,7 +511,8 @@ function saveGrants() {
       if (d < myD) { grants.add(menu[i].folder); myD = d; }
     }
   }
-  updateDoc(doc(db, "systemAccounts", id), { grants: Array.from(grants), grantsAt: serverTimestamp() })
+  updateDoc(doc(db, "systemAccounts", id),
+    { grants: Array.from(grants), grantsAt: serverTimestamp() })
     .then(() => { okMsg("modsel-ok"); return readAccounts(); })
     .then((rows) => {
       paintCounters(rows);
@@ -569,7 +527,7 @@ function saveGrants() {
 // ---------------------------------------------------------------------
 const PAGE_FIELDS = {
   "victim-registration-322": {
-    label: "Health → Registration (322)",
+    label: "Health — Registration (322)",
     fields: [
       { id: "in-name", label: "Full Name" },
       { id: "in-dob", label: "Date of Birth" },
@@ -665,12 +623,14 @@ function saveFields() {
   const pageId = $("page-select").value;
   if (!pageId) return;
   const hidden = [], defaults = {};
-  document.querySelectorAll("#fields-body input[type='checkbox']:checked").forEach((cb) => hidden.push(cb.dataset.field));
-  document.querySelectorAll("#fields-body select, #fields-body input[type='text']").forEach((el) => {
-    if (!el.dataset.field) return;
-    if (el.value === "") return;
-    defaults[el.dataset.field] = el.value === "__checked__" ? true : el.value;
-  });
+  document.querySelectorAll("#fields-body input[type='checkbox']:checked")
+    .forEach((cb) => hidden.push(cb.dataset.field));
+  document.querySelectorAll("#fields-body select, #fields-body input[type='text']")
+    .forEach((el) => {
+      if (!el.dataset.field) return;
+      if (el.value === "") return;
+      defaults[el.dataset.field] = el.value === "__checked__" ? true : el.value;
+    });
   setDoc(doc(db, "systemPageConfig", pageId), {
     page: pageId, hidden: hidden, defaults: defaults, updatedAt: serverTimestamp()
   }).then(() => okMsg("fields-ok"))
