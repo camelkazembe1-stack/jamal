@@ -1,4 +1,4 @@
-/* JAMALI — shared sidebar (every page except index.html) — TASK 58 REWRITE.
+/* JAMALI — shared sidebar (every page except index.html) — TASK 60B.
    THE TWO IRON RULES (unchanged):
    - this file holds NO page data (the tree comes from menu.js)
    - this file fetches NO page data (the tree is built from menu.js only)
@@ -37,15 +37,21 @@
      nothing happens — no extra reads, no flicker.
 
    TASK 60 — the administrator controls what every page shows:
-   - on every page the administrator sees a red dash "-" beside every
-     input, select, textarea, button and section — and beside every
-     sidebar entry. Clicking a dash hides that element from every
-     non-administrator account; the administrator keeps seeing it, with
-     the dash turning SOLID RED while the element is hidden for others.
+   - TASK 60B: the red dash "-" lives on the PAGES ONLY — beside every
+     input, select, textarea, button and section, one PAGE dash per page
+     (pinned to the bottom-right corner) and one dash per home tile.
+     The sidebar stays CLEAN: no dashes there, for anyone.
+   - clicking a dash hides that element from every non-administrator
+     account; the administrator keeps seeing it, with the dash turning
+     SOLID RED while the element is hidden for others.
    - hiding a PARENT hides its CHILDREN for users automatically: a
      hidden section hides all the fields and buttons inside it, and a
-     hidden sidebar folder hides its whole branch — in the sidebar AND
-     on the pages (opening a hidden page directly shows a notice).
+     hidden tile (Business / Computer / Health) hides the whole folder
+     branch — in the sidebar AND on the pages (opening a hidden page
+     directly shows a notice). The PAGE dash hides the whole page: the
+     notice replaces it and its sidebar entry disappears for users.
+   - the administrator's sidebar keeps the FULL tree with hidden entries
+     struck through (never dashes); users never see hidden entries.
    - normal users never see the dashes and never see hidden elements.
      What a user gets = granted in Users & Access MINUS what the
      administrator hid with the dashes.
@@ -101,6 +107,7 @@
   // ===================================================================
   var VIS = { fields: {}, menu: {} };   // filled by bootVisibility()
   var VIS_DOC = ["systemPageConfig", "visibility"];
+  var DASHES = {};   // TASK 60B: one dash per key — reused across scans, never duplicated
 
   function isAdmin() {
     return !!(session && session.role === "admin");
@@ -149,6 +156,19 @@
   // A user may open a folder when it is granted AND not hidden (task 60).
   function userFolderOpen(folder) {
     return folderAllowed(folder) && !menuHidden(folder);
+  }
+
+  // TASK 60B: the page id behind a sidebar entry, e.g. business -> "business/2"
+  function pageIdOfFolder(folder) {
+    for (var i = 0; i < PAGES.length; i++) {
+      if (PAGES[i].folder === folder) return folder + "/" + PAGES[i].n;
+    }
+    return null;
+  }
+
+  // TASK 60B: the page-level hide (the PAGE dash stores "<page>:__page__")
+  function pageHidden(pid) {
+    return !!(pid && VIS.fields[pid + ":__page__"]);
   }
 
   // Hide entries the session may not open, BEFORE the tree is drawn:
@@ -268,14 +288,18 @@
     " body.jamali-sidebar-open #jamali-sidebar{transform:none}",
     " #jamali-burger{display:flex}",
     " body.jamali-sidebar-open #jamali-overlay{display:block}}",
-    ".jamali-dash{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;",
-    "padding:0 5px;margin:0 0 0 6px;border-radius:6px;border:1px solid #fca5a5;background:#fff;",
-    "color:#dc2626;font-weight:900;font-size:13px;line-height:1;cursor:pointer;flex:0 0 auto;",
-    "vertical-align:middle}",
+    ".jamali-dash{display:inline-flex;align-items:center;justify-content:center;width:20px;",
+    "min-width:20px;max-width:20px;height:20px;box-sizing:border-box;padding:0;",
+    "margin:0 0 0 6px;border-radius:6px;border:1px solid #fca5a5;background:#fff;",
+    "color:#dc2626;font-weight:900;font-size:13px;line-height:1;cursor:pointer;",
+    "flex:0 0 20px;align-self:center;vertical-align:middle}",
     ".jamali-dash:hover{background:#fee2e2}",
     ".jamali-dash.jamali-off{background:#dc2626;color:#fff;border-color:#b91c1c}",
     ".jamali-vis-mark{outline:2px dashed #f87171;outline-offset:2px}",
-    "#jamali-sidebar .jamali-dash{margin:0 6px}",
+    ".jamali-vis-host{position:relative}",
+    ".jamali-sec-dash{position:absolute;top:6px;right:6px;margin:0;z-index:6}",
+    ".jamali-page-dash{position:fixed;bottom:14px;right:14px;margin:0;z-index:1001}",
+    "#jamali-sidebar .node.jamali-menu-off a{opacity:.5;text-decoration:line-through}",
     ".jamali-vis-notice{max-width:560px;margin:60px auto;padding:26px 30px;border:1px solid #fca5a5;",
     "border-radius:14px;background:#fff5f5;color:#7f1d1d;font-size:15px;line-height:1.6}",
     ".jamali-vis-notice b{display:block;font-size:17px;margin-bottom:8px}"
@@ -438,7 +462,10 @@
       var m = href.match(/^\/([a-z0-9-]+)\//i);
       if (!m) continue;
       if (m[1] === current) continue;                    // the page you are on
-      if (!folderAllowed(m[1]) || (!isAdmin() && menuHidden(m[1]))) links[i].style.display = "none";
+      if (!folderAllowed(m[1])) { links[i].style.display = "none"; continue; }
+      if (isAdmin()) continue;
+      var rest = href.slice(m[0].length).replace(/\.html$/, "").replace(/\/+$/, "");
+      if (menuHidden(m[1]) || pageHidden(m[1] + "/" + rest)) links[i].style.display = "none";
     }
   }
   if (document.readyState === "loading") {
@@ -456,36 +483,40 @@
     pageBoot();
   });
 
-  // ---- sidebar: users lose the hidden branches, admin gets the dashes --
+  // ---- sidebar: CLEAN for everyone (TASK 60B) ---------------------------
+  // NO dashes in the sidebar — never, for anyone. Users lose the hidden
+  // branches; the administrator keeps the FULL tree (nothing removed, no
+  // dashes) with hidden entries struck through so the state stays
+  // readable. All hiding is done on the PAGES: tile dashes and the PAGE
+  // dash write the menu/page state this pass renders.
   function applySidebarVis() {
     var nodes = document.querySelectorAll("#jamali-sidebar .node[data-folder]");
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
       var f = node.getAttribute("data-folder");
       if (isAdmin()) {
-        injectNodeDash(node, f);
-      } else if (menuHidden(f)) {
+        node.classList.toggle("jamali-menu-off", menuHidden(f) || pageHidden(pageIdOfFolder(f)));
+      } else if (menuHidden(f) || pageHidden(pageIdOfFolder(f))) {
         node.style.display = "none";
         var nx = node.nextElementSibling;
         if (nx && nx.classList && nx.classList.contains("kids")) nx.style.display = "none";
       }
     }
-  }
-
-  function injectNodeDash(node, folder) {
-    if (node.querySelector(".jamali-dash")) return;
-    var b = document.createElement("button");
-    b.type = "button";
-    b.className = "jamali-dash";
-    b.textContent = "-";
-    setDashState(b, menuHidden(folder), "this menu area");
-    b.addEventListener("click", function (ev) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      toggleMenuHide(folder, b);
-    });
-    var tg = node.querySelector(".tg");
-    if (tg) node.insertBefore(b, tg); else node.appendChild(b);
+    // a folder whose every child is hidden must not keep a dead arrow
+    if (!isAdmin()) {
+      var tgl = document.querySelectorAll("#jamali-sidebar .tg");
+      for (var j = 0; j < tgl.length; j++) {
+        var box = tgl[j].parentNode.nextElementSibling;
+        if (!box || !box.classList || !box.classList.contains("kids")) continue;
+        var rows = box.querySelectorAll(".node");
+        var alive = 0;
+        for (var r = 0; r < rows.length; r++) { if (isVisibleEl(rows[r])) alive++; }
+        if (!alive) {
+          tgl[j].style.display = "none";
+          box.style.display = "none";
+        }
+      }
+    }
   }
 
   function setDashState(b, off, what) {
@@ -517,7 +548,9 @@
         return saveVisibility();
       });
     }).then(function () {
-      setDashState(btn, menuHidden(folder), "this menu area");
+      setDashState(btn, menuHidden(folder), "the whole " + folder + " area");
+      applySidebarVis();
+      scanAdminPage(mainEl());
     }).catch(function (e) {
       console.warn("visibility save failed", e);
       dashError(btn);
@@ -530,9 +563,13 @@
   }
 
   // ---- the page itself: admin sees dashes, users get the hides ---------
+  function mainEl() {
+    return document.getElementById("app") || document.querySelector("main") || document.body;
+  }
+
   function pageBoot() {
     if (!PAGE_ID) return;
-    var main = document.getElementById("app") || document.body;
+    var main = mainEl();
     var run = function () {
       if (isAdmin()) {
         scanAdminPage(main);
@@ -550,7 +587,7 @@
 
   // ---- users: block a page the administrator hid, apply the hides ------
   function guardUserPage(main) {
-    if (menuHidden(current)) { blockPage(); return; }
+    if (menuHidden(current) || pageHidden(PAGE_ID)) { blockPage(); return; }
     if (!folderAllowed(current) && ALWAYS_OPEN.indexOf(current) === -1) { blockPage(); return; }
     applyUserHides(main);
     watchPage(main, function () { applyUserHides(main); });
@@ -603,6 +640,23 @@
       if (!key || map[key]) return;
       map[key] = { el: el, wrap: wrap || null, dash: null };
     }
+    // TASK 60B: on the home page the tiles ARE the areas. One dash per
+    // tile; hiding the Business tile hides the whole Business branch
+    // (sidebar + pages). Only links to known menu folders count.
+    if (current === "home") {
+      var tiles = root.querySelectorAll("a[href]");
+      for (var t = 0; t < tiles.length; t++) {
+        var ta = tiles[t];
+        if (insideJamaliUi(ta) || !isVisibleEl(ta)) continue;
+        var tm = (ta.getAttribute("href") || "").match(/^\/([a-z0-9-]+)\//i);
+        if (!tm || tm[1] === current) continue;
+        var known = false;
+        for (var q = 0; q < PAGES.length; q++) {
+          if (PAGES[q].folder === tm[1]) { known = true; break; }
+        }
+        if (known) put("tile-" + tm[1], ta, null);
+      }
+    }
     var ctrls = root.querySelectorAll("input, select, textarea");
     for (var i = 0; i < ctrls.length; i++) {
       var c = ctrls[i];
@@ -623,7 +677,7 @@
       if (insideJamaliUi(b) || !isVisibleEl(b)) continue;
       put(b.id || ("btn-" + (slug(b.textContent) || ("x" + (++seq)))), b, null);
     }
-    var secs = root.querySelectorAll("section, fieldset, .card");
+    var secs = current === "home" ? [] : root.querySelectorAll("section, fieldset, .card");
     for (var k = 0; k < secs.length; k++) {
       var s = secs[k];
       if (insideJamaliUi(s) || !isVisibleEl(s)) continue;
@@ -656,23 +710,39 @@
     }
   }
 
-  // ---- administrator: a dash on everything, marked live -----------------
+  // ---- administrator: a dash on everything (PAGES only), marked live ----
+  // TASK 60B: dashes live in the DASHES registry and are REUSED across
+  // scans — the observer re-runs this function, but a dash is created and
+  // inserted exactly once (no duplicates, no pile-up).
   function scanAdminPage(root) {
     var map = scanTargets(root);
     var hidden = fieldsForPage();
+    // the PAGE itself: one dash, fixed at the bottom-right corner, hides
+    // the whole page (content -> notice, sidebar entry gone for users)
+    if (current !== "home" && root && root !== document.body && !map.__page__) {
+      map.__page__ = { el: root, wrap: null, dash: null, isPage: true };
+    }
     for (var key in map) {
       if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
       var t = map[key];
-      if (!t.dash) {
-        var b = document.createElement("button");
+      var b = DASHES[key];
+      if (!b || !document.documentElement.contains(b)) {
+        b = document.createElement("button");
         b.type = "button";
         b.className = "jamali-dash";
         b.textContent = "-";
         b.addEventListener("click", makeToggler(key, b));
         placeDash(t, b);
-        t.dash = b;
+        DASHES[key] = b;
       }
-      setDashState(t.dash, effHidden(key, t.el, hidden), key);
+      t.dash = b;
+      if (key.indexOf("tile-") === 0) {
+        setDashState(b, menuHidden(key.slice(5)), "the whole " + key.slice(5) + " area");
+      } else if (key === "__page__") {
+        setDashState(b, !!hidden.__page__, "this page");
+      } else {
+        setDashState(b, effHidden(key, t.el, hidden), key);
+      }
     }
   }
 
@@ -689,11 +759,24 @@
   }
 
   function placeDash(t, b) {
+    if (b.parentNode) return;   // a dash is inserted exactly once
     var el = t.el;
+    if (t.isPage) {
+      b.classList.add("jamali-page-dash");
+      el.insertBefore(b, el.firstChild);
+      return;
+    }
     if (t.wrap) { t.wrap.appendChild(b); return; }
     if (el.tagName === "SECTION" || el.tagName === "FIELDSET" || el.classList.contains("card")) {
       var h = el.querySelector("h1,h2,h3,h4");
-      if (h && h.parentNode === el) { h.insertAdjacentElement("afterend", b); return; }
+      if (h && h.parentNode === el && isVisibleEl(h)) {
+        h.insertAdjacentElement("afterend", b);   // inline, on the heading's line
+        return;
+      }
+      // no visible heading: pin the dash to the container's corner so it
+      // never floats alone in the content flow (the old abnormality)
+      el.classList.add("jamali-vis-host");
+      b.classList.add("jamali-sec-dash");
       el.insertBefore(b, el.firstChild);
       return;
     }
@@ -702,6 +785,7 @@
 
   function makeToggler(key, btn) {
     return function () {
+      if (key.indexOf("tile-") === 0) { toggleMenuHide(key.slice(5), btn); return; }
       import("/firebase.js").then(function (fb) {
         return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function (snap) {
           var d = snap.exists() ? snap.data() : {};
