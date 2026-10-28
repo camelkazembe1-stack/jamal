@@ -91,17 +91,19 @@
       <div class="token-row"><input id="ca-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
       <button class="wide" id="create-btn" type="button">Create Account</button>
       <p class="swap">Already registered? <a id="go-login">Back to Login</a></p>
+      <p class="google-note">No Google sign-in needed here — the administrator's Google is the house key. After you create the account, the administrator approves it and you log in with your username and token.</p>
     </section>
 
     <!-- ======== TASK 61 · WAITING FOR ADMINISTRATOR APPROVAL ========
-         One registration per Google identity: while the request is pending
-         this screen REPLACES the registration form, so the same user can
-         never register twice. -->
+         TASK 64: the staff journey is GOOGLE-FREE — the request is one
+         staff account per USERNAME, and this screen takes over right
+         after the form is submitted. The administrator's Google sign-in
+         stays the single house key for the whole house. -->
     <section id="panel-wait" class="hidden">
       <p class="wait-title">Waiting for administrator approval.</p>
-      <p class="sub">Your registration is saved, <span id="wait-user"></span>. The administrator has been notified and must approve it before you can enter. This screen replaces the registration form, so you cannot register again in the meantime.</p>
+      <p class="sub">Your registration is saved, <span id="wait-user"></span>. The administrator has been notified and must approve it before you can enter. You will log in with your username and your four-digit token — no Google needed.</p>
       <button class="wide" id="check-approval" type="button">Check again</button>
-      <p class="swap">Wrong Google account? <a id="wait-switch">Use a different one</a></p>
+      <p class="swap">Not this browser? <a id="wait-switch">Back to the start</a></p>
     </section>
 
     <p class="status" id="status"></p>
@@ -160,20 +162,12 @@
     }
     $("go-login").addEventListener("click", () => showPanel("login"));
 
-    // TASK 61: opening the registration form first checks whether this
-    // Google identity already has a request — a pending request shows the
-    // waiting screen instead of the form (no duplicate registration).
-    $("go-create").addEventListener("click", async () => {
-      if (!auth.currentUser) { showPanel("create"); return; }
-      try {
-        const st = await checkRegistration();
-        if (st) return; // the waiting / approved / rejected screen took over
-        showPanel("create");
-      } catch (err) {
-        showPanel("create");
-        say("Could not check your registrations: " + friendly(err));
-      }
-    });
+    // TASK 64: opening the registration form NEVER needs Google — the
+    // administrator's Google sign-in is the only house key, so ONE email
+    // covers the whole house. Any new staff member registers from any
+    // browser (even the administrator's): one staff per USERNAME, never
+    // one staff per email.
+    $("go-create").addEventListener("click", () => { showPanel("create"); });
 
     // recovery — the username travels with the link
     $("go-forgot-token").addEventListener("click", () => {
@@ -243,23 +237,48 @@
 
     // "Check again" on the waiting screen — if the administrator approved
     // in the meantime, the user is walked straight to the login.
+    // TASK 64: staff have no Google identity, so their check runs by the
+    // username this browser just registered.
+    let lastRegistered = "";
     $("check-approval").addEventListener("click", async () => {
       const btn = $("check-approval");
       btn.disabled = true;
       try {
-        const st = await checkRegistration();
-        if (!st) { showPanel("login"); say("No registration found for this Google account."); }
+        if (!auth.currentUser && lastRegistered) {
+          const snap = await getDoc(doc(db, "systemAccounts", lastRegistered));
+          if (!snap.exists()) {
+            showPanel("login");
+            say("No registration found for " + lastRegistered + ".");
+          } else {
+            const a = snap.data();
+            $("li-username").value = a.usernameDisplay || lastRegistered;
+            if (a.status === "approved") {
+              showPanel("login");
+              say("Approved! Enter your four-digit token to log in.", true);
+            } else if (a.status === "rejected") {
+              showPanel("login");
+              say("This registration was not approved. Ask the administrator.");
+            } else {
+              showPanel("wait");
+              say("Still waiting for administrator approval.", true);
+            }
+          }
+        } else {
+          const st = await checkRegistration();
+          if (!st) { showPanel("login"); say("No registration found for this Google account."); }
+        }
       } catch (err) {
         say("Could not check: " + friendly(err));
       }
       btn.disabled = false;
     });
 
-    // Wrong account? Sign the house key out and return to the start.
+    // Back to the start — the registration stays saved (TASK 64: this is
+    // no longer about Google accounts; staff are never bound to one).
     $("wait-switch").addEventListener("click", async () => {
-      try { await signOut(auth); } catch (err) { say("Could not sign out: " + friendly(err)); return; }
+      try { if (auth.currentUser) await signOut(auth); } catch (err) { say("Could not sign out: " + friendly(err)); return; }
       showPanel("login");
-      say("Signed out. Sign in with the Google account you registered with.");
+      say("Back to the start. The registration stays saved.");
     });
 
     // ------------------------------------------------------------------
@@ -271,7 +290,7 @@
     // ------------------------------------------------------------------
     function writeSession(account, user) {
       const s = {
-        uid: user.uid,
+        uid: user ? user.uid : "",  // TASK 64: staff sessions carry no Google uid
         username: account.usernameDisplay || account.id,
         position: account.position || "",
         role: account.role === "admin" ? "admin" : "user",
@@ -305,14 +324,14 @@
       btn.disabled = true; say("");
 
       try {
-        const user = await ensureHouse();
-
-        // ---- administrator: the credentials decide, not the email --------
+        // ---- administrator: the house key (Google) is asked for HERE and
+        // ONLY here — the staff journey never touches Google (TASK 64) ----
         // (requirement 3/4/5) The token must match the administrator's
         // secret; when it does, ANY Google account may hold the role —
         // the first login claims it, later logins from other Google
         // accounts re-claim it (the security rules verify the hashes).
         if (norm(username) === ADMIN_USERNAME) {
+          const user = await ensureHouse();
           const tokHash = await sha(token);
           if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); showRecovery(); btn.disabled = false; return; }
           const admins = await getDocs(collection(db, "systemAdmins"));
@@ -365,7 +384,7 @@
           return;
         }
 
-        // ---- normal account login ----
+        // ---- staff: username + token only, NO Google anywhere (TASK 64) --
         const id = norm(username);
         const snap = await getDoc(doc(db, "systemAccounts", id));
         if (!snap.exists()) { say("No account with this username."); btn.disabled = false; return; }
@@ -373,7 +392,10 @@
 
         if (acc.status === "pending") { say("Waiting for administrator approval."); btn.disabled = false; return; }
         if (acc.status === "rejected") { say("This account was not approved. Ask the administrator."); btn.disabled = false; return; }
-        if (acc.googleUid && acc.googleUid !== user.uid) {
+        // TASK 64: an account is only compared against a Google identity
+        // when that identity actually sits in this browser (staff accounts
+        // are unbound and pass straight through).
+        if (acc.googleUid && auth.currentUser && acc.googleUid !== auth.currentUser.uid) {
           say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
         }
 
@@ -382,7 +404,7 @@
         const tokHash2 = await sha(token);
         if (credSnap.data().tokenHash !== tokHash2) { say("Wrong token."); showRecovery(); btn.disabled = false; return; }
 
-        writeSession({ id, ...acc }, user);
+        writeSession({ id, ...acc }, auth.currentUser);
         location.href = "/home/1";
       } catch (err) {
         say("Login failed: " + friendly(err));
@@ -409,24 +431,14 @@
       btn.disabled = true; say("");
 
       try {
-        const user = await ensureHouse();
-
-        // requirement 8: ONE registration per Google identity — while a
-        // request is pending the form can never be submitted again; the
-        // waiting screen takes over instead.
-        const rows = await accountsOfUid(user.uid);
-        const pend = rows.find((a) => a.status === "pending");
-        if (pend) { waitPanelFor(pend); btn.disabled = false; return; }
-        const appr = rows.find((a) => a.status === "approved");
-        if (appr) {
-          $("li-username").value = appr.usernameDisplay || appr.id || "";
-          showPanel("login");
-          say("You already have an approved account. Enter your token to log in.", true);
-          btn.disabled = false; return;
-        }
-
+        // TASK 64: the staff journey needs NO Google sign-in at all. The
+        // request is saved exactly as it is typed — one staff per
+        // username, NEVER bound to an email — so many staff accounts live
+        // under the one administrator email that holds the house key.
+        // The old "you already have an approved account" wall is GONE:
+        // registering from the administrator's browser simply works.
         const id = norm(username);
-        if (id === ADMIN_USERNAME) { say("This username is reserved."); btn.disabled = false; return; }
+        if (id === norm(ADMIN_USERNAME)) { say("This username is reserved."); btn.disabled = false; return; }
 
         const dup = await getDocs(query(collection(db, "systemAccounts"), where("usernameLower", "==", id), limit(1)));
         if (!dup.empty) { say("That username is already taken."); btn.disabled = false; return; }
@@ -436,20 +448,21 @@
         const batch = writeBatch(db);
         batch.set(doc(db, "systemAccounts", id), {
           usernameLower: id, usernameDisplay: username, position: position, role: "user",
-          status: "pending", googleUid: user.uid, grants: [], at: serverTimestamp()
+          status: "pending", googleUid: "", grants: [], at: serverTimestamp()
         });
         batch.set(doc(db, "systemCredentials", id), {
-          passHash: passHash, tokenHash: tokHash, phone: phone, googleUid: user.uid
+          passHash: passHash, tokenHash: tokHash, phone: phone, googleUid: ""
         });
         // requirement 9: the registration rings the administrator's bell —
         // one notification per request, counted on the administrator page.
         batch.set(doc(db, "systemNotifications", id), {
           type: "registration", username: username, usernameLower: id,
-          googleUid: user.uid, status: "unread", at: serverTimestamp()
+          googleUid: "", status: "unread", at: serverTimestamp()
         });
         await batch.commit();
 
         // requirements 7 + 8: the exact waiting screen, and the form is gone
+        lastRegistered = id;
         $("wait-user").textContent = username;
         showPanel("wait");
         say("Waiting for administrator approval.", true);
@@ -467,7 +480,18 @@
     // Login / Create Account screen.
     // ------------------------------------------------------------------
     onAuthStateChanged(auth, (user) => {
-      if (!user) { handleDeniedAndNeed(); return; }
+      if (!user) {
+        // TASK 64: a staff session lives without Google — if this browser
+        // holds one, walk straight in; otherwise this page is the entrance.
+        let staff = false;
+        try {
+          const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+          staff = !!(s && !s.uid);
+        } catch (e) { staff = false; }
+        if (staff) { location.replace("/home/1"); return; }
+        handleDeniedAndNeed();
+        return;
+      }
       let valid = false;
       try {
         const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");

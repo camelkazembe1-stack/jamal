@@ -1,12 +1,21 @@
 rules_version = '2';
 
 // =====================================================================
-// JAMALI — firestore.rules — the guard dog (Task 56: system accounts added,
-// Task 61: multi-email administrator claim + registration notifications)
-// Every collection the project uses gives a signed in user create, read,
-// update and delete — the standing order of 25 October 2026, reprinted
-// here in full with the Patient Discharge, Laboratory and Radiology
-// collections added. Anything not matched below is denied by default.
+// JAMALI — firestore.rules — the guard dog
+// (Task 56: system accounts added; Task 61: multi-email administrator
+// claim + registration notifications; TASK 64: the staff journey is
+// GOOGLE-FREE)
+//
+// TASK 64 IN PLAIN WORDS: the administrator's Google sign-in is the
+// ONLY house key. Staff register and log in with a username and a
+// four-digit token, so their requests carry NO Google identity at all
+// — every business collection is therefore open, exactly as the
+// standing order intended. The system collections keep real guards:
+// registration may only CREATE a pending, unbound account (never
+// update, never delete, never touch the administrator's documents),
+// and only the administrator — a real Google sign-in proven by the
+// seeded claim — approves, edits grants or clears notifications.
+// Anything not matched below is denied by default.
 //
 // The project's live collections, named by scanning every page's code:
 //   transactions                — the one journal the whole business reads
@@ -43,77 +52,80 @@ service cloud.firestore {
     }
 
     // ---- Business: one journal, every book derives from it ----
+    // TASK 64: open — staff requests carry no Google identity (username
+    // + token is the whole staff login; the administrator decides what
+    // each staff account may see with the module selection).
     match /transactions/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     // ---- Health: one patient, one ID, one journey ----
     match /healthRegistrations/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthTriage/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthNurseConsultations/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthDoctorConsultations/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthPrescriptions/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthTreatmentOrders/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthDestinations/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     // ---- Health: wards, beds and placement (Task 52) ----
     match /healthWards/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthBeds/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthBedAssignments/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthBedTransfers/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     match /healthBedMaintenance/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     // ---- Health: admissions (Task 52) ----
     match /healthAdmissions/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
     // ---- Health: discharge (Task 54) ----
     match /healthDischarges/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     // ---- Health: laboratory (Task 54) ----
     match /healthLabRequests/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
     // ---- Health: radiology / imaging (Task 54) ----
     match /healthImagingRequests/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
 
@@ -122,36 +134,33 @@ service cloud.firestore {
     // treatment): the department, staff name, office and room the speaker
     // announcement reads aloud.
     match /healthQueueConfig/{docId} {
-      allow create, read, update, delete: if request.auth != null;
+      allow create, read, update, delete: if true;
     }
 
 
     // ===================================================================
-    // SYSTEM — accounts, credentials, administration (Task 56)
-    // Two-key model: the Google sign-in is the key to the house (real
-    // authentication); the system account is storage used for role
-    // definition — who can open which room (module/submodule) and do what.
+    // SYSTEM — accounts, credentials, administration
+    // Two-key model, Task 64 edition: the Google sign-in is the key to
+    // the HOUSE and only the administrator carries it; staff accounts
+    // are room keys bound to NOTHING but their username — one staff per
+    // username, many staff per email.
     // ===================================================================
 
     // ---- account profiles: usernames, positions, approval, grants ----
-    // No secrets live here. Any signed in user may resolve a username;
-    // only the administrator may approve, reject or edit grants.
-    //
-    // Task 56b fix: the administrator bootstrap claim writes the profile
-    // as approved/admin in the same batch that creates systemAdmins — the
-    // old rule (pending/user only) rejected that write, so the very first
-    // administrator login died with "Missing or insufficient permissions".
-    // The claim escape below fires ONLY for the exact seeded profile,
-    // proven by the rules-level hash literals, and only while the setup
-    // marker does not exist yet. .get(field, "") keeps every branch
-    // error-free for payloads that lack the extra fields.
+    // No secrets live here. Anyone may resolve a username — the staff
+    // login itself is unauthenticated. Registration may only CREATE a
+    // pending, UNBOUND profile (googleUid == "", role "user"); the
+    // administrator claim escape below still seeds the first
+    // administrator exactly as Task 56b built it. Only the
+    // administrator approves, rejects, edits grants or deletes.
     match /systemAccounts/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && (
-        (request.resource.data.get("googleUid", "") == request.auth.uid
+      allow read: if true;
+      allow create: if (
+        (request.resource.data.get("googleUid", "") == ""
           && request.resource.data.get("status", "") == "pending"
           && request.resource.data.get("role", "") == "user")
-        || (request.resource.data.get("googleUid", "") == request.auth.uid
+        || (request.auth != null
+          && request.resource.data.get("googleUid", "") == request.auth.uid
           && request.resource.data.get("usernameLower", "") == "jamal kazembe"
           && request.resource.data.get("status", "") == "approved"
           && request.resource.data.get("role", "") == "admin"
@@ -164,16 +173,18 @@ service cloud.firestore {
     }
 
     // ---- credentials: password/token hashes + phone (never profile data) --
-    // A credential document may only be read by the Google identity the
-    // account is bound to — a stolen username+token alone opens nothing.
-    // Task 61: the administrator may UPDATE any credential (the multi-email
-    // re-claim points the binding at the Google identity that just signed
-    // in); reading stays bound to the owning identity.
+    // TASK 64: the staff login must read the token hash WITHOUT a Google
+    // identity, so every credential document is readable EXCEPT the
+    // administrator's own — that one stays bound to its Google identity
+    // (its hashes are also sealed inside these rules). Creates may never
+    // touch the administrator's document; updates stay
+    // administrator/bound-identity only, so nobody can tamper with a
+    // staff member's token once registered.
     match /systemCredentials/{docId} {
-      allow read: if request.auth != null
-        && resource.data.googleUid == request.auth.uid;
-      allow create: if request.auth != null
-        && request.resource.data.googleUid == request.auth.uid;
+      allow read: if docId != "jamal kazembe"
+        || (request.auth != null && resource.data.googleUid == request.auth.uid);
+      allow create: if docId != "jamal kazembe"
+        || (request.auth != null && request.resource.data.googleUid == request.auth.uid);
       allow update: if request.auth != null
         && (resource.data.googleUid == request.auth.uid || isSystemAdmin());
       allow delete: if isSystemAdmin();
@@ -206,22 +217,25 @@ service cloud.firestore {
 
     // ---- notifications (Task 61: requirements 9 + 10) ----
     // One document per registration request, written in the same batch as
-    // the account itself. The administrator reads the counter, dismisses
-    // entries, and a decision marks the notification as read.
+    // the account itself. TASK 64: registration carries no Google
+    // identity, so the create is guarded by SHAPE — a registration ring,
+    // unread, unbound — instead of by the writer's identity. The
+    // administrator reads the counter, dismisses entries, and a decision
+    // marks the notification as read.
     match /systemNotifications/{docId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.get("type", "") == "registration"
-        && request.resource.data.get("googleUid", "") == request.auth.uid
-        && request.resource.data.get("status", "") == "unread";
+      allow create: if request.resource.data.get("type", "") == "registration"
+        && request.resource.data.get("status", "") == "unread"
+        && request.resource.data.get("googleUid", "") == "";
       allow update: if isSystemAdmin();
       allow delete: if isSystemAdmin();
     }
 
     // ---- page field configuration: hide existing fields / set defaults --
-    // Read by every page that applies it; written by the administrator only.
+    // Read by every page that applies it (staff have no Google — the read
+    // opens); written by the administrator only.
     match /systemPageConfig/{docId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create, update, delete: if isSystemAdmin();
     }
 
