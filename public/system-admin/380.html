@@ -15,6 +15,9 @@
     <a class="back" href="/home/1">&larr; Home</a>
     <h1>Account Administration</h1>
     <p class="sub">Approve account requests, decide who enters which room, and customize pages. Administrators see everything; every other account starts with everything hidden.</p>
+    <!-- TASK 61 · requirement 10: the button shows the number of -->
+    <!-- notifications awaiting attention -->
+    <button class="notif-btn" id="notif-open" type="button">Notifications <span class="badge" id="notif-badge" hidden>0</span></button>
   </section>
 
   <!-- ================= TASK 57 · THE COUNTERS ================= -->
@@ -50,6 +53,21 @@
     </div>
     <p class="empty" id="users-empty" hidden>No accounts in this view yet.</p>
     <p class="save-line"><button class="btn-ghost" id="users-close" type="button">Close</button></p>
+  </section>
+
+  <!-- ============ TASK 61 · NOTIFICATIONS PANEL ============
+       One notification per registration request; Review jumps to the
+       requests tab, Dismiss clears it from the counter. -->
+  <section class="card" id="notif-panel" hidden>
+    <h2>Notifications — awaiting your attention</h2>
+    <p class="hint">Every registration request sends you one notification. Review opens the Account Requests tab; Dismiss clears the notification from the counter.</p>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Username</th><th>Requested</th><th colspan="2">Action</th></tr></thead>
+        <tbody id="notif-body"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="notif-empty" hidden>No notifications — nothing is waiting for you.</p>
   </section>
 
   <nav class="tabs">

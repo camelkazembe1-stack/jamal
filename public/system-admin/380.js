@@ -1,5 +1,6 @@
-// JAMALI — Account Administration (380) — TASK 58 FULL REWRITE
+// JAMALI — Account Administration (380) — TASK 58 FULL REWRITE, TASK 61 UPDATE
 // One screen for the administrator: the counters (Total / Ready / Pending),
+// the NOTIFICATIONS (one per registration request, counted on the button),
 // the account requests, the per-user room keys, and the page field settings.
 //
 // REWRITE RULES (written in blood from the "nothing appears" reports):
@@ -12,7 +13,7 @@
 
 import {
   requireAuth, readSystemSession,
-  db, collection, getDocs, getDoc, doc, updateDoc, setDoc, serverTimestamp
+  db, collection, query, where, getDocs, getDoc, doc, updateDoc, setDoc, serverTimestamp
 } from "/firebase.js";
 
 const $ = (id) => document.getElementById(id);
@@ -24,13 +25,22 @@ function show(e) { return (e && (e.message || e.code)) ? (e.message || e.code) :
 
 // ---------------------------------------------------------------------
 // guard: administrators only (requireAuth also checks house + session)
+// TASK 61: the role is verified against the DATABASE, not the session
+// string — a staff position or a typed role can never open this page.
+// Only a systemAdmins document (created behind the security rules by the
+// administrator's real credentials) opens the administration.
 // ---------------------------------------------------------------------
 const user = await requireAuth();
 const session = readSystemSession();
 if (!session || session.role !== "admin") {
   location.replace("/?denied=" + encodeURIComponent("system-admin"));
 } else {
-  boot();
+  const admDoc = await getDoc(doc(db, "systemAdmins", user.uid));
+  if (!admDoc.exists()) {
+    location.replace("/?denied=" + encodeURIComponent("system-admin"));
+  } else {
+    boot();
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -38,6 +48,7 @@ if (!session || session.role !== "admin") {
 // ---------------------------------------------------------------------
 let ACCOUNTS = [];        // every account: { id, usernameDisplay, status, role, grants, ... }
 let CURRENT_USER_ID = ""; // the account picked in Users & Access
+let NOTIFS = [];          // TASK 61: unread notifications (one per request)
 
 async function readAccounts() {
   const snap = await getDocs(collection(db, "systemAccounts"));
@@ -56,6 +67,51 @@ function refreshAll() {
     paintUserSelect(rows);
     if (CURRENT_USER_ID) paintGrants(CURRENT_USER_ID);
   }).catch((e) => fail("Could not read the accounts: " + show(e)));
+}
+
+// ---------------------------------------------------------------------
+// TASK 61 · NOTIFICATIONS (requirements 9 + 10): every registration
+// request rings the bell. The button in the header shows the number of
+// notifications awaiting attention; the panel lists them with a jump to
+// the requests tab and a dismiss.
+// ---------------------------------------------------------------------
+async function readNotifs() {
+  const snap = await getDocs(query(collection(db, "systemNotifications"), where("status", "==", "unread")));
+  const rows = [];
+  snap.forEach((d) => { const n = d.data(); n.id = d.id; rows.push(n); });
+  rows.sort((x, y) => String(x.usernameLower || x.id || "").localeCompare(String(y.usernameLower || y.id || "")));
+  NOTIFS = rows;
+  paintNotifs();
+}
+
+function paintNotifs() {
+  const badge = $("notif-badge");
+  badge.textContent = String(NOTIFS.length);
+  badge.hidden = NOTIFS.length === 0; // the number ON the button (requirement 10)
+  const body = $("notif-body");
+  body.innerHTML = "";
+  for (const n of NOTIFS) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td></td><td></td><td></td><td></td>";
+    tr.cells[0].textContent = n.username || n.usernameLower || n.id;
+    tr.cells[1].textContent = n.at && n.at.toDate ? n.at.toDate().toLocaleString() : "";
+    const rev = document.createElement("button");
+    rev.className = "btn-ghost"; rev.type = "button"; rev.textContent = "Review";
+    rev.addEventListener("click", () => { $("notif-panel").hidden = true; $("tab-requests").click(); });
+    const dis = document.createElement("button");
+    dis.className = "btn-ghost btn-danger"; dis.type = "button"; dis.textContent = "Dismiss";
+    dis.addEventListener("click", () => dismissNotif(n.id));
+    tr.cells[2].appendChild(rev);
+    tr.cells[3].appendChild(dis);
+    body.appendChild(tr);
+  }
+  $("notif-empty").hidden = NOTIFS.length > 0;
+}
+
+function dismissNotif(id) {
+  updateDoc(doc(db, "systemNotifications", id), { status: "read", dismissedAt: serverTimestamp() })
+    .then(readNotifs)
+    .catch((e) => fail("Could not dismiss the notification: " + show(e)));
 }
 
 // ---------------------------------------------------------------------
@@ -90,7 +146,14 @@ function boot() {
   $("page-select").addEventListener("change", () => paintFields($("page-select").value));
   $("fields-save").addEventListener("click", saveFields);
   buildPageSelect();
+  // TASK 61: the bell — open/close the notifications panel
+  $("notif-open").addEventListener("click", () => {
+    const p = $("notif-panel");
+    p.hidden = !p.hidden;
+    if (!p.hidden) readNotifs().catch((e) => fail("Could not read the notifications: " + show(e)));
+  });
   refreshAll();
+  readNotifs().catch((e) => fail("Could not read the notifications: " + show(e)));
 }
 
 // ---------------------------------------------------------------------
@@ -189,7 +252,14 @@ function paintRequests(rows) {
 
 function decide(id, status) {
   updateDoc(doc(db, "systemAccounts", id), { status: status, decidedAt: serverTimestamp() })
-    .then(refreshAll)
+    .then(() => {
+      // TASK 61: a decision clears the matching notification from the
+      // counter (the request is handled); the decision is never lost if
+      // only the notification update fails — it is reported, not silent.
+      return updateDoc(doc(db, "systemNotifications", id), { status: "read", decidedAt: serverTimestamp() })
+        .catch((e) => fail("Decision saved, but the notification could not be cleared: " + show(e)));
+    })
+    .then(() => { refreshAll(); readNotifs(); })
     .catch((e) => fail("Could not save the decision: " + show(e)));
 }
 
