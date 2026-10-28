@@ -113,6 +113,39 @@
   // active page can still be highlighted in the family tree
   var current = location.pathname.split("/")[1];
 
+  // ===================================================================
+  // TASK 65 — THE HOUSE KEY IS CHECKED ON EVERY PAGE (requirement 1):
+  // a JAMALI link opened WITHOUT an active Google authentication
+  // session always lands on the Google sign-in first. A room-key
+  // session that does not belong to the Google identity in THIS
+  // browser — or an old session carrying no identity at all (task 64
+  // relics) — is dropped here and re-chosen on the start page, where
+  // the account hub lists every account of the signed-in Google email.
+  // The recovery pages are excluded: they verify knowledge (password /
+  // phone) on their own, and the security rules already demand a real
+  // Google sign-in for the actual token re-issue.
+  // ===================================================================
+  if (current !== "account-recovery") {
+    if (!session) {
+      location.replace("/?need=account");
+    } else {
+      import("/firebase.js").then(function (fb) {
+        var ready = fb.auth && fb.auth.currentUser
+          ? Promise.resolve(fb.auth.currentUser)
+          : new Promise(function (res) {
+              var off = fb.onAuthStateChanged(fb.auth, function (u) { off(); res(u); });
+            });
+        return ready.then(function (u) {
+          if (!u) { clearSession(); location.replace("/?need=house"); return; }
+          if (!session.uid || session.uid !== u.uid) {
+            clearSession();
+            location.replace("/?need=account");
+          }
+        });
+      }).catch(function () { /* no connection yet — the page still renders */ });
+    }
+  }
+
   // TASK 60: the full page path (e.g. "victim-registration/322"), also
   // read BEFORE the address bar is cleaned — it keys the field hides.
   var PAGE_ID = location.pathname.replace(/^\//, "")
@@ -399,16 +432,18 @@
     location.href = "/";
   });
 
-  // Logout: drop the room keys AND the house key — full sign-out.
+  // TASK 65 (requirement 3): LOGOUT ENDS THE SYSTEM-ACCOUNT SESSION
+  // ONLY — it must NOT sign the user out of Google. The Google session
+  // stays active, so the start page opens straight on the account
+  // selection / registration hub, where another saved account can be
+  // chosen or a new one created WITHOUT repeating the Google sign-in.
+  // (Switch Account always behaved this way — now Logout does too.
+  // Signing out of Google itself lives on the hub, behind "Use a
+  // different Google account".) Every saved account stays in the
+  // database: logging out never deletes, overwrites or merges anything.
   document.getElementById("jamali-logout").addEventListener("click", function () {
     clearSession();
-    import("/firebase.js").then(function (fb) {
-      return fb.signOut(fb.auth);
-    }).then(function () {
-      location.href = "/";
-    }).catch(function () {
-      location.href = "/";
-    });
+    location.href = "/";
   });
 
   // ---- TASK 57: the Admin button — top-right corner of every page, -----------
