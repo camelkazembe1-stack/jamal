@@ -1,4 +1,20 @@
-/* JAMALI — shared sidebar (every page except index.html) — TASK 60B.
+/* JAMALI — shared sidebar (every page except index.html) — TASK 62.
+
+   TASK 62 — the dash became a CORNER chip and hiding became TOTAL:
+   - every dash sits at the TOP-RIGHT CORNER of its own button, card, tile
+     or field row (never floating beside it any more);
+   - tiles and cards on EVERY page are dash targets (the View File grid,
+     hub links) — not just the home page; hiding one hides the TARGET page
+     everywhere (sidebar entry, direct link, the page itself);
+   - clicking the dash makes the element DISAPPEAR COMPLETELY — for the
+     users AND for the administrator (no strike-through, no dimming, no
+     half-visible leftovers — the exact "remove all abnormalities" ask);
+   - what the dashes hid is listed in the red "Hidden (N)" chip at the
+     bottom-right corner (administrator only): open it, press Show next to
+     an entry (or Show all) and the element is back everywhere;
+   - an approved account with NO modules yet sees exactly
+     "Please wait for admin module allowance." instead of any page —
+     the administrator decides what that account will see.
    THE TWO IRON RULES (unchanged):
    - this file holds NO page data (the tree comes from menu.js)
    - this file fetches NO page data (the tree is built from menu.js only)
@@ -290,16 +306,34 @@
     " body.jamali-sidebar-open #jamali-overlay{display:block}}",
     ".jamali-dash{display:inline-flex;align-items:center;justify-content:center;width:20px;",
     "min-width:20px;max-width:20px;height:20px;box-sizing:border-box;padding:0;",
-    "margin:0 0 0 6px;border-radius:6px;border:1px solid #fca5a5;background:#fff;",
-    "color:#dc2626;font-weight:900;font-size:13px;line-height:1;cursor:pointer;",
-    "flex:0 0 20px;align-self:center;vertical-align:middle}",
+    "margin:0;border-radius:6px;border:1px solid #fca5a5;background:#fff;",
+    "color:#dc2626;font-weight:900;font-size:13px;line-height:1;cursor:pointer}",
     ".jamali-dash:hover{background:#fee2e2}",
     ".jamali-dash.jamali-off{background:#dc2626;color:#fff;border-color:#b91c1c}",
     ".jamali-vis-mark{outline:2px dashed #f87171;outline-offset:2px}",
     ".jamali-vis-host{position:relative}",
-    ".jamali-sec-dash{position:absolute;top:6px;right:6px;margin:0;z-index:6}",
+    ".jamali-ctl-host{display:inline-block;position:relative;max-width:100%}",
+    ".jamali-corner-dash{position:absolute;top:3px;right:3px;margin:0;z-index:7;",
+    "width:16px;min-width:16px;max-width:16px;height:16px;font-size:11px;border-radius:5px}",
     ".jamali-page-dash{position:fixed;bottom:14px;right:14px;margin:0;z-index:1001}",
-    "#jamali-sidebar .node.jamali-menu-off a{opacity:.5;text-decoration:line-through}",
+    "#jamali-hidden-chip{position:fixed;bottom:46px;right:14px;z-index:1001;",
+    "border:1px solid #fca5a5;border-radius:999px;background:#dc2626;color:#fff;",
+    "font-weight:800;font-size:12px;padding:7px 12px;cursor:pointer;",
+    "box-shadow:0 10px 24px rgba(0,0,0,.35)}",
+    "#jamali-hidden-chip:hover{filter:brightness(1.08)}",
+    "#jamali-vis-panel{position:fixed;bottom:84px;right:14px;z-index:1002;width:340px;",
+    "max-width:calc(100vw - 28px);max-height:60vh;overflow:auto;background:#111827;",
+    "border:1px solid #334155;border-radius:12px;padding:12px 14px;font-size:13px;",
+    "color:#e2e8f0;box-shadow:0 18px 40px rgba(0,0,0,.5)}",
+    "#jamali-vis-panel b{display:block;margin-bottom:8px;font-size:13px}",
+    "#jamali-vis-panel .jamali-vis-row{display:flex;align-items:center;justify-content:space-between;",
+    "gap:8px;padding:6px 0;border-bottom:1px solid #1e293b}",
+    "#jamali-vis-panel .jamali-vis-row span{flex:1;min-width:0;overflow:hidden;",
+    "text-overflow:ellipsis;white-space:nowrap}",
+    ".jamali-vis-show,.jamali-vis-showall{border:1px solid #4ade80;background:#052e16;",
+    "color:#4ade80;border-radius:8px;font-size:12px;font-weight:800;padding:4px 10px;",
+    "cursor:pointer;flex:0 0 auto}",
+    ".jamali-vis-showall{margin-top:10px;width:100%}",
     ".jamali-vis-notice{max-width:560px;margin:60px auto;padding:26px 30px;border:1px solid #fca5a5;",
     "border-radius:14px;background:#fff5f5;color:#7f1d1d;font-size:15px;line-height:1.6}",
     ".jamali-vis-notice b{display:block;font-size:17px;margin-bottom:8px}"
@@ -463,7 +497,8 @@
       if (!m) continue;
       if (m[1] === current) continue;                    // the page you are on
       if (!folderAllowed(m[1])) { links[i].style.display = "none"; continue; }
-      if (isAdmin()) continue;
+      // TASK 62: a hidden target page hides its links for EVERYONE — the
+      // administrator included (the Hidden panel brings the page back).
       var rest = href.slice(m[0].length).replace(/\.html$/, "").replace(/\/+$/, "");
       if (menuHidden(m[1]) || pageHidden(m[1] + "/" + rest)) links[i].style.display = "none";
     }
@@ -480,41 +515,188 @@
   // ===================================================================
   bootVisibility().then(function () {
     applySidebarVis();
+    if (isAdmin()) { ensureHiddenChip(); ensureVisPanel(); refreshHiddenChip(); }
     pageBoot();
   });
 
-  // ---- sidebar: CLEAN for everyone (TASK 60B) ---------------------------
-  // NO dashes in the sidebar — never, for anyone. Users lose the hidden
-  // branches; the administrator keeps the FULL tree (nothing removed, no
-  // dashes) with hidden entries struck through so the state stays
-  // readable. All hiding is done on the PAGES: tile dashes and the PAGE
-  // dash write the menu/page state this pass renders.
+  // ===================================================================
+  // TASK 62 — the Hidden panel: everything the dashes hid, in one list.
+  // Hidden means GONE for everyone — so the administrator needs one place
+  // that still knows what was hidden and brings any of it back.
+  // ===================================================================
+  function hiddenItems() {
+    var out = [];
+    for (var k in VIS.menu) {
+      if (Object.prototype.hasOwnProperty.call(VIS.menu, k) && VIS.menu[k]) {
+        out.push({ kind: "menu", key: k });
+      }
+    }
+    for (var f in VIS.fields) {
+      if (Object.prototype.hasOwnProperty.call(VIS.fields, f) && VIS.fields[f]) {
+        out.push({ kind: "field", key: f });
+      }
+    }
+    return out;
+  }
+
+  function hiddenLabel(it) {
+    if (it.kind === "menu") return "Area: " + it.key;
+    var i = it.key.indexOf(":");
+    var page = it.key.slice(0, i), k = it.key.slice(i + 1);
+    return k === "__page__" ? ("Page: " + page) : (k + " — " + page);
+  }
+
+  function ensureHiddenChip() {
+    if (document.getElementById("jamali-hidden-chip")) return;
+    var c = document.createElement("button");
+    c.type = "button";
+    c.id = "jamali-hidden-chip";
+    c.hidden = true;
+    c.title = "Everything the dashes hid — click to restore any of it";
+    c.addEventListener("click", function () {
+      var p = document.getElementById("jamali-vis-panel");
+      if (!p) return;
+      p.hidden = !p.hidden;
+      if (!p.hidden) renderHiddenPanel();
+    });
+    document.body.appendChild(c);
+  }
+
+  function ensureVisPanel() {
+    if (document.getElementById("jamali-vis-panel")) return;
+    var p = document.createElement("div");
+    p.id = "jamali-vis-panel";
+    p.hidden = true;
+    document.body.appendChild(p);
+  }
+
+  function refreshHiddenChip() {
+    if (!isAdmin()) return;
+    ensureHiddenChip();
+    var c = document.getElementById("jamali-hidden-chip");
+    var n = hiddenItems().length;
+    c.hidden = n === 0;
+    c.textContent = "Hidden (" + n + ")";
+    var p = document.getElementById("jamali-vis-panel");
+    if (p && !p.hidden) renderHiddenPanel();
+  }
+
+  function renderHiddenPanel() {
+    var p = document.getElementById("jamali-vis-panel");
+    if (!p) return;
+    var items = hiddenItems();
+    p.innerHTML = "";
+    var h = document.createElement("b");
+    h.textContent = "Hidden by the administrator";
+    p.appendChild(h);
+    if (!items.length) {
+      var e = document.createElement("div");
+      e.className = "jamali-vis-row";
+      e.textContent = "Nothing is hidden.";
+      p.appendChild(e);
+      return;
+    }
+    for (var i = 0; i < items.length; i++) {
+      (function (it) {
+        var row = document.createElement("div");
+        row.className = "jamali-vis-row";
+        var s = document.createElement("span");
+        s.textContent = hiddenLabel(it);
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "jamali-vis-show";
+        b.textContent = "Show";
+        b.addEventListener("click", function () { restoreItem(it); });
+        row.appendChild(s);
+        row.appendChild(b);
+        p.appendChild(row);
+      })(items[i]);
+    }
+    var all = document.createElement("button");
+    all.type = "button";
+    all.className = "jamali-vis-showall";
+    all.textContent = "Show all";
+    all.addEventListener("click", showAllHidden);
+    p.appendChild(all);
+  }
+
+  // hidden elements carry data-jamali-gone — clear the marks BEFORE the
+  // rescan, or the scan could never see (and re-judge) them again
+  function clearGoneMarks() {
+    var gones = document.querySelectorAll("[data-jamali-gone]");
+    for (var g = 0; g < gones.length; g++) {
+      gones[g].removeAttribute("data-jamali-gone");
+      gones[g].style.display = "";
+    }
+  }
+
+  function restoreItem(it) {
+    import("/firebase.js").then(function (fb) {
+      return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function (snap) {
+        var d = snap.exists() ? snap.data() : {};
+        VIS.fields = d.fields || {};
+        VIS.menu = d.menu || {};
+        if (it.kind === "menu") delete VIS.menu[it.key];
+        else delete VIS.fields[it.key];
+        return saveVisibility();
+      });
+    }).then(function () {
+      clearGoneMarks();
+      afterVisChange();
+      var p = document.getElementById("jamali-vis-panel");
+      if (p && !p.hidden) renderHiddenPanel();
+    }).catch(function (e) {
+      console.warn("restore failed", e);
+    });
+  }
+
+  function showAllHidden() {
+    import("/firebase.js").then(function (fb) {
+      return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function () {
+        VIS.fields = {};
+        VIS.menu = {};
+        return saveVisibility();
+      });
+    }).then(function () {
+      clearGoneMarks();
+      afterVisChange();
+      renderHiddenPanel();
+    }).catch(function (e) {
+      console.warn("restore all failed", e);
+    });
+  }
+
+  // ---- sidebar: hidden branches leave for EVERYONE (TASK 62) ------------
+  // NO dashes in the sidebar — never, for anyone. A hidden area or page is
+  // GONE from the tree for the users AND for the administrator — there is
+  // no strike-through, no dimming (task 60B's half-visible state is gone).
+  // The administrator restores branches from the Hidden panel.
   function applySidebarVis() {
     var nodes = document.querySelectorAll("#jamali-sidebar .node[data-folder]");
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
       var f = node.getAttribute("data-folder");
-      if (isAdmin()) {
-        node.classList.toggle("jamali-menu-off", menuHidden(f) || pageHidden(pageIdOfFolder(f)));
-      } else if (menuHidden(f) || pageHidden(pageIdOfFolder(f))) {
-        node.style.display = "none";
+      var gone = menuHidden(f) || pageHidden(pageIdOfFolder(f));
+      node.style.display = gone ? "none" : "";
+      if (gone) {
         var nx = node.nextElementSibling;
         if (nx && nx.classList && nx.classList.contains("kids")) nx.style.display = "none";
       }
     }
     // a folder whose every child is hidden must not keep a dead arrow
-    if (!isAdmin()) {
-      var tgl = document.querySelectorAll("#jamali-sidebar .tg");
-      for (var j = 0; j < tgl.length; j++) {
-        var box = tgl[j].parentNode.nextElementSibling;
-        if (!box || !box.classList || !box.classList.contains("kids")) continue;
-        var rows = box.querySelectorAll(".node");
-        var alive = 0;
-        for (var r = 0; r < rows.length; r++) { if (isVisibleEl(rows[r])) alive++; }
-        if (!alive) {
-          tgl[j].style.display = "none";
-          box.style.display = "none";
-        }
+    var tgl = document.querySelectorAll("#jamali-sidebar .tg");
+    for (var j = 0; j < tgl.length; j++) {
+      var box = tgl[j].parentNode.nextElementSibling;
+      if (!box || !box.classList || !box.classList.contains("kids")) continue;
+      var rows = box.querySelectorAll(".node");
+      var alive = 0;
+      for (var r = 0; r < rows.length; r++) { if (isVisibleEl(rows[r])) alive++; }
+      if (!alive) {
+        tgl[j].style.display = "none";
+        box.style.display = "none";
+      } else {
+        tgl[j].style.display = "";
+        box.style.display = "";
       }
     }
   }
@@ -522,8 +704,8 @@
   function setDashState(b, off, what) {
     b.classList.toggle("jamali-off", !!off);
     b.title = off
-      ? "Hidden from users - click to show " + what
-      : "Visible to users - click to hide " + what;
+      ? "Hidden — restore it from the Hidden panel (bottom-right)"
+      : "Click to hide " + what + " completely (restore from the Hidden panel)";
   }
 
   function saveVisibility() {
@@ -548,9 +730,7 @@
         return saveVisibility();
       });
     }).then(function () {
-      setDashState(btn, menuHidden(folder), "the whole " + folder + " area");
-      applySidebarVis();
-      scanAdminPage(mainEl());
+      afterVisChange();
     }).catch(function (e) {
       console.warn("visibility save failed", e);
       dashError(btn);
@@ -586,11 +766,39 @@
   }
 
   // ---- users: block a page the administrator hid, apply the hides ------
+  // TASK 62: an APPROVED account the administrator has not allowed any
+  // module for yet sees the allowance gate instead of any page — the
+  // administrator decides what that account will see, nothing is default.
+  function hasAnyGrant() {
+    return !!(session && Array.isArray(session.grants) && session.grants.length);
+  }
+
   function guardUserPage(main) {
     if (menuHidden(current) || pageHidden(PAGE_ID)) { blockPage(); return; }
+    if (current !== "account-recovery" && !hasAnyGrant()) { blockAllowance(); return; }
     if (!folderAllowed(current) && ALWAYS_OPEN.indexOf(current) === -1) { blockPage(); return; }
     applyUserHides(main);
     watchPage(main, function () { applyUserHides(main); });
+  }
+
+  function blockAllowance() {
+    var app = document.getElementById("app");
+    if (app) {
+      app.style.display = "none";
+    } else {
+      var kids = Array.prototype.slice.call(document.body.children);
+      for (var i = 0; i < kids.length; i++) {
+        var id = kids[i].id || "";
+        if (id.indexOf("jamali-") === 0) continue;
+        kids[i].style.display = "none";
+      }
+    }
+    var n = document.createElement("div");
+    n.className = "jamali-vis-notice";
+    n.innerHTML = "<b>Please wait for admin module allowance.</b>" +
+      "<span>Your account is approved, but the administrator has not allowed any module for it yet. " +
+      "You will see your modules here as soon as the administrator selects them for you.</span>";
+    document.body.appendChild(n);
   }
 
   function blockPage() {
@@ -622,7 +830,7 @@
   }
 
   function insideJamaliUi(el) {
-    return !!(el.closest && el.closest("#jamali-sidebar,#jamali-acct,#jamali-admin-btn,#jamali-burger,#jamali-overlay,.jamali-vis-notice"));
+    return !!(el.closest && el.closest("#jamali-sidebar,#jamali-acct,#jamali-admin-btn,#jamali-burger,#jamali-overlay,.jamali-vis-notice,#jamali-hidden-chip,#jamali-vis-panel"));
   }
 
   function isVisibleEl(el) {
@@ -655,6 +863,26 @@
           if (PAGES[q].folder === tm[1]) { known = true; break; }
         }
         if (known) put("tile-" + tm[1], ta, null);
+      }
+    } else {
+      // TASK 62: on EVERY OTHER page the cards/tiles that link into the
+      // menu are dash targets too — the View File grid, hub links, back
+      // grids. Hiding one hides the TARGET page everywhere (its sidebar
+      // entry, its direct links, the page itself for the users). The
+      // bare back-links ("← Home") are never targets.
+      var links = root.querySelectorAll("a[href]");
+      for (var L = 0; L < links.length; L++) {
+        var la = links[L];
+        if (insideJamaliUi(la) || !isVisibleEl(la)) continue;
+        if (la.classList && la.classList.contains("back")) continue;
+        var lm = (la.getAttribute("href") || "").match(/^\/([a-z0-9-]+)\//i);
+        if (!lm || lm[1] === current) continue;
+        var ld = 0;
+        for (var q2 = 0; q2 < PAGES.length; q2++) {
+          if (PAGES[q2].folder === lm[1]) { ld = PAGES[q2].d || 0; break; }
+        }
+        if (ld < 1) continue;
+        put("link-" + lm[1], la, null);
       }
     }
     var ctrls = root.querySelectorAll("input, select, textarea");
@@ -714,6 +942,9 @@
   // TASK 60B: dashes live in the DASHES registry and are REUSED across
   // scans — the observer re-runs this function, but a dash is created and
   // inserted exactly once (no duplicates, no pile-up).
+  // TASK 62: a hidden element is GONE for the administrator too — the
+  // element gets display:none and its dash disappears with it; the red
+  // "Hidden (N)" panel at the bottom-right brings anything back.
   function scanAdminPage(root) {
     var map = scanTargets(root);
     var hidden = fieldsForPage();
@@ -725,23 +956,51 @@
     for (var key in map) {
       if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
       var t = map[key];
+      var hid;
+      if (key.indexOf("tile-") === 0) {
+        hid = menuHidden(key.slice(5));
+      } else if (key.indexOf("link-") === 0) {
+        hid = pageHidden(pageIdOfFolder(key.slice(5)));
+      } else if (key === "__page__") {
+        hid = !!hidden.__page__;
+      } else {
+        hid = effHidden(key, t.el, hidden);
+      }
+      if (!t.isPage) {
+        var host = t.wrap || t.el;
+        if (host && host.style) {
+          if (hid) {
+            host.setAttribute("data-jamali-gone", "1");
+            host.style.display = "none";
+          } else if (host.getAttribute("data-jamali-gone")) {
+            host.removeAttribute("data-jamali-gone");
+            host.style.display = "";
+          }
+        }
+      }
       var b = DASHES[key];
       if (!b || !document.documentElement.contains(b)) {
         b = document.createElement("button");
         b.type = "button";
         b.className = "jamali-dash";
         b.textContent = "-";
-        b.addEventListener("click", makeToggler(key, b));
+        (function (k, bb) {
+          bb.addEventListener("click", function (ev) {
+            ev.preventDefault();   // a dash inside a link/button/label must
+            ev.stopPropagation();  // never trigger the host itself
+            makeToggler(k, bb)();
+          });
+        })(key, b);
         placeDash(t, b);
         DASHES[key] = b;
       }
       t.dash = b;
       if (key.indexOf("tile-") === 0) {
-        setDashState(b, menuHidden(key.slice(5)), "the whole " + key.slice(5) + " area");
+        setDashState(b, hid, "the whole " + key.slice(5) + " area");
       } else if (key === "__page__") {
-        setDashState(b, !!hidden.__page__, "this page");
+        setDashState(b, hid, "this page");
       } else {
-        setDashState(b, effHidden(key, t.el, hidden), key);
+        setDashState(b, hid, key);
       }
     }
   }
@@ -766,26 +1025,28 @@
       el.insertBefore(b, el.firstChild);
       return;
     }
-    if (t.wrap) { t.wrap.appendChild(b); return; }
-    if (el.tagName === "SECTION" || el.tagName === "FIELDSET" || el.classList.contains("card")) {
-      var h = el.querySelector("h1,h2,h3,h4");
-      if (h && h.parentNode === el && isVisibleEl(h)) {
-        h.insertAdjacentElement("afterend", b);   // inline, on the heading's line
-        return;
-      }
-      // no visible heading: pin the dash to the container's corner so it
-      // never floats alone in the content flow (the old abnormality)
-      el.classList.add("jamali-vis-host");
-      b.classList.add("jamali-sec-dash");
-      el.insertBefore(b, el.firstChild);
+    // TASK 62: EVERY dash sits at the TOP-RIGHT CORNER of its own target —
+    // button, tile, card, section or field row — never floating beside it.
+    var host = t.wrap || el;
+    var tag = host.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
+      // a void control cannot hold children — wrap it first
+      var sp = document.createElement("span");
+      sp.className = "jamali-ctl-host";
+      host.parentNode.insertBefore(sp, host);
+      sp.appendChild(host);
+      sp.appendChild(b);
       return;
     }
-    el.insertAdjacentElement("afterend", b);
+    host.classList.add("jamali-vis-host");
+    b.classList.add("jamali-corner-dash");
+    host.insertBefore(b, host.firstChild);
   }
 
   function makeToggler(key, btn) {
     return function () {
       if (key.indexOf("tile-") === 0) { toggleMenuHide(key.slice(5), btn); return; }
+      if (key.indexOf("link-") === 0) { togglePageHide(pageIdOfFolder(key.slice(5)), btn); return; }
       import("/firebase.js").then(function (fb) {
         return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function (snap) {
           var d = snap.exists() ? snap.data() : {};
@@ -796,12 +1057,39 @@
           return saveVisibility();
         });
       }).then(function () {
-        scanAdminPage(document.getElementById("app") || document.body);
+        afterVisChange();
       }).catch(function (e) {
         console.warn("visibility save failed", e);
         dashError(btn);
       });
     };
+  }
+
+  // TASK 62: every state change funnels through here — the sidebar, the
+  // page scan and the Hidden panel all repaint from the same state.
+  function afterVisChange() {
+    applySidebarVis();
+    scanAdminPage(mainEl());
+    refreshHiddenChip();
+  }
+
+  function togglePageHide(pid, btn) {
+    if (!pid) return;
+    import("/firebase.js").then(function (fb) {
+      return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function (snap) {
+        var d = snap.exists() ? snap.data() : {};
+        VIS.fields = d.fields || {};
+        VIS.menu = d.menu || {};
+        var full = pid + ":__page__";
+        if (VIS.fields[full]) delete VIS.fields[full]; else VIS.fields[full] = true;
+        return saveVisibility();
+      });
+    }).then(function () {
+      afterVisChange();
+    }).catch(function (e) {
+      console.warn("visibility save failed", e);
+      dashError(btn);
+    });
   }
 
   // content a page renders later (new rows, extra buttons) gets its

@@ -114,7 +114,8 @@
 
     <div class="card" id="grants-card" hidden>
       <h2>Modules and submodules this user can access</h2>
-      <p class="hint">Unticked = hidden everywhere, including by direct link. Ticking a whole area (for example Health) grants its hub page; tick the individual rooms below it one by one.</p>
+      <p class="hint">Unticked = hidden everywhere, including by direct link. Tick an area (for example Business) to grant its own page only; tick a submodule (Add Transaction, View File) or a single file (All Transactions, Cash Book) to grant exactly that — a child always carries its parents. ALL allows every module of an area at once. You can also click a user in any users table to land here.</p>
+      <p class="all-line"><button class="btn-ghost" id="grants-all" type="button" hidden>ALL MODULES</button></p>
       <div id="grants-tree"></div>
       <p class="save-line"><button class="btn-primary" id="grants-save" type="button">Save Access</button>
       <span class="ok-note" id="grants-ok" hidden>Saved.</span></p>

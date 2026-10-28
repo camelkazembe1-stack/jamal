@@ -142,6 +142,10 @@ function boot() {
     paintGrants(CURRENT_USER_ID);
   });
   $("grants-save").addEventListener("click", saveGrants);
+  // TASK 62: the global ALL — every module of every area at once
+  $("grants-all").addEventListener("click", () => {
+    document.querySelectorAll("#grants-tree input[type='checkbox']").forEach((x) => { x.checked = true; });
+  });
   // page fields
   $("page-select").addEventListener("change", () => paintFields($("page-select").value));
   $("fields-save").addEventListener("click", saveFields);
@@ -167,7 +171,7 @@ const USER_VIEWS = {
              hint: "Every account ever created, any status.",
              filter: () => true },
   ready:   { title: "Ready — approved accounts",
-             hint: "Accounts you have approved. Grant their access in Users & Access.",
+             hint: "Accounts you have approved. Grant their access in Users & Access — or click a user here to jump straight to their modules.",
              filter: (a) => a.status === "approved" },
   pending: { title: "Pending — waiting for your approval",
              hint: "These people created an account and cannot enter until you approve them.",
@@ -188,6 +192,18 @@ function userRow(a) {
   tr.cells[2].textContent = STATUS_LABELS[a.status] || (a.status || "");
   tr.cells[3].textContent = String(Array.isArray(a.grants) ? a.grants.length : 0);
   tr.cells[4].textContent = a.at && a.at.toDate ? a.at.toDate().toLocaleDateString() : "";
+  // TASK 62: click a user in the table -> land directly on their modules
+  if (a.status === "approved" && a.role !== "admin") {
+    tr.style.cursor = "pointer";
+    tr.title = "Click to choose the modules this user may see";
+    tr.addEventListener("click", () => {
+      $("tab-users").click();
+      $("user-select").value = a.id;
+      CURRENT_USER_ID = a.id;
+      paintGrants(a.id);
+      $("panel-users").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
   return tr;
 }
 
@@ -266,23 +282,6 @@ function decide(id, status) {
 // ---------------------------------------------------------------------
 // TAB 2 · users & access (the room keys)
 // ---------------------------------------------------------------------
-function uniqueFolders() {
-  // { folder, label } in first-appearance order, with each entry's
-  // top-level (d:1) ancestor folder — home is always open, never granted.
-  const menu = window.JAMALI_MENU || [];
-  const out = [];
-  const seen = Object.create(null);
-  let top = null;
-  for (const p of menu) {
-    if ((p.d || 0) === 0) continue;
-    if ((p.d || 0) === 1) top = p;
-    if (seen[p.folder]) continue;
-    seen[p.folder] = true;
-    out.push({ folder: p.folder, label: p.label, top: top ? top.folder : p.folder });
-  }
-  return out;
-}
-
 function paintUserSelect(rows) {
   const sel = $("user-select");
   const keep = sel.value;
@@ -311,45 +310,47 @@ function paintGrants(id) {
     ((acc.grants && acc.grants.length) ? acc.grants.length + " area(s)" : "nothing yet");
   who.hidden = false;
 
-  const groups = [];
-  const byTop = Object.create(null);
-  for (const f of uniqueFolders()) {
-    if (f.folder === "home") continue;
-    if (f.folder === f.top) { groups.push(f); continue; }
-    if (!byTop[f.top]) byTop[f.top] = [];
-    byTop[f.top].push(f);
-  }
-
+  // TASK 62: the FULL depth of the menu as a NESTED tree — Business ->
+  // Add Transaction / View File -> All Transactions, Cash Book, ... Ticking
+  // a parent alone grants that page only (Business without View File means
+  // no files); ticking a child carries its parents at save. Every top area
+  // carries its own ALL button; ALL MODULES ticks everything at once.
   const granted = new Set(acc.grants || []);
+  const menu = window.JAMALI_MENU || [];
   const tree = $("grants-tree");
   tree.innerHTML = "";
-  for (const g of groups) {
-    const box = document.createElement("div");
-    box.className = "grant-group";
-    const head = document.createElement("label");
-    head.className = "big";
-    head.innerHTML = "<input type=\"checkbox\" data-folder=\"" + g.folder + "\"> " + g.label;
-    const headCb = head.querySelector("input");
-    headCb.checked = granted.has(g.folder);
-    box.appendChild(head);
+  $("grants-all").hidden = false;
 
-    const kids = byTop[g.folder] || [];
-    if (kids.length) {
-      const kd = document.createElement("div");
-      kd.className = "grant-kids";
-      for (const k of kids) {
-        const lab = document.createElement("label");
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.dataset.folder = k.folder;
-        cb.checked = granted.has(k.folder);
-        lab.appendChild(cb);
-        lab.appendChild(document.createTextNode(k.label));
-        kd.appendChild(lab);
-      }
-      box.appendChild(kd);
+  const boxes = [];
+  for (let i = 0; i < menu.length; i++) {
+    const p = menu[i];
+    const d = p.d || 0;
+    if (d < 1) continue; // home + system-admin are never granted here
+    const box = document.createElement("div");
+    box.className = "grant-group" + (d > 1 ? " grant-sub" : "");
+    const head = document.createElement("label");
+    head.className = d > 1 ? "mid" : "big";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.dataset.folder = p.folder;
+    cb.checked = granted.has(p.folder);
+    head.appendChild(cb);
+    head.appendChild(document.createTextNode(" " + p.label));
+    box.appendChild(head);
+    if (d === 1) {
+      const all = document.createElement("button");
+      all.type = "button";
+      all.className = "grant-all";
+      all.textContent = "ALL";
+      all.title = "Allow every module under " + p.label;
+      all.addEventListener("click", () => {
+        box.querySelectorAll("input[type='checkbox']").forEach((x) => { x.checked = true; });
+      });
+      head.appendChild(all);
     }
-    tree.appendChild(box);
+    boxes[d] = box;
+    if (d === 1 || !boxes[d - 1]) tree.appendChild(box);
+    else boxes[d - 1].appendChild(box);
   }
   card.hidden = false;
 }
