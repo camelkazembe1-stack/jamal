@@ -287,11 +287,27 @@ function paintGrants(id) {
 function saveGrants() {
   const id = $("user-select").value;
   if (!id) return;
-  const grants = [];
+  const picked = [];
   document.querySelectorAll("#grants-tree input[type='checkbox']:checked").forEach((cb) => {
-    grants.push(cb.dataset.folder);
+    picked.push(cb.dataset.folder);
   });
-  updateDoc(doc(db, "systemAccounts", id), { grants: grants, grantsAt: serverTimestamp() })
+  // TASK 60: a granted child always carries its ancestors — granting
+  // "Add Transaction" also grants "Business", so the sidebar shows the
+  // path exactly as it is arranged in the flow (nothing else hidden).
+  const menu = window.JAMALI_MENU || [];
+  const at = Object.create(null);
+  menu.forEach((p, i) => { if (!(p.folder in at)) at[p.folder] = i; });
+  const grants = new Set(picked);
+  for (const f of picked) {
+    const start = at[f] !== undefined ? at[f] : -1;
+    let myD = start >= 0 ? (menu[start].d || 0) : 0;
+    for (let i = start - 1; i >= 0 && myD > 1; i--) {
+      const d = menu[i].d || 0;
+      if (d === 0) break;
+      if (d < myD) { grants.add(menu[i].folder); myD = d; }
+    }
+  }
+  updateDoc(doc(db, "systemAccounts", id), { grants: Array.from(grants), grantsAt: serverTimestamp() })
     .then(() => { okMsg("grants-ok"); return readAccounts(); })
     .then((rows) => {
       paintCounters(rows);
