@@ -48,6 +48,9 @@
   .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
   .hidden { display: none; }
   .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
+  .wait-title {
+    font-size: 18px; font-weight: 800; color: #fbbf24; text-align: center; margin: 6px 0 10px;
+  }
 </style>
 </head>
 <body>
@@ -88,15 +91,26 @@
       <p class="swap">Already registered? <a id="go-login">Back to Login</a></p>
     </section>
 
+    <!-- ======== TASK 61 · WAITING FOR ADMINISTRATOR APPROVAL ========
+         One registration per Google identity: while the request is pending
+         this screen REPLACES the registration form, so the same user can
+         never register twice. -->
+    <section id="panel-wait" class="hidden">
+      <p class="wait-title">Waiting for administrator approval.</p>
+      <p class="sub">Your registration is saved, <span id="wait-user"></span>. The administrator has been notified and must approve it before you can enter. This screen replaces the registration form, so you cannot register again in the meantime.</p>
+      <button class="wide" id="check-approval" type="button">Check again</button>
+      <p class="swap">Wrong Google account? <a id="wait-switch">Use a different one</a></p>
+    </section>
+
     <p class="status" id="status"></p>
     <p class="foot">JAMALI MultiSystem Management © <span id="year"></span></p>
   </div>
 
   <script type="module">
     import {
-      auth, provider, onAuthStateChanged, signInWithPopup,
+      auth, provider, onAuthStateChanged, signInWithPopup, signOut,
       db, collection, query, where, limit, getDocs,
-      doc, getDoc, writeBatch, serverTimestamp
+      doc, getDoc, setDoc, updateDoc, writeBatch, serverTimestamp
     } from "/firebase.js";
 
     document.getElementById("year").textContent = new Date().getFullYear();
@@ -128,7 +142,7 @@
     function friendly(err) {
       const code = err && err.code ? String(err.code) : "";
       if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
-        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then login again.";
+        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then try again.";
       }
       return (err && err.message) ? err.message : code;
     }
@@ -139,10 +153,25 @@
     function showPanel(which) {
       $("panel-login").classList.toggle("hidden", which !== "login");
       $("panel-create").classList.toggle("hidden", which !== "create");
+      $("panel-wait").classList.toggle("hidden", which !== "wait");
       say("");
     }
-    $("go-create").addEventListener("click", () => showPanel("create"));
     $("go-login").addEventListener("click", () => showPanel("login"));
+
+    // TASK 61: opening the registration form first checks whether this
+    // Google identity already has a request — a pending request shows the
+    // waiting screen instead of the form (no duplicate registration).
+    $("go-create").addEventListener("click", async () => {
+      if (!auth.currentUser) { showPanel("create"); return; }
+      try {
+        const st = await checkRegistration();
+        if (st) return; // the waiting / approved / rejected screen took over
+        showPanel("create");
+      } catch (err) {
+        showPanel("create");
+        say("Could not check your registrations: " + friendly(err));
+      }
+    });
 
     // recovery chain — the username travels with the link
     $("go-forgot-token").addEventListener("click", () => {
@@ -168,14 +197,83 @@
     }
 
     // ------------------------------------------------------------------
+    // TASK 61 — one lookup per Google identity: every account ever
+    // registered with THIS Google sign-in (single-field query, no index
+    // needed), then decided by status on the client.
+    // ------------------------------------------------------------------
+    async function accountsOfUid(uid) {
+      const snap = await getDocs(query(collection(db, "systemAccounts"), where("googleUid", "==", uid)));
+      const rows = [];
+      snap.forEach((d) => { const a = d.data(); a.id = d.id; rows.push(a); });
+      return rows;
+    }
+
+    // The waiting screen: the form disappears, the request speaks.
+    function waitPanelFor(acc) {
+      $("wait-user").textContent = acc.usernameDisplay || acc.id || "";
+      showPanel("wait");
+      say("Waiting for administrator approval.", true);
+    }
+
+    // Returns "pending" | "approved" | "rejected" when a screen took over,
+    // null when this identity has no registration at all.
+    async function checkRegistration() {
+      const user = auth.currentUser;
+      if (!user) { showPanel("login"); return null; }
+      const rows = await accountsOfUid(user.uid);
+      const pend = rows.find((a) => a.status === "pending");
+      if (pend) { waitPanelFor(pend); return "pending"; }
+      const appr = rows.find((a) => a.status === "approved");
+      if (appr) {
+        $("li-username").value = appr.usernameDisplay || appr.id || "";
+        showPanel("login");
+        say("Approved! Enter your four-digit token to log in.", true);
+        return "approved";
+      }
+      const rej = rows.find((a) => a.status === "rejected");
+      if (rej) {
+        $("li-username").value = rej.usernameDisplay || rej.id || "";
+        showPanel("login");
+        say("This registration was not approved. Ask the administrator.");
+        return "rejected";
+      }
+      return null;
+    }
+
+    // "Check again" on the waiting screen — if the administrator approved
+    // in the meantime, the user is walked straight to the login.
+    $("check-approval").addEventListener("click", async () => {
+      const btn = $("check-approval");
+      btn.disabled = true;
+      try {
+        const st = await checkRegistration();
+        if (!st) { showPanel("login"); say("No registration found for this Google account."); }
+      } catch (err) {
+        say("Could not check: " + friendly(err));
+      }
+      btn.disabled = false;
+    });
+
+    // Wrong account? Sign the house key out and return to the start.
+    $("wait-switch").addEventListener("click", async () => {
+      try { await signOut(auth); } catch (err) { say("Could not sign out: " + friendly(err)); return; }
+      showPanel("login");
+      say("Signed out. Sign in with the Google account you registered with.");
+    });
+
+    // ------------------------------------------------------------------
     // system session (the room keys) — written here, read by requireAuth
+    // TASK 61 (requirement 13): the role comes from the stored account
+    // ONLY. Typing "admin" as staff position never makes anyone an
+    // administrator — the admin role exists solely in the systemAdmins
+    // document that the security rules verify.
     // ------------------------------------------------------------------
     function writeSession(account, user) {
       const s = {
         uid: user.uid,
         username: account.usernameDisplay || account.id,
         position: account.position || "",
-        role: account.role || (account.position === "admin" ? "admin" : "user"),
+        role: account.role === "admin" ? "admin" : "user",
         grants: Array.isArray(account.grants) ? account.grants : [],
         at: Date.now()
       };
@@ -208,12 +306,17 @@
       try {
         const user = await ensureHouse();
 
-        // ---- administrator bootstrap: the first ever login claims the admin ----
+        // ---- administrator: the credentials decide, not the email --------
+        // (requirement 3/4/5) The token must match the administrator's
+        // secret; when it does, ANY Google account may hold the role —
+        // the first login claims it, later logins from other Google
+        // accounts re-claim it (the security rules verify the hashes).
         if (norm(username) === ADMIN_USERNAME) {
+          const tokHash = await sha(token);
+          if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); btn.disabled = false; return; }
           const admins = await getDocs(collection(db, "systemAdmins"));
           if (admins.empty) {
-            const tokHash = await sha(token);
-            if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); btn.disabled = false; return; }
+            // first ever login: the claim that seeds the whole server
             const id = norm(ADMIN_USERNAME);
             const batch = writeBatch(db);
             batch.set(doc(db, "systemSetup", "claim"), {
@@ -238,6 +341,27 @@
             location.href = "/home/1";
             return;
           }
+          let mine = false;
+          admins.forEach((d) => { if (d.id === user.uid) mine = true; });
+          if (!mine) {
+            // TASK 61 re-claim: same credentials, different Google email —
+            // this Google identity joins the administrators (rules check
+            // the exact hash literals, so nobody else can).
+            await setDoc(doc(db, "systemAdmins", user.uid), {
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+            });
+            // best effort: point the profile and the credentials at the
+            // Google identity that just signed in (keeps recovery working)
+            try {
+              await updateDoc(doc(db, "systemAccounts", norm(ADMIN_USERNAME)), { googleUid: user.uid });
+              await updateDoc(doc(db, "systemCredentials", norm(ADMIN_USERNAME)), { googleUid: user.uid });
+            } catch (e) {
+              say("Administrator signed in. (Note: the profile rebinding failed: " + friendly(e) + ")");
+            }
+          }
+          writeSession({ id: norm(ADMIN_USERNAME), usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
+          location.href = "/home/1";
+          return;
         }
 
         // ---- normal account login ----
@@ -246,7 +370,7 @@
         if (!snap.exists()) { say("No account with this username."); btn.disabled = false; return; }
         const acc = snap.data();
 
-        if (acc.status === "pending") { say("Please wait for admin approval."); btn.disabled = false; return; }
+        if (acc.status === "pending") { say("Waiting for administrator approval."); btn.disabled = false; return; }
         if (acc.status === "rejected") { say("This account was not approved. Ask the administrator."); btn.disabled = false; return; }
         if (acc.googleUid && acc.googleUid !== user.uid) {
           say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
@@ -254,8 +378,8 @@
 
         const credSnap = await getDoc(doc(db, "systemCredentials", id));
         if (!credSnap.exists()) { say("Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
-        const tokHash = await sha(token);
-        if (credSnap.data().tokenHash !== tokHash) { say("Wrong token."); btn.disabled = false; return; }
+        const tokHash2 = await sha(token);
+        if (credSnap.data().tokenHash !== tokHash2) { say("Wrong token."); btn.disabled = false; return; }
 
         writeSession({ id, ...acc }, user);
         location.href = "/home/1";
@@ -285,6 +409,21 @@
 
       try {
         const user = await ensureHouse();
+
+        // requirement 8: ONE registration per Google identity — while a
+        // request is pending the form can never be submitted again; the
+        // waiting screen takes over instead.
+        const rows = await accountsOfUid(user.uid);
+        const pend = rows.find((a) => a.status === "pending");
+        if (pend) { waitPanelFor(pend); btn.disabled = false; return; }
+        const appr = rows.find((a) => a.status === "approved");
+        if (appr) {
+          $("li-username").value = appr.usernameDisplay || appr.id || "";
+          showPanel("login");
+          say("You already have an approved account. Enter your token to log in.", true);
+          btn.disabled = false; return;
+        }
+
         const id = norm(username);
         if (id === ADMIN_USERNAME) { say("This username is reserved."); btn.disabled = false; return; }
 
@@ -301,11 +440,18 @@
         batch.set(doc(db, "systemCredentials", id), {
           passHash: passHash, tokenHash: tokHash, phone: phone, googleUid: user.uid
         });
+        // requirement 9: the registration rings the administrator's bell —
+        // one notification per request, counted on the administrator page.
+        batch.set(doc(db, "systemNotifications", id), {
+          type: "registration", username: username, usernameLower: id,
+          googleUid: user.uid, status: "unread", at: serverTimestamp()
+        });
         await batch.commit();
 
-        showPanel("login");
-        $("li-username").value = username;
-        say("Your account has been created. Please wait for admin approval.", true);
+        // requirements 7 + 8: the exact waiting screen, and the form is gone
+        $("wait-user").textContent = username;
+        showPanel("wait");
+        say("Waiting for administrator approval.", true);
         btn.disabled = false;
       } catch (err) {
         say("Could not create the account: " + friendly(err));
@@ -314,18 +460,23 @@
     });
 
     // ------------------------------------------------------------------
-    // entry state: fully signed in (house + account session) -> home;
-    // otherwise stay here — this page IS the Login / Create Account screen
+    // entry state: signed in with a valid session -> home; signed in with
+    // a pending/rejected registration -> the waiting screen (requirement 8,
+    // it survives reloads); otherwise stay here — this page IS the
+    // Login / Create Account screen.
     // ------------------------------------------------------------------
     onAuthStateChanged(auth, (user) => {
-      if (!user) return;
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (!raw) { handleDeniedAndNeed(); return; }
+      if (!user) { handleDeniedAndNeed(); return; }
+      let valid = false;
       try {
-        const s = JSON.parse(raw);
-        if (s.uid === user.uid) location.replace("/home/1");
-        else { sessionStorage.removeItem(SESSION_KEY); handleDeniedAndNeed(); }
-      } catch (e) { sessionStorage.removeItem(SESSION_KEY); handleDeniedAndNeed(); }
+        const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+        valid = !!(s && s.uid === user.uid);
+      } catch (e) { valid = false; }
+      if (valid) { location.replace("/home/1"); return; }
+      sessionStorage.removeItem(SESSION_KEY);
+      checkRegistration()
+        .then((st) => { if (!st) handleDeniedAndNeed(); })
+        .catch(() => handleDeniedAndNeed());
     });
   </script>
 </body>
