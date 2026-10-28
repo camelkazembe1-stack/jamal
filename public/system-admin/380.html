@@ -42,6 +42,28 @@
   </section>
 
   <!-- ================= TASK 57 · THE COUNTERS ================= -->
+<!-- TASK 67 - SELF-DIAGNOSIS. When the database refuses the reads, this
+     panel explains the one real fix (publishing firestore.rules in the
+     Firebase console) with the exact steps, the exact rules text and a
+     re-check button - the page never goes silently blank again. -->
+<section class="card fix-panel" id="fix-panel" hidden>
+  <h2 id="fix-title">The accounts could not be read</h2>
+  <p class="hint" id="fix-text"></p>
+  <ol class="fix-steps">
+    <li>Open <b>console.firebase.google.com</b> and open the project <b>jamal-542b5</b>.</li>
+    <li>In the left menu choose <b>Build &rarr; Firestore Database</b>, then the <b>Rules</b> tab.</li>
+    <li>Select <b>everything</b> in the rules editor, delete it, and paste the rules from the box below (they are the project's own <b>firestore.rules</b> file).</li>
+    <li>Press <b>Publish</b>, wait about a minute, then press <b>I published them &mdash; check again</b> below.</li>
+  </ol>
+  <pre class="fix-pre" id="fix-pre" hidden></pre>
+  <p class="save-line">
+    <button class="btn-ghost" id="fix-show" type="button">Show the rules to publish</button>
+    <button class="btn-ghost" id="fix-copy" type="button">Copy the rules</button>
+    <button class="btn-primary" id="fix-recheck" type="button">I published them &mdash; check again</button>
+    <button class="btn-ghost" id="fix-close" type="button">Close</button>
+  </p>
+</section>
+
   <section class="stats-row" aria-label="Account totals">
     <button class="stat-card" id="stat-total" type="button">
       <span class="stat-num" id="stat-total-num">&ndash;</span>
