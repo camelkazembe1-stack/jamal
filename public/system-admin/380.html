@@ -18,6 +18,27 @@
     <!-- TASK 61 · requirement 10: the button shows the number of -->
     <!-- notifications awaiting attention -->
     <button class="notif-btn" id="notif-open" type="button">Notifications <span class="badge" id="notif-badge" hidden>0</span></button>
+
+    <!-- ============ TASK 63 · MODULE SELECTION — ACROSS ============
+         The module selection lives HERE — at the top of the Account
+         Administration page, right before the Admin button (which
+         floats at the top-right corner). Pick a user and every
+         grantable module appears ACROSS in one wrapping row: a top
+         area, its submodules, their files — tick exactly what this
+         user may see. "all" after a group allows the group's whole
+         subtree; the big "all" allows every module at once. -->
+    <div class="modsel" id="modsel" hidden>
+      <div class="modsel-top">
+        <span class="modsel-who" id="modsel-who">Module selection</span>
+        <span class="modsel-actions">
+          <button class="btn-ghost" id="modsel-all" type="button">all</button>
+          <button class="btn-primary" id="modsel-save" type="button">Save Access</button>
+          <span class="ok-note" id="modsel-ok" hidden>Saved.</span>
+        </span>
+      </div>
+      <div class="modsel-row" id="modsel-row"></div>
+      <p class="modsel-hint">Tick exactly what this user may see — a top module alone grants its own page only; tick a submodule (Add Transaction) or a file (All Transactions) to grant it — a granted child always carries its parents. "all" after a group allows every module of that group; the big "all" allows every module of the account.</p>
+    </div>
   </section>
 
   <!-- ================= TASK 57 · THE COUNTERS ================= -->
@@ -107,18 +128,14 @@
   <section class="panel" id="panel-users" hidden>
     <div class="card">
       <h2>Choose a user</h2>
-      <p class="hint">Approved accounts. Select one, then tick the rooms it may enter.</p>
+      <p class="hint">Approved accounts. Select one — or click a user in any users table — and the module selection appears ACROSS at the top of this page, before the Admin button.</p>
       <select id="user-select"><option value="">— Select a user —</option></select>
       <p class="who-line" id="user-who" hidden></p>
     </div>
 
     <div class="card" id="grants-card" hidden>
       <h2>Modules and submodules this user can access</h2>
-      <p class="hint">Unticked = hidden everywhere, including by direct link. Tick an area (for example Business) to grant its own page only; tick a submodule (Add Transaction, View File) or a single file (All Transactions, Cash Book) to grant exactly that — a child always carries its parents. ALL allows every module of an area at once. You can also click a user in any users table to land here.</p>
-      <p class="all-line"><button class="btn-ghost" id="grants-all" type="button" hidden>ALL MODULES</button></p>
-      <div id="grants-tree"></div>
-      <p class="save-line"><button class="btn-primary" id="grants-save" type="button">Save Access</button>
-      <span class="ok-note" id="grants-ok" hidden>Saved.</span></p>
+      <p class="hint">The module selection is at the TOP of this page — before the Admin button. The modules are laid out ACROSS in one row: click a chip to allow or remove that module, "all" after a group allows the group's whole subtree, and the big "all" allows every module of the account. Then press Save Access.</p>
     </div>
   </section>
 

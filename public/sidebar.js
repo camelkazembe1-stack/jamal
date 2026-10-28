@@ -1,11 +1,17 @@
-/* JAMALI — shared sidebar (every page except index.html) — TASK 62.
+/* JAMALI — shared sidebar (every page except index.html) — TASK 63.
+
+   TASK 63 — THE DASH IS FOR BUTTONS AND INPUT FIELDS ONLY:
+   - the red "-" chip now appears ONLY on buttons and on input / select /
+     textarea fields (each with its label row) — NEVER on tiles, link
+     cards, sections or the page itself, and NEVER on the Account
+     Administration page (the administrator's own controls — the module
+     strip, the user tables, the save buttons — must stay untouchable).
+     Which AREAS and PAGES an account sees is decided by the module
+     selection (the per-user grants), not by dashes.
 
    TASK 62 — the dash became a CORNER chip and hiding became TOTAL:
-   - every dash sits at the TOP-RIGHT CORNER of its own button, card, tile
-     or field row (never floating beside it any more);
-   - tiles and cards on EVERY page are dash targets (the View File grid,
-     hub links) — not just the home page; hiding one hides the TARGET page
-     everywhere (sidebar entry, direct link, the page itself);
+   - every dash sits at the TOP-RIGHT CORNER of its own button or field
+     row (never floating beside it any more);
    - clicking the dash makes the element DISAPPEAR COMPLETELY — for the
      users AND for the administrator (no strike-through, no dimming, no
      half-visible leftovers — the exact "remove all abnormalities" ask);
@@ -315,7 +321,6 @@
     ".jamali-ctl-host{display:inline-block;position:relative;max-width:100%}",
     ".jamali-corner-dash{position:absolute;top:3px;right:3px;margin:0;z-index:7;",
     "width:16px;min-width:16px;max-width:16px;height:16px;font-size:11px;border-radius:5px}",
-    ".jamali-page-dash{position:fixed;bottom:14px;right:14px;margin:0;z-index:1001}",
     "#jamali-hidden-chip{position:fixed;bottom:46px;right:14px;z-index:1001;",
     "border:1px solid #fca5a5;border-radius:999px;background:#dc2626;color:#fff;",
     "font-weight:800;font-size:12px;padding:7px 12px;cursor:pointer;",
@@ -720,23 +725,6 @@
     });
   }
 
-  function toggleMenuHide(folder, btn) {
-    import("/firebase.js").then(function (fb) {
-      return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function (snap) {
-        var d = snap.exists() ? snap.data() : {};
-        VIS.menu = d.menu || {};
-        VIS.fields = d.fields || {};
-        if (VIS.menu[folder]) delete VIS.menu[folder]; else VIS.menu[folder] = true;
-        return saveVisibility();
-      });
-    }).then(function () {
-      afterVisChange();
-    }).catch(function (e) {
-      console.warn("visibility save failed", e);
-      dashError(btn);
-    });
-  }
-
   function dashError(b) {
     b.textContent = "!";
     setTimeout(function () { b.textContent = "-"; }, 1500);
@@ -749,6 +737,10 @@
 
   function pageBoot() {
     if (!PAGE_ID) return;
+    // TASK 63: the Account Administration page carries NO dashes — the
+    // administrator's own controls (the module strip, the user tables,
+    // the save buttons) must never be hideable, not even by accident.
+    if (current === "system-admin") return;
     var main = mainEl();
     var run = function () {
       if (isAdmin()) {
@@ -838,52 +830,16 @@
     return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
   }
 
-  // Every hide-able target on this page: field rows (label-wrapped
-  // controls), buttons, and section containers (section/fieldset/.card).
-  // A section target is the PARENT of its contents — hiding it hides
-  // everything inside it for the users (the DOM does the cascading).
+  // TASK 63: the ONLY dash targets left — buttons and input fields
+  // (input / select / textarea, each with its label row). Tiles, link
+  // cards, sections and the page itself are NO LONGER targets: which
+  // areas and pages an account sees is the module selection's job (the
+  // per-user grants on the Account Administration page), not the dash's.
   function scanTargets(root) {
     var map = {}, seq = 0;
     function put(key, el, wrap) {
       if (!key || map[key]) return;
       map[key] = { el: el, wrap: wrap || null, dash: null };
-    }
-    // TASK 60B: on the home page the tiles ARE the areas. One dash per
-    // tile; hiding the Business tile hides the whole Business branch
-    // (sidebar + pages). Only links to known menu folders count.
-    if (current === "home") {
-      var tiles = root.querySelectorAll("a[href]");
-      for (var t = 0; t < tiles.length; t++) {
-        var ta = tiles[t];
-        if (insideJamaliUi(ta) || !isVisibleEl(ta)) continue;
-        var tm = (ta.getAttribute("href") || "").match(/^\/([a-z0-9-]+)\//i);
-        if (!tm || tm[1] === current) continue;
-        var known = false;
-        for (var q = 0; q < PAGES.length; q++) {
-          if (PAGES[q].folder === tm[1]) { known = true; break; }
-        }
-        if (known) put("tile-" + tm[1], ta, null);
-      }
-    } else {
-      // TASK 62: on EVERY OTHER page the cards/tiles that link into the
-      // menu are dash targets too — the View File grid, hub links, back
-      // grids. Hiding one hides the TARGET page everywhere (its sidebar
-      // entry, its direct links, the page itself for the users). The
-      // bare back-links ("← Home") are never targets.
-      var links = root.querySelectorAll("a[href]");
-      for (var L = 0; L < links.length; L++) {
-        var la = links[L];
-        if (insideJamaliUi(la) || !isVisibleEl(la)) continue;
-        if (la.classList && la.classList.contains("back")) continue;
-        var lm = (la.getAttribute("href") || "").match(/^\/([a-z0-9-]+)\//i);
-        if (!lm || lm[1] === current) continue;
-        var ld = 0;
-        for (var q2 = 0; q2 < PAGES.length; q2++) {
-          if (PAGES[q2].folder === lm[1]) { ld = PAGES[q2].d || 0; break; }
-        }
-        if (ld < 1) continue;
-        put("link-" + lm[1], la, null);
-      }
     }
     var ctrls = root.querySelectorAll("input, select, textarea");
     for (var i = 0; i < ctrls.length; i++) {
@@ -904,15 +860,6 @@
       if (b.classList.contains("jamali-dash") || b.classList.contains("tg")) continue;
       if (insideJamaliUi(b) || !isVisibleEl(b)) continue;
       put(b.id || ("btn-" + (slug(b.textContent) || ("x" + (++seq)))), b, null);
-    }
-    var secs = current === "home" ? [] : root.querySelectorAll("section, fieldset, .card");
-    for (var k = 0; k < secs.length; k++) {
-      var s = secs[k];
-      if (insideJamaliUi(s) || !isVisibleEl(s)) continue;
-      var h = s.querySelector("h1,h2,h3,h4");
-      var skey = s.id || ("sec-" + (slug(h && h.textContent) || ("x" + (++seq))));
-      s.setAttribute("data-jamali-key", skey);
-      put(skey, s, null);
     }
     return map;
   }
@@ -938,44 +885,31 @@
     }
   }
 
-  // ---- administrator: a dash on everything (PAGES only), marked live ----
-  // TASK 60B: dashes live in the DASHES registry and are REUSED across
-  // scans — the observer re-runs this function, but a dash is created and
-  // inserted exactly once (no duplicates, no pile-up).
+  // ---- administrator: a dash on every BUTTON and INPUT FIELD, marked live
+  // Dashes live in the DASHES registry and are REUSED across scans — the
+  // observer re-runs this function, but a dash is created and inserted
+  // exactly once (no duplicates, no pile-up).
   // TASK 62: a hidden element is GONE for the administrator too — the
   // element gets display:none and its dash disappears with it; the red
   // "Hidden (N)" panel at the bottom-right brings anything back.
+  // TASK 63: buttons and input fields ONLY — no tiles, no link cards,
+  // no sections, no page dash, and never on the Account Administration
+  // page (pageBoot skips system-admin entirely).
   function scanAdminPage(root) {
     var map = scanTargets(root);
     var hidden = fieldsForPage();
-    // the PAGE itself: one dash, fixed at the bottom-right corner, hides
-    // the whole page (content -> notice, sidebar entry gone for users)
-    if (current !== "home" && root && root !== document.body && !map.__page__) {
-      map.__page__ = { el: root, wrap: null, dash: null, isPage: true };
-    }
     for (var key in map) {
       if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
       var t = map[key];
-      var hid;
-      if (key.indexOf("tile-") === 0) {
-        hid = menuHidden(key.slice(5));
-      } else if (key.indexOf("link-") === 0) {
-        hid = pageHidden(pageIdOfFolder(key.slice(5)));
-      } else if (key === "__page__") {
-        hid = !!hidden.__page__;
-      } else {
-        hid = effHidden(key, t.el, hidden);
-      }
-      if (!t.isPage) {
-        var host = t.wrap || t.el;
-        if (host && host.style) {
-          if (hid) {
-            host.setAttribute("data-jamali-gone", "1");
-            host.style.display = "none";
-          } else if (host.getAttribute("data-jamali-gone")) {
-            host.removeAttribute("data-jamali-gone");
-            host.style.display = "";
-          }
+      var hid = effHidden(key, t.el, hidden);
+      var host = t.wrap || t.el;
+      if (host && host.style) {
+        if (hid) {
+          host.setAttribute("data-jamali-gone", "1");
+          host.style.display = "none";
+        } else if (host.getAttribute("data-jamali-gone")) {
+          host.removeAttribute("data-jamali-gone");
+          host.style.display = "";
         }
       }
       var b = DASHES[key];
@@ -986,7 +920,7 @@
         b.textContent = "-";
         (function (k, bb) {
           bb.addEventListener("click", function (ev) {
-            ev.preventDefault();   // a dash inside a link/button/label must
+            ev.preventDefault();   // a dash inside a button/label must
             ev.stopPropagation();  // never trigger the host itself
             makeToggler(k, bb)();
           });
@@ -995,13 +929,7 @@
         DASHES[key] = b;
       }
       t.dash = b;
-      if (key.indexOf("tile-") === 0) {
-        setDashState(b, hid, "the whole " + key.slice(5) + " area");
-      } else if (key === "__page__") {
-        setDashState(b, hid, "this page");
-      } else {
-        setDashState(b, hid, key);
-      }
+      setDashState(b, hid, key);
     }
   }
 
@@ -1019,15 +947,9 @@
 
   function placeDash(t, b) {
     if (b.parentNode) return;   // a dash is inserted exactly once
-    var el = t.el;
-    if (t.isPage) {
-      b.classList.add("jamali-page-dash");
-      el.insertBefore(b, el.firstChild);
-      return;
-    }
     // TASK 62: EVERY dash sits at the TOP-RIGHT CORNER of its own target —
-    // button, tile, card, section or field row — never floating beside it.
-    var host = t.wrap || el;
+    // button or field row — never floating beside it.
+    var host = t.wrap || t.el;
     var tag = host.tagName;
     if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
       // a void control cannot hold children — wrap it first
@@ -1045,8 +967,6 @@
 
   function makeToggler(key, btn) {
     return function () {
-      if (key.indexOf("tile-") === 0) { toggleMenuHide(key.slice(5), btn); return; }
-      if (key.indexOf("link-") === 0) { togglePageHide(pageIdOfFolder(key.slice(5)), btn); return; }
       import("/firebase.js").then(function (fb) {
         return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function (snap) {
           var d = snap.exists() ? snap.data() : {};
@@ -1071,25 +991,6 @@
     applySidebarVis();
     scanAdminPage(mainEl());
     refreshHiddenChip();
-  }
-
-  function togglePageHide(pid, btn) {
-    if (!pid) return;
-    import("/firebase.js").then(function (fb) {
-      return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1])).then(function (snap) {
-        var d = snap.exists() ? snap.data() : {};
-        VIS.fields = d.fields || {};
-        VIS.menu = d.menu || {};
-        var full = pid + ":__page__";
-        if (VIS.fields[full]) delete VIS.fields[full]; else VIS.fields[full] = true;
-        return saveVisibility();
-      });
-    }).then(function () {
-      afterVisChange();
-    }).catch(function (e) {
-      console.warn("visibility save failed", e);
-      dashError(btn);
-    });
   }
 
   // content a page renders later (new rows, extra buttons) gets its

@@ -1,7 +1,11 @@
-// JAMALI — Account Administration (380) — TASK 58 FULL REWRITE, TASK 61 UPDATE
+// JAMALI — Account Administration (380) — TASK 58 FULL REWRITE, TASK 63 UPDATE
 // One screen for the administrator: the counters (Total / Ready / Pending),
 // the NOTIFICATIONS (one per registration request, counted on the button),
 // the account requests, the per-user room keys, and the page field settings.
+// TASK 63: the module selection is the ACROSS strip at the top of the page
+// (before the Admin button): one wrapping row of module chips — click a
+// chip to allow exactly that module, "all" after a group allows the
+// group's whole subtree, the big "all" allows every module at once.
 //
 // REWRITE RULES (written in blood from the "nothing appears" reports):
 //   1. every Firestore function used in this file is imported below —
@@ -136,15 +140,15 @@ function boot() {
   $("stat-ready").addEventListener("click", () => openUsers("ready"));
   $("stat-pending").addEventListener("click", () => openUsers("pending"));
   $("users-close").addEventListener("click", () => { $("users-panel").hidden = true; });
-  // users & access: picking a user paints the access tree
+  // users & access: picking a user paints the ACROSS module strip
   $("user-select").addEventListener("change", () => {
     CURRENT_USER_ID = $("user-select").value;
     paintGrants(CURRENT_USER_ID);
   });
-  $("grants-save").addEventListener("click", saveGrants);
-  // TASK 62: the global ALL — every module of every area at once
-  $("grants-all").addEventListener("click", () => {
-    document.querySelectorAll("#grants-tree input[type='checkbox']").forEach((x) => { x.checked = true; });
+  // TASK 63: the module strip — before the Admin button, across
+  $("modsel-save").addEventListener("click", saveGrants);
+  $("modsel-all").addEventListener("click", () => {
+    document.querySelectorAll("#modsel-row .modsel-chip").forEach((x) => { x.classList.add("on"); });
   });
   // page fields
   $("page-select").addEventListener("change", () => paintFields($("page-select").value));
@@ -201,7 +205,9 @@ function userRow(a) {
       $("user-select").value = a.id;
       CURRENT_USER_ID = a.id;
       paintGrants(a.id);
-      $("panel-users").scrollIntoView({ behavior: "smooth", block: "start" });
+      // TASK 63: the module strip is at the TOP of the page — before the
+      // Admin button — so the click lands the administrator there
+      $("modsel").scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
   return tr;
@@ -295,72 +301,81 @@ function paintUserSelect(rows) {
     }
   }
   sel.value = keep && sel.querySelector("option[value='" + keep + "']") ? keep : "";
-  if (!sel.value) { $("grants-card").hidden = true; $("user-who").hidden = true; CURRENT_USER_ID = ""; }
+  if (!sel.value) { $("grants-card").hidden = true; $("user-who").hidden = true; $("modsel").hidden = true; CURRENT_USER_ID = ""; }
   else paintGrants(sel.value);
 }
 
 function paintGrants(id) {
-  const card = $("grants-card"), who = $("user-who");
-  if (!id) { card.hidden = true; who.hidden = true; return; }
+  const card = $("grants-card"), who = $("user-who"), strip = $("modsel");
+  if (!id) { card.hidden = true; who.hidden = true; strip.hidden = true; return; }
   // read from the cache — no extra Firestore round-trip, nothing to fail
   const acc = ACCOUNTS.find((a) => a.id === id);
-  if (!acc) { card.hidden = true; who.hidden = true; return; }
+  if (!acc) { card.hidden = true; who.hidden = true; strip.hidden = true; return; }
   CURRENT_USER_ID = id;
   who.textContent = (acc.usernameDisplay || id) + " — currently granted: " +
     ((acc.grants && acc.grants.length) ? acc.grants.length + " area(s)" : "nothing yet");
   who.hidden = false;
+  card.hidden = false; // the pointer card in Users & Access
 
-  // TASK 62: the FULL depth of the menu as a NESTED tree — Business ->
-  // Add Transaction / View File -> All Transactions, Cash Book, ... Ticking
-  // a parent alone grants that page only (Business without View File means
-  // no files); ticking a child carries its parents at save. Every top area
-  // carries its own ALL button; ALL MODULES ticks everything at once.
+  // TASK 63: the module selection is the ACROSS strip at the top of the
+  // page — before the Admin button. Every grantable module of the menu
+  // is one chip, in tree order (a top area, then its submodules, then
+  // their files), separated by a small divider per top area. Clicking a
+  // chip ticks exactly that module; the small "all" after a group ticks
+  // the group's whole subtree; the big "all" ticks everything. A granted
+  // child still carries its parents at save (saveGrants).
   const granted = new Set(acc.grants || []);
   const menu = window.JAMALI_MENU || [];
-  const tree = $("grants-tree");
-  tree.innerHTML = "";
-  $("grants-all").hidden = false;
-
-  const boxes = [];
+  $("modsel-who").textContent = "Modules for " + (acc.usernameDisplay || id) +
+    " — tick what this user may see:";
+  const rowEl = $("modsel-row");
+  rowEl.innerHTML = "";
+  const chips = [];
   for (let i = 0; i < menu.length; i++) {
     const p = menu[i];
     const d = p.d || 0;
     if (d < 1) continue; // home + system-admin are never granted here
-    const box = document.createElement("div");
-    box.className = "grant-group" + (d > 1 ? " grant-sub" : "");
-    const head = document.createElement("label");
-    head.className = d > 1 ? "mid" : "big";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.dataset.folder = p.folder;
-    cb.checked = granted.has(p.folder);
-    head.appendChild(cb);
-    head.appendChild(document.createTextNode(" " + p.label));
-    box.appendChild(head);
-    if (d === 1) {
+    if (d === 1 && chips.length) {
+      const sep = document.createElement("span");
+      sep.className = "modsel-sep";
+      rowEl.appendChild(sep);
+    }
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "modsel-chip d" + Math.min(d, 3) + (granted.has(p.folder) ? " on" : "");
+    chip.dataset.folder = p.folder;
+    chip.textContent = p.label;
+    chip.title = (d === 1 ? p.label + " — its own page only. " : "") +
+      "Click to allow or remove " + p.label + ".";
+    chip.addEventListener("click", () => { chip.classList.toggle("on"); });
+    rowEl.appendChild(chip);
+    chips.push({ chip, i });
+    // a small "all" chip ticks this module and everything under it
+    if (d <= 2 && i + 1 < menu.length && (menu[i + 1].d || 0) > d) {
       const all = document.createElement("button");
       all.type = "button";
-      all.className = "grant-all";
-      all.textContent = "ALL";
+      all.className = "modsel-allchip";
+      all.textContent = "all";
       all.title = "Allow every module under " + p.label;
       all.addEventListener("click", () => {
-        box.querySelectorAll("input[type='checkbox']").forEach((x) => { x.checked = true; });
+        chip.classList.add("on");
+        for (let j = i + 1; j < menu.length && (menu[j].d || 0) > d; j++) {
+          const hit = chips.find((x) => x.i === j);
+          if (hit) hit.chip.classList.add("on");
+        }
       });
-      head.appendChild(all);
+      rowEl.appendChild(all);
     }
-    boxes[d] = box;
-    if (d === 1 || !boxes[d - 1]) tree.appendChild(box);
-    else boxes[d - 1].appendChild(box);
   }
-  card.hidden = false;
+  strip.hidden = false;
 }
 
 function saveGrants() {
   const id = $("user-select").value;
   if (!id) return;
   const picked = [];
-  document.querySelectorAll("#grants-tree input[type='checkbox']:checked").forEach((cb) => {
-    picked.push(cb.dataset.folder);
+  document.querySelectorAll("#modsel-row .modsel-chip.on").forEach((chip) => {
+    picked.push(chip.dataset.folder);
   });
   // TASK 60: a granted child always carries its ancestors — granting
   // "Add Transaction" also grants "Business", so the sidebar shows the
@@ -379,7 +394,7 @@ function saveGrants() {
     }
   }
   updateDoc(doc(db, "systemAccounts", id), { grants: Array.from(grants), grantsAt: serverTimestamp() })
-    .then(() => { okMsg("grants-ok"); return readAccounts(); })
+    .then(() => { okMsg("modsel-ok"); return readAccounts(); })
     .then((rows) => {
       paintCounters(rows);
       paintUserSelect(rows);
