@@ -36,6 +36,22 @@
     </button>
   </section>
 
+  <!-- ============ TASK 57/58 · THE USERS PANEL: opens right under ============
+       the numbers when a counter is clicked (it used to sit at the very
+       bottom of the page — off-screen, which read as "nothing appears"). -->
+  <section class="card" id="users-panel" hidden>
+    <h2 id="users-title">Users</h2>
+    <p class="hint" id="users-hint"></p>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Username</th><th>Staff position</th><th>Status</th><th>Granted areas</th><th>Registered</th></tr></thead>
+        <tbody id="users-body"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="users-empty" hidden>No accounts in this view yet.</p>
+    <p class="save-line"><button class="btn-ghost" id="users-close" type="button">Close</button></p>
+  </section>
+
   <nav class="tabs">
     <button class="tab active" id="tab-requests" type="button">Account Requests <span class="badge" id="req-badge" hidden>0</span></button>
     <button class="tab" id="tab-users" type="button">Users &amp; Access</button>
@@ -109,19 +125,7 @@
     </div>
   </section>
 
-  <!-- ================= TASK 57 · WHO IS BEHIND A NUMBER ================= -->
-  <section class="card" id="users-panel" hidden>
-    <h2 id="users-title">Users</h2>
-    <p class="hint" id="users-hint"></p>
-    <div class="table-wrap">
-      <table class="bk">
-        <thead><tr><th>Username</th><th>Staff position</th><th>Status</th><th>Granted areas</th><th>Registered</th></tr></thead>
-        <tbody id="users-body"></tbody>
-      </table>
-    </div>
-    <p class="empty" id="users-empty" hidden>No accounts in this view yet.</p>
-    <p class="save-line"><button class="btn-ghost" id="users-close" type="button">Close</button></p>
-  </section>
+  <!-- (the users panel now lives directly under the counters) -->
 
   <p class="form-err" id="err" hidden></p>
 </main>
