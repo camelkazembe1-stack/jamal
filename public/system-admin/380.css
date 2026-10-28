@@ -107,3 +107,13 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: #0ea5e9; }
 .stat-hint { font-size: 12px; color: #94a3b8; }
 #stat-ready .stat-num { color: #16a34a; }
 #stat-pending .stat-num { color: #d97706; }
+
+/* ---- task 67: the self-diagnosis panel (publish-rules guide) ---- */
+.fix-panel { border-left: 4px solid #f59e0b; }
+.fix-steps { margin: 8px 0 12px 20px; color: #334155; font-size: 13.5px; line-height: 1.8; }
+.fix-steps b { color: #0f172a; }
+.fix-pre {
+  max-height: 260px; overflow: auto; background: #0f172a; border: 1px solid #1f2937;
+  border-radius: 10px; padding: 12px 14px; font-size: 12px; line-height: 1.55;
+  color: #93c5fd; white-space: pre-wrap; word-break: break-word; margin: 0 0 4px;
+}
