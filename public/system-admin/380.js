@@ -1,16 +1,26 @@
-// JAMALI — Account Administration (380) — task 56
-// Approve/reject account requests · grant modules/submodules per user ·
-// hide existing page fields / set defaults. Administrators only.
+// JAMALI — Account Administration (380) — TASK 58 FULL REWRITE
+// One screen for the administrator: the counters (Total / Ready / Pending),
+// the account requests, the per-user room keys, and the page field settings.
+//
+// REWRITE RULES (written in blood from the "nothing appears" reports):
+//   1. every Firestore function used in this file is imported below —
+//      no exceptions (a missing import = silent ReferenceError);
+//   2. NO silent catch — every failure is written on the screen;
+//   3. the accounts are read ONCE into one cache; the counters, the
+//      requests, the user selector and the user lists all render from
+//      that same cache, and every action re-reads it first.
 
 import {
   requireAuth, readSystemSession,
-  db, collection, getDocs, getDoc, doc, updateDoc, setDoc, query, where, serverTimestamp
+  db, collection, getDocs, getDoc, doc, updateDoc, setDoc, serverTimestamp
 } from "/firebase.js";
 
 const $ = (id) => document.getElementById(id);
 const err = $("err");
 function fail(msg) { err.textContent = msg; err.hidden = false; }
+function clearErr() { if (err.textContent.indexOf("Could not read the accounts") === 0) err.hidden = true; }
 function okMsg(id) { const el = $(id); el.hidden = false; setTimeout(() => { el.hidden = true; }, 2200); }
+function show(e) { return (e && (e.message || e.code)) ? (e.message || e.code) : String(e); }
 
 // ---------------------------------------------------------------------
 // guard: administrators only (requireAuth also checks house + session)
@@ -21,6 +31,31 @@ if (!session || session.role !== "admin") {
   location.replace("/?denied=" + encodeURIComponent("system-admin"));
 } else {
   boot();
+}
+
+// ---------------------------------------------------------------------
+// the ONE cache — one read feeds every panel
+// ---------------------------------------------------------------------
+let ACCOUNTS = [];        // every account: { id, usernameDisplay, status, role, grants, ... }
+let CURRENT_USER_ID = ""; // the account picked in Users & Access
+
+async function readAccounts() {
+  const snap = await getDocs(collection(db, "systemAccounts"));
+  const rows = [];
+  snap.forEach((d) => { const a = d.data(); a.id = d.id; rows.push(a); });
+  rows.sort((x, y) => String(x.usernameDisplay || x.id || "").localeCompare(String(y.usernameDisplay || y.id || "")));
+  ACCOUNTS = rows;
+  return rows;
+}
+
+// re-read the accounts, then repaint every panel that shows them
+function refreshAll() {
+  readAccounts().then((rows) => {
+    paintCounters(rows);
+    paintRequests(rows);
+    paintUserSelect(rows);
+    if (CURRENT_USER_ID) paintGrants(CURRENT_USER_ID);
+  }).catch((e) => fail("Could not read the accounts: " + show(e)));
 }
 
 // ---------------------------------------------------------------------
@@ -40,15 +75,22 @@ function boot() {
       });
     });
   });
-  // task 57: the counters and the user lists behind them
-  $("stat-total").addEventListener("click", () => showUsers("total"));
-  $("stat-ready").addEventListener("click", () => showUsers("ready"));
-  $("stat-pending").addEventListener("click", () => showUsers("pending"));
+  // the counters: click a number -> that group's users
+  $("stat-total").addEventListener("click", () => openUsers("total"));
+  $("stat-ready").addEventListener("click", () => openUsers("ready"));
+  $("stat-pending").addEventListener("click", () => openUsers("pending"));
   $("users-close").addEventListener("click", () => { $("users-panel").hidden = true; });
-  loadStats();
-  loadRequests();
-  loadUsers();
+  // users & access: picking a user paints the access tree
+  $("user-select").addEventListener("change", () => {
+    CURRENT_USER_ID = $("user-select").value;
+    paintGrants(CURRENT_USER_ID);
+  });
+  $("grants-save").addEventListener("click", saveGrants);
+  // page fields
+  $("page-select").addEventListener("change", () => paintFields($("page-select").value));
+  $("fields-save").addEventListener("click", saveFields);
   buildPageSelect();
+  refreshAll();
 }
 
 // ---------------------------------------------------------------------
@@ -69,57 +111,51 @@ const USER_VIEWS = {
              filter: (a) => a.status === "pending" }
 };
 
-async function loadStats() {
-  try {
-    const snap = await getDocs(collection(db, "systemAccounts"));
-    const all = [];
-    snap.forEach((d) => all.push(d.data()));
-    $("stat-total-num").textContent = String(all.length);
-    $("stat-ready-num").textContent = String(all.filter((a) => a.status === "approved").length);
-    $("stat-pending-num").textContent = String(all.filter((a) => a.status === "pending").length);
-  } catch (e) { /* the counters stay as dashes until the read succeeds */ }
+function paintCounters(rows) {
+  $("stat-total-num").textContent = String(rows.length);
+  $("stat-ready-num").textContent = String(rows.filter((a) => a.status === "approved").length);
+  $("stat-pending-num").textContent = String(rows.filter((a) => a.status === "pending").length);
 }
 
-async function showUsers(kind) {
+function userRow(a) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = "<td></td><td></td><td></td><td></td><td></td>";
+  tr.cells[0].textContent = a.usernameDisplay || a.id || "";
+  tr.cells[1].textContent = a.position || "";
+  tr.cells[2].textContent = STATUS_LABELS[a.status] || (a.status || "");
+  tr.cells[3].textContent = String(Array.isArray(a.grants) ? a.grants.length : 0);
+  tr.cells[4].textContent = a.at && a.at.toDate ? a.at.toDate().toLocaleDateString() : "";
+  return tr;
+}
+
+function openUsers(kind) {
   const view = USER_VIEWS[kind];
   if (!view) return;
   const body = $("users-body");
   body.innerHTML = "";
   $("users-panel").hidden = false;
+  $("users-panel").scrollIntoView({ behavior: "smooth", block: "nearest" });
   $("users-title").textContent = view.title;
   $("users-hint").textContent = view.hint;
-  let n = 0;
-  try {
-    const snap = await getDocs(collection(db, "systemAccounts"));
-    const rows = [];
-    snap.forEach((d) => { const a = d.data(); if (view.filter(a)) rows.push(a); });
-    rows.sort((x, y) => String(x.usernameDisplay || "").localeCompare(String(y.usernameDisplay || "")));
+  readAccounts().then((rows) => {
+    paintCounters(rows); // the numbers are re-counted on every click
+    let n = 0;
     for (const a of rows) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = "<td></td><td></td><td></td><td></td><td></td>";
-      tr.cells[0].textContent = a.usernameDisplay || "";
-      tr.cells[1].textContent = a.position || "";
-      tr.cells[2].textContent = STATUS_LABELS[a.status] || (a.status || "");
-      tr.cells[3].textContent = String(Array.isArray(a.grants) ? a.grants.length : 0);
-      tr.cells[4].textContent = a.at && a.at.toDate ? a.at.toDate().toLocaleDateString() : "";
-      body.appendChild(tr);
-      n++;
+      if (view.filter(a)) { body.appendChild(userRow(a)); n++; }
     }
-  } catch (e) { fail("Could not read the accounts: " + (e.message || e.code)); }
-  $("users-empty").hidden = n > 0;
+    $("users-empty").hidden = n > 0;
+  }).catch((e) => fail("Could not read the accounts: " + show(e)));
 }
 
 // ---------------------------------------------------------------------
 // TAB 1 · account requests
 // ---------------------------------------------------------------------
-async function loadRequests() {
+function paintRequests(rows) {
   const reqBody = $("req-body"), rejBody = $("rej-body");
   reqBody.innerHTML = ""; rejBody.innerHTML = "";
   let pend = 0, rej = 0;
 
-  const snap = await getDocs(collection(db, "systemAccounts"));
-  snap.forEach((d) => {
-    const a = d.data();
+  for (const a of rows) {
     const row = document.createElement("tr");
     if (a.status === "pending") {
       pend++;
@@ -128,21 +164,21 @@ async function loadRequests() {
         "<td></td><td></td><td>" + when + "</td>" +
         "<td><button class=\"btn-ghost approve\" type=\"button\">Approve</button>" +
         "<button class=\"btn-ghost btn-danger reject\" type=\"button\">Reject</button></td>";
-      row.cells[0].textContent = a.usernameDisplay || d.id;
+      row.cells[0].textContent = a.usernameDisplay || a.id;
       row.cells[1].textContent = a.position || "";
-      row.querySelector(".approve").addEventListener("click", () => decide(d.id, "approved"));
-      row.querySelector(".reject").addEventListener("click", () => decide(d.id, "rejected"));
+      row.querySelector(".approve").addEventListener("click", () => decide(a.id, "approved"));
+      row.querySelector(".reject").addEventListener("click", () => decide(a.id, "rejected"));
       reqBody.appendChild(row);
     } else if (a.status === "rejected") {
       rej++;
       row.innerHTML = "<td></td><td></td>" +
         "<td><button class=\"btn-ghost approve\" type=\"button\">Approve again</button></td>";
-      row.cells[0].textContent = a.usernameDisplay || d.id;
+      row.cells[0].textContent = a.usernameDisplay || a.id;
       row.cells[1].textContent = a.position || "";
-      row.querySelector(".approve").addEventListener("click", () => decide(d.id, "approved"));
+      row.querySelector(".approve").addEventListener("click", () => decide(a.id, "approved"));
       rejBody.appendChild(row);
     }
-  });
+  }
 
   $("req-empty").hidden = pend > 0;
   $("rej-empty").hidden = rej > 0;
@@ -151,13 +187,10 @@ async function loadRequests() {
   badge.hidden = pend === 0;
 }
 
-async function decide(id, status) {
-  try {
-    await updateDoc(doc(db, "systemAccounts", id), { status: status, decidedAt: serverTimestamp() });
-    loadRequests();
-    loadUsers();
-    loadStats();
-  } catch (e) { fail("Could not save the decision: " + (e.message || e.code)); }
+function decide(id, status) {
+  updateDoc(doc(db, "systemAccounts", id), { status: status, decidedAt: serverTimestamp() })
+    .then(refreshAll)
+    .catch((e) => fail("Could not save the decision: " + show(e)));
 }
 
 // ---------------------------------------------------------------------
@@ -180,36 +213,30 @@ function uniqueFolders() {
   return out;
 }
 
-async function loadUsers() {
+function paintUserSelect(rows) {
   const sel = $("user-select");
   const keep = sel.value;
   sel.innerHTML = "<option value=\"\">— Select a user —</option>";
-  const snap = await getDocs(collection(db, "systemAccounts"));
-  const names = [];
-  snap.forEach((d) => {
-    const a = d.data();
-    if (a.status === "approved" && a.role !== "admin") names.push({ id: d.id, a });
-  });
-  names.sort((x, y) => (x.a.usernameDisplay || x.id).localeCompare(y.a.usernameDisplay || y.id));
-  for (const { id, a } of names) {
-    const o = document.createElement("option");
-    o.value = id;
-    o.textContent = (a.usernameDisplay || id) + (a.position ? " — " + a.position : "");
-    sel.appendChild(o);
+  for (const a of rows) {
+    if (a.status === "approved" && a.role !== "admin") {
+      const o = document.createElement("option");
+      o.value = a.id;
+      o.textContent = (a.usernameDisplay || a.id) + (a.position ? " — " + a.position : "");
+      sel.appendChild(o);
+    }
   }
   sel.value = keep && sel.querySelector("option[value='" + keep + "']") ? keep : "";
-  if (!sel.value) { $("grants-card").hidden = true; $("user-who").hidden = true; }
-  sel.onchange = () => renderGrants(sel.value);
-  if (sel.value) renderGrants(sel.value);
+  if (!sel.value) { $("grants-card").hidden = true; $("user-who").hidden = true; CURRENT_USER_ID = ""; }
+  else paintGrants(sel.value);
 }
 
-async function renderGrants(id) {
+function paintGrants(id) {
   const card = $("grants-card"), who = $("user-who");
   if (!id) { card.hidden = true; who.hidden = true; return; }
-  let acc;
-  try {
-    acc = (await getDoc(doc(db, "systemAccounts", id))).data();
-  } catch (e) { fail("Could not read the account: " + (e.message || e.code)); return; }
+  // read from the cache — no extra Firestore round-trip, nothing to fail
+  const acc = ACCOUNTS.find((a) => a.id === id);
+  if (!acc) { card.hidden = true; who.hidden = true; return; }
+  CURRENT_USER_ID = id;
   who.textContent = (acc.usernameDisplay || id) + " — currently granted: " +
     ((acc.grants && acc.grants.length) ? acc.grants.length + " area(s)" : "nothing yet");
   who.hidden = false;
@@ -257,21 +284,22 @@ async function renderGrants(id) {
   card.hidden = false;
 }
 
-$("grants-save").addEventListener("click", async () => {
-  const sel = $("user-select");
-  const id = sel.value;
+function saveGrants() {
+  const id = $("user-select").value;
   if (!id) return;
   const grants = [];
   document.querySelectorAll("#grants-tree input[type='checkbox']:checked").forEach((cb) => {
     grants.push(cb.dataset.folder);
   });
-  try {
-    await updateDoc(doc(db, "systemAccounts", id), { grants: grants, grantsAt: serverTimestamp() });
-    okMsg("grants-ok");
-    renderGrants(id);
-    loadUsers();
-  } catch (e) { fail("Could not save access: " + (e.message || e.code)); }
-});
+  updateDoc(doc(db, "systemAccounts", id), { grants: grants, grantsAt: serverTimestamp() })
+    .then(() => { okMsg("grants-ok"); return readAccounts(); })
+    .then((rows) => {
+      paintCounters(rows);
+      paintUserSelect(rows);
+      paintGrants(id);
+    })
+    .catch((e) => fail("Could not save access: " + show(e)));
+}
 
 // ---------------------------------------------------------------------
 // TAB 3 · page fields (hide existing fields / set defaults)
@@ -310,17 +338,20 @@ function buildPageSelect() {
     o.textContent = PAGE_FIELDS[id].label;
     sel.appendChild(o);
   }
-  sel.onchange = () => renderFields(sel.value);
 }
 
-async function renderFields(pageId) {
+async function paintFields(pageId) {
   const card = $("fields-card");
   if (!pageId) { card.hidden = true; return; }
   let config = { hidden: [], defaults: {} };
   try {
     const snap = await getDoc(doc(db, "systemPageConfig", pageId));
     if (snap.exists()) config = snap.data();
-  } catch (e) { /* fresh page config */ }
+  } catch (e) {
+    // NOT silent: a denied read used to swallow the whole tab invisibly
+    fail("Could not read the page settings: " + show(e));
+    return;
+  }
 
   const hidden = new Set(config.hidden || []);
   const defaults = config.defaults || {};
@@ -367,7 +398,7 @@ async function renderFields(pageId) {
   card.hidden = false;
 }
 
-$("fields-save").addEventListener("click", async () => {
+function saveFields() {
   const pageId = $("page-select").value;
   if (!pageId) return;
   const hidden = [], defaults = {};
@@ -377,10 +408,8 @@ $("fields-save").addEventListener("click", async () => {
     if (el.value === "") return;
     defaults[el.dataset.field] = el.value === "__checked__" ? true : el.value;
   });
-  try {
-    await setDoc(doc(db, "systemPageConfig", pageId), {
-      page: pageId, hidden: hidden, defaults: defaults, updatedAt: serverTimestamp()
-    });
-    okMsg("fields-ok");
-  } catch (e) { fail("Could not save the page settings: " + (e.message || e.code)); }
-});
+  setDoc(doc(db, "systemPageConfig", pageId), {
+    page: pageId, hidden: hidden, defaults: defaults, updatedAt: serverTimestamp()
+  }).then(() => okMsg("fields-ok"))
+    .catch((e) => fail("Could not save the page settings: " + show(e)));
+}

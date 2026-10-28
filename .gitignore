@@ -1,0 +1,3 @@
+# JAMALI delivery scripts run from the chat link — never stored in the repo
+task*.sh
+jamali-*.sh
