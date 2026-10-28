@@ -1,13 +1,13 @@
-/* JAMALI — shared sidebar (every page except index.html).
+/* JAMALI — shared sidebar (every page except index.html) — TASK 58 REWRITE.
    THE TWO IRON RULES (unchanged):
    - this file holds NO page data (the tree comes from menu.js)
-   - this file calls NO file (no fetch, no import)
+   - this file fetches NO page data (the tree is built from menu.js only)
    Adding or moving a page is still ONE line in menu.js — never this file.
    The tree is COLLAPSIBLE: any node whose menu entries go one level deeper
    gets a toggle. Home and Business start open, deeper nodes start closed,
    and the path to the page you are on is opened automatically.
 
-   TASK 56 — the two-key model:
+   THE TWO-KEY MODEL (task 56):
    - key to the HOUSE = the Google sign-in; keys to the ROOMS = the system
      account session (sessionStorage "JAMALI_SYSTEM_SESSION", written by the
      start page at account login).
@@ -15,8 +15,9 @@
      other accounts see only the folders granted to them (all hidden until
      the administrator grants access).
    - the PERSON ICON sits immediately to the right of JAMAL with a small
-     space; clicking it opens Logout and Switch Account. Both hide the
-     system and return to the start page (Login / Create Account).
+     space; clicking it opens the account menu: the user's name + Logout
+     and Switch Account. Both return to the start page (Login / Create
+     Account).
    - folder links whose area the session may not open (home page tiles,
      hub links, cross-page links) are hidden as well.
 
@@ -24,13 +25,25 @@
    - when the administrator is logged in, a fixed "Admin" button sits at
      the top-right corner of every page and opens the Account
      Administration dashboard (/system-admin/380). Everyone else never
-     sees it. */
+     sees it.
+
+   TASK 58 — the session corrects itself:
+   - a STALE session (the administrator changed the role, the grants or
+     the display name after this browser last logged in) used to keep
+     showing the old menu and the old buttons until the next manual login.
+     Now, once per page, the sidebar quietly re-reads this browser's own
+     account from the stored profile and, if anything changed, saves the
+     corrected session and refreshes the page once. If nothing changed,
+     nothing happens — no extra reads, no flicker. */
 (function () {
 
   var SESSION_KEY = "JAMALI_SYSTEM_SESSION";
   function readSession() {
     try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); }
     catch (e) { return null; }
+  }
+  function writeSession(s) {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {}
   }
   function clearSession() {
     try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
@@ -138,7 +151,7 @@
     "cursor:pointer;line-height:1;padding:2px 3px;border-radius:8px}",
     "#jamali-person:hover{background:#1e293b;color:#fff}",
     "#jamali-acct{position:absolute;top:56px;left:14px;background:#111827;border:1px solid #334155;",
-    "border-radius:12px;min-width:180px;box-shadow:0 14px 34px rgba(0,0,0,.5);overflow:hidden}",
+    "border-radius:12px;min-width:180px;box-shadow:0 14px 34px rgba(0,0,0,.5);overflow:hidden;z-index:1002}",
     "#jamali-acct .who{padding:10px 14px;font-size:12px;color:#94a3b8;border-bottom:1px solid #1e293b}",
     "#jamali-acct .who b{display:block;color:#e2e8f0;font-size:13px;white-space:nowrap;",
     "overflow:hidden;text-overflow:ellipsis}",
@@ -192,7 +205,7 @@
   });
 
   // brand: JAMAL first, then the person icon immediately to its right with
-  // a small space (task 56). The icon opens Logout / Switch Account.
+  // a small space (task 56). The icon opens the account menu.
   var aside = document.createElement("aside");
   aside.id = "jamali-sidebar";
   aside.innerHTML =
@@ -205,7 +218,7 @@
   document.body.insertBefore(burger, document.body.firstChild);
   document.body.classList.add("jamali-has-sidebar");
 
-  // ---- account menu: Logout + Switch Account (task 56) ----------------------
+  // ---- account menu: name + Logout + Switch Account (task 56) ----------------
   var who = session ? (session.username || "account") : "account";
   var roleLine = session ? (session.role === "admin" ? "administrator" : (session.position || "user")) : "";
   var acct = document.createElement("div");
@@ -244,9 +257,10 @@
     });
   });
 
-  // ---- TASK 57: the Admin button — top-right corner of every page, --------
+  // ---- TASK 57: the Admin button — top-right corner of every page, -----------
   // ---- administrators only. Opens the Account Administration dashboard.
-  if (session && session.role === "admin") {
+  function ensureAdminBtn() {
+    if (document.getElementById("jamali-admin-btn")) return;
     var abtn = document.createElement("button");
     abtn.id = "jamali-admin-btn";
     abtn.type = "button";
@@ -256,6 +270,50 @@
       location.href = "/system-admin/380";
     });
     document.body.appendChild(abtn);
+  }
+  if (session && session.role === "admin") {
+    ensureAdminBtn();
+  }
+
+  // ---- TASK 58: the session corrects itself against the stored account -------
+  // One quiet read per page. If the stored account changed since this browser
+  // last logged in (role, grants, name, position), the corrected session is
+  // saved and the page refreshes once; the fresh render is then correct.
+  if (session && session.username) {
+    import("/firebase.js").then(function (fb) {
+      var uid = fb.auth && fb.auth.currentUser;
+      var ready = uid
+        ? Promise.resolve(uid)
+        : new Promise(function (res) {
+            var off = fb.onAuthStateChanged(fb.auth, function (u) { off(); res(u); });
+          });
+      return ready.then(function (u) {
+        if (!u) return null;
+        var id = String(session.username || "").toLowerCase();
+        return fb.getDoc(fb.doc(fb.db, "systemAccounts", id));
+      });
+    }).then(function (snap) {
+      if (!snap || !snap.exists()) return;
+      var a = snap.data();
+      var next = {
+        uid: session.uid,
+        username: a.usernameDisplay || session.username,
+        position: a.position || "",
+        role: a.role || "user",
+        grants: Array.isArray(a.grants) ? a.grants : [],
+        at: session.at
+      };
+      var same = next.username === session.username &&
+                 next.role === session.role &&
+                 next.position === (session.position || "") &&
+                 JSON.stringify(next.grants) === JSON.stringify(session.grants || []);
+      if (!same) {
+        writeSession(next);
+        location.reload(); // one refresh; the next render reads the new session
+      }
+    }).catch(function () {
+      /* a hiccup never breaks the page — the cached session stays */
+    });
   }
 
   // ---- v / ^ toggles: v = children closed (click to open), ^ = open (click to close)
