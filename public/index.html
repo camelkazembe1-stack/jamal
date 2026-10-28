@@ -45,6 +45,7 @@
   .status { margin-top: 14px; font-size: 13px; color: #f87171; min-height: 18px; text-align: center; }
   .status.ok { color: #4ade80; }
   .google-note { margin-top: 10px; font-size: 12px; color: #64748b; text-align: center; }
+  #recovery-line { margin: 8px 0 0; }
   .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
   .hidden { display: none; }
   .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
@@ -65,13 +66,14 @@
       <input id="li-username" type="text" autocomplete="username" placeholder="Your username">
       <label for="li-token">Four-digit token</label>
       <div class="token-row"><input id="li-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <!-- TASK 63: ONE recovery link, shown ONLY at the token step. The
+           old three-up row (Forgot Token? · Forgot Password? · Forgot
+           Phone Number?) is gone. The single link appears when the user
+           is actually at the token field (focus / typing) or after a
+           wrong-token attempt, and opens the token recovery page. -->
+      <p class="links" id="recovery-line" hidden><a id="go-forgot-token">Forgot Token?</a></p>
       <button class="wide" id="login-btn" type="button">Login</button>
       <p class="swap">No account yet? <a id="go-create">Create Account</a></p>
-      <p class="links">
-        <a id="go-forgot-token">Forgot Token?</a> &nbsp;·&nbsp;
-        <a id="go-forgot-password">Forgot Password?</a> &nbsp;·&nbsp;
-        <a id="go-forgot-phone">Forgot Phone Number?</a>
-      </p>
       <p class="google-note">Your Google sign-in is the key to the house — you will be asked for it if needed.</p>
     </section>
 
@@ -173,19 +175,18 @@
       }
     });
 
-    // recovery chain — the username travels with the link
+    // recovery — the username travels with the link
     $("go-forgot-token").addEventListener("click", () => {
       const u = $("li-username").value.trim();
       location.href = "/account-recovery/390" + (u ? "?u=" + encodeURIComponent(u) : "");
     });
-    $("go-forgot-password").addEventListener("click", () => {
-      const u = $("li-username").value.trim();
-      location.href = "/account-recovery/391" + (u ? "?u=" + encodeURIComponent(u) : "");
-    });
-    $("go-forgot-phone").addEventListener("click", () => {
-      const u = $("li-username").value.trim();
-      location.href = "/account-recovery/392" + (u ? "?u=" + encodeURIComponent(u) : "");
-    });
+
+    // TASK 63: the ONE recovery link shows only at the token step —
+    // when the token field is engaged (focused / typed into) or after a
+    // wrong-token attempt. No other recovery entry exists on this page.
+    function showRecovery() { $("recovery-line").hidden = false; }
+    $("li-token").addEventListener("focus", showRecovery);
+    $("li-token").addEventListener("input", showRecovery);
 
     // ------------------------------------------------------------------
     // house key (Google) — unchanged authentication, asked for only when needed
@@ -313,7 +314,7 @@
         // accounts re-claim it (the security rules verify the hashes).
         if (norm(username) === ADMIN_USERNAME) {
           const tokHash = await sha(token);
-          if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); btn.disabled = false; return; }
+          if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); showRecovery(); btn.disabled = false; return; }
           const admins = await getDocs(collection(db, "systemAdmins"));
           if (admins.empty) {
             // first ever login: the claim that seeds the whole server
@@ -379,7 +380,7 @@
         const credSnap = await getDoc(doc(db, "systemCredentials", id));
         if (!credSnap.exists()) { say("Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
         const tokHash2 = await sha(token);
-        if (credSnap.data().tokenHash !== tokHash2) { say("Wrong token."); btn.disabled = false; return; }
+        if (credSnap.data().tokenHash !== tokHash2) { say("Wrong token."); showRecovery(); btn.disabled = false; return; }
 
         writeSession({ id, ...acc }, user);
         location.href = "/home/1";
