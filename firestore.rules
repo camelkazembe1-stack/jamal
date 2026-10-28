@@ -3,19 +3,21 @@ rules_version = '2';
 // =====================================================================
 // JAMALI — firestore.rules — the guard dog
 // (Task 56: system accounts added; Task 61: multi-email administrator
-// claim + registration notifications; TASK 64: the staff journey is
-// GOOGLE-FREE)
+// claim + registration notifications; TASK 65: one Google identity,
+// many system accounts — every account LINKED TO ITS GOOGLE EMAIL)
 //
-// TASK 64 IN PLAIN WORDS: the administrator's Google sign-in is the
-// ONLY house key. Staff register and log in with a username and a
-// four-digit token, so their requests carry NO Google identity at all
-// — every business collection is therefore open, exactly as the
-// standing order intended. The system collections keep real guards:
-// registration may only CREATE a pending, unbound account (never
-// update, never delete, never touch the administrator's documents),
-// and only the administrator — a real Google sign-in proven by the
-// seeded claim — approves, edits grants or clears notifications.
-// Anything not matched below is denied by default.
+// TASK 65 IN PLAIN WORDS: the Google sign-in is the key to the HOUSE
+// and it is checked everywhere — no JAMALI link opens without it. A
+// system account is a separate saved record LINKED TO THE GOOGLE EMAIL
+// that created it: one email may hold MANY accounts (each under its
+// own username), switching between them never deletes, overwrites or
+// merges anything, and logging out of JAMALI never signs the Google
+// session away. Registration may only CREATE a pending account whose
+// googleEmail is exactly the writer's own authenticated email; only
+// the administrator — a real Google sign-in proven by the seeded
+// claim — approves, edits grants or clears notifications. The 18
+// business collections stay open exactly as the standing order
+// intended. Anything not matched below is denied by default.
 //
 // The project's live collections, named by scanning every page's code:
 //   transactions                — the one journal the whole business reads
@@ -52,9 +54,9 @@ service cloud.firestore {
     }
 
     // ---- Business: one journal, every book derives from it ----
-    // TASK 64: open — staff requests carry no Google identity (username
-    // + token is the whole staff login; the administrator decides what
-    // each staff account may see with the module selection).
+    // Open — every writer now holds the house key (the Google gate),
+    // and the administrator decides what each system account may see
+    // with the module selection.
     match /transactions/{docId} {
       allow create, read, update, delete: if true;
     }
@@ -140,23 +142,27 @@ service cloud.firestore {
 
     // ===================================================================
     // SYSTEM — accounts, credentials, administration
-    // Two-key model, Task 64 edition: the Google sign-in is the key to
-    // the HOUSE and only the administrator carries it; staff accounts
-    // are room keys bound to NOTHING but their username — one staff per
-    // username, many staff per email.
+    // Two-key model, Task 65 edition: the Google sign-in is the key to
+    // the HOUSE (checked on every page), and every system account is a
+    // separate room key LINKED TO THE GOOGLE EMAIL that created it —
+    // one email, many accounts, nothing ever merged.
     // ===================================================================
 
     // ---- account profiles: usernames, positions, approval, grants ----
-    // No secrets live here. Anyone may resolve a username — the staff
-    // login itself is unauthenticated. Registration may only CREATE a
-    // pending, UNBOUND profile (googleUid == "", role "user"); the
-    // administrator claim escape below still seeds the first
-    // administrator exactly as Task 56b built it. Only the
-    // administrator approves, rejects, edits grants or deletes.
+    // No secrets live here. Anyone may resolve a username. TASK 65
+    // (requirements 2 + 4): registration may only CREATE a pending
+    // account whose googleEmail is EXACTLY the writer's own
+    // authenticated email — one Google email may hold many accounts
+    // (each under its own username), and no write may ever rebind or
+    // overwrite somebody else's record. The administrator claim escape
+    // below still seeds the first administrator exactly as Task 56b
+    // built it. Only the administrator approves, rejects, edits grants
+    // or deletes.
     match /systemAccounts/{docId} {
       allow read: if true;
       allow create: if (
-        (request.resource.data.get("googleUid", "") == ""
+        (request.auth != null
+          && request.resource.data.get("googleEmail", "") == request.auth.token.email
           && request.resource.data.get("status", "") == "pending"
           && request.resource.data.get("role", "") == "user")
         || (request.auth != null
@@ -173,18 +179,19 @@ service cloud.firestore {
     }
 
     // ---- credentials: password/token hashes + phone (never profile data) --
-    // TASK 64: the staff login must read the token hash WITHOUT a Google
-    // identity, so every credential document is readable EXCEPT the
-    // administrator's own — that one stays bound to its Google identity
-    // (its hashes are also sealed inside these rules). Creates may never
-    // touch the administrator's document; updates stay
-    // administrator/bound-identity only, so nobody can tamper with a
-    // staff member's token once registered.
+    // TASK 65: the Google gate means EVERY reader is an authenticated
+    // one, so the token hashes may only be read while signed in — and
+    // never for the administrator's own document except by the
+    // administrator's identity itself. Creates may never touch the
+    // administrator's document; updates stay administrator/bound-
+    // identity only, so nobody can tamper with a token once registered.
     match /systemCredentials/{docId} {
-      allow read: if docId != "jamal kazembe"
-        || (request.auth != null && resource.data.googleUid == request.auth.uid);
-      allow create: if docId != "jamal kazembe"
-        || (request.auth != null && request.resource.data.googleUid == request.auth.uid);
+      allow read: if request.auth != null
+        && (docId != "jamal kazembe"
+          || resource.data.googleUid == request.auth.uid);
+      allow create: if request.auth != null
+        && (docId != "jamal kazembe"
+          || request.resource.data.googleUid == request.auth.uid);
       allow update: if request.auth != null
         && (resource.data.googleUid == request.auth.uid || isSystemAdmin());
       allow delete: if isSystemAdmin();
@@ -217,23 +224,25 @@ service cloud.firestore {
 
     // ---- notifications (Task 61: requirements 9 + 10) ----
     // One document per registration request, written in the same batch as
-    // the account itself. TASK 64: registration carries no Google
-    // identity, so the create is guarded by SHAPE — a registration ring,
-    // unread, unbound — instead of by the writer's identity. The
-    // administrator reads the counter, dismisses entries, and a decision
-    // marks the notification as read.
+    // the account itself. TASK 65: the ring is signed with the writer's
+    // own Google email — the create only lands while the house key is
+    // really held (request.auth != null) and the email on the ring IS
+    // the authenticated one. The administrator reads the counter,
+    // dismisses entries, and a decision marks the notification as read.
     match /systemNotifications/{docId} {
       allow read: if request.auth != null;
-      allow create: if request.resource.data.get("type", "") == "registration"
+      allow create: if request.auth != null
+        && request.resource.data.get("type", "") == "registration"
         && request.resource.data.get("status", "") == "unread"
-        && request.resource.data.get("googleUid", "") == "";
+        && request.resource.data.get("googleEmail", "") == request.auth.token.email;
       allow update: if isSystemAdmin();
       allow delete: if isSystemAdmin();
     }
 
     // ---- page field configuration: hide existing fields / set defaults --
-    // Read by every page that applies it (staff have no Google — the read
-    // opens); written by the administrator only.
+    // Read by every page that applies it (every reader now holds the
+    // house key, and the read stays open for resilience); written by
+    // the administrator only.
     match /systemPageConfig/{docId} {
       allow read: if true;
       allow create, update, delete: if isSystemAdmin();
