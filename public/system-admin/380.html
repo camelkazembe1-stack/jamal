@@ -11,181 +11,187 @@
 <body>
 <main class="wrap">
 
-  <section class="head">
-    <a class="back" href="/home/1">&larr; Home</a>
-    <h1>Account Administration</h1>
-    <p class="sub">Approve account requests, decide who enters which room, and customize pages. Administrators see everything; every other account starts with everything hidden.</p>
-    <!-- TASK 61 · requirement 10: the button shows the number of -->
-    <!-- notifications awaiting attention -->
-    <button class="notif-btn" id="notif-open" type="button">Notifications <span class="badge" id="notif-badge" hidden>0</span></button>
+ <section class="head">
+  <a class="back" href="/home/1">&larr; Home</a>
+  <h1>Account Administration</h1>
+  <p class="sub">Approve account requests, decide who enters which room, and customize pages. Administrators see everything; every other account starts with everything hidden.</p>
+  <button class="notif-btn" id="notif-open" type="button">Notifications <span class="badge" id="notif-badge" hidden>0</span></button>
 
-    <!-- ============ TASK 63 · MODULE SELECTION — ACROSS ============
-         The module selection lives HERE — at the top of the Account
-         Administration page, right before the Admin button (which
-         floats at the top-right corner). Pick a user and every
-         grantable module appears ACROSS in one wrapping row: a top
-         area, its submodules, their files — tick exactly what this
-         user may see. "all" after a group allows the group's whole
-         subtree; the big "all" allows every module at once. -->
-    <div class="modsel" id="modsel" hidden>
-      <div class="modsel-top">
-        <span class="modsel-who" id="modsel-who">Module selection</span>
-        <span class="modsel-actions">
-          <button class="btn-ghost" id="modsel-all" type="button">all</button>
-          <button class="btn-primary" id="modsel-save" type="button">Save Access</button>
-          <span class="ok-note" id="modsel-ok" hidden>Saved.</span>
-        </span>
-      </div>
-      <div class="modsel-row" id="modsel-row"></div>
-      <p class="modsel-hint">Tick exactly what this user may see — a top module alone grants its own page only; tick a submodule (Add Transaction) or a file (All Transactions) to grant it — a granted child always carries its parents. "all" after a group allows every module of that group; the big "all" allows every module of the account.</p>
+  <!-- TASK 67 · THE DATABASE SELF-TEST
+       The page tests every Firestore read it needs and prints the REAL
+       result (PASS with a document count, or FAIL with the exact error
+       code the database returned). No more guessing which side failed. -->
+  <div class="card" id="diag-card">
+    <h2>Database self-test</h2>
+    <p class="hint">This page reads five collections. The test below reads each one exactly like the page does and shows the true result — PASS with a document count, or FAIL with the exact error code the database returned.</p>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Collection</th><th>What it holds</th><th>Result</th></tr></thead>
+        <tbody id="diag-body">
+          <tr><td colspan="3">testing&hellip;</td></tr>
+        </tbody>
+      </table>
     </div>
-  </section>
+    <p class="hint" id="diag-note">running&hellip;</p>
+    <p class="save-line"><button class="btn-ghost" id="diag-run" type="button">Run the test again</button></p>
+  </div>
 
-  <!-- ================= TASK 57 · THE COUNTERS ================= -->
-<!-- TASK 67 - SELF-DIAGNOSIS. When the database refuses the reads, this
-     panel explains the one real fix (publishing firestore.rules in the
-     Firebase console) with the exact steps, the exact rules text and a
-     re-check button - the page never goes silently blank again. -->
-<section class="card fix-panel" id="fix-panel" hidden>
-  <h2 id="fix-title">The accounts could not be read</h2>
-  <p class="hint" id="fix-text"></p>
-  <ol class="fix-steps">
-    <li>Open <b>console.firebase.google.com</b> and open the project <b>jamal-542b5</b>.</li>
-    <li>In the left menu choose <b>Build &rarr; Firestore Database</b>, then the <b>Rules</b> tab.</li>
-    <li>Select <b>everything</b> in the rules editor, delete it, and paste the rules from the box below (they are the project's own <b>firestore.rules</b> file).</li>
-    <li>Press <b>Publish</b>, wait about a minute, then press <b>I published them &mdash; check again</b> below.</li>
-  </ol>
-  <pre class="fix-pre" id="fix-pre" hidden></pre>
-  <p class="save-line">
-    <button class="btn-ghost" id="fix-show" type="button">Show the rules to publish</button>
-    <button class="btn-ghost" id="fix-copy" type="button">Copy the rules</button>
-    <button class="btn-primary" id="fix-recheck" type="button">I published them &mdash; check again</button>
-    <button class="btn-ghost" id="fix-close" type="button">Close</button>
-  </p>
-</section>
+  <!-- TASK 67 · THE RULES HELPER (honest edition)
+       The box below holds the project's own firestore.rules — the exact
+       text that is live right now. It is here so the administrator can
+       re-publish it from one place if a future rules change is needed. -->
+  <div class="card" id="helper-panel" hidden>
+    <h2>Publish the database rules</h2>
+    <p class="hint">If the self-test above shows FAIL with <b>permission-denied</b>, the database is running older rules. Paste the box below into the Firebase console and publish: console.firebase.google.com &rarr; project jamal-542b5 &rarr; Build &rarr; Firestore Database &rarr; Rules. If the code is anything else (unavailable, network&hellip;), the rules are not the problem — read the FAIL line instead.</p>
+    <pre id="rules-box" style="max-height:260px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;font-size:12px;line-height:1.45;white-space:pre;"></pre>
+    <p class="save-line">
+      <button class="btn-ghost" id="rules-copy" type="button">Copy the rules</button>
+      <button class="btn-primary" id="helper-recheck" type="button">I published them — check again</button>
+      <button class="btn-ghost" id="helper-close" type="button">Close</button>
+      <span class="ok-note" id="rules-ok" hidden>Copied.</span>
+    </p>
+  </div>
 
-  <section class="stats-row" aria-label="Account totals">
-    <button class="stat-card" id="stat-total" type="button">
-      <span class="stat-num" id="stat-total-num">&ndash;</span>
-      <span class="stat-label">Total Accounts</span>
-      <span class="stat-hint">click to view the users</span>
-    </button>
-    <button class="stat-card" id="stat-ready" type="button">
-      <span class="stat-num" id="stat-ready-num">&ndash;</span>
-      <span class="stat-label">Ready</span>
-      <span class="stat-hint">approved accounts</span>
-    </button>
-    <button class="stat-card" id="stat-pending" type="button">
-      <span class="stat-num" id="stat-pending-num">&ndash;</span>
-      <span class="stat-label">Pending</span>
-      <span class="stat-hint">waiting for approval</span>
-    </button>
-  </section>
+  <!-- TASK 63 · MODULE SELECTION — ACROSS
+       The module selection lives HERE — at the top of the Account
+       Administration page, right before the Admin button (which
+       floats at the top-right corner). Pick a user and every
+       grantable module appears ACROSS in one wrapping row: a top
+       area, its submodules, their files — tick exactly what this
+       user may see. "all" after a group allows the group's whole
+       subtree; the big "all" allows every module at once. -->
+  <div class="modsel" id="modsel" hidden>
+    <div class="modsel-top">
+      <span class="modsel-who" id="modsel-who">Module selection</span>
+      <span class="modsel-actions">
+        <button class="btn-ghost" id="modsel-all" type="button">all</button>
+        <button class="btn-primary" id="modsel-save" type="button">Save Access</button>
+        <span class="ok-note" id="modsel-ok" hidden>Saved.</span>
+      </span>
+    </div>
+    <div class="modsel-row" id="modsel-row"></div>
+    <p class="modsel-hint">Tick exactly what this user may see — a top module alone grants its own page only; tick a submodule (Add Transaction) or a file (All Transactions) to grant it — a granted child always carries its parents. "all" after a group allows every module of that group; the big "all" allows every module of the account.</p>
+  </div>
+ </section>
 
-  <!-- ============ TASK 57/58 · THE USERS PANEL: opens right under ============
-       the numbers when a counter is clicked (it used to sit at the very
-       bottom of the page — off-screen, which read as "nothing appears"). -->
+ <!-- ================= TASK 57 · THE COUNTERS ================= -->
+ <section class="stats-row" aria-label="Account totals">
+  <button class="stat-card" id="stat-total" type="button">
+    <span class="stat-num" id="stat-total-num">&ndash;</span>
+    <span class="stat-label">Total Accounts</span>
+    <span class="stat-hint">click to view the users</span>
+  </button>
+  <button class="stat-card" id="stat-ready" type="button">
+    <span class="stat-num" id="stat-ready-num">&ndash;</span>
+    <span class="stat-label">Ready</span>
+    <span class="stat-hint">approved accounts</span>
+  </button>
+  <button class="stat-card" id="stat-pending" type="button">
+    <span class="stat-num" id="stat-pending-num">&ndash;</span>
+    <span class="stat-label">Pending</span>
+    <span class="stat-hint">waiting for approval</span>
+  </button>
+ </section>
+
+  <!-- ============ TASK 57/58 · THE USERS PANEL ============ -->
   <section class="card" id="users-panel" hidden>
-    <h2 id="users-title">Users</h2>
-    <p class="hint" id="users-hint"></p>
-    <div class="table-wrap">
-      <table class="bk">
-        <thead><tr><th>Username</th><th>Staff position</th><th>Status</th><th>Granted areas</th><th>Registered</th></tr></thead>
-        <tbody id="users-body"></tbody>
-      </table>
-    </div>
-    <p class="empty" id="users-empty" hidden>No accounts in this view yet.</p>
-    <p class="save-line"><button class="btn-ghost" id="users-close" type="button">Close</button></p>
+   <h2 id="users-title">Users</h2>
+   <p class="hint" id="users-hint"></p>
+   <div class="table-wrap">
+     <table class="bk">
+       <thead><tr><th>Username</th><th>Staff position</th><th>Status</th><th>Granted areas</th><th>Registered</th></tr></thead>
+       <tbody id="users-body"></tbody>
+     </table>
+   </div>
+   <p class="empty" id="users-empty" hidden>No accounts in this view yet.</p>
+   <p class="save-line"><button class="btn-ghost" id="users-close" type="button">Close</button></p>
   </section>
 
-  <!-- ============ TASK 61 · NOTIFICATIONS PANEL ============
-       One notification per registration request; Review jumps to the
-       requests tab, Dismiss clears it from the counter. -->
+  <!-- ============ TASK 61 · NOTIFICATIONS PANEL ============ -->
   <section class="card" id="notif-panel" hidden>
-    <h2>Notifications — awaiting your attention</h2>
-    <p class="hint">Every registration request sends you one notification, and every pending request counts on the bell above - even one whose notification record is missing (older registrations repair themselves at the registrant's next visit). Review opens the Account Requests tab; Dismiss clears the notification from the counter.</p>
-    <div class="table-wrap">
-      <table class="bk">
-        <thead><tr><th>Username</th><th>Requested</th><th colspan="2">Action</th></tr></thead>
-        <tbody id="notif-body"></tbody>
-      </table>
-    </div>
-    <p class="empty" id="notif-empty" hidden>No notifications — nothing is waiting for you.</p>
+   <h2>Notifications — awaiting your attention</h2>
+   <p class="hint">Every registration request sends you one notification. Review opens the Account Requests tab; Dismiss clears the notification from the counter.</p>
+   <div class="table-wrap">
+     <table class="bk">
+       <thead><tr><th>Username</th><th>Requested</th><th colspan="2">Action</th></tr></thead>
+       <tbody id="notif-body"></tbody>
+     </table>
+   </div>
+   <p class="empty" id="notif-empty" hidden>No notifications — nothing is waiting for you.</p>
   </section>
 
-  <nav class="tabs">
-    <button class="tab active" id="tab-requests" type="button">Account Requests <span class="badge" id="req-badge" hidden>0</span></button>
-    <button class="tab" id="tab-users" type="button">Users &amp; Access</button>
-    <button class="tab" id="tab-pages" type="button">Page Fields</button>
-  </nav>
+ <nav class="tabs">
+   <button class="tab active" id="tab-requests" type="button">Account Requests <span class="badge" id="req-badge" hidden>0</span></button>
+   <button class="tab" id="tab-users" type="button">Users &amp; Access</button>
+   <button class="tab" id="tab-pages" type="button">Page Fields</button>
+ </nav>
 
   <!-- ================= TAB 1 · ACCOUNT REQUESTS ================= -->
   <section class="panel" id="panel-requests">
-    <div class="card">
-      <h2>Pending account requests</h2>
-      <p class="hint">People who created an account and are waiting for your approval.</p>
-      <div class="table-wrap">
-        <table class="bk">
-          <thead><tr><th>Username</th><th>Staff position</th><th>Requested</th><th>Decision</th></tr></thead>
-          <tbody id="req-body"></tbody>
-        </table>
-      </div>
-      <p class="empty" id="req-empty" hidden>No pending requests.</p>
-    </div>
+   <div class="card">
+     <h2>Pending account requests</h2>
+     <p class="hint">People who created an account and are waiting for your approval.</p>
+     <div class="table-wrap">
+       <table class="bk">
+         <thead><tr><th>Username</th><th>Staff position</th><th>Requested</th><th>Decision</th></tr></thead>
+         <tbody id="req-body"></tbody>
+       </table>
+     </div>
+     <p class="empty" id="req-empty" hidden>No pending requests.</p>
+   </div>
 
-    <div class="card">
-      <h2>Rejected accounts</h2>
-      <p class="hint">A rejected account can still be approved later if you change your mind.</p>
-      <div class="table-wrap">
-        <table class="bk">
-          <thead><tr><th>Username</th><th>Staff position</th><th>Decision</th></tr></thead>
-          <tbody id="rej-body"></tbody>
-        </table>
-      </div>
-      <p class="empty" id="rej-empty" hidden>No rejected accounts.</p>
-    </div>
-  </section>
+   <div class="card">
+     <h2>Rejected accounts</h2>
+     <p class="hint">A rejected account can still be approved later if you change your mind.</p>
+     <div class="table-wrap">
+       <table class="bk">
+         <thead><tr><th>Username</th><th>Staff position</th><th>Decision</th></tr></thead>
+         <tbody id="rej-body"></tbody>
+       </table>
+     </div>
+     <p class="empty" id="rej-empty" hidden>No rejected accounts.</p>
+   </div>
+ </section>
 
   <!-- ================= TAB 2 · USERS & ACCESS ================= -->
   <section class="panel" id="panel-users" hidden>
-    <div class="card">
-      <h2>Choose a user</h2>
-      <p class="hint">Approved accounts. Select one — or click a user in any users table — and the module selection appears ACROSS at the top of this page, before the Admin button.</p>
-      <select id="user-select"><option value="">— Select a user —</option></select>
-      <p class="who-line" id="user-who" hidden></p>
+   <div class="card">
+     <h2>Choose a user</h2>
+     <p class="hint">Approved accounts. Select one — or click a user in any users table — and the module selection appears ACROSS at the top of this page, before the Admin button.</p>
+     <select id="user-select"><option value="">— Select a user —</option></select>
+     <p class="who-line" id="user-who" hidden></p>
+   </div>
+
+   <div class="card" id="grants-card" hidden>
+     <h2>Modules and submodules this user can access</h2>
+     <p class="hint">The module selection is at the TOP of this page — before the Admin button. The modules are laid out ACROSS in one row: click a chip to allow or remove that module, "all" after a group allows the group's whole subtree, and the big "all" allows every module of the account. Then press Save Access.</p>
+   </div>
+ </section>
+
+ <!-- ================= TAB 3 · PAGE FIELDS ================= -->
+ <section class="panel" id="panel-pages" hidden>
+  <div class="card">
+    <h2>Choose a page</h2>
+    <p class="hint">You can hide EXISTING fields and give them default values. New fields cannot be created here.</p>
+    <select id="page-select"></select>
+  </div>
+
+  <div class="card" id="fields-card" hidden>
+    <h2 id="fields-title">Fields</h2>
+    <p class="hint">Hidden fields disappear from the page for other users (the administrator always sees the full form). Defaults fill in when the form opens and after it is cleared.</p>
+    <div class="table-wrap">
+      <table class="bk fields-table">
+        <thead><tr><th>Field</th><th>Hidden</th><th>Default value</th></tr></thead>
+        <tbody id="fields-body"></tbody>
+      </table>
     </div>
+    <p class="save-line"><button class="btn-primary" id="fields-save" type="button">Save Page Settings</button>
+    <span class="ok-note" id="fields-ok" hidden>Saved.</span></p>
+  </div>
+ </section>
 
-    <div class="card" id="grants-card" hidden>
-      <h2>Modules and submodules this user can access</h2>
-      <p class="hint">The module selection is at the TOP of this page — before the Admin button. The modules are laid out ACROSS in one row: click a chip to allow or remove that module, "all" after a group allows the group's whole subtree, and the big "all" allows every module of the account. Then press Save Access.</p>
-    </div>
-  </section>
-
-  <!-- ================= TAB 3 · PAGE FIELDS ================= -->
-  <section class="panel" id="panel-pages" hidden>
-    <div class="card">
-      <h2>Choose a page</h2>
-      <p class="hint">You can hide EXISTING fields and give them default values. New fields cannot be created here.</p>
-      <select id="page-select"></select>
-    </div>
-
-    <div class="card" id="fields-card" hidden>
-      <h2 id="fields-title">Fields</h2>
-      <p class="hint">Hidden fields disappear from the page for other users (the administrator always sees the full form). Defaults fill in when the form opens and after it is cleared.</p>
-      <div class="table-wrap">
-        <table class="bk fields-table">
-          <thead><tr><th>Field</th><th>Hidden</th><th>Default value</th></tr></thead>
-          <tbody id="fields-body"></tbody>
-        </table>
-      </div>
-      <p class="save-line"><button class="btn-primary" id="fields-save" type="button">Save Page Settings</button>
-      <span class="ok-note" id="fields-ok" hidden>Saved.</span></p>
-    </div>
-  </section>
-
-  <!-- (the users panel now lives directly under the counters) -->
-
-  <p class="form-err" id="err" hidden></p>
+ <p class="form-err" id="err" hidden></p>
+ <p id="build-tag" style="color:#94a3b8;font-size:11px;margin:18px 0 0;">build T67</p>
 </main>
 
 <script type="module" src="/system-admin/380.js"></script>
