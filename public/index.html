@@ -102,7 +102,6 @@
       <p class="email-line">Google account: <b id="hub-email"></b></p>
       <div id="hub-list"></div>
       <button class="wide" id="hub-create" type="button">Create a new system account</button>
-      <p class="swap"><a id="hub-switch">Use a different Google account</a></p>
     </section>
 
     <!-- ============ LOGIN (username + token) ============ -->
@@ -313,6 +312,39 @@
       }
     }
 
+  // ------------------------------------------------------------------
+  // TASK 66 - SELF-HEALING BELL. A pending account must always have its
+  // registration notification. Registrations made before Task 61 (and
+  // any request whose notification record was lost) are repaired here,
+  // from the registrant's own Google session - exactly what the security
+  // rules demand on a notification create (the writer's own
+  // authenticated email on the ring). Best effort: a failed repair never
+  // blocks the hub, and the administrator's pending table reads the
+  // accounts themselves, so the request always shows.
+  // ------------------------------------------------------------------
+  async function repairNotifications(rows) {
+    const me = auth.currentUser;
+    if (!me) return;
+    for (const a of rows) {
+      try {
+        if (!a || a.status !== "pending" || !a.id) continue;
+        const ref = doc(db, "systemNotifications", a.id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) continue;
+        await setDoc(ref, {
+          type: "registration",
+          username: a.usernameDisplay || a.id,
+          usernameLower: String(a.usernameLower || a.id || "").toLowerCase(),
+          googleEmail: normEmail(me.email || ""),
+          googleUid: a.googleUid || me.uid,
+          status: "unread",
+          at: serverTimestamp(),
+          repairedAt: serverTimestamp()
+        });
+      } catch (e) { /* best effort - never blocks the hub */ }
+    }
+  }
+
     async function buildHub(user) {
       hubUser = user;
       $("hub-email").textContent = user.email || "(no email on this Google account)";
@@ -320,6 +352,7 @@
       try {
         const rows = await accountsOfEmail(normEmail(user.email), user.uid);
         if (hubUser === user) renderHub(rows);
+        if (hubUser === user) repairNotifications(rows);
       } catch (err) {
         say("Could not load your accounts: " + friendly(err));
       }
@@ -344,10 +377,9 @@
     $("login-back").addEventListener("click", () => openHub());
     $("create-back").addEventListener("click", () => openHub());
     $("wait-switch").addEventListener("click", () => openHub());
-    $("hub-switch").addEventListener("click", async () => {
-      try { await signOut(auth); } catch (err) { say("Could not sign out: " + friendly(err)); }
-      // onAuthStateChanged fires with no user and shows the gate
-    });
+      // TASK 66: "Use a different Google account" was removed - the hub
+      // always serves the signed-in Google email, and nothing on this page
+      // signs the Google session away.
 
     // recovery — the username travels with the link
     $("go-forgot-token").addEventListener("click", () => {
@@ -385,6 +417,7 @@
             say("This registration was not approved. Ask the administrator.");
           } else {
             waitPanelFor(a);
+            repairNotifications([a]);
             say("Still waiting for administrator approval.", true);
           }
         }
@@ -521,13 +554,13 @@
         const acc = snap.data();
 
         if (acc.status === "pending") {
-          waitPanelFor(Object.assign({ id }, acc));
+          waitPanelFor(Object.assign({ id }, acc)); repairNotifications([Object.assign({ id }, acc)]);
           btn.disabled = false; return;
         }
         if (acc.status === "rejected") { say("This account was not approved. Ask the administrator."); btn.disabled = false; return; }
 
         if (acc.googleEmail && email && normEmail(acc.googleEmail) !== email) {
-          say("This account belongs to " + acc.googleEmail + ". Use a different Google account.");
+          say("This account belongs to " + acc.googleEmail + " and cannot open from this Google account.");
           btn.disabled = false; return;
         }
         // legacy binding (task 61): uid-linked accounts without an email
@@ -583,7 +616,7 @@
           // the exact message instead of a second write.
           if (a.status === "pending" && normEmail(a.googleEmail) === normEmail(user.email)) {
             lastRegistered = d.id;
-            waitPanelFor(Object.assign({ id: d.id }, a));
+            waitPanelFor(Object.assign({ id: d.id }, a)); repairNotifications([Object.assign({ id: d.id }, a)]);
           } else {
             say("That username is already taken.");
           }

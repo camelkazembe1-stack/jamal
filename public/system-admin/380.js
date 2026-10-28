@@ -70,6 +70,7 @@ function refreshAll() {
     paintRequests(rows);
     paintUserSelect(rows);
     if (CURRENT_USER_ID) paintGrants(CURRENT_USER_ID);
+    paintBell(); // TASK 66: the bell repaints with the accounts
   }).catch((e) => fail("Could not read the accounts: " + show(e)));
 }
 
@@ -86,12 +87,28 @@ async function readNotifs() {
   rows.sort((x, y) => String(x.usernameLower || x.id || "").localeCompare(String(y.usernameLower || y.id || "")));
   NOTIFS = rows;
   paintNotifs();
+  NOTIFS = rows;
+  paintBell();
+}
+
+// ---------------------------------------------------------------------
+// TASK 66 - THE BELL COUNTS THE TRUTH. Every pending account rings,
+// whether or not its notification record survived (registrations made
+// before Task 61 carry none), plus every other unread notification. The
+// count always agrees with the Pending counter and the requests table,
+// because both read the same accounts cache.
+// ---------------------------------------------------------------------
+function paintBell() {
+  const pendingIds = new Set(ACCOUNTS.filter((a) => a.status === "pending").map((a) => a.id));
+  const extra = NOTIFS.filter((n) => !pendingIds.has(n.id));
+  const total = pendingIds.size + extra.length;
+  const badge = $("notif-badge");
+  badge.textContent = String(total);
+  badge.hidden = total === 0; // the number ON the button (requirement 10)
 }
 
 function paintNotifs() {
-  const badge = $("notif-badge");
-  badge.textContent = String(NOTIFS.length);
-  badge.hidden = NOTIFS.length === 0; // the number ON the button (requirement 10)
+  paintBell(); // TASK 66: the number ON the button - every pending request + every other unread notification
   const body = $("notif-body");
   body.innerHTML = "";
   for (const n of NOTIFS) {
@@ -109,7 +126,23 @@ function paintNotifs() {
     tr.cells[3].appendChild(dis);
     body.appendChild(tr);
   }
-  $("notif-empty").hidden = NOTIFS.length > 0;
+  // TASK 66: pending requests whose notification record is missing still
+  // show here - the panel always matches the bell and the database.
+  const pendIds = new Set(ACCOUNTS.filter((a) => a.status === "pending").map((a) => a.id));
+  const known = new Set(NOTIFS.map((n) => n.id));
+  for (const a of ACCOUNTS) {
+    if (a.status !== "pending" || known.has(a.id)) continue;
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td></td><td></td><td colspan='2'></td>";
+    tr.cells[0].textContent = a.usernameDisplay || a.id;
+    tr.cells[1].textContent = "(no notification record)";
+    const rev = document.createElement("button");
+    rev.className = "btn-ghost"; rev.type = "button"; rev.textContent = "Review";
+    rev.addEventListener("click", () => { $("notif-panel").hidden = true; $("tab-requests").click(); });
+    tr.cells[2].appendChild(rev);
+    body.appendChild(tr);
+  }
+  $("notif-empty").hidden = body.children.length > 0;
 }
 
 function dismissNotif(id) {
@@ -278,8 +311,11 @@ function decide(id, status) {
       // TASK 61: a decision clears the matching notification from the
       // counter (the request is handled); the decision is never lost if
       // only the notification update fails — it is reported, not silent.
-      return updateDoc(doc(db, "systemNotifications", id), { status: "read", decidedAt: serverTimestamp() })
-        .catch((e) => fail("Decision saved, but the notification could not be cleared: " + show(e)));
+      return getDoc(doc(db, "systemNotifications", id)).then((n) => {
+       if (!n.exists()) return undefined; // TASK 66: a registration made before Task 61 carries no notification record - nothing to clear
+       return updateDoc(doc(db, "systemNotifications", id), { status: "read", decidedAt: serverTimestamp() })
+         .catch((e) => fail("Decision saved, but the notification could not be cleared: " + show(e)));
+     });
     })
     .then(() => { refreshAll(); readNotifs(); })
     .catch((e) => fail("Could not save the decision: " + show(e)));
