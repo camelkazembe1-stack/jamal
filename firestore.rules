@@ -13,84 +13,91 @@ service cloud.firestore {
     }
 
     match /transactions/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthRegistrations/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthTriage/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthNurseConsultations/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthDoctorConsultations/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthPrescriptions/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthTreatmentOrders/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthDestinations/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthWards/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthBeds/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthBedAssignments/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthBedTransfers/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthBedMaintenance/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthAdmissions/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthDischarges/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthLabRequests/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthImagingRequests/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /healthQueueConfig/{docId} {
-      allow create, read, update, delete: if true;
+      allow create, read, update, delete: if isSignedIn();
     }
 
     match /systemAccounts/{docId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn()
+        && (resource.data.googleUid == request.auth.uid
+          || resource.data.googleEmail == request.auth.token.email
+          || isSystemAdmin());
       allow create: if isSignedIn()
         && request.resource.data.get("googleEmail", "") == request.auth.token.email
         && request.resource.data.get("status", "") == "pending"
         && request.resource.data.get("role", "") == "user";
-      allow update, delete: if isSystemAdmin();
+      allow update: if isSystemAdmin()
+        || (isSignedIn()
+          && resource.data.googleUid == request.auth.uid
+          && request.resource.data.get("status", "") != "approved");
+      allow delete: if isSystemAdmin();
     }
 
     match /systemCredentials/{docId} {
@@ -112,17 +119,24 @@ service cloud.firestore {
 
     match /systemSetup/{docId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && !exists(/databases/$(database)/documents/systemSetup/claim);
+      allow create: if isSignedIn()
+        && !exists(/databases/$(database)/documents/systemSetup/claim)
+        && request.resource.data.get("passHash", "") == "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af"
+        && request.resource.data.get("tokenHash", "") == "3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1";
       allow update, delete: if isSystemAdmin();
     }
 
     match /systemNotifications/{docId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn()
+        && (resource.data.googleUid == request.auth.uid || isSystemAdmin());
       allow create: if isSignedIn()
         && request.resource.data.get("type", "") == "registration"
         && request.resource.data.get("status", "") == "unread"
         && request.resource.data.get("googleEmail", "") == request.auth.token.email;
-      allow update: if isSystemAdmin();
+      allow update: if isSystemAdmin()
+        || (isSignedIn()
+          && resource.data.googleUid == request.auth.uid
+          && resource.data.get("status", "") == "unread");
       allow delete: if isSystemAdmin();
     }
 
