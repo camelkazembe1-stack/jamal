@@ -1,77 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JAMALI — MultiSystem Management</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    body {
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; padding: 20px;
-    }
-    .card {
-      background: #111827; border: 1px solid #1f2937; border-radius: 18px;
-      padding: 40px 38px; width: 100%; max-width: 440px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.45);
-    }
-    .logo {
-      width: 62px; height: 62px; margin: 0 auto 18px; border-radius: 16px;
-      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 22px; color: #fff; letter-spacing: 1px;
-    }
-    h1 { font-size: 21px; line-height: 1.35; margin-bottom: 8px; text-align: center; }
-    h1 span { color: #38bdf8; }
-    .sub { font-size: 14px; color: #94a3b8; margin-bottom: 22px; text-align: center; }
-    label { display: block; font-size: 13px; color: #94a3b8; margin: 12px 0 5px; }
-    input {
-      width: 100%; background: #0b1220; color: #e2e8f0; border: 1px solid #334155;
-      border-radius: 10px; padding: 11px 13px; font-size: 15px; outline: none;
-    }
-    input:focus { border-color: #38bdf8; }
-    button.wide {
-      width: 100%; margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;
-      background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #06121f; border: 0; border-radius: 12px;
-      padding: 13px 16px; font-size: 15px; font-weight: 800; cursor: pointer; transition: .2s;
-    }
-    button.wide:hover { filter: brightness(1.07); transform: translateY(-1px); }
-    button.wide:disabled { opacity: .6; cursor: wait; transform: none; }
-    .swap { margin-top: 16px; text-align: center; font-size: 13.5px; color: #94a3b8; }
-    .swap + .swap { margin-top: 8px; }
-    .swap a { color: #38bdf8; cursor: pointer; text-decoration: none; font-weight: 700; }
-    .links { margin-top: 14px; text-align: center; font-size: 12.5px; color: #64748b; }
-    .links a { color: #94a3b8; cursor: pointer; text-decoration: none; }
-    .links a:hover { color: #38bdf8; }
-    .status { margin-top: 14px; font-size: 13px; color: #f87171; min-height: 18px; text-align: center; }
-    .status.ok { color: #4ade80; }
-    .google-note { margin-top: 10px; font-size: 12px; color: #64748b; text-align: center; }
-    #recovery-line { margin: 8px 0 0; }
-    .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
-    .hidden { display: none; }
-    .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
-    .wait-title {
-      font-size: 18px; font-weight: 800; color: #fbbf24; text-align: center; margin: 6px 0 10px;
-    }
-    .email-line { font-size: 12.5px; color: #94a3b8; text-align: center; margin: -12px 0 14px; }
-    .email-line b { color: #e2e8f0; word-break: break-all; }
-    .acc-row {
-      display: flex; align-items: center; gap: 12px; background: #0b1220;
-      border: 1px solid #1f2937; border-radius: 12px; padding: 12px 14px; margin-top: 10px;
-    }
-    .acc-row .acc-info { flex: 1; min-width: 0; text-align: left; }
-    .acc-row .acc-info b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .acc-row .acc-info span { display: block; font-size: 12px; margin-top: 2px; }
-    .acc-row .st-appr { color: #4ade80; font-weight: 700; }
-    .acc-row .st-pend { color: #fbbf24; font-weight: 700; }
-    .acc-row .st-rej { color: #f87171; font-weight: 700; }
-    .acc-row button.mini {
-      background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #06121f; border: 0;
-      border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 800; cursor: pointer;
-      white-space: nowrap; transition: .2s;
-    }
-    .acc-row button.mini:hover { filter: brightness(1.07); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAMALI — MultiSystem Management</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; padding: 20px;
+  }
+  .card {
+    background: #111827; border: 1px solid #1f2937; border-radius: 18px;
+    padding: 40px 38px; width: 100%; max-width: 440px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  }
+  .logo {
+    width: 62px; height: 62px; margin: 0 auto 18px; border-radius: 16px;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 22px; color: #fff; letter-spacing: 1px;
+  }
+  h1 { font-size: 21px; line-height: 1.35; margin-bottom: 8px; text-align: center; }
+  h1 span { color: #38bdf8; }
+  .sub { font-size: 14px; color: #94a3b8; margin-bottom: 22px; text-align: center; }
+  label { display: block; font-size: 13px; color: #94a3b8; margin: 12px 0 5px; }
+  input {
+    width: 100%; background: #0b1220; color: #e2e8f0; border: 1px solid #334155;
+    border-radius: 10px; padding: 11px 13px; font-size: 15px; outline: none;
+  }
+  input:focus { border-color: #38bdf8; }
+  button.wide {
+    width: 100%; margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #06121f; border: 0; border-radius: 12px;
+    padding: 13px 16px; font-size: 15px; font-weight: 800; cursor: pointer; transition: .2s;
+  }
+  button.wide:hover { filter: brightness(1.07); transform: translateY(-1px); }
+  button.wide:disabled { opacity: .6; cursor: wait; transform: none; }
+  .swap { margin-top: 16px; text-align: center; font-size: 13.5px; color: #94a3b8; }
+  .swap + .swap { margin-top: 8px; }
+  .swap a { color: #38bdf8; cursor: pointer; text-decoration: none; font-weight: 700; }
+  .links { margin-top: 14px; text-align: center; font-size: 12.5px; color: #64748b; }
+  .links a { color: #94a3b8; cursor: pointer; text-decoration: none; }
+  .links a:hover { color: #38bdf8; }
+  .status { margin-top: 14px; font-size: 13px; color: #f87171; min-height: 18px; text-align: center; }
+  .status.ok { color: #4ade80; }
+  .google-note { margin-top: 10px; font-size: 12px; color: #64748b; text-align: center; }
+  #recovery-line { margin: 8px 0 0; }
+  .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
+  .hidden { display: none; }
+  .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
+  .wait-title {
+    font-size: 18px; font-weight: 800; color: #fbbf24; text-align: center; margin: 6px 0 10px;
+  }
+  /* ---- TASK 65: the account hub — one Google email, many system accounts -- */
+  .email-line { font-size: 12.5px; color: #94a3b8; text-align: center; margin: -12px 0 14px; }
+  .email-line b { color: #e2e8f0; word-break: break-all; }
+  .acc-row {
+    display: flex; align-items: center; gap: 12px; background: #0b1220;
+    border: 1px solid #1f2937; border-radius: 12px; padding: 12px 14px; margin-top: 10px;
+  }
+  .acc-row .acc-info { flex: 1; min-width: 0; text-align: left; }
+  .acc-row .acc-info b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acc-row .acc-info span { display: block; font-size: 12px; margin-top: 2px; }
+  .acc-row .st-appr { color: #4ade80; font-weight: 700; }
+  .acc-row .st-pend { color: #fbbf24; font-weight: 700; }
+  .acc-row .st-rej { color: #f87171; font-weight: 700; }
+  .acc-row button.mini {
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #06121f; border: 0;
+    border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 800; cursor: pointer;
+    white-space: nowrap; transition: .2s;
+  }
+  .acc-row button.mini:hover { filter: brightness(1.07); }
+</style>
 </head>
 <body>
   <div class="card">
@@ -130,352 +131,426 @@
 
   <script type="module">
     import {
-      auth, provider, onAuthStateChanged, signInWithPopup,
-      db, collection, query, where, getDocs,
-      doc, getDoc, setDoc, updateDoc, serverTimestamp
+      auth, provider, onAuthStateChanged, signInWithPopup, signOut,
+      db, collection, query, where, limit, getDocs,
+      doc, getDoc, setDoc, updateDoc, writeBatch, serverTimestamp
     } from "/firebase.js";
 
     document.getElementById("year").textContent = new Date().getFullYear();
 
     const SALT = "JAMALI::v1::";
+    const ADMIN_USERNAME = "jamal kazembe";
+    const ADMIN_PASS_HASH  = "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af";
+    const ADMIN_TOKEN_HASH = "3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1";
     const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
+
     const $ = (id) => document.getElementById(id);
     const status = $("status");
 
-    let currentGoogleUser = null;
-    let currentGoogleEmail = "";
-
-    function say(msg, ok = false) {
+    function say(msg, ok) {
       status.textContent = msg || "";
       status.className = "status" + (ok ? " ok" : "");
     }
-
     function sha(v) {
-      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + String(v || "")))
-        .then((buf) => Array.from(new Uint8Array(buf)).map((x) => x.toString(16).padStart(2, "0")).join(""));
+      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
+        .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
-
     function norm(u) { return String(u || "").trim().toLowerCase(); }
     function normEmail(e) { return String(e || "").trim().toLowerCase(); }
-
     function friendly(err) {
       const code = err && err.code ? String(err.code) : "";
-      if (code.includes("permission-denied") || (err && err.message && String(err.message).includes("insufficient permissions"))) {
-        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, then publish.";
+      if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
+        return "the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, replace everything there with the contents of the file firestore.rules from the project folder, press Publish, then try again.";
       }
       return (err && err.message) ? err.message : code;
     }
 
-    function clearSystemSession() {
-      try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
-    }
-
-    function setSystemSession(account) {
-      const payload = {
-        uid: currentGoogleUser ? currentGoogleUser.uid : "",
-        email: currentGoogleEmail,
-        accountId: account.id,
-        username: account.usernameDisplay || account.usernameLower || account.id,
-        usernameLower: String(account.usernameLower || account.usernameDisplay || account.id || "").toLowerCase(),
-        role: account.role || "user",
-        grants: Array.isArray(account.grants) ? account.grants : [],
-        status: account.status || "pending"
-      };
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-    }
-
-    function showPanel(name) {
-      ["panel-gate", "panel-hub", "panel-login", "panel-create", "panel-wait"].forEach((id) => {
-        const el = $(id);
-        if (id === name) el.classList.remove("hidden");
-        else el.classList.add("hidden");
-      });
+    function showPanel(which) {
+      $("panel-gate").classList.toggle("hidden", which !== "gate");
+      $("panel-hub").classList.toggle("hidden", which !== "hub");
+      $("panel-login").classList.toggle("hidden", which !== "login");
+      $("panel-create").classList.toggle("hidden", which !== "create");
+      $("panel-wait").classList.toggle("hidden", which !== "wait");
       say("");
     }
 
-    async function listAccountsForGoogleEmail(email) {
-      const q = query(collection(db, "systemAccounts"), where("googleEmail", "==", email));
-      const snap = await getDocs(q);
-      const rows = [];
-      snap.forEach((d) => {
-        const data = d.data();
-        data.id = d.id;
-        rows.push(data);
-      });
-      rows.sort((a, b) => String(a.usernameDisplay || a.id || "").localeCompare(String(b.usernameDisplay || b.id || "")));
+    async function ensureHouse() {
+      if (auth.currentUser) return auth.currentUser;
+      const res = await signInWithPopup(auth, provider);
+      return res.user;
+    }
+
+    $("gate-btn").addEventListener("click", async () => {
+      const btn = $("gate-btn");
+      btn.disabled = true;
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        say("Google sign-in was cancelled or failed. Try again.");
+      }
+      btn.disabled = false;
+    });
+
+    let hubUser = null;
+
+    async function accountsOfEmail(email, uid) {
+      const out = new Map();
+      const byMail = await getDocs(query(collection(db, "systemAccounts"), where("googleEmail", "==", email)));
+      byMail.forEach((d) => { const a = d.data(); a.id = d.id; out.set(d.id, a); });
+      try {
+        const byUid = await getDocs(query(collection(db, "systemAccounts"), where("googleUid", "==", uid)));
+        byUid.forEach((d) => {
+          if (!out.has(d.id)) { const a = d.data(); a.id = d.id; out.set(d.id, a); }
+        });
+      } catch (e) { }
+      const rows = Array.from(out.values());
+      rows.sort((x, y) => String(x.usernameLower || x.id).localeCompare(String(y.usernameLower || y.id)));
       return rows;
     }
 
-    function renderHub() {
-      if (!currentGoogleUser) {
-        showPanel("panel-gate");
-        $("sub-line").textContent = "Login to your account, or create one.";
-        return;
-      }
-
-      currentGoogleEmail = normEmail(currentGoogleUser.email || "");
-      $("hub-email").textContent = currentGoogleEmail;
-      $("sub-line").textContent = "Choose one of your saved system accounts.";
-      showPanel("panel-hub");
-
+    function renderHub(rows) {
       const list = $("hub-list");
       list.innerHTML = "";
-
-      listAccountsForGoogleEmail(currentGoogleEmail)
-        .then((rows) => {
-          if (!rows.length) {
-            list.innerHTML = '<p class="google-note">No JAMALI accounts saved for this Google account yet. Create one below.</p>';
-            return;
-          }
-
-          for (const account of rows) {
-            const row = document.createElement("div");
-            row.className = "acc-row";
-
-            const info = document.createElement("div");
-            info.className = "acc-info";
-
-            const name = document.createElement("b");
-            name.textContent = account.usernameDisplay || account.usernameLower || account.id;
-
-            const statusLine = document.createElement("span");
-            const statusText = String(account.status || "pending");
-            if (statusText === "approved") {
-              statusLine.className = "st-appr";
-              statusLine.textContent = "Approved — " + (account.role || "user");
-            } else if (statusText === "pending") {
-              statusLine.className = "st-pend";
-              statusLine.textContent = "Waiting for administrator approval.";
-            } else {
-              statusLine.className = "st-rej";
-              statusLine.textContent = "Rejected";
-            }
-
-            info.appendChild(name);
-            info.appendChild(statusLine);
-            row.appendChild(info);
-
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "mini";
-
-            if (statusText === "approved") {
-              btn.textContent = "Open";
-              btn.addEventListener("click", () => {
-                setSystemSession(account);
-                window.location.href = "/home/1";
-              });
-            } else if (statusText === "pending") {
-              btn.textContent = "Check";
-              btn.addEventListener("click", () => {
-                $("li-username").value = account.usernameDisplay || account.usernameLower || "";
-                $("li-token").value = "";
-                showPanel("panel-login");
-              });
-            } else {
-              btn.textContent = "Review";
-              btn.addEventListener("click", () => {
-                $("ca-username").value = account.usernameDisplay || account.usernameLower || "";
-                $("ca-phone").value = account.phone || "";
-                $("ca-position").value = account.position || "";
-                showPanel("panel-create");
-              });
-            }
-
-            row.appendChild(btn);
-            list.appendChild(row);
-          }
-        })
-        .catch((err) => {
-          list.innerHTML = '<p class="google-note">Could not load your saved JAMALI accounts: ' + friendly(err) + '</p>';
-        });
-    }
-
-    function loadGoogleUser() {
-      const user = auth.currentUser;
-      if (!user) {
-        currentGoogleUser = null;
-        currentGoogleEmail = "";
-        clearSystemSession();
-        showPanel("panel-gate");
-        $("sub-line").textContent = "Login to your account, or create one.";
+      if (!rows.length) {
+        const p = document.createElement("p");
+        p.className = "email-line";
+        p.style.margin = "0 0 2px";
+        p.textContent = "No system accounts on this Google email yet — create one below.";
+        list.appendChild(p);
         return;
       }
-
-      currentGoogleUser = user;
-      currentGoogleEmail = normEmail(user.email || "");
-      renderHub();
+      for (const a of rows) {
+        const row = document.createElement("div");
+        row.className = "acc-row";
+        const info = document.createElement("div");
+        info.className = "acc-info";
+        const b = document.createElement("b");
+        b.textContent = a.usernameDisplay || a.username || a.id;
+        const meta = document.createElement("span");
+        const pos = a.position ? " — " + a.position : "";
+        const act = document.createElement("button");
+        act.type = "button";
+        act.className = "mini";
+        if (a.status === "approved") {
+          meta.textContent = "Approved" + pos;
+          meta.className = "st-appr";
+          act.textContent = "Log in";
+          act.addEventListener("click", () => {
+            $("li-username").value = a.usernameDisplay || a.username || a.id;
+            showPanel("login");
+            $("li-token").focus();
+          });
+        } else if (a.status === "pending") {
+          meta.textContent = "Waiting for administrator approval." + pos;
+          meta.className = "st-pend";
+          act.textContent = "View status";
+          act.addEventListener("click", () => waitPanelFor(a));
+        } else {
+          meta.textContent = "This registration was not approved." + pos;
+          meta.className = "st-rej";
+          act.textContent = "Details";
+          act.addEventListener("click", () => say("This registration was not approved. Ask the administrator."));
+        }
+        info.appendChild(b);
+        info.appendChild(meta);
+        row.appendChild(info);
+        row.appendChild(act);
+        list.appendChild(row);
+      }
     }
 
-    async function createSystemAccount() {
+    async function repairNotifications(rows) {
+      const me = auth.currentUser;
+      if (!me) return;
+      for (const a of rows) {
+        try {
+          if (!a || a.status !== "pending" || !a.id) continue;
+          const ref = doc(db, "systemNotifications", a.id);
+          const snap = await getDoc(ref);
+          if (snap.exists()) continue;
+          await setDoc(ref, {
+            type: "registration",
+            username: a.usernameDisplay || a.username || a.id,
+            usernameLower: String(a.usernameLower || (a.usernameDisplay || a.username || a.id) || "").toLowerCase(),
+            googleEmail: normEmail(me.email || ""),
+            googleUid: a.googleUid || me.uid,
+            status: "unread",
+            at: serverTimestamp(),
+            repairedAt: serverTimestamp()
+          });
+        } catch (e) { }
+      }
+    }
+
+    async function buildHub(user) {
+      hubUser = user;
+      $("hub-email").textContent = user.email || "(no email on this Google account)";
+      showPanel("hub");
+      try {
+        const rows = await accountsOfEmail(normEmail(user.email), user.uid);
+        if (hubUser === user) renderHub(rows);
+        if (hubUser === user) repairNotifications(rows);
+      } catch (err) {
+        say("Could not load your accounts: " + friendly(err));
+      }
+    }
+
+    function openHub() {
+      if (auth.currentUser) { buildHub(auth.currentUser); return; }
+      showPanel("gate");
+    }
+
+    function waitPanelFor(acc) {
+      $("wait-user").textContent = acc.usernameDisplay || acc.username || acc.id || "";
+      showPanel("wait");
+      say("Waiting for administrator approval.", true);
+    }
+
+    $("go-create").addEventListener("click", () => showPanel("create"));
+    $("hub-create").addEventListener("click", () => showPanel("create"));
+    $("login-back").addEventListener("click", () => openHub());
+    $("create-back").addEventListener("click", () => openHub());
+    $("wait-switch").addEventListener("click", () => openHub());
+
+    $("go-forgot-token").addEventListener("click", () => {
+      const u = $("li-username").value.trim();
+      location.href = "/account-recovery/390" + (u ? "?u=" + encodeURIComponent(u) : "");
+    });
+
+    function showRecovery() { $("recovery-line").hidden = false; }
+    $("li-token").addEventListener("focus", showRecovery);
+    $("li-token").addEventListener("input", showRecovery);
+
+    let lastRegistered = "";
+    $("check-approval").addEventListener("click", async () => {
+      const btn = $("check-approval");
+      btn.disabled = true;
+      try {
+        if (!lastRegistered) { openHub(); btn.disabled = false; return; }
+        const snap = await getDoc(doc(db, "systemAccounts", lastRegistered));
+        if (!snap.exists()) {
+          openHub();
+          say("No registration found for " + lastRegistered + ".");
+        } else {
+          const a = snap.data(); a.id = snap.id;
+          $("li-username").value = a.usernameDisplay || a.username || lastRegistered;
+          if (a.status === "approved") {
+            showPanel("login");
+            say("Approved! Enter your four-digit token to log in.", true);
+          } else if (a.status === "rejected") {
+            showPanel("login");
+            say("This registration was not approved. Ask the administrator.");
+          } else {
+            waitPanelFor(a);
+            repairNotifications([a]);
+            say("Still waiting for administrator approval.", true);
+          }
+        }
+      } catch (err) {
+        say("Could not check: " + friendly(err));
+      }
+      btn.disabled = false;
+    });
+
+    function writeSession(account, user) {
+      const s = {
+        uid: user ? user.uid : "",
+        email: user && user.email ? user.email : "",
+        username: account.usernameDisplay || account.username || account.id,
+        position: account.position || "",
+        role: account.role === "admin" ? "admin" : "user",
+        grants: Array.isArray(account.grants) ? account.grants : [],
+        at: Date.now()
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(s));
+      return s;
+    }
+
+    function handleDeniedAndNeed() {
+      const q = new URLSearchParams(location.search);
+      if (q.get("denied")) {
+        say("You do not have access to the \"" + q.get("denied") + "\" area. Ask the administrator to grant it.");
+      } else if (q.get("need") === "house") {
+        say("Please sign in with Google to continue.");
+      } else if (q.get("need") === "account") {
+        say("Choose your system account, or create one.");
+      }
+    }
+
+    $("login-btn").addEventListener("click", async () => {
+      const btn = $("login-btn");
+      const username = $("li-username").value.trim();
+      const token = $("li-token").value.trim();
+      if (!username) { say("Enter your username."); return; }
+      if (!/^[0-9]{4}$/.test(token)) { say("Enter your four-digit token."); return; }
+
+      let user = auth.currentUser;
+      if (!user) {
+        try { user = await ensureHouse(); }
+        catch (err) { say("Please sign in with Google first."); showPanel("gate"); return; }
+      }
+      const email = normEmail(user.email);
+
+      btn.disabled = true; say("");
+
+      try {
+        if (norm(username) === ADMIN_USERNAME) {
+          const tokHash = await sha(token);
+          if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); showRecovery(); btn.disabled = false; return; }
+          const admins = await getDocs(collection(db, "systemAdmins"));
+          if (admins.empty) {
+            const id = norm(ADMIN_USERNAME);
+            const batch = writeBatch(db);
+            batch.set(doc(db, "systemSetup", "claim"), {
+              googleUid: user.uid, passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+            });
+            batch.set(doc(db, "systemAdmins", user.uid), {
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+            });
+            batch.set(doc(db, "systemAccounts", id), {
+              usernameLower: id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin",
+              status: "approved", googleEmail: user.email || "", googleUid: user.uid, grants: [],
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+            });
+            batch.set(doc(db, "systemCredentials", id), {
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, phone: "0780526437",
+              googleEmail: user.email || "", googleUid: user.uid
+            });
+            await batch.commit();
+            writeSession({ id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
+            location.href = "/home/1";
+            return;
+          }
+          let mine = false;
+          admins.forEach((d) => { if (d.id === user.uid) mine = true; });
+          if (!mine) {
+            await setDoc(doc(db, "systemAdmins", user.uid), {
+              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+            });
+            try {
+              await updateDoc(doc(db, "systemAccounts", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
+              await updateDoc(doc(db, "systemCredentials", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
+            } catch (e) {
+              say("Administrator signed in. (Note: the profile rebinding failed: " + friendly(e) + ")");
+            }
+          }
+          writeSession({ id: norm(ADMIN_USERNAME), usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
+          location.href = "/home/1";
+          return;
+        }
+
+        const id = norm(username);
+        const snap = await getDoc(doc(db, "systemAccounts", id));
+        if (!snap.exists()) { say("No account with this username."); btn.disabled = false; return; }
+        const acc = snap.data();
+
+        if (acc.status === "pending") {
+          waitPanelFor(Object.assign({ id }, acc)); repairNotifications([Object.assign({ id }, acc)]);
+          btn.disabled = false; return;
+        }
+        if (acc.status === "rejected") { say("This account was not approved. Ask the administrator."); btn.disabled = false; return; }
+
+        if (acc.googleEmail && email && normEmail(acc.googleEmail) !== email) {
+          say("This account belongs to " + acc.googleEmail + " and cannot open from this Google account.");
+          btn.disabled = false; return;
+        }
+        if (!acc.googleEmail && acc.googleUid && acc.googleUid !== user.uid) {
+          say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
+        }
+
+        const credSnap = await getDoc(doc(db, "systemCredentials", id));
+        if (!credSnap.exists()) { say("Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
+        const tokHash2 = await sha(token);
+        if (credSnap.data().tokenHash !== tokHash2) { say("Wrong token."); showRecovery(); btn.disabled = false; return; }
+
+        writeSession({ id, ...acc }, user);
+        location.href = "/home/1";
+      } catch (err) {
+        say("Login failed: " + friendly(err));
+        btn.disabled = false;
+      }
+    });
+
+    $("create-btn").addEventListener("click", async () => {
+      const btn = $("create-btn");
       const username = $("ca-username").value.trim();
       const password = $("ca-password").value;
       const phone = $("ca-phone").value.trim();
       const position = $("ca-position").value.trim();
       const token = $("ca-token").value.trim();
 
-      if (!username || !password || !phone || !position || !token) {
-        say("Please complete all fields before creating a system account.");
-        return;
-      }
-      if (password.length < 6) {
-        say("Password must be at least 6 characters long.");
-        return;
-      }
-      if (!/^\d{4}$/.test(token)) {
-        say("The security token must be exactly 4 digits.");
-        return;
-      }
+      if (username.length < 3) { say("Username must be at least 3 characters."); return; }
+      if (password.length < 6) { say("Password must be at least 6 characters."); return; }
+      if (phone.replace(/[^0-9]/g, "").length < 9) { say("Enter a valid phone number."); return; }
+      if (!position) { say("Enter your staff position."); return; }
+      if (!/^[0-9]{4}$/.test(token)) { say("Choose a four-digit token."); return; }
+
+      const user = auth.currentUser;
+      if (!user) { say("Please sign in with Google first."); showPanel("gate"); return; }
+
+      btn.disabled = true; say("");
 
       try {
-        const rows = await listAccountsForGoogleEmail(currentGoogleEmail);
-        const lower = norm(username);
-        const duplicate = rows.find((row) => norm(row.usernameLower || row.usernameDisplay || row.id) === lower);
-        if (duplicate) {
-          say("That username is already in use for this Google account. Choose another one.");
-          return;
+        const id = norm(username);
+        if (id === norm(ADMIN_USERNAME)) { say("This username is reserved."); btn.disabled = false; return; }
+
+        const dup = await getDocs(query(collection(db, "systemAccounts"), where("usernameLower", "==", id), limit(1)));
+        if (!dup.empty) {
+          const d = dup.docs[0];
+          const a = d.data();
+          if (a.status === "pending" && normEmail(a.googleEmail) === normEmail(user.email)) {
+            lastRegistered = d.id;
+            waitPanelFor(Object.assign({ id: d.id }, a)); repairNotifications([Object.assign({ id: d.id }, a)]);
+          } else {
+            say("That username is already taken.");
+          }
+          btn.disabled = false; return;
         }
 
         const passHash = await sha(password);
-        const tokenHash = await sha(token);
-        const recordId = `${currentGoogleUser.uid}:${lower}:${Date.now()}`;
-
-        const docRef = doc(collection(db, "systemAccounts"), recordId);
-        await setDoc(docRef, {
-          googleEmail: currentGoogleEmail,
-          googleUid: currentGoogleUser.uid,
-          usernameDisplay: username,
-          usernameLower: lower,
-          passHash,
-          tokenHash,
-          phone,
-          position,
-          status: "pending",
-          role: "user",
-          grants: [],
-          createdAt: serverTimestamp()
+        const tokHash = await sha(token);
+        const mail = user.email || "";
+        const batch = writeBatch(db);
+        const displayName = username;
+        const lowerName = id;
+        batch.set(doc(db, "systemAccounts", id), {
+          usernameLower: lowerName, usernameDisplay: displayName, position: position, role: "user",
+          status: "pending", googleEmail: mail, googleUid: user.uid, grants: [], at: serverTimestamp()
         });
-
-        await setDoc(doc(collection(db, "systemNotifications"), recordId), {
-          type: "registration",
-          status: "unread",
-          googleEmail: currentGoogleEmail,
-          googleUid: currentGoogleUser.uid,
-          username: username,
-          usernameLower: lower,
-          position,
-          phone,
-          createdAt: serverTimestamp()
+        batch.set(doc(db, "systemCredentials", id), {
+          passHash: passHash, tokenHash: tokHash, phone: phone, googleEmail: mail, googleUid: user.uid
         });
+        batch.set(doc(db, "systemNotifications", id), {
+          type: "registration", username: displayName, usernameLower: lowerName,
+          googleEmail: mail, googleUid: user.uid, status: "unread", at: serverTimestamp()
+        });
+        await batch.commit();
 
-        $("wait-user").textContent = username;
-        say("Your request has been saved. Waiting for administrator approval.", true);
-        showPanel("panel-wait");
+        lastRegistered = id;
+        waitPanelFor({ id, usernameDisplay: displayName, username: displayName, usernameLower: lowerName });
+        btn.disabled = false;
       } catch (err) {
-        say(friendly(err));
+        say("Could not create the account: " + friendly(err));
+        btn.disabled = false;
       }
-    }
-
-    async function loginSystemAccount() {
-      const username = $("li-username").value.trim();
-      const token = $("li-token").value.trim();
-
-      if (!username || !token) {
-        say("Enter both username and token to continue.");
-        return;
-      }
-
-      try {
-        const rows = await listAccountsForGoogleEmail(currentGoogleEmail);
-        const match = rows.find((row) => norm(row.usernameLower || row.usernameDisplay || row.id) === norm(username));
-        if (!match) {
-          say("That user does not exist for this Google account.");
-          return;
-        }
-
-        if (match.status !== "approved") {
-          say("This account is still pending approval or has been rejected.");
-          $("wait-user").textContent = match.usernameDisplay || match.usernameLower || username;
-          showPanel("panel-wait");
-          return;
-        }
-
-        const passHash = await sha($("ca-password") ? $("ca-password").value : "");
-        const tokenHash = await sha(token);
-
-        // In the current app, the login form uses the password from the create screen as a stored credential,
-        // and the same username + token model is already used elsewhere in the project.
-        const storedPass = match.passHash || "";
-        const storedToken = match.tokenHash || "";
-
-        if ((storedPass && passHash !== storedPass) || (storedToken && tokenHash !== storedToken)) {
-          say("Incorrect username, password, or token.");
-          return;
-        }
-
-        setSystemSession(match);
-        say("Logged in successfully.", true);
-        window.location.href = "/home/1";
-      } catch (err) {
-        say(friendly(err));
-      }
-    }
-
-    function switchUser() {
-      clearSystemSession();
-      renderHub();
-    }
-
-    function bindHandlers() {
-      $("gate-btn").addEventListener("click", async () => {
-        try {
-          const result = await signInWithPopup(auth, provider);
-          currentGoogleUser = result.user;
-          loadGoogleUser();
-        } catch (err) {
-          say(friendly(err));
-        }
-      });
-
-      $("hub-create").addEventListener("click", () => {
-        $("ca-username").value = "";
-        $("ca-password").value = "";
-        $("ca-phone").value = "";
-        $("ca-position").value = "";
-        $("ca-token").value = "";
-        showPanel("panel-create");
-      });
-
-      $("login-btn").addEventListener("click", loginSystemAccount);
-      $("go-create").addEventListener("click", () => {
-        $("ca-username").value = "";
-        $("ca-password").value = "";
-        $("ca-phone").value = "";
-        $("ca-position").value = "";
-        $("ca-token").value = "";
-        showPanel("panel-create");
-      });
-      $("create-back").addEventListener("click", () => renderHub());
-      $("login-back").addEventListener("click", () => switchUser());
-      $("wait-switch").addEventListener("click", () => switchUser());
-      $("check-approval").addEventListener("click", () => renderHub());
-      $("create-btn").addEventListener("click", createSystemAccount);
-      $("go-forgot-token").addEventListener("click", () => window.location.href = "/account-recovery");
-    }
-
-    onAuthStateChanged(auth, (user) => {
-      currentGoogleUser = user;
-      if (!user) {
-        clearSystemSession();
-        showPanel("panel-gate");
-        $("sub-line").textContent = "Login to your account, or create one.";
-        return;
-      }
-      renderHub();
     });
 
-    bindHandlers();
-    loadGoogleUser();
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        sessionStorage.removeItem(SESSION_KEY);
+        showPanel("gate");
+        handleDeniedAndNeed();
+        return;
+      }
+      let valid = false;
+      try {
+        const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+        valid = !!(s && s.uid && s.uid === user.uid);
+      } catch (e) { valid = false; }
+      if (valid) { location.replace("/home/1"); return; }
+      sessionStorage.removeItem(SESSION_KEY);
+      buildHub(user);
+    });
   </script>
 </body>
 </html>
