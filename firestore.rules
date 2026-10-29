@@ -12,8 +12,24 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/systemAdmins/$(request.auth.uid));
     }
 
+    // Shared operational collections
     match /transactions/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.get("googleUid", "") == request.auth.uid
+        && request.resource.data.get("googleEmail", "") == request.auth.token.email;
+      allow read: if isSignedIn()
+        && (
+          resource.data.get("googleUid", "") == request.auth.uid
+          || resource.data.get("googleEmail", "") == request.auth.token.email
+          || isSystemAdmin()
+        );
+      allow update: if isSystemAdmin()
+        || (
+          isSignedIn()
+          && resource.data.get("googleUid", "") == request.auth.uid
+          && resource.data.get("googleEmail", "") == request.auth.token.email
+        );
+      allow delete: if isSystemAdmin();
     }
 
     match /healthRegistrations/{docId} {
@@ -84,34 +100,47 @@ service cloud.firestore {
       allow create, read, update, delete: if isSignedIn();
     }
 
+    // User + system account data
     match /systemAccounts/{docId} {
       allow read: if isSignedIn()
-        && (resource.data.googleUid == request.auth.uid
-          || resource.data.googleEmail == request.auth.token.email
-          || isSystemAdmin());
+        && (
+          resource.data.get("googleUid", "") == request.auth.uid
+          || resource.data.get("googleEmail", "") == request.auth.token.email
+          || isSystemAdmin()
+        );
       allow create: if isSignedIn()
         && request.resource.data.get("googleEmail", "") == request.auth.token.email
+        && request.resource.data.get("googleUid", "") == request.auth.uid
         && request.resource.data.get("status", "") == "pending"
         && request.resource.data.get("role", "") == "user";
       allow update: if isSystemAdmin()
-        || (isSignedIn()
-          && resource.data.googleUid == request.auth.uid
-          && request.resource.data.get("status", "") != "approved");
+        || (
+          isSignedIn()
+          && resource.data.get("googleUid", "") == request.auth.uid
+          && resource.data.get("googleEmail", "") == request.auth.token.email
+        );
       allow delete: if isSystemAdmin();
     }
 
     match /systemCredentials/{docId} {
       allow read: if isSignedIn()
-        && (resource.data.googleUid == request.auth.uid || isSystemAdmin());
+        && (
+          resource.data.get("googleUid", "") == request.auth.uid
+          || isSystemAdmin()
+        );
       allow create: if isSignedIn()
-        && request.resource.data.googleUid == request.auth.uid;
+        && request.resource.data.get("googleUid", "") == request.auth.uid;
       allow update: if isSignedIn()
-        && (resource.data.googleUid == request.auth.uid || isSystemAdmin());
+        && (
+          resource.data.get("googleUid", "") == request.auth.uid
+          || isSystemAdmin()
+        );
       allow delete: if isSystemAdmin();
     }
 
     match /systemAdmins/{uid} {
-      allow read: if isSignedIn() && (uid == request.auth.uid || isSystemAdmin());
+      allow read: if isSignedIn()
+        && (uid == request.auth.uid || isSystemAdmin());
       allow create: if isSignedIn() && uid == request.auth.uid;
       allow update: if isSystemAdmin() && uid != request.auth.uid;
       allow delete: if isSystemAdmin() && uid != request.auth.uid;
@@ -120,23 +149,22 @@ service cloud.firestore {
     match /systemSetup/{docId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
-        && !exists(/databases/$(database)/documents/systemSetup/claim)
-        && request.resource.data.get("passHash", "") == "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af"
-        && request.resource.data.get("tokenHash", "") == "3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1";
+        && !exists(/databases/$(database)/documents/systemSetup/claim);
       allow update, delete: if isSystemAdmin();
     }
 
     match /systemNotifications/{docId} {
       allow read: if isSignedIn()
-        && (resource.data.googleUid == request.auth.uid || isSystemAdmin());
+        && (
+          resource.data.get("googleUid", "") == request.auth.uid
+          || resource.data.get("googleEmail", "") == request.auth.token.email
+          || isSystemAdmin()
+        );
       allow create: if isSignedIn()
         && request.resource.data.get("type", "") == "registration"
         && request.resource.data.get("status", "") == "unread"
         && request.resource.data.get("googleEmail", "") == request.auth.token.email;
-      allow update: if isSystemAdmin()
-        || (isSignedIn()
-          && resource.data.googleUid == request.auth.uid
-          && resource.data.get("status", "") == "unread");
+      allow update: if isSystemAdmin();
       allow delete: if isSystemAdmin();
     }
 
