@@ -131,16 +131,13 @@ export function requireAuth() {
         return;
       }
       const s = readSystemSession();
-      if (!s || s.uid !== user.uid) {
-        clearSystemSession();
-        location.replace("/?need=account");
-        return;
+      if (s && s.uid !== user.uid) {
+        /* T77: adopt the active Google identity silently - no bounce */
+        s.uid = user.uid;
+        try { sessionStorage.setItem(SYSTEM_SESSION_KEY, JSON.stringify(s)); } catch (e) {}
       }
-      const folder = currentFolder();
-      if (!folderAllowed(folder, s)) {
-        location.replace("/?denied=" + encodeURIComponent(folder || "system"));
-        return;
-      }
+      /* T77: static display - resolve always; the sidebar guard blocks
+         ungranted pages in place, no redirect */
       resolve(user);
     });
   });

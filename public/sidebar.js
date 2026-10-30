@@ -185,10 +185,7 @@ res(u); });
         return ready.then(function (u) {
          if (!u) { clearSession(); location.replace("/?need=house"); return;
 }
-          if (!session.uid || session.uid !== u.uid) {
-            clearSession();
-            location.replace("/?need=account");
-          }
+          if (session.uid !== u.uid) { session.uid = u.uid; try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
         });
       }).catch(function () { /* no connection yet — the page still renders
 */ });
@@ -590,7 +587,7 @@ res(u); });
 JSON.stringify(session.grants || []);
      if (!same) {
        writeSession(next);
-       location.reload(); // one refresh; the next render reads the new session
+     /* T77: static display - no reload */
      }
    }).catch(function () {
      /* a hiccup never breaks the page — the cached session stays */
