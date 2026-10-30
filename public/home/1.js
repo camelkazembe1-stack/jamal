@@ -6,7 +6,7 @@
 // with the sidebar. No grants -> blank home (hidden before paint).
 import { requireAuth, db, doc, getDoc } from "/firebase.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+/* T77: static home - no auth bounce here */ // not logged in? -> bounced to "/"
 
 const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
 let S = null;
