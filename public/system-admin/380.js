@@ -52,7 +52,7 @@ function show(e) {
 }
 
 // TASK 67: the build tag proves the NEW script is actually running.
-// If this line still says only "build T67" with no timestamp, the
+// If this line still says only "build T69 · awaited-live" with no timestamp, the
 // browser is showing an old cached copy — press Ctrl+Shift+R.
 try {
   $("build-tag").textContent =
