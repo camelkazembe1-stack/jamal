@@ -1,12 +1,12 @@
-// JAMALI — Account Administration (380) — T73 INSTANT TABLE
-// The table paints as soon as the accounts arrive — no gate, no
-// bouncing, no "Loading…" dead ends (systemAccounts is public-read by
-// the rules, so display never blocks). Phones fill in per row. The
-// Approve / Remove-approval buttons activate only when the visitor is
-// signed in AND has a systemAdmins document — checked in the
-// background with a timeout, so nothing can hang the page.
+// JAMALI — Account Administration (380) — T74 BUTTONS ACTIVE
+// The table paints instantly and the Approve / Remove-approval buttons
+// are ACTIVE from the first paint — no disabled state, no waiting.
+// The update itself is guarded by the Firestore rules (only a real
+// systemAdmin can change a status). T74 also fixes the T73 bug: the
+// background admin check subscribed but never called verifyAdmin,
+// which left the buttons stuck disabled.
 let F = null;          // firebase module
-let IS_ADMIN = false;  // true only for the real administrator
+let IS_ADMIN = false;  // true only for the real administrator (notes only)
 let ROWS = [];
 let PHONES = {};
 
@@ -61,32 +61,25 @@ async function readAll() {
 }
 
 function checkAdmin() {
-  if (F.auth.currentUser) return verifyAdmin(F.auth.currentUser);
-  const t = setTimeout(() => off(F.auth.currentUser), 4000); // never hang
-  const off = F.onAuthStateChanged(F.auth, (u) => { clearTimeout(t); off(u); });
-  // note: the listener is detached inside its own callback via `off`
-}
-// the version above detaches correctly; this wrapper keeps it simple:
-async function verifyAdmin(u) {
-  if (!u) { note("Signed out — the table is view-only. Sign in as the administrator to approve."); return; }
-  try {
-    const adm = await F.getDoc(F.doc(F.db, "systemAdmins", u.uid));
-    if (adm.exists()) {
-      IS_ADMIN = true;
-      enableButtons();
-      note("");
-    } else {
-      note("This Google account is not the administrator — view only.");
-      enableButtons();
-    }
-  } catch (e) {
-    note("Admin check failed: " + txt(e));
-    enableButtons();
-  }
+  if (F.auth.currentUser) { verifyAdmin(F.auth.currentUser); return; }
+  const t = setTimeout(() => { unsub(); verifyAdmin(F.auth.currentUser); }, 4000);
+  const unsub = F.onAuthStateChanged(F.auth, (u) => {
+    if (!u) return;              // keep waiting — timeout is the backstop
+    clearTimeout(t);
+    unsub();
+    verifyAdmin(u);              // THE FIX: actually verify the admin
+  });
 }
 
-function enableButtons() {
-  document.querySelectorAll("button.act").forEach((b) => { b.disabled = false; });
+async function verifyAdmin(u) {
+  if (!u) { note("Not signed in — you can look, but the database will refuse changes."); return; }
+  try {
+    const adm = await F.getDoc(F.doc(F.db, "systemAdmins", u.uid));
+    IS_ADMIN = adm.exists();
+    note(IS_ADMIN ? "" : "This Google account is not the administrator — the database will refuse changes.");
+  } catch (e) {
+    note("Admin check failed: " + txt(e));
+  }
 }
 
 function paint() {
@@ -132,7 +125,6 @@ function paint() {
     const tdAct = document.createElement("td");
     const b = document.createElement("button");
     b.type = "button";
-    b.disabled = true; // activated by the background admin check
     if (st === "approved") {
       b.textContent = "Remove approval";
       b.className = "act";
@@ -150,13 +142,16 @@ function paint() {
 }
 
 async function decide(id, next, btn) {
-  if (!IS_ADMIN) { note("Only the administrator can change a status."); return; }
   if (btn) btn.disabled = true;
   try {
     await F.updateDoc(F.doc(F.db, "systemAccounts", id), { status: next });
     readAll(); // re-read and repaint with the new status
   } catch (e) {
-    showErr("Could not update " + id + ": " + txt(e));
+    const m = txt(e);
+    showErr("Could not update " + id + ": " + m +
+      (m.indexOf("permission-denied") >= 0
+        ? " — the database allows this only for the administrator."
+        : ""));
     if (btn) btn.disabled = false;
   }
 }
