@@ -20,9 +20,19 @@
 //    that same cache, and every action re-reads it first.
 
 import {
-  requireAuth, readSystemSession,
-  db, collection, query, where, getDocs, getDoc, doc, updateDoc,
-  setDoc, serverTimestamp
+  requireAuth,
+  readSystemSession,
+  db,
+  collection,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  doc,
+  updateDoc,
+  setDoc,
+  serverTimestamp,
+  onSnapshot
 } from "/firebase.js";
 
 const $ = (id) => document.getElementById(id);
@@ -97,6 +107,7 @@ function refreshAll() {
     paintRequests(rows);
     paintUserSelect(rows);
     if (CURRENT_USER_ID) paintGrants(CURRENT_USER_ID);
+    paintAwaited(rows);
   }).catch((e) => {
     fail("Reading the accounts failed: " + show(e) +
       " — the self-test table at the top shows exactly which read the database refused.");
@@ -255,6 +266,11 @@ function boot() {
   });
   $("helper-close").addEventListener("click", () => { $("helper-panel").hidden = true; });
   selfTest().catch((e) => fail("The self-test could not run: " + show(e)));
+  try {
+    onSnapshot(collection(db, "systemAccounts"), () => refreshAll());
+    onSnapshot(query(collection(db, "systemNotifications"), where("status", "==", "unread")),
+      () => readNotifs().catch(() => {}));
+  } catch (e) { fail("Live awaited-user updates could not start: " + show(e)); }
   refreshAll();
   readNotifs().catch((e) =>
     fail("Reading the notifications failed: " + show(e)));
@@ -350,6 +366,33 @@ function openUsers(kind) {
 // ---------------------------------------------------------------------
 // TAB 1 · account requests
 // ---------------------------------------------------------------------
+function paintAwaited(rows) {
+  const bar = $("awaited-bar"); if (!bar) return;
+  const pend = rows.filter((a) => a.status === "pending");
+  $("awaited-count").textContent = String(pend.length);
+  $("awaited-badge").textContent = String(pend.length);
+  $("awaited-badge").hidden = pend.length === 0;
+  bar.hidden = pend.length === 0;
+  const body = $("awaited-body");
+  body.innerHTML = "";
+  for (const a of pend) {
+    const row = document.createElement("div");
+    row.className = "awaited-row";
+    const when = a.at && a.at.toDate ? a.at.toDate().toLocaleString() : "";
+    const span = document.createElement("span");
+    span.textContent = (a.usernameDisplay || a.id || "") +
+      (a.position ? " — " + a.position : "") + (when ? " — " + when : "");
+    const ap = document.createElement("button");
+    ap.type = "button"; ap.className = "btn-ghost"; ap.textContent = "Approve";
+    ap.addEventListener("click", () => decide(a.id, "approved"));
+    const rj = document.createElement("button");
+    rj.type = "button"; rj.className = "btn-ghost btn-danger"; rj.textContent = "Reject";
+    rj.addEventListener("click", () => decide(a.id, "rejected"));
+    row.appendChild(span); row.appendChild(ap); row.appendChild(rj);
+    body.appendChild(row);
+  }
+}
+
 function paintRequests(rows) {
   const reqBody = $("req-body"), rejBody = $("rej-body");
   reqBody.innerHTML = ""; rejBody.innerHTML = "";
