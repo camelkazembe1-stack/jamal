@@ -21,10 +21,12 @@
   .st-pending{color:#b45309;font-weight:600;}
   .st-rejected{color:#b91c1c;font-weight:600;}
   button.act{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;}
-  button.act:hover{background:#f1f5f9;}
+  button.act:hover:not(:disabled){background:#f1f5f9;}
+  button.act:disabled{opacity:.45;cursor:not-allowed;}
   button.act.approve{background:#15803d;border-color:#15803d;color:#fff;}
-  button.act.approve:hover{background:#166534;}
+  button.act.approve:hover:not(:disabled){background:#166534;}
   .err{color:#b91c1c;margin:12px 0 0;}
+  .note{color:#475569;margin:8px 0 0;font-size:13px;}
 </style>
 </head>
 <body>
@@ -42,6 +44,7 @@
     </table>
   </div>
   <p class="err" id="err" hidden></p>
+  <p class="note" id="note" hidden></p>
 </main>
 <script type="module" src="/system-admin/380.js"></script>
 </body>
