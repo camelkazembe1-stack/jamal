@@ -43,6 +43,17 @@
       <tbody id="rows"><tr><td colspan="7">Loading&hellip;</td></tr></tbody>
     </table>
   </div>
+  <section id="modsel" hidden style="margin-top:18px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;text-align:left;">
+    <h2 style="font-size:18px;margin:0 0 10px;">Select modules — <span id="modsel-who"></span></h2>
+    <p style="color:#64748b;font-size:13px;margin:0 0 10px;">Tick the main modules this user may open — ticking a module reveals its submodules for individual selection. A granted submodule always carries its parent module. Only selected modules and submodules appear for the user on Home and in the sidebar.</p>
+    <div id="modsel-body"></div>
+    <p style="margin:12px 0 0;display:flex;gap:8px;align-items:center;">
+      <button class="act" id="modsel-all" type="button">all</button>
+      <button class="act approve" id="modsel-save" type="button">Save Access</button>
+      <button class="act" id="modsel-close" type="button">Close</button>
+      <span id="modsel-ok" hidden style="color:#15803d;font-weight:600;">Saved.</span>
+    </p>
+  </section>
   <p class="err" id="err" hidden></p>
   <p class="note" id="note" hidden></p>
 </main>

@@ -907,15 +907,20 @@ session.grants.length);
  function guardUserPage(main) {
    if (menuHidden(current) || pageHidden(PAGE_ID)) { blockPage();
 return; }
-   if (current !== "account-recovery" && !hasAnyGrant()) {
-blockAllowance(); return; }
+   if (current !== "account-recovery" && !hasAnyGrant()) { if (current === "home") { blankHome(main); return; } blockAllowance(); return; }
    if (!folderAllowed(current) && ALWAYS_OPEN.indexOf(current)
 === -1) { blockPage(); return; }
    applyUserHides(main);
    watchPage(main, function () { applyUserHides(main); });
  }
 
- function blockAllowance() {
+ 
+  // T75: blank home - hide the page content, add nothing.
+  function blankHome(main) {
+    try { if (main) main.style.display = "none"; } catch (e) {}
+  }
+
+function blockAllowance() {
    var app = document.getElementById("app");
    if (app) {
      app.style.display = "none";

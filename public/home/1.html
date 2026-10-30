@@ -7,23 +7,25 @@
 <link rel="stylesheet" href="/home/1.css">
 <script src="/menu.js" defer></script>
 <script src="/sidebar.js" defer></script>
+<script>
+  (function () {
+    var s = null;
+    try { s = JSON.parse(sessionStorage.getItem("JAMALI_SYSTEM_SESSION") || "null"); } catch (e) {}
+    var g = s && Array.isArray(s.grants) ? s.grants : [];
+    if (!g.length && (!s || s.role !== "admin")) {
+      var st = document.createElement("style");
+      st.textContent = "main.wrap{display:none!important}";
+      document.head.appendChild(st);
+    }
+  })();
+</script>
 </head>
 <body>
   <main class="wrap">
-    <section class="grid" id="app-grid">
-      <a class="tile business" href="/business/2">
-        <span class="tile-icon">🏢</span>
-        <span class="tile-label">Business</span>
-      </a>
-      <a class="tile" href="/computer/62">
-        <span class="tile-icon">🖥️</span>
-        <span class="tile-label">Computer</span>
-      </a>
-      <a class="tile" href="/health/321">
-        <span class="tile-icon">🏥</span>
-        <span class="tile-label">Health</span>
-      </a>
-      <!-- future system buttons: add one .tile here each time, 8 per row -->
+    <section class="grid" id="app-grid"></section>
+    <section id="sub-wrap" hidden>
+      <h3 class="sub-title">Modules</h3>
+      <div class="grid small" id="sub-grid"></div>
     </section>
   </main>
   <script type="module" src="/home/1.js"></script>
