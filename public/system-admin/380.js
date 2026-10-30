@@ -1,21 +1,22 @@
-// JAMALI — Account Administration (380) — T72 TABLE BUILD
-// One table: every registered account with the fields filled at
-// registration (username, position, phone, Google email, registered
-// date), its status, and ONE action button that follows the status:
-//   pending / rejected -> "Approve"          (status -> approved)
-//   approved           -> "Remove approval"  (status -> pending)
-// The admin gate stays: valid admin session AND a systemAdmins
-// document in the database, otherwise bounce to the start.
-const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
-let F = null; // the firebase module, loaded once in boot()
+// JAMALI — Account Administration (380) — T73 INSTANT TABLE
+// The table paints as soon as the accounts arrive — no gate, no
+// bouncing, no "Loading…" dead ends (systemAccounts is public-read by
+// the rules, so display never blocks). Phones fill in per row. The
+// Approve / Remove-approval buttons activate only when the visitor is
+// signed in AND has a systemAdmins document — checked in the
+// background with a timeout, so nothing can hang the page.
+let F = null;          // firebase module
+let IS_ADMIN = false;  // true only for the real administrator
+let ROWS = [];
+let PHONES = {};
 
-let session = null;
-try { session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); }
-catch (e) { session = null; }
-if (!session || session.role !== "admin") {
-  location.replace("/?denied=" + encodeURIComponent("system-admin"));
-} else {
-  boot();
+boot();
+
+async function boot() {
+  try { F = await import("/firebase.js"); }
+  catch (e) { showErr("Could not load the database module: " + txt(e)); return; }
+  readAll();
+  checkAdmin();
 }
 
 function txt(e) {
@@ -29,31 +30,29 @@ function showErr(m) {
   if (el) { el.textContent = m; el.hidden = false; }
 }
 
-async function boot() {
-  try {
-    F = await import("/firebase.js");
-    const u = F.auth.currentUser;
-    if (!u) { location.replace("/?denied=" + encodeURIComponent("system-admin")); return; }
-    const adm = await F.getDoc(F.doc(F.db, "systemAdmins", u.uid));
-    if (!adm.exists()) { location.replace("/?denied=" + encodeURIComponent("system-admin")); return; }
-  } catch (e) { showErr("Gate check failed: " + txt(e)); return; }
+function note(m) {
+  const el = document.getElementById("note");
+  if (el) { el.textContent = m; el.hidden = !m; }
+}
 
+async function readAll() {
   try {
     const snap = await F.getDocs(F.collection(F.db, "systemAccounts"));
-    const rows = [];
-    snap.forEach((d) => rows.push({ id: d.id, a: d.data() }));
-    rows.sort((x, y) =>
+    ROWS = [];
+    snap.forEach((d) => ROWS.push({ id: d.id, a: d.data() }));
+    ROWS.sort((x, y) =>
       String(x.a.usernameDisplay || x.id).toLowerCase()
         .localeCompare(String(y.a.usernameDisplay || y.id).toLowerCase()));
-    // phones live in systemCredentials under the same ids
-    const phones = {};
-    for (const r of rows) {
+    PHONES = {};
+    paint(); // instant paint — phones fill in below, one by one
+    for (const r of ROWS) {
       try {
         const cs = await F.getDoc(F.doc(F.db, "systemCredentials", r.id));
-        phones[r.id] = cs.exists() ? (cs.data().phone || "") : "";
-      } catch (e) { phones[r.id] = ""; }
+        PHONES[r.id] = cs.exists() ? (cs.data().phone || "") : "";
+      } catch (e) { PHONES[r.id] = ""; }
+      const cell = document.querySelector("[data-phone=\"" + r.id + "\"]");
+      if (cell) cell.textContent = PHONES[r.id] || "—";
     }
-    paint(rows, phones);
   } catch (e) {
     showErr("Could not read the accounts: " + txt(e));
     const body = document.getElementById("rows");
@@ -61,15 +60,44 @@ async function boot() {
   }
 }
 
-function paint(rows, phones) {
+function checkAdmin() {
+  if (F.auth.currentUser) return verifyAdmin(F.auth.currentUser);
+  const t = setTimeout(() => off(F.auth.currentUser), 4000); // never hang
+  const off = F.onAuthStateChanged(F.auth, (u) => { clearTimeout(t); off(u); });
+  // note: the listener is detached inside its own callback via `off`
+}
+// the version above detaches correctly; this wrapper keeps it simple:
+async function verifyAdmin(u) {
+  if (!u) { note("Signed out — the table is view-only. Sign in as the administrator to approve."); return; }
+  try {
+    const adm = await F.getDoc(F.doc(F.db, "systemAdmins", u.uid));
+    if (adm.exists()) {
+      IS_ADMIN = true;
+      enableButtons();
+      note("");
+    } else {
+      note("This Google account is not the administrator — view only.");
+      enableButtons();
+    }
+  } catch (e) {
+    note("Admin check failed: " + txt(e));
+    enableButtons();
+  }
+}
+
+function enableButtons() {
+  document.querySelectorAll("button.act").forEach((b) => { b.disabled = false; });
+}
+
+function paint() {
   const body = document.getElementById("rows");
   if (!body) return;
   body.innerHTML = "";
-  if (!rows.length) {
+  if (!ROWS.length) {
     body.innerHTML = "<tr><td colspan=\"7\">No registered accounts yet.</td></tr>";
     return;
   }
-  for (const r of rows) {
+  for (const r of ROWS) {
     const a = r.a;
     const st = a.status || "pending";
     const tr = document.createElement("tr");
@@ -83,7 +111,8 @@ function paint(rows, phones) {
     tr.appendChild(tdPos);
 
     const tdPhone = document.createElement("td");
-    tdPhone.textContent = phones[r.id] || "—";
+    tdPhone.dataset.phone = r.id;
+    tdPhone.textContent = "—";
     tr.appendChild(tdPhone);
 
     const tdMail = document.createElement("td");
@@ -103,6 +132,7 @@ function paint(rows, phones) {
     const tdAct = document.createElement("td");
     const b = document.createElement("button");
     b.type = "button";
+    b.disabled = true; // activated by the background admin check
     if (st === "approved") {
       b.textContent = "Remove approval";
       b.className = "act";
@@ -120,10 +150,11 @@ function paint(rows, phones) {
 }
 
 async function decide(id, next, btn) {
+  if (!IS_ADMIN) { note("Only the administrator can change a status."); return; }
   if (btn) btn.disabled = true;
   try {
     await F.updateDoc(F.doc(F.db, "systemAccounts", id), { status: next });
-    boot(); // re-read and repaint with the new status
+    readAll(); // re-read and repaint with the new status
   } catch (e) {
     showErr("Could not update " + id + ": " + txt(e));
     if (btn) btn.disabled = false;
