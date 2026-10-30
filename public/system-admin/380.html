@@ -108,7 +108,12 @@
   </section>
 
   <!-- ============ TASK 61 · NOTIFICATIONS PANEL ============ -->
-  <section class="card" id="notif-panel" hidden>
+   <section class="card" id="awaited-bar" hidden>
+  <h2>Awaiting your approval <span class="badge" id="awaited-badge" hidden>0</span></h2>
+  <p class="hint">Everyone who created an account and cannot enter until you approve them — updated live.</p>
+  <div id="awaited-body"></div>
+ </section>
+ <section class="card" id="notif-panel" hidden>
    <h2>Notifications — awaiting your attention</h2>
    <p class="hint">Every registration request sends you one notification. Review opens the Account Requests tab; Dismiss clears the notification from the counter.</p>
    <div class="table-wrap">
