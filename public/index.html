@@ -80,48 +80,28 @@
     <h1>Welcome to <span>Jamal MultiSystem Management</span></h1>
     <p class="sub" id="sub-line">Login to your account, or create one.</p>
 
-    <!-- ============ TASK 65 · THE GOOGLE GATE (requirement 1) ============
-         A JAMALI link opened WITHOUT an active Google authentication
-         session shows THIS first — nothing else is reachable before the
-         Google sign-in succeeds. After it succeeds the account hub takes
-         over (selection / registration), and it never asks again while
-         the Google session is alive. -->
     <section id="panel-gate" class="hidden">
       <button class="wide" id="gate-btn" type="button">Continue with Google</button>
       <p class="google-note">JAMALI opens only for an authenticated Google identity. Your system accounts are separate saved records linked to that Google email — you will pick one or create one next, and logging out of JAMALI never signs you out of Google.</p>
     </section>
 
-    <!-- ====== TASK 65 · THE ACCOUNT HUB (requirements 2, 3, 4) ======
-         Every system account ever created by THIS Google email is listed
-         here — approved ones open with their token, pending ones show
-         their waiting status, and a new one can be registered. Switching
-         accounts or logging out of JAMALI always returns HERE while the
-         Google session stays active; no account is ever deleted,
-         overwritten or merged. -->
     <section id="panel-hub" class="hidden">
       <p class="email-line">Google account: <b id="hub-email"></b></p>
       <div id="hub-list"></div>
       <button class="wide" id="hub-create" type="button">Create a new system account</button>
     </section>
 
-    <!-- ============ LOGIN (username + token) ============ -->
     <section id="panel-login" class="hidden">
       <label for="li-username">Username</label>
       <input id="li-username" type="text" autocomplete="username" placeholder="Your username">
       <label for="li-token">Four-digit token</label>
       <div class="token-row"><input id="li-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
-      <!-- TASK 63: ONE recovery link, shown ONLY at the token step. The
-           old three-up row (Forgot Token? · Forgot Password? · Forgot
-           Phone Number?) is gone. The single link appears when the user
-           is actually at the token field (focus / typing) or after a
-           wrong-token attempt, and opens the token recovery page. -->
       <p class="links" id="recovery-line" hidden><a id="go-forgot-token">Forgot Token?</a></p>
       <button class="wide" id="login-btn" type="button">Login</button>
       <p class="swap">No account yet? <a id="go-create">Create Account</a></p>
       <p class="swap"><a id="login-back">Back to my accounts</a></p>
     </section>
 
-    <!-- ============ CREATE ACCOUNT ============ -->
     <section id="panel-create" class="hidden">
       <label for="ca-username">Username</label>
       <input id="ca-username" type="text" placeholder="Choose a username">
@@ -138,11 +118,6 @@
       <p class="google-note">This account will be saved as a separate record linked to your Google email — one Google email can hold many system accounts. The administrator approves every new account before it can enter.</p>
     </section>
 
-    <!-- ======== WAITING FOR ADMINISTRATOR APPROVAL (requirement 5) ========
-         Every new registration lands here with the exact message, the
-         administrator's bell rings, and "Check again" re-reads the
-         request. Going back NEVER deletes the registration and NEVER
-         signs the user out of Google. -->
     <section id="panel-wait" class="hidden">
       <p class="wait-title">Waiting for administrator approval.</p>
       <p class="sub">Your registration is saved, <span id="wait-user"></span>. The administrator has been notified and must approve it before you can enter. The account stays linked to your Google email.</p>
@@ -163,9 +138,6 @@
 
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // ------------------------------------------------------------------
-    // constants shared with the recovery pages and the security rules
-    // ------------------------------------------------------------------
     const SALT = "JAMALI::v1::";
     const ADMIN_USERNAME = "jamal kazembe";
     const ADMIN_PASS_HASH  = "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af";
@@ -183,11 +155,8 @@
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
-    function norm(u) { return u.trim().toLowerCase(); }
+    function norm(u) { return String(u || "").trim().toLowerCase(); }
     function normEmail(e) { return String(e || "").trim().toLowerCase(); }
-    // task 56b: "Missing or insufficient permissions" almost always means the
-    // firestore.rules file was never published in the Firebase console — say
-    // so in plain words instead of the raw Firebase error.
     function friendly(err) {
       const code = err && err.code ? String(err.code) : "";
       if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
@@ -196,9 +165,6 @@
       return (err && err.message) ? err.message : code;
     }
 
-    // ------------------------------------------------------------------
-    // panels
-    // ------------------------------------------------------------------
     function showPanel(which) {
       $("panel-gate").classList.toggle("hidden", which !== "gate");
       $("panel-hub").classList.toggle("hidden", which !== "hub");
@@ -208,12 +174,6 @@
       say("");
     }
 
-    // ------------------------------------------------------------------
-    // TASK 65 (requirement 1) — the house key: the Google sign-in IS the
-    // first screen when no session is active. The gate button triggers
-    // it; every later screen reuses the SAME session — nobody is ever
-    // asked to sign in twice while the Google session lives.
-    // ------------------------------------------------------------------
     async function ensureHouse() {
       if (auth.currentUser) return auth.currentUser;
       const res = await signInWithPopup(auth, provider);
@@ -225,37 +185,24 @@
       btn.disabled = true;
       try {
         await signInWithPopup(auth, provider);
-        // onAuthStateChanged picks the user up and opens the account hub
       } catch (err) {
         say("Google sign-in was cancelled or failed. Try again.");
       }
       btn.disabled = false;
     });
 
-    // ------------------------------------------------------------------
-    // TASK 65 (requirements 2 + 3 + 4) — THE ACCOUNT HUB: the system-
-    // account selection / registration page for THIS Google email.
-    // Every account saved with this email is listed — approved ones open
-    // with their token, a pending one shows its waiting status, and a
-    // new one can be registered. Nothing here is ever deleted,
-    // overwritten or merged: switching accounts simply loads another
-    // saved record.
-    // ------------------------------------------------------------------
     let hubUser = null;
 
     async function accountsOfEmail(email, uid) {
       const out = new Map();
       const byMail = await getDocs(query(collection(db, "systemAccounts"), where("googleEmail", "==", email)));
       byMail.forEach((d) => { const a = d.data(); a.id = d.id; out.set(d.id, a); });
-      // best effort: older accounts (task 61) were linked by Google uid
-      // only — surface them in the hub too, without ever overwriting the
-      // email-linked records above.
       try {
         const byUid = await getDocs(query(collection(db, "systemAccounts"), where("googleUid", "==", uid)));
         byUid.forEach((d) => {
           if (!out.has(d.id)) { const a = d.data(); a.id = d.id; out.set(d.id, a); }
         });
-      } catch (e) { /* legacy query is best effort */ }
+      } catch (e) { }
       const rows = Array.from(out.values());
       rows.sort((x, y) => String(x.usernameLower || x.id).localeCompare(String(y.usernameLower || y.id)));
       return rows;
@@ -278,7 +225,7 @@
         const info = document.createElement("div");
         info.className = "acc-info";
         const b = document.createElement("b");
-        b.textContent = a.usernameDisplay || a.id;
+        b.textContent = a.usernameDisplay || a.username || a.id;
         const meta = document.createElement("span");
         const pos = a.position ? " — " + a.position : "";
         const act = document.createElement("button");
@@ -289,7 +236,7 @@
           meta.className = "st-appr";
           act.textContent = "Log in";
           act.addEventListener("click", () => {
-            $("li-username").value = a.usernameDisplay || a.id;
+            $("li-username").value = a.usernameDisplay || a.username || a.id;
             showPanel("login");
             $("li-token").focus();
           });
@@ -312,38 +259,28 @@
       }
     }
 
-  // ------------------------------------------------------------------
-  // TASK 66 - SELF-HEALING BELL. A pending account must always have its
-  // registration notification. Registrations made before Task 61 (and
-  // any request whose notification record was lost) are repaired here,
-  // from the registrant's own Google session - exactly what the security
-  // rules demand on a notification create (the writer's own
-  // authenticated email on the ring). Best effort: a failed repair never
-  // blocks the hub, and the administrator's pending table reads the
-  // accounts themselves, so the request always shows.
-  // ------------------------------------------------------------------
-  async function repairNotifications(rows) {
-    const me = auth.currentUser;
-    if (!me) return;
-    for (const a of rows) {
-      try {
-        if (!a || a.status !== "pending" || !a.id) continue;
-        const ref = doc(db, "systemNotifications", a.id);
-        const snap = await getDoc(ref);
-        if (snap.exists()) continue;
-        await setDoc(ref, {
-          type: "registration",
-          username: a.usernameDisplay || a.id,
-          usernameLower: String(a.usernameLower || a.id || "").toLowerCase(),
-          googleEmail: normEmail(me.email || ""),
-          googleUid: a.googleUid || me.uid,
-          status: "unread",
-          at: serverTimestamp(),
-          repairedAt: serverTimestamp()
-        });
-      } catch (e) { /* best effort - never blocks the hub */ }
+    async function repairNotifications(rows) {
+      const me = auth.currentUser;
+      if (!me) return;
+      for (const a of rows) {
+        try {
+          if (!a || a.status !== "pending" || !a.id) continue;
+          const ref = doc(db, "systemNotifications", a.id);
+          const snap = await getDoc(ref);
+          if (snap.exists()) continue;
+          await setDoc(ref, {
+            type: "registration",
+            username: a.usernameDisplay || a.username || a.id,
+            usernameLower: String(a.usernameLower || (a.usernameDisplay || a.username || a.id) || "").toLowerCase(),
+            googleEmail: normEmail(me.email || ""),
+            googleUid: a.googleUid || me.uid,
+            status: "unread",
+            at: serverTimestamp(),
+            repairedAt: serverTimestamp()
+          });
+        } catch (e) { }
+      }
     }
-  }
 
     async function buildHub(user) {
       hubUser = user;
@@ -363,39 +300,27 @@
       showPanel("gate");
     }
 
-    // The waiting screen: the form disappears, the request speaks.
     function waitPanelFor(acc) {
-      $("wait-user").textContent = acc.usernameDisplay || acc.id || "";
+      $("wait-user").textContent = acc.usernameDisplay || acc.username || acc.id || "";
       showPanel("wait");
       say("Waiting for administrator approval.", true);
     }
 
-    // navigation: every side door leads back to the hub — never to a
-    // Google sign-out (requirement 3).
     $("go-create").addEventListener("click", () => showPanel("create"));
     $("hub-create").addEventListener("click", () => showPanel("create"));
     $("login-back").addEventListener("click", () => openHub());
     $("create-back").addEventListener("click", () => openHub());
     $("wait-switch").addEventListener("click", () => openHub());
-      // TASK 66: "Use a different Google account" was removed - the hub
-      // always serves the signed-in Google email, and nothing on this page
-      // signs the Google session away.
 
-    // recovery — the username travels with the link
     $("go-forgot-token").addEventListener("click", () => {
       const u = $("li-username").value.trim();
       location.href = "/account-recovery/390" + (u ? "?u=" + encodeURIComponent(u) : "");
     });
 
-    // TASK 63: the ONE recovery link shows only at the token step —
-    // when the token field is engaged (focused / typed into) or after a
-    // wrong-token attempt. No other recovery entry exists on this page.
     function showRecovery() { $("recovery-line").hidden = false; }
     $("li-token").addEventListener("focus", showRecovery);
     $("li-token").addEventListener("input", showRecovery);
 
-    // "Check again" on the waiting screen — if the administrator approved
-    // in the meantime, the user is walked straight to the login.
     let lastRegistered = "";
     $("check-approval").addEventListener("click", async () => {
       const btn = $("check-approval");
@@ -408,7 +333,7 @@
           say("No registration found for " + lastRegistered + ".");
         } else {
           const a = snap.data(); a.id = snap.id;
-          $("li-username").value = a.usernameDisplay || lastRegistered;
+          $("li-username").value = a.usernameDisplay || a.username || lastRegistered;
           if (a.status === "approved") {
             showPanel("login");
             say("Approved! Enter your four-digit token to log in.", true);
@@ -427,18 +352,11 @@
       btn.disabled = false;
     });
 
-    // ------------------------------------------------------------------
-    // system session (the room keys) — written here, read by requireAuth
-    // TASK 61 (requirement 13): the role comes from the stored account
-    // ONLY. Typing "admin" as staff position never makes anyone an
-    // administrator — the admin role exists solely in the systemAdmins
-    // document that the security rules verify.
-    // ------------------------------------------------------------------
     function writeSession(account, user) {
       const s = {
         uid: user ? user.uid : "",
         email: user && user.email ? user.email : "",
-        username: account.usernameDisplay || account.id,
+        username: account.usernameDisplay || account.username || account.id,
         position: account.position || "",
         role: account.role === "admin" ? "admin" : "user",
         grants: Array.isArray(account.grants) ? account.grants : [],
@@ -459,9 +377,6 @@
       }
     }
 
-    // ------------------------------------------------------------------
-    // LOGIN
-    // ------------------------------------------------------------------
     $("login-btn").addEventListener("click", async () => {
       const btn = $("login-btn");
       const username = $("li-username").value.trim();
@@ -469,9 +384,6 @@
       if (!username) { say("Enter your username."); return; }
       if (!/^[0-9]{4}$/.test(token)) { say("Enter your four-digit token."); return; }
 
-      // TASK 65 (requirement 1): the house key comes first — the gate
-      // guarantees it, and if it ever lapsed the user is sent back there
-      // instead of being asked mid-form.
       let user = auth.currentUser;
       if (!user) {
         try { user = await ensureHouse(); }
@@ -482,19 +394,11 @@
       btn.disabled = true; say("");
 
       try {
-        // ---- administrator: the EXACT credentials decide, never the
-        // Google identity (requirement 6). The same administrator
-        // credentials work from ANY Google email: the first login
-        // claims the role, later logins from other Google accounts
-        // re-claim it (the security rules verify the hashes). The house
-        // key is already active here — the gate saw to it — so this
-        // path NEVER pops a Google window.
         if (norm(username) === ADMIN_USERNAME) {
           const tokHash = await sha(token);
           if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); showRecovery(); btn.disabled = false; return; }
           const admins = await getDocs(collection(db, "systemAdmins"));
           if (admins.empty) {
-            // first ever login: the claim that seeds the whole server
             const id = norm(ADMIN_USERNAME);
             const batch = writeBatch(db);
             batch.set(doc(db, "systemSetup", "claim"), {
@@ -503,9 +407,6 @@
             batch.set(doc(db, "systemAdmins", user.uid), {
               passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
             });
-            // task 56b: the profile write carries the hash literals so the
-            // security rules can verify the claim themselves (they could not
-            // before — the batch was rejected with permission-denied).
             batch.set(doc(db, "systemAccounts", id), {
               usernameLower: id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin",
               status: "approved", googleEmail: user.email || "", googleUid: user.uid, grants: [],
@@ -523,14 +424,9 @@
           let mine = false;
           admins.forEach((d) => { if (d.id === user.uid) mine = true; });
           if (!mine) {
-            // TASK 61 re-claim: same credentials, different Google email —
-            // this Google identity joins the administrators (rules check
-            // the exact hash literals, so nobody else can).
             await setDoc(doc(db, "systemAdmins", user.uid), {
               passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
             });
-            // best effort: point the profile and the credentials at the
-            // Google identity that just signed in (keeps recovery working)
             try {
               await updateDoc(doc(db, "systemAccounts", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
               await updateDoc(doc(db, "systemCredentials", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
@@ -543,11 +439,6 @@
           return;
         }
 
-        // ---- system account: username + token, LINKED TO THE GOOGLE
-        // EMAIL that created it (requirements 2 + 4). A pending request
-        // shows the waiting screen; an account created by a DIFFERENT
-        // Google email never opens here. Accounts saved by this email
-        // before Task 65 (linked by uid only) keep working.
         const id = norm(username);
         const snap = await getDoc(doc(db, "systemAccounts", id));
         if (!snap.exists()) { say("No account with this username."); btn.disabled = false; return; }
@@ -563,7 +454,6 @@
           say("This account belongs to " + acc.googleEmail + " and cannot open from this Google account.");
           btn.disabled = false; return;
         }
-        // legacy binding (task 61): uid-linked accounts without an email
         if (!acc.googleEmail && acc.googleUid && acc.googleUid !== user.uid) {
           say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
         }
@@ -581,9 +471,6 @@
       }
     });
 
-    // ------------------------------------------------------------------
-    // CREATE ACCOUNT (requirements 2 + 5)
-    // ------------------------------------------------------------------
     $("create-btn").addEventListener("click", async () => {
       const btn = $("create-btn");
       const username = $("ca-username").value.trim();
@@ -611,9 +498,6 @@
         if (!dup.empty) {
           const d = dup.docs[0];
           const a = d.data();
-          // TASK 65 (requirement 5): the SAME pending registration is
-          // never submitted twice — the waiting screen takes over with
-          // the exact message instead of a second write.
           if (a.status === "pending" && normEmail(a.googleEmail) === normEmail(user.email)) {
             lastRegistered = d.id;
             waitPanelFor(Object.assign({ id: d.id }, a)); repairNotifications([Object.assign({ id: d.id }, a)]);
@@ -626,29 +510,24 @@
         const passHash = await sha(password);
         const tokHash = await sha(token);
         const mail = user.email || "";
-        // requirement 2: the account is saved as its OWN record, linked
-        // to the authenticated Google email — one email, many accounts,
-        // and switching later never deletes, overwrites or merges them.
         const batch = writeBatch(db);
+        const displayName = username;
+        const lowerName = id;
         batch.set(doc(db, "systemAccounts", id), {
-          usernameLower: id, usernameDisplay: username, position: position, role: "user",
+          usernameLower: lowerName, usernameDisplay: displayName, position: position, role: "user",
           status: "pending", googleEmail: mail, googleUid: user.uid, grants: [], at: serverTimestamp()
         });
         batch.set(doc(db, "systemCredentials", id), {
           passHash: passHash, tokenHash: tokHash, phone: phone, googleEmail: mail, googleUid: user.uid
         });
-        // requirement 5: the registration rings the administrator's bell —
-        // one notification per request, counted on the administrator's
-        // notification button, for THIS server.
         batch.set(doc(db, "systemNotifications", id), {
-          type: "registration", username: username, usernameLower: id,
+          type: "registration", username: displayName, usernameLower: lowerName,
           googleEmail: mail, googleUid: user.uid, status: "unread", at: serverTimestamp()
         });
         await batch.commit();
 
-        // requirement 5: the exact waiting screen, and the form is gone
         lastRegistered = id;
-        waitPanelFor({ id, usernameDisplay: username });
+        waitPanelFor({ id, usernameDisplay: displayName, username: displayName, usernameLower: lowerName });
         btn.disabled = false;
       } catch (err) {
         say("Could not create the account: " + friendly(err));
@@ -656,13 +535,6 @@
       }
     });
 
-    // ------------------------------------------------------------------
-    // entry state (requirements 1 + 3): no active Google session -> the
-    // GATE is the first screen and any stale room key dies; a valid
-    // session for this identity -> straight home; otherwise the ACCOUNT
-    // HUB takes over — selection or registration, with the Google
-    // session untouched. Logging out of JAMALI lands here too.
-    // ------------------------------------------------------------------
     onAuthStateChanged(auth, (user) => {
       if (!user) {
         sessionStorage.removeItem(SESSION_KEY);
