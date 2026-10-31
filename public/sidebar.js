@@ -322,7 +322,7 @@ p.label + "</a>";
      html += "<button type=\"button\" class=\"tg\" aria-expanded=\"false\"></button></div>";
      // default: shallow parents (Home, Business) open, deeper ones closed;
      // the active page's path is always opened
-     var open = (p.d || 0) <= 1 || subtreeHasCurrent(i);
+     var open = true; /* T79: granted tree shows its full parent-child chain */
      html += "<div class=\"kids\"" + (open ? "" : " hidden") + ">";
      for (var x = 0; x < k.length; x++) html += render(k[x]);
      html += "</div>";
@@ -586,7 +586,7 @@ res(u); });
               JSON.stringify(next.grants) ===
 JSON.stringify(session.grants || []);
      if (!same) {
-       writeSession(next);
+       writeSession(next); try { paintNav(); } catch (e) {} /* T79: sidebar repaints in place */
      /* T77: static display - no reload */
      }
    }).catch(function () {
@@ -601,19 +601,42 @@ JSON.stringify(session.grants || []);
     btn.textContent = open ? "\u25B4" : "\u25BE"; // ^ : v
     btn.setAttribute("aria-expanded", open ? "true" : "false");
   }
-  var tgs = aside.querySelectorAll(".tg");
-  for (var t = 0; t < tgs.length; t++) {
-    (function (btn) {
+  function wireToggles(scope){
+  var tgs=scope.querySelectorAll(".tg");
+  for(var t=0;t<tgs.length;t++){
+    (function(btn){
       sync(btn);
-      btn.addEventListener("click", function () {
-        var box = btn.parentNode.nextElementSibling;
-        if (!box) return;
-        if (box.hasAttribute("hidden")) { box.removeAttribute("hidden"); }
-         else { box.setAttribute("hidden", ""); }
-         sync(btn);
-       });
-     })(tgs[t]);
- }
+      btn.addEventListener("click",function(){
+        var box=btn.parentNode.nextElementSibling;
+        if(!box)return;
+        if(box.hasAttribute("hidden")){box.removeAttribute("hidden");}
+        else{box.setAttribute("hidden","");}
+        sync(btn);
+      });
+    })(tgs[t]);
+  }
+}
+wireToggles(aside);
+/* T79: nav repaints from the CURRENT session - grants appear in place,
+   no reload (T77 removed the reload, so the sidebar must repaint) */
+function paintNav(){
+  session=readSession();
+  visible=PAGES.map(function(p){return folderAllowed(p.folder);});
+  for(var v=0;v<PAGES.length;v++){
+    if(visible[v])continue;
+    var my=PAGES[v].d||0;
+    for(var w=v+1;w<PAGES.length;w++){
+      if((PAGES[w].d||0)<=my)break;
+      visible[w]=false;
+    }
+  }
+  var nv=aside.querySelector("nav"),nav="";
+  for(var r=0;r<PAGES.length;r++){
+    if((PAGES[r].d||0)===0&&visible[r])nav+=render(r);
+  }
+  nv.innerHTML=nav;
+  wireToggles(nv);
+}
 
   // ---- hide folder links the session may not open (tiles, hub links, etc.) --
   // Runs after the page content exists; also covers links rendered later by
