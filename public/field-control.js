@@ -14,7 +14,7 @@
   st.textContent = ".jamali-fc-btns{position:absolute;top:2px;right:2px;display:flex;gap:2px;z-index:60}" +
     ".jamali-fc-btn{width:18px;height:18px;border-radius:5px;border:1px solid #fca5a5;background:#fff;color:#dc2626;font-size:12px;line-height:1;cursor:pointer;padding:0}" +
     ".jamali-fc-btn:hover{background:#fee2e2}.jamali-fc-btn.jamali-fc-on{background:#dc2626;color:#fff;border-color:#b91c1c}" +
-    ".jamali-fc-off{outline:2px solid #dc2626;outline-offset:1px;background:rgba(220,38,38,.07)}";
+    ".jamali-fc-off{outline:2px solid #dc2626;outline-offset:1px;background:rgba(220,38,38,.07)}"+".jamali-vis-host{position:relative}"+".jamali-ctl-host{display:inline-block;position:relative;max-width:100%}"+"#jamali-vis-panel{position:fixed;bottom:84px;right:14px;z-index:1002;width:340px;max-width:calc(100vw - 28px);max-height:60vh;overflow:auto;background:#111827;border:1px solid #334155;border-radius:12px;padding:12px 14px;font-size:13px;color:#e2e8f0;box-shadow:0 18px 40px rgba(0,0,0,.5)}"+".jamali-vis-show{border:1px solid #4ade80;background:#052e16;color:#4ade80;border-radius:8px;font-size:12px;font-weight:800;padding:4px 10px;cursor:pointer;flex:0 0 auto}";
   document.head.appendChild(st);
   function slug(t){return String(t||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);}
   function inUi(el){return !!(el.closest&&el.closest("#jamali-sidebar,#jamali-acct,#jamali-admin-btn,#jamali-burger,#jamali-overlay,.jamali-vis-notice,#jamali-hidden-chip,#jamali-vis-panel,.jamali-fc-btns"));}
@@ -38,11 +38,11 @@
   function adminScan(root){
     var list=scan(root);
     for(var i=0;i<list.length;i++)(function(t){
-      var cf=cfg(t.key),host=t.wrap||t.el,bar=null;
+      var cf=cfg(t.key),el=t.el,host=(el.parentElement&&el.parentElement.classList.contains("jamali-ctl-host"))?el.parentElement:(t.wrap||t.el),bar=null;
       if(host.classList)host.classList.toggle("jamali-fc-off",!!cf.h);
-      if(host.dataset&&host.dataset.fcBar)bar=host.querySelector(".jamali-fc-btns");
+      bar=host.querySelector(".jamali-fc-btns");
       if(!bar){
-        if(/^(INPUT|SELECT|TEXTAREA)$/.test(host.tagName)){var sp=document.createElement("span");sp.className="jamali-vis-host";host.parentNode.insertBefore(sp,host);sp.appendChild(host);host=sp;t.wrap=sp;}
+        if(/^(INPUT|SELECT|TEXTAREA)$/.test(host.tagName)){var sp=document.createElement("span");sp.className="jamali-ctl-host";host.parentNode.insertBefore(sp,host);sp.appendChild(host);host=sp;t.wrap=sp;}
         host.classList.add("jamali-vis-host");
         bar=document.createElement("span");bar.className="jamali-fc-btns";
         var bm=document.createElement("button");bm.type="button";bm.className="jamali-fc-btn";bm.textContent="\u2212";bm.title="Hide / restore for normal users";

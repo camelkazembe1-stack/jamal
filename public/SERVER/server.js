@@ -86,7 +86,7 @@ export const SERVER_CONFIG = {
       hosting: "Vercel static hosting (public/ folder)",
       auth: "google-popup",
       database: "cloud-firestore",
-      analytics: true,
+      analytics: false,
       config: {
         apiKey: "AIzaSyCtE7p5LM8L2yaJB0JJCyyTz763CBQhKGE",
         authDomain: "jamal-542b5.firebaseapp.com",
