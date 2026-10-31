@@ -146,7 +146,7 @@ catch (e) {}
 
  var session = readSession();
  // Folders any account may open without a grant; system-admin is admin-only.
- var ALWAYS_OPEN = ["home", "account-recovery"];
+ var ALWAYS_OPEN = ["home", "account-recovery", "file-viewer"];
  function folderAllowed(folder) {
    if (!session) return false;
    if (session.role === "admin") return true;
