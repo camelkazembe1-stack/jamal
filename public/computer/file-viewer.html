@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All File Viewer — JAMALI Computer</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/computer/file-viewer.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/computer/62">&larr; Computer</a>
+  <h1>All File Viewer</h1>
+  <p class="sub">Choose file(s) from this device and open them right here &mdash; video plays, audio plays, images, PDF, text and Word documents open in place. Nothing uploads; files never leave this device.</p>
+
+  <div class="card afv-card">
+    <input type="file" id="afv-input" multiple hidden>
+    <div class="afv-actions">
+      <button type="button" class="afv-btn" id="afv-choose">&#128193; Choose file(s)</button>
+      <span class="afv-count" id="afv-count"></span>
+    </div>
+    <ul class="afv-list" id="afv-list"></ul>
+    <div class="afv-preview" id="afv-preview" hidden>
+      <div class="afv-phead">
+        <b class="afv-pname" id="afv-pname"></b>
+        <span class="afv-pactions">
+          <button type="button" class="afv-mini" id="afv-tab">Open in new tab</button>
+          <button type="button" class="afv-mini" id="afv-close">Close</button>
+        </span>
+      </div>
+      <div class="afv-body" id="afv-body"></div>
+    </div>
+  </div>
+</main>
+<script type="module" src="/computer/file-viewer.js"></script>
+</body>
+</html>

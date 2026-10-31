@@ -1,0 +1,56 @@
+/* JAMALI — Computer · All File Viewer (T83)
+   Opens any file chosen from the device fully client side — nothing uploads.
+   Base design system lives in /records/records.css. */
+@import url("/records/records.css");
+
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #0d9488; }
+
+.afv-card { margin-top: 14px; }
+.afv-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.afv-btn { border: 0; background: #0d9488; color: #fff; font-weight: 800;
+  font-size: 14.5px; padding: 10px 16px; border-radius: 10px; cursor: pointer; }
+.afv-btn:hover { background: #0f766e; }
+.afv-count { color: #64748b; font-size: 12.5px; font-weight: 700; }
+.afv-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.afv-item { display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0;
+  border-radius: 10px; padding: 9px 12px; background: #fff; cursor: pointer; }
+.afv-item:hover, .afv-item.afv-on { border-color: #0d9488; background: #f0fdfa; }
+.afv-ico { font-size: 20px; flex: 0 0 auto; }
+.afv-name { font-weight: 700; font-size: 13.5px; color: #0f172a;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.afv-meta { color: #94a3b8; font-size: 11.5px; font-weight: 700; flex: 0 0 auto;
+  margin-left: auto; }
+.afv-preview { margin-top: 14px; border: 1px solid #e2e8f0; border-radius: 12px;
+  overflow: hidden; background: #f8fafc; }
+.afv-phead { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  background: #0f172a; color: #e2e8f0; font-size: 12.5px; }
+.afv-pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.afv-pactions { margin-left: auto; display: flex; gap: 6px; flex: 0 0 auto; }
+.afv-mini { border: 1px solid #334155; background: #1e293b; color: #e2e8f0;
+  font-size: 11.5px; font-weight: 800; border-radius: 8px; padding: 4px 10px;
+  cursor: pointer; }
+.afv-mini:hover { border-color: #0d9488; color: #5eead4; }
+.afv-body { padding: 12px; max-height: 70vh; overflow: auto; }
+.afv-body video, .afv-body audio, .afv-body img { display: block; max-width: 100%;
+  border-radius: 8px; }
+.afv-body iframe { width: 100%; height: 70vh; border: 1px solid #e2e8f0;
+  border-radius: 8px; background: #fff; }
+.afv-body pre { white-space: pre-wrap; word-break: break-word; background: #0f172a;
+  color: #e2e8f0; padding: 12px; border-radius: 8px; font-size: 12.5px;
+  max-height: 65vh; overflow: auto; }
+.afv-doc { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 18px 22px; font-size: 14px; line-height: 1.55; color: #0f172a; }
+.afv-doc p { margin: .4em 0; }
+.afv-doc table { border-collapse: collapse; }
+.afv-doc td, .afv-doc th { border: 1px solid #cbd5e1; padding: 4px 8px; }
+.afv-fallback { text-align: center; padding: 26px 12px; color: #475569;
+  font-weight: 700; font-size: 13.5px; }
+.afv-big { font-size: 40px; margin-bottom: 8px; }
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .afv-actions,
+  .afv-pactions { display: none !important; }
+  body.jamali-has-sidebar { margin-left: 0 !important; }
+  .afv-preview { border: 0; }
+}
