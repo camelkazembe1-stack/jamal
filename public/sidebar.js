@@ -280,6 +280,7 @@ break; }
   for (var v = 0; v < PAGES.length; v++) {
     if (visible[v]) continue;
     var my = PAGES[v].d || 0;
+    if (my === 0) continue; /* T80: a standalone page hides nothing below it */
     for (var w = v + 1; w < PAGES.length; w++) {
       if ((PAGES[w].d || 0) <= my) break;
       visible[w] = false; // children of a hidden node stay hidden
@@ -292,6 +293,7 @@ break; }
  // level deeper, stopping at the first entry at i's level or higher.
  function kidsOf(i) {
    var out = [], my = PAGES[i].d || 0;
+   if (my === 0) return out; /* T80: Home / Account Administration never claim children */
    for (var j = i + 1; j < PAGES.length; j++) {
      var dj = PAGES[j].d || 0;
      if (dj <= my) break;
@@ -335,7 +337,7 @@ p.label + "</a>";
  // Draw every visible top-level entry (d: 0), e.g. Home.
  var nav = "";
  for (var r = 0; r < PAGES.length; r++) {
-   if ((PAGES[r].d || 0) === 0 && visible[r]) nav += render(r);
+   if ((PAGES[r].d || 0) <= 1 && visible[r]) nav += render(r);
  }
  if (nav === "") { // defensive: flat list if the menu has no depth at all
    for (var f = 0; f < PAGES.length; f++) { if (visible[f]) nav += render(f);
@@ -632,7 +634,7 @@ function paintNav(){
   }
   var nv=aside.querySelector("nav"),nav="";
   for(var r=0;r<PAGES.length;r++){
-    if((PAGES[r].d||0)===0&&visible[r])nav+=render(r);
+    if((PAGES[r].d||0)<=1&&visible[r])nav+=render(r);
   }
   nv.innerHTML=nav;
   wireToggles(nv);
