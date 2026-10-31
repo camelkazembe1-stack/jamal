@@ -1,7 +1,4 @@
-/* JAMALI — page 70 · HTML to Text — the tool's own engine.
-   Convertor tool #6 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   DOMParser strips tags, keeps the words (scripts/styles dropped)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

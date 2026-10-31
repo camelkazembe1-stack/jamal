@@ -1,22 +1,19 @@
-// ward-management (page 331) — JAMALI Health — Ward Registration
-// Register wards, keep their details current, and activate or deactivate
-// them. Occupancy shown here is counted from the bed records (never typed
-// in), and a ward with patients still placed in it refuses to deactivate.
-// No failure can hide: every listener carries an error callback, the page
-// shows its build and boot progress, and a red banner names any error.
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, addDoc, updateDoc, onSnapshot } from "/firebase.js";
 
-/* the boot diagnostic: the inline script in 331.html reads this after 12
-   seconds if the page never answered, so a silent failure names itself.
-   It stands BEFORE the top-level await on purpose: everything the error
-   paths touch must exist before the module can ever suspend. */
+ 
 window.__p52 = { page: "331", build: "52w1", auth: false, listeners: 0, docs: -1, errs: [] };
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* ---------- visible load errors: never swallow a failure again ---------- */
+ 
 function loadErr(coll, e) {
   const box = document.getElementById("p-err");
   const boot = document.getElementById("p-boot");
@@ -32,8 +29,7 @@ function loadErr(coll, e) {
       : "");
 }
 
-/* the boot line answered: with wards the line goes, with zero it stays
-   and says so — an empty account is a fact, not a failure */
+ 
 function bootAnswered(n) {
   if (window.__p52) window.__p52.docs = n;
   const b = document.getElementById("p-boot");
@@ -45,14 +41,14 @@ function bootAnswered(n) {
 }
 
 try {
-  await requireAuth(); // not logged in? -> bounced to "/"
+  await requireAuth(); 
   if (window.__p52) window.__p52.auth = true;
 } catch (e) {
   loadErr("the sign-in check", e);
   throw e;
 }
 
-/* ---------- shared helpers (same language as pages 322 to 328) ---------- */
+ 
 function pad(n) { return String(n).padStart(2, "0"); }
 function nowISO() { return new Date().toISOString(); }
 function when(iso) {
@@ -62,9 +58,9 @@ function when(iso) {
   return d.toLocaleDateString("en-GB") + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
 
-/* ---------- internal IDs: 4 digits + 4 letters, e.g. W4827ABCD ---------- */
+ 
 const DIGITS = "0123456789";
-const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // I and O left out — they read as 1 and 0
+const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; 
 function makeWardId() {
   const used = new Set(wards.map((w) => String(w.wardId || "")));
   for (let t = 0; t < 200; t++) {
@@ -77,10 +73,10 @@ function makeWardId() {
   return "W" + Date.now().toString(36).toUpperCase();
 }
 
-/* ---------- live data ---------- */
-let wards = [];        // every ward
-let beds = [];         // every bed, so ward counts are real
-let assignments = [];  // every assignment, so the deactivate guard is real
+ 
+let wards = [];        
+let beds = [];         
+let assignments = [];  
 
 onSnapshot(collection(db, "healthWards"), (snap) => {
   wards = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
@@ -102,7 +98,7 @@ onSnapshot(collection(db, "healthBedAssignments"), (snap) => {
 }, (e) => loadErr("healthBedAssignments", e));
 window.__p52.listeners++;
 
-/* ---------- derived counts ---------- */
+ 
 function bedsOf(wardId) { return beds.filter((b) => String(b.wardId) === String(wardId)); }
 function occupiedOf(wardId) {
   return beds.filter((b) => String(b.wardId) === String(wardId) && b.status === "Occupied").length;
@@ -111,7 +107,7 @@ function activeAssignmentsOf(wardId) {
   return assignments.filter((a) => a.status === "Active" && String(a.wardId) === String(wardId));
 }
 
-/* ---------- form helpers ---------- */
+ 
 function ferr(msg) { const e = $("#w-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function fok(msg) {
   const e = $("#w-fok");
@@ -121,7 +117,7 @@ function fok(msg) {
 }
 function v(sel) { return $(sel).value.trim(); }
 
-/* ---------- render the ward table ---------- */
+ 
 function render() {
   const q = v("#w-q").toLowerCase();
   const rows = wards.filter((w) => !q ||
@@ -160,7 +156,7 @@ function render() {
       (inactive.length ? " " + inactive.length + " inactive." : "");
 }
 
-/* events: search typing + row buttons (event delegation, no dynamic ids) */
+ 
 $("#w-q").addEventListener("input", render);
 $("#w-body").addEventListener("click", onRowClick);
 function onRowClick(e) {
@@ -172,7 +168,7 @@ function onRowClick(e) {
   if (btn.getAttribute("data-act") === "toggle") return toggleWard(w);
 }
 
-/* ---------- activate / deactivate ---------- */
+ 
 async function toggleWard(w) {
   ferr(""); fok("");
   const isActive = w.status !== "Inactive";
@@ -196,7 +192,7 @@ async function toggleWard(w) {
   }
 }
 
-/* ---------- register a ward ---------- */
+ 
 function readForm(prefix) {
   return {
     wardName: v(prefix + "-name"),
@@ -237,7 +233,7 @@ $("#w-save").addEventListener("click", async () => {
   const bad = validate(f, null);
   if (bad) return ferr(bad);
   const btn = $("#w-save");
-  if (btn.disabled) return; // duplicate-submission guard
+  if (btn.disabled) return; 
   btn.disabled = true;
   try {
     await addDoc(collection(db, "healthWards"), {
@@ -271,7 +267,7 @@ $("#w-clear").addEventListener("click", () => {
   ferr(""); fok("");
 });
 
-/* ---------- the edit modal ---------- */
+ 
 let editing = null;
 function openEdit(w) {
   editing = w;

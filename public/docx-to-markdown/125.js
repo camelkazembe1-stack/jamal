@@ -1,7 +1,4 @@
-/* JAMALI — page 125 · DOCX to Markdown — the tool's own engine.
-   Convertor tool #61 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mammoth HTML -> markdown (#, **, lists, links) via a mini converter*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

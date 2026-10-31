@@ -1,7 +1,4 @@
-/* JAMALI — page 247 · XML Minifier — the tool's own engine.
-   Convertor tool #183 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   whitespace between tags removed, markup untouched*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

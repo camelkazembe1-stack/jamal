@@ -1,7 +1,4 @@
-/* JAMALI — page 72 · Markdown to Text — the tool's own engine.
-   Convertor tool #8 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   markdown syntax (#, **, links, fences) is stripped to plain text*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,6 +1,4 @@
-/* JAMALI Health - the patient chip and the past-records panel (Task 45).
-   One victim, one ID, one history. The chip sits in the top right corner of
-   every stage page; the i button opens every record kept for that ID. */
+ 
 #pi-chip { position: fixed; top: 12px; right: 14px; z-index: 900; display: flex;
   align-items: center; gap: 8px; background: #ffffff; border: 1px solid #e2e8f0;
   border-radius: 999px; padding: 7px 8px 7px 14px;
@@ -16,7 +14,7 @@
   font-family: Georgia, 'Times New Roman', serif; }
 #pi-chip .pi-i:hover { background: #0369a1; color: #ffffff; }
 
-/* the hidden attribute must always win over the display rules above */
+ 
 #pi-chip[hidden], #pi-panel[hidden] { display: none; }
 
 #pi-panel { position: fixed; inset: 0; z-index: 1100; }

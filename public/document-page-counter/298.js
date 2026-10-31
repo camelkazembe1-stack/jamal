@@ -1,7 +1,4 @@
-/* JAMALI — page 298 · Document Page Counter — the tool's own engine.
-   Convertor tool #234 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   words -> estimated pages at 250 / 500 / 1800 words per page*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

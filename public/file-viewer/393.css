@@ -1,6 +1,4 @@
-/* JAMALI — Computer · All File Viewer (T83)
-   Opens any file chosen from the device fully client side — nothing uploads.
-   Base design system lives in /records/records.css. */
+ 
 @import url("/records/records.css");
 
 h1 { position: relative; padding-left: 15px; }

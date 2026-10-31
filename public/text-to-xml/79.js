@@ -1,7 +1,4 @@
-/* JAMALI — page 79 · Text to XML — the tool's own engine.
-   Convertor tool #15 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   lines -> <row><cell> XML with proper escaping*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,10 +1,10 @@
-// bank-reconciliation (page 53) — bank items vs the Bank A/C books.
+
 import { initBankRec } from "/reports/reports.js";
 import { initRecords } from "/records/records.js";
 
 initBankRec({ root: "#sum" });
 
-// reconciling items — statement balance first, then the open items
+
 initRecords({
   root: "#items", collection: "bankrec",
   addLabel: "Add Item", saveLabel: "Save Item", entity: "reconciling item",

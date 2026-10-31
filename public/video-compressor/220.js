@@ -1,7 +1,4 @@
-/* JAMALI — page 220 · Video Compressor — the tool's own engine.
-   Convertor tool #156 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   scaled-down re-encode with a bitrate target — real, measured cut*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

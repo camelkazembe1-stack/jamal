@@ -1,7 +1,4 @@
-/* JAMALI — page 219 · Images to Video — the tool's own engine.
-   Convertor tool #155 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   image sequence -> WebM video via canvas + MediaRecorder*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

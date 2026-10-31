@@ -1,7 +1,4 @@
-/* JAMALI — page 288 · UUID Generator — the tool's own engine.
-   Convertor tool #224 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   crypto.randomUUID in bulk, with a manual v4 fallback*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

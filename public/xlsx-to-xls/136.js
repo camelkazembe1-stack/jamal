@@ -1,7 +1,4 @@
-/* JAMALI — page 136 · XLSX to XLS — the tool's own engine.
-   Convertor tool #72 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   modern .xlsx -> Excel 97-2003 .xls (BIFF8)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

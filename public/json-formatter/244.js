@@ -1,7 +1,4 @@
-/* JAMALI — page 244 · JSON Formatter — the tool's own engine.
-   Convertor tool #180 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   parse + pretty-print with 2-space indent, exact error positions*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

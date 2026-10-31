@@ -1,7 +1,4 @@
-/* JAMALI — page 307 · Unix Timestamp Converter — the tool's own engine.
-   Convertor tool #243 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   seconds/millis ↔ readable dates, with the live current time*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

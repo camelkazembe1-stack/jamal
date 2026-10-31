@@ -1,7 +1,4 @@
-/* JAMALI — page 278 · Batch File Renamer — the tool's own engine.
-   Convertor tool #214 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   prefix + suffix + running number, delivered as a zip*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

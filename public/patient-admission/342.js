@@ -1,10 +1,10 @@
-// patient-admission (page 342) — JAMALI Health — the Admission List
-// Every admission drawn live from healthAdmissions — nothing hard-coded.
-// Search by number / patient number / name, filter by status, type and
-// admission date range; clearing the filters restores the default list.
-// Actions: open the details (343), confirm a Pending admission, cancel a
-// Pending one. The Ward and Bed columns come from the live assignment
-// records kept by Ward Management — never from typed-in copies.
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, arrayUnion } from "/firebase.js";
 
 window.__p52 = { page: "342", build: "52l1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -63,7 +63,7 @@ const ST_CLASS = {
 };
 const TY_CLASS = { "Emergency": "st-emergency", "Planned": "st-planned" };
 
-/* ---------- live data ---------- */
+ 
 let admissions = [];
 let assignments = [];
 let beds = [];
@@ -97,7 +97,7 @@ function activePlacementOf(patientId) {
   return { ward: a.wardCode || "—", bed: (a.bedNumber || "—") + st };
 }
 
-/* ---------- render ---------- */
+ 
 function render() {
   const q = $("#l-q").value.trim().toLowerCase();
   const st = $("#l-status").value;
@@ -159,7 +159,7 @@ $("#l-clear").addEventListener("click", () => {
   render();
 });
 
-/* ---------- status actions ---------- */
+ 
 $("#l-body").addEventListener("click", async (e) => {
   const cbtn = e.target.closest("button[data-confirm]");
   const xbtn = e.target.closest("button[data-cancel]");

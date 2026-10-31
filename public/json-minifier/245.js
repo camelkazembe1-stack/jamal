@@ -1,7 +1,4 @@
-/* JAMALI — page 245 · JSON Minifier — the tool's own engine.
-   Convertor tool #181 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   parse + re-stringify compact (also validates while minifying)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

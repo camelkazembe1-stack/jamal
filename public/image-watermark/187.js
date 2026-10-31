@@ -1,7 +1,4 @@
-/* JAMALI — page 187 · Image Watermark — the tool's own engine.
-   Convertor tool #123 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   text watermark with position, size and opacity controls*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

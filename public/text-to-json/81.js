@@ -1,7 +1,4 @@
-/* JAMALI — page 81 · Text to JSON — the tool's own engine.
-   Convertor tool #17 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   lines / key:value pairs / delimited rows -> JSON array or object*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

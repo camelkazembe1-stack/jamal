@@ -1,7 +1,4 @@
-/* JAMALI — page 183 · Image Resizer — the tool's own engine.
-   Convertor tool #119 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   exact pixels or percentage, aspect ratio locked by default*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

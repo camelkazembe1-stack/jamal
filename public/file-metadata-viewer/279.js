@@ -1,7 +1,4 @@
-/* JAMALI — page 279 · File Metadata Viewer — the tool's own engine.
-   Convertor tool #215 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   name, size, type, dates — everything the browser can see*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

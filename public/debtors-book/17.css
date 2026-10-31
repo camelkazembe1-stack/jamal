@@ -7,7 +7,7 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .sub { color: #64748b; font-size: 14px; margin-bottom: 18px; }
 .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
 
-/* creditors / debtors book table */
+ 
 .table-wrap { overflow-x: auto; }
 table.bk { width: 100%; border-collapse: collapse; min-width: 820px; }
 thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; background: #f8fafc; }
@@ -27,7 +27,7 @@ tfoot td { padding: 12px 14px; font-size: 14px; }
 tfoot .total-row td { border-top: 2px solid #0f172a; font-weight: 800; background: #f8fafc; }
 tfoot .total-row .c-amount { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
-/* per-person summary card */
+ 
 .people-card { padding: 18px 20px; margin-top: 18px; }
 .people-card h2 { font-size: 15px; margin-bottom: 8px; }
 table.people { width: 100%; border-collapse: collapse; }
@@ -36,7 +36,7 @@ table.people tr:last-child td { border-bottom: 0; }
 table.people .c-name { font-weight: 700; }
 table.people .c-amount { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* empty state */
+ 
 .empty { padding: 46px 20px; text-align: center; }
 .empty-icon { font-size: 34px; margin-bottom: 10px; }
 .empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }

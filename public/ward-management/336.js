@@ -1,11 +1,11 @@
-// ward-management (page 336) — JAMALI Health — Cleaning & Maintenance
-// A bed reported here leaves the Available pool at once and comes back
-// only through this page: Cleaning Required -> Cleaning in Progress ->
-// Ready for Use (bed Available again), Maintenance Required -> Ready for
-// Use, Out of Service -> Ready for Use. Occupied beds cannot be reported,
-// and every step is preserved in the maintenance history. No failure can
-// hide: every listener carries an error callback and failures paint the
-// banner.
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, setDoc, updateDoc, onSnapshot, arrayUnion } from "/firebase.js";
 
 window.__p52 = { page: "336", build: "52m1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -60,7 +60,7 @@ const ST_CLASS = {
   "Ready for Use": "st-ready"
 };
 
-/* ---------- live data ---------- */
+ 
 let beds = [];
 let wards = [];
 let maints = [];
@@ -98,7 +98,7 @@ function rememberedStaff() {
 }
 function keepStaff(v) { if (v) { try { localStorage.setItem("jamaliStaff", v); } catch (e) {} } }
 
-/* ---------- report form ---------- */
+ 
 function renderWards() {
   const sel = $("#m-ward");
   const cur = sel.value;
@@ -150,7 +150,7 @@ $("#m-report").addEventListener("click", async () => {
   keepStaff(staff);
 
   const btn = $("#m-report");
-  if (btn.disabled) return; // duplicate-submission guard
+  if (btn.disabled) return; 
   btn.disabled = true;
   try {
     const ref = doc(collection(db, "healthBedMaintenance"));
@@ -182,7 +182,7 @@ $("#m-report").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* ---------- beds under attention ---------- */
+ 
 function renderOpen() {
   const open = maints.filter((m) => m.status !== "Ready for Use");
   $("#u-empty").hidden = open.length > 0;
@@ -242,7 +242,7 @@ $("#u-body").addEventListener("click", async (e) => {
   btn.disabled = false;
 });
 
-/* ---------- history ---------- */
+ 
 function renderHistory() {
   $("#y-empty").hidden = maints.length > 0;
   $("#y-wrap").hidden = maints.length === 0;

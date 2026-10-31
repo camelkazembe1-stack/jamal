@@ -1,7 +1,4 @@
-/* JAMALI — page 237 · EPUB to MOBI — the tool's own engine.
-   Convertor tool #173 (Ebook and Publishing Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   minimal (uncompressed PalmDOC) MOBI writer — Kindle/calibre readable*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }
@@ -127,23 +124,23 @@
       var rec0 = [];
       function push16(v) { rec0.push((v >> 8) & 0xFF, v & 0xFF); }
       function push32(v) { rec0.push((v >>> 24) & 0xFF, (v >>> 16) & 0xFF, (v >>> 8) & 0xFF, v & 0xFF); }
-      // PalmDOC header (compression 1 = none)
+      
       push16(1); push32(enc.length); push16(recCount); push16(recSize); push16(0); push16(0);
-      // MOBI header
+      
       strPaddedInto(rec0, "MOBI", 4);
-      push32(0xE8 - 16); // header length (232) incl. this field counted from MOBI start
-      push32(2);         // mobi type: book
-      push32(65001);     // utf-8
-      push32(0x1234);    // unique id
-      push32(0);         // file version
-      for (var z = 0; z < 32; z++) push32(0xFFFFFFFF); // offsets we do not use
+      push32(0xE8 - 16); 
+      push32(2);         
+      push32(65001);     
+      push32(0x1234);    
+      push32(0);         
+      for (var z = 0; z < 32; z++) push32(0xFFFFFFFF); 
       while (rec0.length < 0xE8) rec0.push(0);
-      // EXTH placeholder skipped (optional in readers we target)
+      
       var rec0bytes = new Uint8Array(rec0);
-      // records
+      
       var records = [rec0bytes];
       for (var rI = 0; rI < recCount; rI++) records.push(enc.subarray(rI * recSize, Math.min(enc.length, (rI + 1) * recSize)));
-      // PDB container
+      
       var numRec = records.length;
       var headerSize = 78 + numRec * 8 + 2;
       var total = headerSize;
@@ -152,7 +149,7 @@
       var out = new Uint8Array(total);
       var dv = new DataView(out.buffer);
       strPaddedInto(out, name, 32);
-      out.set([0, 0], 32); // attributes
+      out.set([0, 0], 32); 
       dv.setUint16(34, 0);
       dv.setUint32(36, now()); dv.setUint32(40, now());
       dv.setUint32(44, 0); dv.setUint32(48, 0); dv.setUint32(52, 0);

@@ -1,7 +1,4 @@
-/* JAMALI — page 115 · DOC to DOCX — the tool's own engine.
-   Convertor tool #51 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   reads .doc (and .docx-in-disguise) and writes a real .docx*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }
@@ -145,7 +142,7 @@
           text = (await mammoth.extractRawText({ arrayBuffer: buf })).value;
           st("That .doc is actually a .docx inside — converting properly.");
         }
-      } catch (e) { /* real binary .doc */ }
+      } catch (e) {   }
       if (text === null) {
         var b = u8(buf), s = "", chunk = "";
         for (var i = 0; i < b.length; i++) {

@@ -1,7 +1,4 @@
-/* JAMALI — page 275 · File Checksum Generator — the tool's own engine.
-   Convertor tool #211 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   MD5 (pure JS) + SHA-1/256/384/512 via the Web Crypto API*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

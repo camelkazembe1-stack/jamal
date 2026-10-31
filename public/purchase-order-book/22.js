@@ -1,6 +1,6 @@
-// purchase-order-book (page 22) — config for the shared records engine.
-// Orders are NOT sales/purchases until fulfilled: they live in their own
-// collection and saving an order never moves stock or books a journal entry.
+
+
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

@@ -1,7 +1,4 @@
-/* JAMALI — page 206 · Text to Speech — the tool's own engine.
-   Convertor tool #142 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   browser speech synthesis: voice, speed and pitch controls*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

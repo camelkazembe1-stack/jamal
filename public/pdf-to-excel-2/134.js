@@ -1,7 +1,4 @@
-/* JAMALI — page 134 · PDF to Excel — the tool's own engine.
-   Convertor tool #70 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pdf.js text rows -> .xlsx (columns split on gaps, heuristic)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

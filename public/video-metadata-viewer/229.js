@@ -1,7 +1,4 @@
-/* JAMALI — page 229 · Video Metadata Viewer — the tool's own engine.
-   Convertor tool #165 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   duration, resolution, aspect, bitrate — read from the media element*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

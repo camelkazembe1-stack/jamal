@@ -1,7 +1,4 @@
-/* JAMALI — page 255 · CSS Minifier — the tool's own engine.
-   Convertor tool #191 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   comments and whitespace stripped (strings left intact)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

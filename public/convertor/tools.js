@@ -1,11 +1,6 @@
-/* JAMALI — Convertor module · the tool catalogue (page 63).
-   256 tools in 14 families — the user's full list, ids 1-256, in order.
-   n = the tool's own page number (id + 64): the folder /<slug>/ holds
-   65..320 real pages (N.html + .css + .js each).
-   DATA ONLY. The hub (63.js) draws the buttons.
-   Adding a tool = ONE line in its family below + its folder of files. */
+ 
 (function () {
-  var PHASE1 = [1,2,21,22,23,24,27,28,31,32,33,67,68,127]; // the 14 "Essential" tools — they get the star
+  var PHASE1 = [1,2,21,22,23,24,27,28,31,32,33,67,68,127]; 
   var FAMILIES = [
     ["Text Conversion Tools", "📄", [
       [1, "Text to PDF", "text-to-pdf", 65],

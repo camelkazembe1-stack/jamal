@@ -1,7 +1,4 @@
-/* JAMALI — page 261 · ZIP Extractor — the tool's own engine.
-   Convertor tool #197 (Archive and Compression Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   every entry extracted and downloadable — straight from the zip*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

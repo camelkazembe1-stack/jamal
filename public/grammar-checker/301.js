@@ -1,7 +1,4 @@
-/* JAMALI — page 301 · Grammar Checker — the tool's own engine.
-   Convertor tool #237 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   rule-based pass: doubled words, spacing, a/an, capitalization*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

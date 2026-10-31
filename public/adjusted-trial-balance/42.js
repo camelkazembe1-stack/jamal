@@ -1,10 +1,10 @@
-// adjusted-trial-balance (page 42) — TB + adjusting entries.
+
 import { initAdjTB } from "/reports/reports.js";
 import { initRecords } from "/records/records.js";
 
 initAdjTB({ root: "#app" });
 
-// adjusting entries — each one debits one account and credits another
+
 initRecords({
   root: "#adj", collection: "adjustments",
   addLabel: "Add Adjustment", saveLabel: "Save Adjustment", entity: "adjusting entry",

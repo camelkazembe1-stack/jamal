@@ -1,7 +1,4 @@
-/* JAMALI — page 207 · Audio Format Inspector — the tool's own engine.
-   Convertor tool #143 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   duration, sample rate, channels and size — straight from the decoder*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

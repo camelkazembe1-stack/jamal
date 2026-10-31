@@ -1,7 +1,4 @@
-/* JAMALI — page 111 · PDF Repair — the tool's own engine.
-   Convertor tool #47 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   reloads the file with tolerant parsing and re-saves a clean structure*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

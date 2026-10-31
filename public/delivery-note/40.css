@@ -1,15 +1,12 @@
-/* JAMALI — page 40 · Delivery Note (records family)
-   Own stylesheet for this folder — every JAMALI folder ships html + css + js.
-   Base design system lives in /records/records.css (imported below), so this file works
-   standalone too. */
+ 
 @import url("/records/records.css");
 
-/* page accent — Delivery Note */
+ 
 h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #0891b2; }
 
-/* print — clean paper output */
+ 
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .add-card,
   .add-toggle, .tabs, .settle-btn, .form-actions, .count-line { display: none !important; }

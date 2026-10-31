@@ -1,7 +1,7 @@
-// laboratory (page 362) — JAMALI Health — Lab Request List
-// The laboratory register. Open, completed and cancelled requests are listed
-// separately; searching and filtering run on the live stored records only.
-// Opening a row goes to the workbench for that request.
+
+
+
+
 import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
 
 window.__p54 = { page: "362", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };

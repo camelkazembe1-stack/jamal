@@ -1,7 +1,4 @@
-/* JAMALI — page 221 · Video Trimmer — the tool's own engine.
-   Convertor tool #157 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   records only between your start / end marks (real-time)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

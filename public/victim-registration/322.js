@@ -1,20 +1,20 @@
-// victim-registration (page 322) — JAMALI Health
-// Sixteen intake fields, three per row. The Registration ID — 4 digits then 4
-// letters, for example 4827ABCD — is generated ONLY when the form passes
-// validation and the document saves successfully. Unidentified victims
-// register without a name — the Registration ID is the one and only
-// identifier (temporary IDs were removed in Task 45).
-// EMERGENCY RULE: nothing blocks a save except a completely empty form —
-// emergency treatment must never wait for registration details.
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/firebase.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+await requireAuth(); 
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* ---------- registering staff — a history kept on THIS device ---------- */
+ 
 const STAFF_KEY = "jamali_health_staff_v1";
 
 function loadStaff() {
@@ -51,7 +51,7 @@ function wireStaff(sel, addBtn) {
   });
 }
 
-/* ---------- automatic fields ---------- */
+ 
 function pad(n) { return String(n).padStart(2, "0"); }
 function nowLocal() {
   const d = new Date();
@@ -60,7 +60,7 @@ function nowLocal() {
 }
 function resetArrival() { $("#in-arrival").value = nowLocal(); }
 
-/* age — computed from the date of birth, never typed */
+ 
 $("#in-dob").addEventListener("change", () => {
   const v = $("#in-dob").value;
   const out = $("#in-age");
@@ -75,14 +75,14 @@ $("#in-dob").addEventListener("change", () => {
   if (age >= 0 && age < 140) out.value = String(age);
 });
 
-/* referral — Yes reveals the referring facility */
+ 
 $("#in-referral").addEventListener("change", () => {
   const yes = $("#in-referral").value === "Yes";
   $("#f-facility").hidden = !yes;
   if (!yes) $("#in-facility").value = "";
 });
 
-/* ---------- registration IDs already in use (live list) ---------- */
+ 
 const usedIds = new Set();
 let regs = [];
 
@@ -124,9 +124,9 @@ function renderRecent() {
     : " victims registered on this account.");
 }
 
-/* ---------- Registration ID: 4 digits + 4 letters, e.g. 4827ABCD ---------- */
+ 
 const DIGITS = "0123456789";
-const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // I and O left out — they read as 1 and 0
+const LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; 
 function makeRegId() {
   let id = "";
   for (let t = 0; t < 200; t++) {
@@ -138,7 +138,7 @@ function makeRegId() {
   return id;
 }
 
-/* ---------- save ---------- */
+ 
 function err(msg) { const e = $("#form-err"); e.hidden = !msg; e.textContent = msg || ""; }
 
 $("#save-btn").addEventListener("click", async () => {
@@ -152,15 +152,15 @@ $("#save-btn").addEventListener("click", async () => {
   const facility = v("#in-facility");
   const staff = $("#in-staff").value === "__add" ? "" : $("#in-staff").value;
 
-  // a completely empty form is the ONLY blocked save — and even that only
-  // when nobody marked the victim unidentified
+  
+  
   const touched = [name, dob, v("#in-sex"), v("#in-phone"), v("#in-address"), v("#in-kin"),
     v("#in-incident"), v("#in-desc"), v("#in-dept"), v("#in-priority"), staff,
     facility, v("#in-payment")].some(Boolean) || checked;
   if (!touched) {
     return err("Enter at least one detail, or mark the victim unidentified.");
   }
-  const unidentified = checked || !name; // no known name -> unidentified, never a blocker
+  const unidentified = checked || !name; 
   if (dob && !age) return err("The date of birth is not valid — it cannot be in the future.");
   if (referral === "Yes" && !facility) return err("Referral is set to Yes — enter the referring facility.");
 
@@ -209,7 +209,7 @@ $("#save-btn").addEventListener("click", async () => {
   }
 });
 
-/* ---------- clear / again ---------- */
+ 
 function clearForm() {
   ["#in-name", "#in-dob", "#in-age", "#in-sex", "#in-phone", "#in-address", "#in-kin",
    "#in-incident", "#in-desc", "#in-dept", "#in-priority", "#in-facility", "#in-payment"]
@@ -230,6 +230,6 @@ $("#again-btn").addEventListener("click", () => {
   window.scrollTo(0, 0);
 });
 
-/* ---------- init ---------- */
+ 
 wireStaff($("#in-staff"), $("#staff-add"));
 resetArrival();

@@ -1,7 +1,4 @@
-/* JAMALI — page 242 · Markdown to HTML — the tool's own engine.
-   Convertor tool #178 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mini markdown engine: headings, lists, fences, inline styles*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

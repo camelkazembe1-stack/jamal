@@ -1,7 +1,4 @@
-/* JAMALI — page 304 · Document Template Generator — the tool's own engine.
-   Convertor tool #240 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   invoice / letter / memo / minutes / receipt -> real .docx*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

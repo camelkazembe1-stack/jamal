@@ -1,7 +1,4 @@
-/* JAMALI — page 274 · File Size Converter — the tool's own engine.
-   Convertor tool #210 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   bytes ↔ KB ↔ MB ↔ GB ↔ TB, decimal and binary*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 289 · Timestamp Converter — the tool's own engine.
-   Convertor tool #225 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   unix seconds/millis ↔ dates in UTC, local and ISO*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

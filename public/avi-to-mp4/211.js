@@ -1,7 +1,4 @@
-/* JAMALI — page 211 · AVI to MP4 — the tool's own engine.
-   Convertor tool #147 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   re-records the decoded video to MP4 where the browser supports it*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 127 · DOCX to ODT — the tool's own engine.
-   Convertor tool #63 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   docx text -> OpenDocument Text (LibreOffice/Writer opens it)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

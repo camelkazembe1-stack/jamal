@@ -1,4 +1,4 @@
-// petty-cash-voucher (page 36) — petty vouchers (shared "vouchers" collection).
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

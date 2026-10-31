@@ -1,9 +1,9 @@
-// ward-management (page 337) — JAMALI Health — the Ward Register
-// Read-only: every registered ward with code, name, type, location,
-// licensed capacity, bed count, occupancy and status, searched by code,
-// name or type. All figures are counted from the live bed records — the
-// register never stores its own totals. No failure can hide: every
-// listener carries an error callback and failures paint the banner.
+
+
+
+
+
+
 import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
 
 window.__p52 = { page: "337", build: "52r1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -43,7 +43,7 @@ try {
   throw e;
 }
 
-/* ---------- live data ---------- */
+ 
 let wards = [];
 let beds = [];
 
@@ -68,7 +68,7 @@ function countsOf(wardId) {
   return { total: list.length, occupied, usable: list.length - oos };
 }
 
-/* ---------- render ---------- */
+ 
 function render() {
   const q = $("#r-q").value.trim().toLowerCase();
   const rows = wards.filter((w) => !q ||

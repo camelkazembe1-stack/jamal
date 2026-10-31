@@ -1,7 +1,4 @@
-/* JAMALI — page 277 · File Renamer — the tool's own engine.
-   Convertor tool #213 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   new name in, same bytes out (extension kept on request)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

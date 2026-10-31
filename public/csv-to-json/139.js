@@ -1,7 +1,4 @@
-/* JAMALI — page 139 · CSV to JSON — the tool's own engine.
-   Convertor tool #75 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   proper CSV parse (quoted fields) -> array of objects, header keys*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

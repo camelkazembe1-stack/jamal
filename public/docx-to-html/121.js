@@ -1,7 +1,4 @@
-/* JAMALI — page 121 · DOCX to HTML — the tool's own engine.
-   Convertor tool #57 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mammoth.js convertToHtml keeps headings, lists, bold and italics*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

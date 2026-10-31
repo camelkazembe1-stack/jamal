@@ -1,7 +1,4 @@
-/* JAMALI — page 282 · URL Encoder — the tool's own engine.
-   Convertor tool #218 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   encodeURIComponent or +-for-spaces, your choice*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

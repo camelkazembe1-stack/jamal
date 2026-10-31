@@ -1,7 +1,4 @@
-/* JAMALI — page 78 · CSV to Text — the tool's own engine.
-   Convertor tool #14 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   quoted CSV is properly parsed, then re-joined with tab stops*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

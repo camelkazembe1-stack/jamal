@@ -1,7 +1,4 @@
-/* JAMALI — page 174 · SVG to PNG — the tool's own engine.
-   Convertor tool #110 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   SVG -> PNG: renders at the SVG's intrinsic size*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

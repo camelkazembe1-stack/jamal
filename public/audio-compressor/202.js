@@ -1,7 +1,4 @@
-/* JAMALI — page 202 · Audio Compressor — the tool's own engine.
-   Convertor tool #138 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   re-encodes to a chosen MP3 bitrate — real, visible size cut*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

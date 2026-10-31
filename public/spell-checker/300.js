@@ -1,7 +1,4 @@
-/* JAMALI — page 300 · Spell Checker — the tool's own engine.
-   Convertor tool #236 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   common misspellings + repeated words, flagged with suggestions*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 93 · HTML to PDF — the tool's own engine.
-   Convertor tool #29 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   HTML is parsed to text, then typeset with jsPDF (tags dropped)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

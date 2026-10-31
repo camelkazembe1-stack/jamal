@@ -1,7 +1,4 @@
-/* JAMALI — page 222 · Video Merger — the tool's own engine.
-   Convertor tool #158 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   clips play back-to-back on one canvas and are recorded in one pass*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

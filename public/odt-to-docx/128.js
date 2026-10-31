@@ -1,7 +1,4 @@
-/* JAMALI — page 128 · ODT to DOCX — the tool's own engine.
-   Convertor tool #64 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   content.xml is read from the ODT package and written into a .docx*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

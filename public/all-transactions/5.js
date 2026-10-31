@@ -1,9 +1,9 @@
-// all-transactions (page 5) — every saved transaction, live from Firestore
-// Table columns: Transaction Name | Date & Time | Flow Method |
-//                Transaction Type | Name | Amount
+
+
+
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+await requireAuth(); 
 
 const $ = (s) => document.querySelector(s);
 const body = $("#txn-body");
@@ -28,7 +28,7 @@ function fmtAmount(n) {
 }
 
 function fmtWhen(ts) {
-  if (!ts) return "Just now"; // server timestamp still pending
+  if (!ts) return "Just now"; 
   const d = typeof ts.toDate === "function" ? ts.toDate() : new Date(ts);
   return d.toLocaleString("en-GB", {
     day: "2-digit", month: "short", year: "numeric",
@@ -70,7 +70,7 @@ function render() {
   });
 }
 
-/* filter tabs */
+ 
 document.querySelectorAll(".tab").forEach((btn) =>
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((b) => b.classList.remove("is-active"));
@@ -79,11 +79,11 @@ document.querySelectorAll(".tab").forEach((btn) =>
     render();
   }));
 
-/* live feed — updates automatically when Add Transaction saves something */
+ 
 const q = query(collection(db, "transactions"), orderBy("dateTime", "desc"));
 onSnapshot(q, (snap) => {
   ALL = snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }));
-  ALL.sort((a, b) => { // newest first; identical stamps: original above its charge
+  ALL.sort((a, b) => { 
     const ta = a.dateTime && a.dateTime.toDate ? a.dateTime.toDate().getTime() : 0;
     const tb = b.dateTime && b.dateTime.toDate ? b.dateTime.toDate().getTime() : 0;
     if (tb !== ta) return tb - ta;

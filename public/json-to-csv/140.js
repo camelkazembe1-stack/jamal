@@ -1,7 +1,4 @@
-/* JAMALI — page 140 · JSON to CSV — the tool's own engine.
-   Convertor tool #76 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   array of objects / array of arrays -> RFC-4180 CSV*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

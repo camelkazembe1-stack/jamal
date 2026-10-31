@@ -1,7 +1,4 @@
-/* JAMALI — page 152 · PPTX to PPT — the tool's own engine.
-   Convertor tool #88 (Presentation Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   honest engine: explains why true .ppt cannot be authored in a browser*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

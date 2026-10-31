@@ -1,7 +1,4 @@
-/* JAMALI — page 69 · Text to HTML — the tool's own engine.
-   Convertor tool #5 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   plain text -> clean HTML paragraphs, ready to paste into any page*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

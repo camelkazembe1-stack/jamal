@@ -1,7 +1,4 @@
-/* JAMALI — page 71 · Text to Markdown — the tool's own engine.
-   Convertor tool #7 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   plain text -> markdown paragraphs (blank-line separated)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

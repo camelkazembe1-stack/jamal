@@ -1,7 +1,4 @@
-/* JAMALI — page 113 · PDF to PDF/A — the tool's own engine.
-   Convertor tool #49 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   archival metadata + XMP-style description added (best-effort PDF/A)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

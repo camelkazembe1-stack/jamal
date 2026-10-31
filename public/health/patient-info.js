@@ -1,14 +1,4 @@
-/* JAMALI Health - the patient chip and the past-records panel (Task 45).
-   ONE VICTIM, ONE ID, ONE HISTORY.
-   Every stage page calls showPatient(regId) the moment a Registration ID
-   resolves - typed into the find box, picked from a list, or opened from a
-   queue row. The chip then sits in the TOP RIGHT CORNER with the victim's
-   name, the Registration ID and an i button; clicking the i opens every
-   record kept for that ID across all the stages - registration, triage,
-   nurse consultation, doctor consultation, pharmacy prescriptions and
-   treatment orders - newest first, read only. hidePatient() clears the chip.
-   The temporary ID is gone: the Registration ID is the only identifier,
-   and any old temporary ID still stored on ancient records is ignored. */
+ 
 import { db, collection, onSnapshot } from "/firebase.js";
 
 const STAGES = [
@@ -54,12 +44,12 @@ const LABELS = {
   worker: "Healthcare worker", updatedAt: "Last update", orderedBy: "Ordered by"
 };
 
-/* internal keys never render - the temporary ID above all, even on old records */
+ 
 const SKIP = new Set(["regId", "createdAt", "savedAt", "triageSavedAt",
   "consultationId", "__id", "tempId"]);
 
-const store = {};          // coll -> { docs: [], ready: false }
-let started = false;       // the subscriptions start on the first lookup
+const store = {};          
+let started = false;       
 let currentId = "";
 let panelOpen = false;
 let chip, panel;
@@ -156,7 +146,7 @@ function buildDom() {
   panel.querySelector(".pi-backdrop").addEventListener("click", closePanel);
 }
 
-/* the one entry point every stage page calls */
+ 
 export function showPatient(regId) {
   currentId = String(regId || "").trim().toUpperCase();
   if (!/^[0-9]{4}[A-Z]{4}$/.test(currentId)) { hidePatient(); return; }

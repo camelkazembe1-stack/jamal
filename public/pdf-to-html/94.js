@@ -1,7 +1,4 @@
-/* JAMALI — page 94 · PDF to HTML — the tool's own engine.
-   Convertor tool #30 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pdf.js text layer -> simple HTML with one <p> per block*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

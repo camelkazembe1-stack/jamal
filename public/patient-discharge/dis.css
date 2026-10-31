@@ -1,19 +1,15 @@
-/* JAMALI — patient-discharge · shared stylesheet for pages 350 to 353
-   Base design system lives in /records/records.css (imported below).
-   Family accent: emerald, the Health wing colour. This file carries the
-   pieces every discharge page needs: boot line, error banner, status
-   badges, candidate lists, the checklist, detail sections and the trail. */
+ 
 @import url("/records/records.css");
 
-/* the hidden attribute always wins, even over display rules below */
+ 
 [hidden] { display: none !important; }
 
-/* page accent — Health */
+ 
 h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #059669; }
 
-/* the boot status line and the red load-error banner (task 46d language) */
+ 
 .p-boot { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: #64748b; }
 .p-err { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca;
   background: #fef2f2; color: #b91c1c; border-radius: 10px; font-size: 13px;
@@ -22,7 +18,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 
 .mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
 
-/* ---------- status badges (the discharge status language) ---------- */
+ 
 .st { display: inline-block; border-radius: 999px; padding: 3px 10px;
   font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
 .st-pendauth { background: #fef3c7; color: #92400e; }
@@ -40,7 +36,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .st-critical{ background: #fee2e2; color: #b91c1c; }
 .st-none    { background: #f1f5f9; color: #94a3b8; }
 
-/* ---------- hub tiles (page 350) — the 321 square-tile language ---------- */
+ 
 .mod-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px; margin: 0 0 16px; }
 a.mod { aspect-ratio: 1 / 1; display: flex; flex-direction: column;
@@ -64,7 +60,7 @@ a.mod:hover .mod-sub { color: #059669; }
   .mod-sub { font-size: 9.5px; margin-top: 2px; }
 }
 
-/* ---------- dashboard counters (page 350) ---------- */
+ 
 .dash-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px; margin: 0 0 16px; }
 .dash { border: 1px solid #e2e8f0; background: #fff; border-radius: 12px;
@@ -75,7 +71,7 @@ a.mod:hover .mod-sub { color: #059669; }
 .dash.info b { color: #075985; } .dash.mute b { color: #64748b; }
 @media (max-width: 900px) { .dash-grid { grid-template-columns: repeat(2, 1fr); } }
 
-/* ---------- queue panel (page 350) — the task-53 card ---------- */
+ 
 #qa-card .qa-counts{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 14px}
 .qa-count{display:flex;flex-direction:column;min-width:130px;padding:10px 14px;border:1px solid #e3e0d6;border-radius:10px;background:#faf9f4}
 .qa-num{font-size:26px;font-weight:700;line-height:1.1}
@@ -94,7 +90,7 @@ a.mod:hover .mod-sub { color: #059669; }
 .qa-form input,.qa-form select{border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit}
 @media (max-width: 700px) { .qa-form { grid-template-columns: 1fr; } }
 
-/* ---------- find-a-patient / find-a-discharge row ---------- */
+ 
 .find-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .find-row input { flex: 1 1 260px; border: 1px solid #cbd5e1; border-radius: 9px;
   padding: 9px 12px; font-size: 14px; }
@@ -114,7 +110,7 @@ a.mod:hover .mod-sub { color: #059669; }
   border-radius: 10px; padding: 10px 14px; font-size: 13.5px; }
 .sel-panel b { font-weight: 800; }
 
-/* ---------- form grid ---------- */
+ 
 .add-card { padding: 16px 20px; margin-bottom: 18px; }
 .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px 14px; margin: 14px 0 2px; }
@@ -148,7 +144,7 @@ a.mod:hover .mod-sub { color: #059669; }
   font-size: 14px; font-family: inherit; }
 .btn-danger:hover { background: #fef2f2; }
 
-/* ---------- tabs (page 352) ---------- */
+ 
 .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .tab { border: 1px solid #cbd5e1; background: #fff; border-radius: 999px;
   padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #475569;
@@ -156,7 +152,7 @@ a.mod:hover .mod-sub { color: #059669; }
 .tab:hover { border-color: #059669; color: #047857; }
 .tab.on { background: #059669; border-color: #059669; color: #fff; }
 
-/* ---------- detail sections (page 353) ---------- */
+ 
 .sec-h { font-size: 13px; font-weight: 800; text-transform: uppercase;
   letter-spacing: .08em; color: #475569; margin: 18px 0 8px; }
 .kv { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0;
@@ -170,7 +166,7 @@ a.mod:hover .mod-sub { color: #059669; }
 .trail li:last-child { border-bottom: 0; }
 .trail .t-who { color: #64748b; font-weight: 600; }
 
-/* ---------- the discharge checklist (page 353) ---------- */
+ 
 .ck-row { display: flex; align-items: center; justify-content: space-between;
   gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 13.5px; }
 .ck-row:last-child { border-bottom: 0; }
@@ -185,12 +181,12 @@ a.mod:hover .mod-sub { color: #059669; }
 .ck-state:disabled { opacity: .6; cursor: not-allowed; }
 .ck-state.fixed { cursor: default; }
 
-/* ---------- the emergency note ---------- */
+ 
 .emg-note { margin: 10px 0 16px; padding: 10px 14px; border: 1px solid #fde68a;
   background: #fffbeb; color: #92400e; border-radius: 10px; font-size: 13px;
   font-weight: 700; }
 
-/* ---------- small buttons ---------- */
+ 
 .ghost-btn { border: 1px solid #cbd5e1; background: #fff; color: #334155;
   font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 7px;
   cursor: pointer; white-space: nowrap; font-family: inherit; }
@@ -201,7 +197,7 @@ a.mod:hover .mod-sub { color: #059669; }
 .nowrap { white-space: nowrap; }
 td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* print — clean paper output */
+ 
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .find-row,
   .form-actions, .emg-note { display: none !important; }

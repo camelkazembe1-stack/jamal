@@ -1,7 +1,4 @@
-/* JAMALI — page 310 · Roman Numeral Converter — the tool's own engine.
-   Convertor tool #246 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   both directions: number ↔ roman numeral, validated*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

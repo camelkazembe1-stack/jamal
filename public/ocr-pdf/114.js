@@ -1,7 +1,4 @@
-/* JAMALI — page 114 · OCR PDF — the tool's own engine.
-   Convertor tool #50 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pages render, then tesseract.js reads the words (real OCR)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

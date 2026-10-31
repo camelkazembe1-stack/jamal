@@ -1,7 +1,4 @@
-/* JAMALI — page 287 · Barcode Reader — the tool's own engine.
-   Convertor tool #223 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   BarcodeDetector API (Chrome/Edge) — QR, EAN, CODE128 and more*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

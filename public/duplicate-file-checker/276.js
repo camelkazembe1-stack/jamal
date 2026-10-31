@@ -1,7 +1,4 @@
-/* JAMALI — page 276 · Duplicate File Checker — the tool's own engine.
-   Convertor tool #212 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   SHA-256 of every file, grouped — identical content shown together*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

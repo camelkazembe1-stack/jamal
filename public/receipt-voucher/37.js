@@ -1,4 +1,4 @@
-// receipt-voucher (page 37) — receipt vouchers (shared "vouchers" collection).
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

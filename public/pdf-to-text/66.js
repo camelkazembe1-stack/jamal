@@ -1,7 +1,4 @@
-/* JAMALI — page 66 · PDF to Text — the tool's own engine.
-   Convertor tool #2 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pdf.js extracts the text layer of every page into clean text*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 163 · JPG to WebP — the tool's own engine.
-   Convertor tool #99 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   JPG -> WebP: modern smaller files (Chrome/Edge encode)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

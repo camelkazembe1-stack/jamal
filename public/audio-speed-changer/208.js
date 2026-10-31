@@ -1,7 +1,4 @@
-/* JAMALI — page 208 · Audio Speed Changer — the tool's own engine.
-   Convertor tool #144 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   playback-rate rendered offline — pitch rises with speed (chipmunk-free option)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

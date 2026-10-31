@@ -1,7 +1,4 @@
-/* JAMALI — page 254 · SQL Formatter — the tool's own engine.
-   Convertor tool #190 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   major clauses on their own lines, keywords uppercased, indents*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

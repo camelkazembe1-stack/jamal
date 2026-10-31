@@ -1,10 +1,10 @@
-// laboratory (page 360) — JAMALI Health — Laboratory Hub & Dashboard
-// Every number is calculated from the stored lab requests — never
-// hard-coded. The queue panel follows the task-53 contract: the waiting and
-// completed counters, the current and the next patient, and the speaker,
-// which announces exactly the patient the panel shows using this module's
-// saved destination (healthQueueConfig "laboratory"). Calling a patient
-// never completes a laboratory request by itself.
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, setDoc, onSnapshot } from "/firebase.js";
 
 window.__p54 = { page: "360", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -41,11 +41,7 @@ try {
   throw e;
 }
 
-/* =====================================================================
-   JAMALI-QUEUE (task 53 contract, task 54 voice) — the shared queue panel.
-   Waiting counts the requests still open; Completed today counts the
-   requests finished today. The announcement reads the patient shown in the
-   panel — never anybody else — at the speed saved in the settings. */
+ 
 const QA_MODULE = "laboratory";
 const QA_DEFAULT = "Laboratory";
 let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 };
@@ -201,9 +197,9 @@ try {
     if (window.__p54) window.__p54.errs.push("healthQueueConfig: " + code);
     qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
   });
-} catch (e) { /* the settings listener is optional — the dashboard keeps working */ }
+} catch (e) {   }
 
-/* ---------- live data & the counters ---------- */
+ 
 let reqs = [];
 
 function stBadge(s) {

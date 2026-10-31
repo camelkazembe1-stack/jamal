@@ -1,7 +1,4 @@
-/* JAMALI — page 203 · Audio Trimmer — the tool's own engine.
-   Convertor tool #139 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   start/end seconds sliced from the decoded PCM -> WAV or MP3*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,14 +1,14 @@
-// ward-management (page 334) — JAMALI Health — Patient-to-Bed Assignment
-// Connects an EXISTING patient to an AVAILABLE bed. Rules the page enforces:
-//   · the patient must already exist (searched from the registrations) —
-//     no second patient record is ever created;
-//   · one active placement per patient — a duplicate is refused and the
-//     current placement is shown instead;
-//   · only beds whose status is exactly "Available" can be chosen, and the
-//     choice is re-checked against the live data at the moment of saving;
-//   · the assignment + the bed update are written in ONE atomic batch, so
-//     two patients can never take the same bed, even on a slow network.
-// Emergency care is never delayed by this page — treat first, assign after.
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/firebase.js";
 
 window.__p52 = { page: "334", build: "52g1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -73,13 +73,13 @@ function rememberedStaff() {
   try { return localStorage.getItem("jamaliStaff") || ""; } catch (e) { return ""; }
 }
 
-/* ---------- live data ---------- */
+ 
 let regs = [];
 let wards = [];
 let beds = [];
 let assignments = [];
 let admissions = [];
-let selected = null; // the registration chosen for placement
+let selected = null; 
 
 onSnapshot(collection(db, "healthRegistrations"), (snap) => {
   regs = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
@@ -127,7 +127,7 @@ function activeAdmissionOf(patientId) {
     String(a.patientId) === String(patientId)) || null;
 }
 
-/* ---------- 1 · find the patient ---------- */
+ 
 function renderCands() {
   const box = $("#g-cands");
   if (selected) { box.innerHTML = ""; return; }
@@ -169,13 +169,13 @@ function renderSel() {
         esc((dup.wardCode || "") + " · bed " + (dup.bedNumber || "")) +
         ". One active placement per patient — to move them, use Transfers (335); to release the bed, use the button below.</span>"
       : "");
-  // the ward/bed card is meaningful only for a patient without a placement
+  
   $("#g-ward").disabled = !!dup;
   $("#g-bed").disabled = !!dup;
   $("#g-assign").disabled = !!dup;
 }
 
-/* the deep link: 341 sends the patient over via ?patient= or sessionStorage */
+ 
 function maybeAutoOpen() {
   if (selected) return;
   let pid = new URLSearchParams(location.search).get("patient") || "";
@@ -190,7 +190,7 @@ function maybeAutoOpen() {
   if (r) { selected = r; $("#g-q").value = String(r.regId); renderCands(); renderSel(); renderWards(); renderBeds(); renderLink(); }
 }
 
-/* ---------- 2 · choose the bed ---------- */
+ 
 function renderWards() {
   const sel = $("#g-ward");
   const cur = sel.value;
@@ -232,7 +232,7 @@ function renderLink() {
     : "";
 }
 
-/* ---------- assign ---------- */
+ 
 function ferr(msg) { const e = $("#g-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function fok(msg) {
   const e = $("#g-fok");
@@ -260,7 +260,7 @@ $("#g-assign").addEventListener("click", async () => {
   const linked = activeAdmissionOf(selected.regId);
 
   const btn = $("#g-assign");
-  if (btn.disabled) return; // duplicate-submission guard
+  if (btn.disabled) return; 
   btn.disabled = true;
   try {
     const ref = doc(collection(db, "healthBedAssignments"));
@@ -312,7 +312,7 @@ $("#g-assign").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* ---------- 3 · current placements + release ---------- */
+ 
 function render() {
   const act = assignments.filter((a) => a.status === "Active");
   $("#g-empty").hidden = act.length > 0;

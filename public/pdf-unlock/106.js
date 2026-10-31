@@ -1,7 +1,4 @@
-/* JAMALI — page 106 · PDF Unlock — the tool's own engine.
-   Convertor tool #42 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   opens with your password and rebuilds a clean copy (rasterized)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

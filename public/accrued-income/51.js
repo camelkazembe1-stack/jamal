@@ -1,4 +1,4 @@
-// accrued-income (page 51) — accrued income register.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

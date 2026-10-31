@@ -1,7 +1,4 @@
-/* JAMALI — page 131 · Excel to CSV — the tool's own engine.
-   Convertor tool #67 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   every sheet becomes CSV text (one file, sheets separated)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

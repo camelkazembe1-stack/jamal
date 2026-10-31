@@ -1,7 +1,4 @@
-/* JAMALI — page 188 · Image to Base64 — the tool's own engine.
-   Convertor tool #124 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   file -> data URL (with copy + download of the .b64 text)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

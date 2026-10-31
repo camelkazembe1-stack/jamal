@@ -1,7 +1,4 @@
-/* JAMALI — page 88 · PDF to Excel — the tool's own engine.
-   Convertor tool #24 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pdf.js text rows -> SheetJS workbook (.xlsx), columns split on gaps*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

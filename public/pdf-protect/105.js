@@ -1,7 +1,4 @@
-/* JAMALI — page 105 · PDF Protect — the tool's own engine.
-   Convertor tool #41 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   password-encrypts the PDF (AES) via the @cantoo/pdf-lib engine*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

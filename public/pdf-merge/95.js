@@ -1,7 +1,4 @@
-/* JAMALI — page 95 · PDF Merge — the tool's own engine.
-   Convertor tool #31 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   any number of PDFs are appended in order with pdf-lib*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

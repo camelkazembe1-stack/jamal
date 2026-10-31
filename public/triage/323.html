@@ -15,7 +15,7 @@
   <p class="h-boot" id="h-boot" hidden></p>
   <p class="h-err" id="h-err" hidden></p>
 
-  <!-- STEP 1 · the assessment -->
+  
   <section id="step-form">
     <a class="back" href="/health/321">&larr; Health</a>
     <h1>Triage</h1>
@@ -179,7 +179,7 @@
     </div>
   </section>
 
-  <!-- STEP 2 · saved -->
+  
   <section id="step-done" hidden>
     <div class="card done-card">
       <div class="done-icon">&#10003;</div>
@@ -202,7 +202,7 @@
 #h-boot{background:#fff7e0;color:#6b4e00;border:1px solid #e8d48a}
 #h-err{background:#fdecec;color:#8a1f1f;border:1px solid #f2b8b5}
 
-/* task 53 - queue & announcements */
+ 
 #qa-card .qa-counts{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 14px}
 .qa-count{display:flex;flex-direction:column;min-width:130px;padding:10px 14px;border:1px solid #e3e0d6;border-radius:10px;background:#faf9f4}
 .qa-num{font-size:26px;font-weight:700;line-height:1.1}
@@ -221,8 +221,7 @@
 .qa-form input{width:100%;margin-top:4px;padding:8px 10px;border:1px solid #d8d3c4;border-radius:8px;font:inherit;background:#fff}
 </style>
 <script>
-/* Task 47 - boot line, page painters and the 12-second watchdog. The same
-   contract as the Patient List (build 46d): a silent failure names itself. */
+ 
 (function () {
   var boot = document.getElementById("h-boot");
   if (boot) { boot.hidden = false; boot.textContent = "Triage \u00b7 build 53 \u00b7 connecting\u2026"; }
@@ -237,7 +236,7 @@ function __jamaliHerr(msg) {
   box.textContent = "Page error \u2014 " + msg;
 }
 window.addEventListener("error", function (e) {
-  if (!e || !e.message) return; /* resource errors carry no message */
+  if (!e || !e.message) return;  
   __jamaliHerr(e.message);
 }, true);
 window.addEventListener("unhandledrejection", function (e) {
@@ -247,7 +246,7 @@ window.addEventListener("unhandledrejection", function (e) {
 setTimeout(function () {
   var boot = document.getElementById("h-boot");
   var s = window.__p47 || {};
-  if (!boot || boot.hidden) return; /* answered - nothing to report */
+  if (!boot || boot.hidden) return;  
   var bits = [];
   bits.push("build " + (s.build || "47") + " script " +
     ((s.ran === true || s.listeners > 0) ? "ran" : "DID NOT run"));

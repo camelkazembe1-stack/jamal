@@ -1,7 +1,4 @@
-/* JAMALI — page 108 · PDF Fill Forms — the tool's own engine.
-   Convertor tool #44 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   lists the PDF's AcroForm fields and fills the text ones for you*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

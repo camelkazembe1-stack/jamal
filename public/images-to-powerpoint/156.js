@@ -1,7 +1,4 @@
-/* JAMALI — page 156 · Images to PowerPoint — the tool's own engine.
-   Convertor tool #92 (Presentation Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   one image per slide, ordered as chosen (PptxGenJS)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

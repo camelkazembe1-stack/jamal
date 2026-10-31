@@ -1,7 +1,4 @@
-/* JAMALI — page 233 · TXT to EPUB — the tool's own engine.
-   Convertor tool #169 (Ebook and Publishing Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   text -> chapters (blank-line split) -> EPUB 2 package*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

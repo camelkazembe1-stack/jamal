@@ -1,9 +1,7 @@
-/* JAMALI — page 140 · JSON to CSV (Convertor tool #76, Spreadsheet and Data Tools).
-   The tool's own stylesheet. Base design system via the import below;
-   the tool widget kit and this tool's widgets are inlined underneath. */
+ 
 @import url("/records/records.css");
 
-/* page accent — Convertor teal */
+ 
 h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #0d9488; }
@@ -17,7 +15,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .t-chip.t-fam { background: #ccfbf1; color: #0f766e; }
 .t-links { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
 
-/* ---------- Convertor tool widget kit (Task 25) ---------- */
+ 
 .t-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
   box-shadow: 0 6px 18px rgba(15, 23, 42, .06); padding: 16px 18px; margin-bottom: 14px; max-width: 880px; }
 .t-lab { display: block; font-size: 12px; font-weight: 800; color: #475569; margin: 0 0 5px; }

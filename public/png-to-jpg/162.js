@@ -1,7 +1,4 @@
-/* JAMALI — page 162 · PNG to JPG — the tool's own engine.
-   Convertor tool #98 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   PNG -> JPG: white-backed flatten, quality 0.92*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

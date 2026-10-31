@@ -1,7 +1,4 @@
-/* JAMALI — page 98 · PDF Rotate — the tool's own engine.
-   Convertor tool #34 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   all pages (or a range) turn by 90 / 180 / 270 degrees*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

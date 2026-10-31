@@ -1,7 +1,4 @@
-/* JAMALI — page 129 · DOCX to EPUB — the tool's own engine.
-   Convertor tool #65 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   docx text -> chapters -> a valid EPUB 2 package (opens in any reader)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

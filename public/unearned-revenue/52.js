@@ -1,4 +1,4 @@
-// unearned-revenue (page 52) — unearned revenue register.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

@@ -1,24 +1,24 @@
-// debtors-book (page 17) — JAMALI Debtors Book (money owed TO the business)
-// Rules (user spec):
-//   1. Credit sales increase what a customer owes          -> Credit Sales column
-//   2. Sales returns reduce what a customer owes           -> Payments Received column
-//   3. Cash/Bank payments received reduce what they owe    -> Payments Received column
-//      A payment row counts ONLY if that name also has credit sales or sales
-//      return activity — so other income (interest, etc.) never enters this
-//      book (income already lives in the Cash Receipts Journal).
-//   4. Balance Owed column = that person's running balance AFTER the row
-//   5. ONE Total row: totals of both columns + total outstanding receivable
-//   6. Summary card lists the outstanding balance per debtor
-// Classification reuses /journals/journal.js — one source of truth for what
-// counts as a credit sale, a sales return, or a payment received.
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 import { classify } from "/journals/journal.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+await requireAuth(); 
 
-const INC = "sales";          // credit sales (Credit + IN)
-const RET = "salesReturns";   // sales returns (Credit + return)
-const PAY = "cashReceipts";   // cash/bank receipts (Cash|Bank + IN)
+const INC = "sales";          
+const RET = "salesReturns";   
+const PAY = "cashReceipts";   
 
 const $ = (s) => document.querySelector(s);
 const body = $("#bk-body");
@@ -45,7 +45,7 @@ function asDate(ts) {
 
 function fmtDate(ts) {
   if (!ts) return "\u2014";
-  return asDate(ts).toLocaleDateString("en-GB"); // 21/10/2026
+  return asDate(ts).toLocaleDateString("en-GB"); 
 }
 
 const personOf = (t) => t.name || t.transactionName || "\u2014";
@@ -54,14 +54,14 @@ function render() {
   const rows = TXNS.map((t) => ({ t, kind: classify(t) }))
     .filter((r) => r.kind === INC || r.kind === RET || r.kind === PAY);
 
-  // a payment belongs in this book only if the person is a real debtor
-  // (has at least one credit sale or sales return)
+  
+  
   const people = new Set(rows.filter((r) => r.kind !== PAY).map((r) => personOf(r.t)));
   const book = rows
     .filter((r) => r.kind !== PAY || people.has(personOf(r.t)))
     .sort((a, b) => asDate(a.t.dateTime) - asDate(b.t.dateTime));
 
-  // running balance PER PERSON, in chronological order
+  
   const bal = Object.create(null);
   let totInc = 0, totDec = 0;
   let html = "";
@@ -69,7 +69,7 @@ function render() {
     const p = personOf(t);
     const amt = Number(t.amount || 0);
     const inc = kind === INC ? amt : 0;
-    const dec = kind === INC ? 0 : amt; // returns AND payments received both reduce
+    const dec = kind === INC ? 0 : amt; 
     bal[p] = (bal[p] || 0) + inc - dec;
     totInc += inc;
     totDec += dec;
@@ -92,7 +92,7 @@ function render() {
     '<td class="c-amount">' + esc(fmtAmount(outstanding)) + "</td>" +
   "</tr>";
 
-  // summary: outstanding balance per debtor
+  
   const names = Object.keys(bal).sort((a, b) => bal[b] - bal[a]);
   let ph = "";
   names.forEach((p) => {
@@ -114,7 +114,7 @@ function render() {
     : "";
 }
 
-/* live feed — classified client-side, sorted chronologically */
+ 
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {
   TXNS = snap.docs

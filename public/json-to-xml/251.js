@@ -1,7 +1,4 @@
-/* JAMALI — page 251 · JSON to XML — the tool's own engine.
-   Convertor tool #187 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   @-keys become attributes, #text becomes the node text*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

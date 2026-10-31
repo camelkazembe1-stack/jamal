@@ -1,9 +1,9 @@
-// home (page 1) — T78: hierarchical launcher.
-// Home shows ONLY the granted main modules. Clicking a module opens
-// its submodules in place (drill-down); clicking a submodule opens its
-// pages; a page with no children opens directly. Order is exactly the
-// menu tree order, filtered by the account grants; the administrator
-// sees the whole tree. No redirects, no flat "Modules" dump.
+
+
+
+
+
+
 import { db, doc, getDoc } from "/firebase.js";
 
 const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
@@ -13,7 +13,7 @@ try { S = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); } catch (e)
 const isAdmin = !!(S && S.role === "admin");
 let grants = S && Array.isArray(S.grants) ? S.grants.slice() : [];
 
-// fresh grants from the database (one source of truth), silent update
+
 (async () => {
   try {
     if (S && S.id) {
@@ -28,7 +28,7 @@ let grants = S && Array.isArray(S.grants) ? S.grants.slice() : [];
         }
       }
     }
-  } catch (e) { /* offline — the session copy is used */ }
+  } catch (e) {   }
 })();
 
 function tree() {

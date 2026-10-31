@@ -1,4 +1,4 @@
-// employee-advance (page 35) — advances and repayments.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

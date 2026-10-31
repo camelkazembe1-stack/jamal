@@ -1,7 +1,4 @@
-/* JAMALI — page 262 · Create ZIP — the tool's own engine.
-   Convertor tool #198 (Archive and Compression Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   any files -> one .zip (deflate), folder structure flattened*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

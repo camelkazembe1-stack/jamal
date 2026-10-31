@@ -1,7 +1,4 @@
-/* JAMALI — page 223 · Video Resizer — the tool's own engine.
-   Convertor tool #159 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   scales to a chosen width and re-encodes*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

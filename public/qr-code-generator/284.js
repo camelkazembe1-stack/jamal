@@ -1,7 +1,4 @@
-/* JAMALI — page 284 · QR Code Generator — the tool's own engine.
-   Convertor tool #220 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   QR Code (qrcodejs) rendered to canvas, saved as PNG*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

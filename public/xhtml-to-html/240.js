@@ -1,7 +1,4 @@
-/* JAMALI — page 240 · XHTML to HTML — the tool's own engine.
-   Convertor tool #176 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   XML parsed with strictness, re-serialized as plain HTML5*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

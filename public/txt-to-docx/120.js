@@ -1,7 +1,4 @@
-/* JAMALI — page 120 · TXT to DOCX — the tool's own engine.
-   Convertor tool #56 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   a .txt (or pasted text) becomes a real .docx written from scratch*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

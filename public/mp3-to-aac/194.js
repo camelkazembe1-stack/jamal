@@ -1,7 +1,4 @@
-/* JAMALI — page 194 · MP3 to AAC — the tool's own engine.
-   Convertor tool #130 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   re-encodes through the browser's encoder (M4A/AAC where supported)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 167 · JPG to GIF — the tool's own engine.
-   Convertor tool #103 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   JPG -> GIF (single frame; GIF is 256-colour)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

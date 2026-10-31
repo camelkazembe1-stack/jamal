@@ -1,14 +1,14 @@
-// patient-admission (page 343) — JAMALI Health — Admission Details & History
-// One admission, fully drawn from the live records: patient, admission and
-// clinical information, the current ward and bed (read from the assignment
-// records of Ward Management), placement and transfer history, the record
-// trail and the status history. Status transitions are validated:
-//   Pending     -> Admitted (confirm) | Cancelled
-//   Admitted    -> Discharged (frees the bed) | Transferred (via page 335)
-//   Transferred -> Discharged
-//   Discharged / Cancelled -> final, no further changes
-// Every change records who made it and when. Previous admissions of the
-// same patient are listed below and never overwritten.
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/firebase.js";
 
 window.__p52 = { page: "343", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -72,12 +72,12 @@ function stBadge(s) {
   return "<span class='st " + (ST_CLASS[s] || "st-none") + "'>" + esc(s || "—") + "</span>";
 }
 
-/* ---------- live data ---------- */
+ 
 let admissions = [];
 let regs = [];
 let assignments = [];
 let transfers = [];
-let current = null; // the open admission document
+let current = null; 
 
 onSnapshot(collection(db, "healthAdmissions"), (snap) => {
   admissions = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
@@ -109,7 +109,7 @@ onSnapshot(collection(db, "healthBedTransfers"), (snap) => {
 }, (e) => loadErr("healthBedTransfers", e));
 window.__p52.listeners++;
 
-/* ---------- open an admission ---------- */
+ 
 function openById(id) {
   const a = admissions.find((x) => x.__id === id);
   if (!a) { $("#d-none").hidden = false; $("#d-none").textContent = "No admission with that reference is on record."; return; }
@@ -141,7 +141,7 @@ function maybeAutoOpen() {
   }
 }
 
-/* ---------- render ---------- */
+ 
 function regOf(patientId) {
   return regs.find((r) => String(r.regId) === String(patientId)) || null;
 }
@@ -224,7 +224,7 @@ function renderAll() {
           (h.note ? " <span class='t-who'>· " + esc(h.note) + "</span>" : "") +
         "</span><span class='t-who'>" + esc(when(h.at)) + (h.by ? " · by " + esc(h.by) : "") + "</span></li>").join("");
 
-  // the status actions, strictly by the transition rules
+  
   $("#d-confirm").hidden = a.status !== "Pending";
   $("#d-canceladm").hidden = a.status !== "Pending";
   $("#d-discharge").hidden = !(a.status === "Admitted" || a.status === "Transferred");
@@ -232,7 +232,7 @@ function renderAll() {
   $("#d-staff").value = $("#d-staff").value || rememberedStaff();
   $("#d-plink").href = "/patient-module/328";
 
-  // the admission history of the same patient
+  
   const own = admissions.filter((x) => String(x.patientId) === String(a.patientId));
   $("#d-hcard").hidden = false;
   $("#d-hempty").hidden = own.length > 0;
@@ -260,7 +260,7 @@ $("#d-hbody").addEventListener("click", (e) => {
   openById(btn.getAttribute("data-openad"));
 });
 
-/* ---------- status actions ---------- */
+ 
 function ferr(msg) { const e = $("#d-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function staffForAction() {
   const s = $("#d-staff").value.trim();
@@ -308,9 +308,7 @@ $("#d-canceladm").addEventListener("click", async () => {
   btn.disabled = false;
 });
 $("#d-discharge").addEventListener("click", () => {
-  /* task 54: discharge is its own module now. The button opens it — the
-     discharge decision, checklist and the final confirmation (which releases
-     the bed to cleaning) live there, so one process owns every discharge. */
+   
   if (!current) return;
   if (!(current.status === "Admitted" || current.status === "Transferred"))
     return ferr("Only an Admitted or Transferred admission can be discharged.");
@@ -321,7 +319,7 @@ $("#d-discharge").addEventListener("click", () => {
 
 function bedsAll() { return window.__bedsCache || []; }
 
-/* ---------- edit permitted details ---------- */
+ 
 $("#d-edit").addEventListener("click", () => {
   if (!current) return;
   $("#e-sub").textContent = "Admission " + (current.admissionNumber || current.__id) +
@@ -372,7 +370,7 @@ $("#e-save").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* ---------- the live bed cache for the discharge batch ---------- */
+ 
 onSnapshot(collection(db, "healthBeds"), (snap) => {
   window.__bedsCache = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }));
   renderAll();

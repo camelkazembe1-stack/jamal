@@ -1,9 +1,9 @@
-// radiology (page 371) — JAMALI Health — New Imaging Request
-// Requests imaging for an EXISTING patient (patientId = the Registration
-// ID). The requesting department / clinician, the priority (Routine /
-// Urgent) and the clinical reason are recorded; each chosen procedure
-// starts as Pending with its own report slot. The request number
-// (IMG-date-code) is checked for uniqueness against the live requests.
+
+
+
+
+
+
 import { requireAuth, db, collection, addDoc, onSnapshot } from "/firebase.js";
 
 window.__p54 = { page: "371", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -61,7 +61,7 @@ function rememberedStaff() {
 }
 function keepStaff(v) { if (v) { try { localStorage.setItem("jamaliStaff", v); } catch (e) {} } }
 
-/* ---------- live data ---------- */
+ 
 let regs = [];
 let reqs = [];
 let selected = null;
@@ -79,7 +79,7 @@ onSnapshot(collection(db, "healthImagingRequests"), (snap) => {
 }, (e) => loadErr("healthImagingRequests", e));
 window.__p54.listeners++;
 
-/* ---------- 1 · find the patient ---------- */
+ 
 function renderCands() {
   const box = $("#r-cands");
   if (selected) { box.innerHTML = ""; return; }
@@ -116,7 +116,7 @@ function renderSel() {
     esc([selected.age, selected.sex].filter(Boolean).join(" · ") || "—") + " " + priBadge(selected.priority);
 }
 
-/* the deep link: /radiology/371?patient=REGID */
+ 
 function maybeAutoOpen() {
   if (selected) return;
   const pid = new URLSearchParams(location.search).get("patient") || "";
@@ -125,7 +125,7 @@ function maybeAutoOpen() {
   if (r) { selected = r; $("#r-q").value = String(r.regId); renderCands(); renderSel(); $("#r-formcard").hidden = false; }
 }
 
-/* ---------- 2 · the procedures ---------- */
+ 
 const STANDARD = ["X-ray", "Ultrasound", "CT scan", "MRI"];
 const picks = new Set();
 
@@ -152,12 +152,12 @@ $("#r-addcustom").addEventListener("click", () => {
   renderPicks();
 });
 
-/* ---------- save ---------- */
+ 
 function ferr(msg) { const e = $("#r-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function v(sel) { return $(sel).value.trim(); }
 
 function freshNumber() {
-  // IMG-YYYYMMDD-XXLL, checked against the live requests for uniqueness
+  
   for (let t = 0; t < 5; t++) {
     let code = "";
     const D = "0123456789", L = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -180,7 +180,7 @@ async function saveReq() {
   if (procedures.length === 0) return ferr("Choose at least one procedure — tick from the list or add your own.");
   keepStaff(clinician);
   const btn = $("#r-save");
-  if (btn.disabled) return; // duplicate-submission guard
+  if (btn.disabled) return; 
   btn.disabled = true;
   try {
     const num = freshNumber();

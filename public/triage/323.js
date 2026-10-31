@@ -1,23 +1,19 @@
-// triage (page 323) — JAMALI Health
-// The stage after registration: a healthcare worker assesses the victim and
-// decides how urgently medical attention is needed. Triage sets the ORDER of
-// care — it is not a diagnosis, and it never delays emergency treatment.
-// Twelve items per assessment. Every assessment links to its registration by
-// Registration ID and stays in the history below the form.
+
+
+
+
+
+
 import { requireAuth, db, collection, query, addDoc, doc, setDoc, onSnapshot, serverTimestamp } from "/firebase.js";
-/* patient chip - non-fatal since Task 47: if /health/patient-info.js cannot
-   load (a missing or stale file), the page loses only the floating chip,
-   never the find, the forms or the saves. */
+ 
 let showPatient = function () {}, hidePatient = function () {};
 try {
   const pi = await import("/health/patient-info.js");
   if (pi && typeof pi.showPatient === "function") showPatient = pi.showPatient;
   if (pi && typeof pi.hidePatient === "function") hidePatient = pi.hidePatient;
-} catch (e) { /* chip unavailable - everything else keeps working */ }
+} catch (e) {   }
 
-/* boot diagnostics (Task 47 - the same contract as the Patient List, build
-   46d): every collection listener carries an error callback and every
-   failure paints itself on the page instead of dying in silence. */
+ 
 window.__p47 = Object.assign(window.__p47 || {}, {
   page: "323", build: "53", queue: true, ran: true, auth: false,
   listeners: 0, need: 3, answered: false, errs: []
@@ -43,7 +39,7 @@ function bootDone() {
 }
 
 try {
-  await requireAuth(); // not logged in? -> bounced to "/"
+  await requireAuth(); 
   window.__p47.auth = true;
 } catch (e) {
   herr("the sign-in check", e);
@@ -54,7 +50,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* ---------- assessed by — a history kept on THIS device ---------- */
+ 
 const STAFF_KEY = "jamali_health_staff_v1";
 
 function loadStaff() {
@@ -91,7 +87,7 @@ function wireStaff(sel, addBtn) {
   });
 }
 
-/* ---------- automatic fields ---------- */
+ 
 function pad(n) { return String(n).padStart(2, "0"); }
 function nowLocal() {
   const d = new Date();
@@ -106,7 +102,7 @@ function when(iso) {
   return d.toLocaleDateString("en-GB") + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
 
-/* ---------- live registrations: the ID list and the victim line ---------- */
+ 
 let regs = [];
 const regMap = new Map();
 
@@ -156,7 +152,7 @@ function refreshVictimLine() {
   }
 }
 
-/* the ID field: uppercase, 8 characters, digits and letters only */
+ 
 $("#t-regid").addEventListener("input", () => {
   const el = $("#t-regid");
   el.value = el.value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 8);
@@ -164,12 +160,12 @@ $("#t-regid").addEventListener("input", () => {
   qaDeriveTriage();
 });
 
-/* pain slider */
+ 
 $("#t-pain").addEventListener("input", () => {
   $("#t-pain-out").textContent = $("#t-pain").value;
 });
 
-/* ---------- the triage history ---------- */
+ 
 let rows = [];
 
 onSnapshot(query(collection(db, "healthTriage")), (snap) => {
@@ -193,8 +189,7 @@ function qaStart(id) {
   window.scrollTo(0, 0);
   $("#t-symptoms").focus();
 }
-/* the triage queue: patients registered today without an assessment today,
-   ordered by arrival (creation time) and then Registration ID */
+ 
 function qaDeriveTriage() {
   const done = new Set();
   rows.forEach((t) => {
@@ -206,8 +201,7 @@ function qaDeriveTriage() {
     const id = String(r.regId);
     if (done.has(id)) return;
     const saved = String(r.savedAt || "");
-    /* registered today — the stamp is UTC, so accept either the UTC day or
-       the patient's local day to keep the early-morning edge honest */
+     
     if (!qaIsToday(saved) && qaLocalDay(saved) !== qaTodayLocal()) return;
     waiting.push({
       regId: id,
@@ -222,15 +216,7 @@ function qaDeriveTriage() {
 }
 
 
-/* =====================================================================
-   JAMALI-QUEUE (task 53) — the queue panel shared by every service stage:
-   waiting and completed counts, the current and the next patient, the
-   speaker announcement, and this module's own announcement settings.
-   Waiting counts patients waiting for THIS service only; Completed counts
-   the patients finished here today. The announcement always reads the
-   patient the panel is showing — never anybody else — and it reads the
-   destination the hospital saved for this module (healthQueueConfig),
-   falling back to the module's own name. No hard-coded rooms or IDs. */
+ 
 const QA_MODULE = "triage";
 const QA_DEFAULT = "Triage";
 let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 };
@@ -249,7 +235,7 @@ function qaLocalDay(stamp) {
 function qaIsToday(stamp) { return String(stamp || "").slice(0, 10) === new Date().toISOString().slice(0, 10); }
 function qaIsTodayLocal(stamp) { return String(stamp || "").slice(0, 10) === qaTodayLocal(); }
 
-/* the destination, composed from the saved settings */
+ 
 function qaText() {
   const dept = String(qaCfg.department || "").trim();
   const staff = String(qaCfg.staffName || "").trim();
@@ -262,13 +248,12 @@ function qaSentence(id) {
   return "Patient number " + String(id) + ", please proceed to " + qaText().dest + ".";
 }
 function qaRate() {
-  /* task 54 voice fix: the saved speed wins; a calm 0.75 is the default */
+   
   const r = Number(qaCfg.voiceRate);
   return (r >= 0.5 && r <= 1.1) ? r : 0.75;
 }
 function qaSpeech(id) {
-  /* spoken letter by letter with real pauses (commas), and the whole
-     sentence is repeated so a waiting patient cannot miss their number */
+   
   const d = String(id).split("").join(", ");
   const dest = qaText().dest;
   return "Patient number " + d + ". Please proceed to " + dest +
@@ -308,7 +293,7 @@ function qaRenderPanel() {
   qaSet("qa-note", nxt ? "Ready to announce: " + qaSentence(nxt.regId) : "");
 }
 
-/* every stage derives its own queue, then calls this */
+ 
 function qaUpdate(waitingRows, current, doneCount) {
   qaState.waitingCount = Array.isArray(waitingRows) ? waitingRows.length : 0;
   qaState.doneCount = doneCount || 0;
@@ -317,7 +302,7 @@ function qaUpdate(waitingRows, current, doneCount) {
   qaRenderPanel();
 }
 
-/* the speaker button announces exactly the patient shown above it */
+ 
 const qaAnnounceBtn = document.getElementById("qa-announce");
 if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
   const id = qaAnnounceBtn.getAttribute("data-regid");
@@ -342,14 +327,14 @@ if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
   }
 });
 
-/* open the next patient straight from the panel */
+ 
 const qaStartBtn = document.getElementById("qa-start");
 if (qaStartBtn) qaStartBtn.addEventListener("click", () => {
   const id = qaStartBtn.getAttribute("data-regid");
   if (id) qaStart(id);
 });
 
-/* this module's announcement settings */
+ 
 const qaSettingsBox = document.getElementById("qa-settings");
 const qaSettingsBtn = document.getElementById("qa-settings-btn");
 if (qaSettingsBtn && qaSettingsBox) {
@@ -398,7 +383,7 @@ if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
   } finally { qaSaveBtn.disabled = false; }
 });
 
-/* live settings — a change here is heard on every device at once */
+ 
 try {
   onSnapshot(doc(db, "healthQueueConfig", QA_MODULE), (s) => {
     qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 },
@@ -411,7 +396,7 @@ try {
     if (window.__p47) window.__p47.errs.push("healthQueueConfig: " + code);
     qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
   });
-} catch (e) { /* the settings listener is optional — the queue keeps working */ }
+} catch (e) {   }
 
 
 function priBadge(p) {
@@ -451,7 +436,7 @@ function renderHistory() {
     : "";
 }
 
-/* ---------- save ---------- */
+ 
 function err(msg) { const e = $("#t-err"); e.hidden = !msg; e.textContent = msg || ""; }
 
 $("#t-save").addEventListener("click", async () => {
@@ -460,7 +445,7 @@ $("#t-save").addEventListener("click", async () => {
   if (!/^[0-9]{4}[A-Z]{4}$/.test(regId)) {
     return err("Enter the victim's Registration ID — 4 digits and 4 letters, for example 4827ABCD.");
   }
-  /* JAMALI-NO-SKIP (task 51): triage is step 2 — registration (step 1) must be on record first */
+   
   if (!regMap.has(regId)) {
     return err("No registration found for " + regId + ". A patient cannot skip a step — register the patient on page 322 (Victim Registration) first, then triage here.");
   }
@@ -507,7 +492,7 @@ $("#t-save").addEventListener("click", async () => {
   }
 });
 
-/* ---------- clear / again ---------- */
+ 
 function clearForm() {
   ["#t-regid", "#t-symptoms", "#t-temp", "#t-pulse", "#t-rr", "#t-bp", "#t-spo2",
    "#t-injuries", "#t-allergies", "#t-conditions", "#t-notes"]
@@ -531,6 +516,6 @@ $("#again-btn").addEventListener("click", () => {
   window.scrollTo(0, 0);
 });
 
-/* ---------- init ---------- */
+ 
 wireStaff($("#t-staff"), $("#t-staff-add"));
 resetWhen();

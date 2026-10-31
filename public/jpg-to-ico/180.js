@@ -1,7 +1,4 @@
-/* JAMALI — page 180 · JPG to ICO — the tool's own engine.
-   Convertor tool #116 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   JPG -> ICO: one file with 16/32/48/256 px PNG layers*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

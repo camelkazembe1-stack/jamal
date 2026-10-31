@@ -1,7 +1,4 @@
-/* JAMALI — page 286 · Barcode Generator — the tool's own engine.
-   Convertor tool #222 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   JsBarcode: CODE128 / EAN / UPC / CODE39 rendered to PNG*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

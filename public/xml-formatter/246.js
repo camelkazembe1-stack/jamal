@@ -1,7 +1,4 @@
-/* JAMALI — page 246 · XML Formatter — the tool's own engine.
-   Convertor tool #182 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   indentation rebuilt from the tag tree, text nodes preserved*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,8 +1,4 @@
-/* JAMALI — page 64 · the Convertor tool page engine.
-   Every tool folder holds an identical copy of 64.html. This script reads the
-   folder name (captured inline in 64.html before the address bar is cleaned),
-   looks the tool up in tools.js and draws its page.
-   No match (e.g. /convertor/64 itself) -> a friendly card with the way back. */
+ 
 (function () {
   var box = document.getElementById("tool-page");
   var slug = window.JAMALI_TOOL_SLUG || "";

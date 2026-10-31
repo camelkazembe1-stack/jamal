@@ -1,4 +1,4 @@
-// payment-voucher (page 38) — payment vouchers (shared "vouchers" collection).
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

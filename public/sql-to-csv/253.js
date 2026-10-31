@@ -1,7 +1,4 @@
-/* JAMALI — page 253 · SQL to CSV — the tool's own engine.
-   Convertor tool #189 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   INSERT INTO ... VALUES (...) tuples parsed (quotes respected)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

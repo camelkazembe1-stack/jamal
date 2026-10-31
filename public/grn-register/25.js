@@ -1,6 +1,6 @@
-// grn-register (page 25) — goods movement register (in).
-// Inventory rises by the qty RECEIVED here; the Stock Movement
-// report (page 31) and Inventory Valuation (page 46) read BOTH goods registers.
+
+
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

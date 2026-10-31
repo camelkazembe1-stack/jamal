@@ -1,20 +1,15 @@
-/* JAMALI — page 325 · Doctor Consultation (Health)
-   Own stylesheet for this folder — every JAMALI folder ships html + css + js.
-   Base design system lives in /records/records.css (imported below).
-   Family accent: emerald. Same panel, queue and form language as pages
-   322, 323 and 324, plus the prescription row editor and the destination
-   picker. */
+ 
 @import url("/records/records.css");
 
-/* the hidden attribute always wins, even over display rules above */
+ 
 [hidden] { display: none !important; }
 
-/* page accent — Health */
+ 
 h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #059669; }
 
-/* the workflow ribbon */
+ 
 .flow-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
   background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;
   font-size: 13px; font-weight: 600; border-radius: 12px;
@@ -22,13 +17,13 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .flow-ribbon b { font-weight: 800; }
 .flow-ribbon .arr { color: #059669; font-weight: 800; }
 
-/* the emergency banner */
+ 
 .urgent-note { display: flex; align-items: center; gap: 10px;
   background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
   font-weight: 700; font-size: 13.5px; border-radius: 12px;
   padding: 11px 14px; margin-bottom: 14px; }
 
-/* the Registration ID search row: input + Find Patient */
+ 
 .search-row { display: flex; gap: 10px; align-items: stretch; }
 .search-row input { flex: 1; min-width: 0; border: 1px solid #cbd5e1;
   border-radius: 10px; padding: 12px 14px; font-size: 16px; font-weight: 700;
@@ -38,7 +33,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .victim-line.ok { color: #047857; }
 .victim-line.miss { color: #b91c1c; }
 
-/* patient panels — read only, key then value */
+ 
 .rec-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 16px; }
 .rec-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
   padding: 8px 12px; min-width: 0; }
@@ -51,18 +46,18 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   border-radius: 10px; padding: 10px 12px; }
 .pri-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-/* status chips */
+ 
 .st-progress { background: #fef3c7; color: #92400e; }
 .st-waiting  { background: #e0f2fe; color: #075985; }
 .st-done     { background: #d1fae5; color: #047857; }
 
-/* the resume banner when an in progress consultation is reopened */
+ 
 .resume-note { background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
   font-weight: 700; font-size: 13px; border-radius: 10px;
   padding: 10px 14px; margin-bottom: 12px; }
 .save-ok { color: #047857; font-weight: 700; font-size: 13px; min-height: 16px; margin: 0 0 6px; }
 
-/* vital signs — full width band, five inputs side by side */
+ 
 .vitals-card { border: 1px solid #e2e8f0; border-radius: 12px;
   background: #f8fafc; padding: 12px 14px 14px; margin: 2px 0 14px; }
 .vitals-card h3 { font-size: 12px; letter-spacing: .07em; text-transform: uppercase;
@@ -79,14 +74,14 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .span2 { grid-column: span 2; }
 .opt { color: #94a3b8; font-weight: 600; font-size: 12px; }
 
-/* priority badges (same language as the triage page) */
+ 
 .st-critical { background: #fee2e2; color: #b91c1c; }
 .st-high     { background: #ffedd5; color: #c2410c; }
 .st-medium   { background: #fef3c7; color: #92400e; }
 .st-low      { background: #d1fae5; color: #047857; }
 .st-none     { background: #f1f5f9; color: #94a3b8; }
 
-/* ---------- prescription and order row editors ---------- */
+ 
 .row-ed { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1.6fr 34px;
   gap: 8px; align-items: start; background: #f8fafc; border: 1px solid #e2e8f0;
   border-radius: 10px; padding: 10px; margin-bottom: 8px; }
@@ -101,7 +96,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   align-self: end; font-size: 15px; }
 .row-del:hover { background: #fee2e2; }
 
-/* ---------- completed step + destination ---------- */
+ 
 .done-card { padding: 40px 22px; text-align: center; max-width: 720px; margin: 0 auto; }
 .done-icon { width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%;
   background: #dcfce7; color: #15803d; font-size: 30px; font-weight: 900;
@@ -142,7 +137,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   background: linear-gradient(135deg, #059669, #34d399); color: #fff;
   text-decoration: none; font-weight: 800; font-size: 14px; }
 
-/* narrow screens */
+ 
 @media (max-width: 900px) { .vitals-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rec-item.wide, .rec-note { grid-column: span 2; }
@@ -152,7 +147,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   .search-row { flex-direction: column; }
   .dest-row { flex-direction: column; } }
 
-/* print — clean paper output */
+ 
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .urgent-note,
   .flow-ribbon, .form-actions, .count-line, .search-row, .resume-note,

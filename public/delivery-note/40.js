@@ -1,4 +1,4 @@
-// delivery-note (page 40) — notes accompanying deliveries.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({
