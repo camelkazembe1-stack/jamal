@@ -216,18 +216,7 @@ res(u); });
 
     function bootVisibility() {
       return Promise.resolve(); /* T81: dash hiding removed - the visibility document is never read again */
-      return import("/firebase.js").then(function (fb) {
-        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]));
-      }).then(function (snap) {
-        if (snap && snap.exists()) {
-       var d = snap.data();
-       VIS.fields = d.fields || {};
-       VIS.menu = d.menu || {};
-       }
-     }).catch(function () {
-       /* nothing readable — everything stays as the grants allow */
-     });
- }
+}
 
  // The folder chain of a menu area (its ancestors), e.g.
  // add-transaction -> business. d:0 entries (Home, Account
@@ -1052,15 +1041,7 @@ k.indexOf(prefix) === 0) {
  }
 
  function applyUserHides(root) { return; /* T81: removed - nothing is dash-hidden for users */
-   var map = scanTargets(root);
-   var hidden = fieldsForPage();
-   for (var key in map) {
-     if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
-     if (!hidden[key]) continue;
-     var el = map[key].wrap || map[key].el;
-     if (el && el.style) el.style.display = "none";
-   }
- }
+}
 
   // ---- administrator: a dash on every BUTTON and INPUT FIELD, marked live
   // Dashes live in the DASHES registry and are REUSED across scans — the
@@ -1073,41 +1054,6 @@ k.indexOf(prefix) === 0) {
   // no sections, no page dash, and never on the Account Administration
   // page (pageBoot skips system-admin entirely).
   function scanAdminPage(root) { return; /* T81: removed - no dash chips, nothing hidden */
-    var map = scanTargets(root);
-    var hidden = fieldsForPage();
-    for (var key in map) {
-      if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
-      var t = map[key];
-      var hid = effHidden(key, t.el, hidden);
-      var host = t.wrap || t.el;
-        if (host && host.style) {
-          if (hid) {
-            host.setAttribute("data-jamali-gone", "1");
-            host.style.display = "none";
-          } else if (host.getAttribute("data-jamali-gone")) {
-            host.removeAttribute("data-jamali-gone");
-            host.style.display = "";
-          }
-        }
-        var b = DASHES[key];
-        if (!b || !document.documentElement.contains(b)) {
-          b = document.createElement("button");
-          b.type = "button";
-          b.className = "jamali-dash";
-          b.textContent = "-";
-          (function (k, bb) {
-            bb.addEventListener("click", function (ev) {
-              ev.preventDefault(); // a dash inside a button/label must
-              ev.stopPropagation(); // never trigger the host itself
-              makeToggler(k, bb)();
-            });
-          })(key, b);
-          placeDash(t, b);
-          DASHES[key] = b;
-        }
-        t.dash = b;
-        setDashState(b, hid, key);
-    }
 }
 
 // hidden directly, or hidden because a parent section is hidden
