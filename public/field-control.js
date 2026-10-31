@@ -4,11 +4,11 @@
 (function () {
   var S = null;
   try { S = JSON.parse(sessionStorage.getItem("JAMALI_SYSTEM_SESSION") || "null"); } catch (e) {}
-  if (!S) return;
+  if (!S) { try { console.log("[FC] no session - chips off"); } catch (e) {} return; }
   var ADMIN = S.role === "admin";
-  var PAGE = location.pathname.replace(/^\//, "").replace(/\.html$/, "").replace(/\/+$/, "");
+  var RAWURL = (window.performance && performance.getEntriesByType && performance.getEntriesByType("navigation") && performance.getEntriesByType("navigation")[0] && performance.getEntriesByType("navigation")[0].name) || location.href; var ANCHOR = document.createElement("a"); ANCHOR.href = RAWURL; var PAGE = ANCHOR.pathname.replace(/^\//, "").replace(/\.html$/, "").replace(/\/+$/, "");
   var F = PAGE.split("/")[0];
-  if (!PAGE || F === "system-admin" || F === "account-recovery") return;
+  if (!PAGE || F === "system-admin" || F === "account-recovery") { try { console.log("[FC] page off: " + PAGE); } catch (e) {} return; }
   var ST = { fields: {} }, seq = 0;
   var st = document.createElement("style");
   st.textContent = ".jamali-fc-btns{position:absolute;top:2px;right:2px;display:flex;gap:2px;z-index:60}" +
@@ -99,7 +99,8 @@
   }
   load().then(function(){
     var fn=ADMIN?adminScan:userScan;
-    var go=function(){fn(document.body);};
+    var booted=false;
+    var go=function(){fn(document.body);if(booted)return;booted=true;try{console.log("[FC] boot page="+PAGE+" admin="+ADMIN+" chips="+Math.floor(document.querySelectorAll(".jamali-fc-btn").length/2));}catch(e){}};
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",go);else go();
     setInterval(function(){fn(document.body);},1200);
   });
