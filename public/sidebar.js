@@ -215,6 +215,7 @@ res(u); });
     }
 
     function bootVisibility() {
+      return Promise.resolve(); /* T81: dash hiding removed - the visibility document is never read again */
       return import("/firebase.js").then(function (fb) {
         return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]));
       }).then(function (snap) {
@@ -1050,7 +1051,7 @@ k.indexOf(prefix) === 0) {
    return out;
  }
 
- function applyUserHides(root) {
+ function applyUserHides(root) { return; /* T81: removed - nothing is dash-hidden for users */
    var map = scanTargets(root);
    var hidden = fieldsForPage();
    for (var key in map) {
@@ -1071,7 +1072,7 @@ k.indexOf(prefix) === 0) {
   // TASK 63: buttons and input fields ONLY — no tiles, no link cards,
   // no sections, no page dash, and never on the Account Administration
   // page (pageBoot skips system-admin entirely).
-  function scanAdminPage(root) {
+  function scanAdminPage(root) { return; /* T81: removed - no dash chips, nothing hidden */
     var map = scanTargets(root);
     var hidden = fieldsForPage();
     for (var key in map) {
