@@ -1,7 +1,4 @@
-/* JAMALI — page 172 · TIFF to JPG — the tool's own engine.
-   Convertor tool #108 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   TIFF -> JPG via the UTIF decoder*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

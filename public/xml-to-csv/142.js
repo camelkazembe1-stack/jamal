@@ -1,7 +1,4 @@
-/* JAMALI — page 142 · XML to CSV — the tool's own engine.
-   Convertor tool #78 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   repeating <row>-style records become CSV columns*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

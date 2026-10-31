@@ -1,7 +1,4 @@
-/* JAMALI — page 177 · HEIC to JPG — the tool's own engine.
-   Convertor tool #113 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   HEIC (iPhone photos) -> JPG via heic2any*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 235 · HTML to EPUB — the tool's own engine.
-   Convertor tool #171 (Ebook and Publishing Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   the page's text becomes a small e-book with real chapters*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 157 · PPTX to Video — the tool's own engine.
-   Convertor tool #93 (Presentation Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   text slides are drawn on a canvas and recorded to a WebM video*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

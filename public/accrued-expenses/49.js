@@ -1,4 +1,4 @@
-// accrued-expenses (page 49) — accrued expenses register.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

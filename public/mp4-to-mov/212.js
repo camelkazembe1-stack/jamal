@@ -1,7 +1,4 @@
-/* JAMALI — page 212 · MP4 to MOV — the tool's own engine.
-   Convertor tool #148 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   MP4 and MOV share the ISO container family — verified re-encode + explain*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

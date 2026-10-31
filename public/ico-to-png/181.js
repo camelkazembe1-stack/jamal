@@ -1,7 +1,4 @@
-/* JAMALI — page 181 · ICO to PNG — the tool's own engine.
-   Convertor tool #117 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   ICO -> PNG: the largest layer is extracted*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

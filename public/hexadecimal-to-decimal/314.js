@@ -1,7 +1,4 @@
-/* JAMALI — page 314 · Hexadecimal to Decimal — the tool's own engine.
-   Convertor tool #250 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   base-16 conversion with validation and a bit/byte readout*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

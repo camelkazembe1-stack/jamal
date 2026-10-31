@@ -1,12 +1,12 @@
-// patient-admission (page 341) — JAMALI Health — New Admission
-// Admits an EXISTING patient. The record links to the registration that
-// already exists (patientId = the Registration ID) — no second patient
-// record is ever created. The admission number is generated (ADM-date-code)
-// and checked for uniqueness against the live admissions before saving.
-// Duplicate submissions are blocked by a busy flag on both save buttons.
-// Status on save: Pending (process started) or Admitted (confirmed).
-// Emergency rule: an emergency admission needs only patient, date, time,
-// type and reason — the diagnosis can follow the patient.
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, addDoc, onSnapshot } from "/firebase.js";
 
 window.__p52 = { page: "341", build: "52n1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -69,7 +69,7 @@ function rememberedStaff() {
 }
 function keepStaff(v) { if (v) { try { localStorage.setItem("jamaliStaff", v); } catch (e) {} } }
 
-/* ---------- live data ---------- */
+ 
 let regs = [];
 let docConsults = [];
 let admissions = [];
@@ -102,7 +102,7 @@ onSnapshot(collection(db, "healthAdmissions"), (snap) => {
 }, (e) => loadErr("healthAdmissions", e));
 window.__p52.listeners++;
 
-/* ---------- 1 · find the patient ---------- */
+ 
 function renderCands() {
   const box = $("#n-cands");
   if (selected) { box.innerHTML = ""; return; }
@@ -140,7 +140,7 @@ function renderSel() {
     esc(selected.phone ? "· " + selected.phone : "") + " " + priBadge(selected.priority);
 }
 
-/* the deep link: /patient-admission/341?patient=REGID */
+ 
 function maybeAutoOpen() {
   if (selected) return;
   const pid = new URLSearchParams(location.search).get("patient") || "";
@@ -149,7 +149,7 @@ function maybeAutoOpen() {
   if (r) { selected = r; $("#n-q").value = String(r.regId); renderCands(); renderSel(); }
 }
 
-/* ---------- 2 · the admission form ---------- */
+ 
 function ferr(msg) { const e = $("#n-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function fok(msg) {
   const e = $("#n-fok");
@@ -160,7 +160,7 @@ function fok(msg) {
 function v(sel) { return $(sel).value.trim(); }
 
 function freshNumber() {
-  // ADM-YYYYMMDD-XXXX, checked against the live admissions for uniqueness
+  
   for (let t = 0; t < 5; t++) {
     let code = "";
     const D = "0123456789", L = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -194,7 +194,7 @@ async function saveAdmission(confirmNow) {
   keepStaff(staff);
 
   const bConfirm = $("#n-confirm"), bSave = $("#n-save");
-  if (bConfirm.disabled || bSave.disabled) return; // duplicate-submission guard
+  if (bConfirm.disabled || bSave.disabled) return; 
   bConfirm.disabled = true; bSave.disabled = true;
   const status = confirmNow ? "Admitted" : "Pending";
   try {
@@ -220,7 +220,7 @@ async function saveAdmission(confirmNow) {
       createdAt: nowISO(),
       updatedAt: nowISO()
     });
-    // success panel — shown only after the store answered
+    
     $("#n-done-title").textContent = confirmNow
       ? "Admission confirmed" : "Admission saved as pending";
     $("#n-done-line").textContent = who(selected) + " · " + num +
@@ -252,7 +252,7 @@ $("#n-again").addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-/* defaults: the real current date and time — editable, never forced */
+ 
 $("#n-date").value = nowLocalDate();
 $("#n-time").value = nowLocalTime();
 $("#n-staff").value = rememberedStaff();

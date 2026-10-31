@@ -1,7 +1,4 @@
-/* JAMALI — page 96 · PDF Split — the tool's own engine.
-   Convertor tool #32 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   page ranges (e.g. 1-3,5) become separate PDFs — zipped when several*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

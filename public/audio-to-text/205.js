@@ -1,7 +1,4 @@
-/* JAMALI — page 205 · Audio to Text — the tool's own engine.
-   Convertor tool #141 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   live mic dictation with the built-in speech engine (files explained)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

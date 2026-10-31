@@ -1,19 +1,15 @@
-/* JAMALI — page 328 · Patient List (Health)
-   Own stylesheet for this folder — every JAMALI folder ships html + css + js.
-   Base design system lives in /records/records.css (imported below).
-   Family accent: emerald. One table of every victim, an edit modal, and
-   copy / edit / delete actions. Task 46: the page is the list, nothing else. */
+ 
 @import url("/records/records.css");
 
-/* the hidden attribute always wins, even over display rules below */
+ 
 [hidden] { display: none !important; }
 
-/* page accent — Health */
+ 
 h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #059669; }
 
-/* the Registration ID cell: the ID and its copy button */
+ 
 .id-cell { white-space: nowrap; }
 .id-txt { font-weight: 800; letter-spacing: .08em;
   font-variant-numeric: tabular-nums; margin-right: 8px; color: #065f46; }
@@ -23,7 +19,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .copy-btn:hover { border-color: #059669; color: #065f46; }
 .copy-btn.done { background: #d1fae5; border-color: #059669; color: #065f46; }
 
-/* the actions cell: the pen edits, the bin deletes */
+ 
 .act-cell { white-space: nowrap; }
 .icon-btn { width: 34px; height: 34px; display: inline-flex; align-items: center;
   justify-content: center; border-radius: 10px; border: 1px solid #cbd5e1;
@@ -38,7 +34,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .nowrap { white-space: nowrap; }
 td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-/* priority badges (same language as the triage page) */
+ 
 .st-critical { background: #fee2e2; color: #b91c1c; }
 .st-high     { background: #ffedd5; color: #c2410c; }
 .st-medium   { background: #fef3c7; color: #92400e; }
@@ -49,19 +45,19 @@ td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
 
-/* the red load-error banner: every failure is visible, none swallowed */
+ 
 .p-err { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca;
   background: #fef2f2; color: #b91c1c; border-radius: 10px; font-size: 13px;
   font-weight: 700; }
 .p-err .p-err-hint { display: block; margin-top: 4px; font-weight: 600; color: #7f1d1d; }
 
-/* the boot status line: proves the build and shows where the boot stopped */
+ 
 .p-boot { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: #64748b; }
 
-/* the saved note inside the edit modal */
+ 
 .form-ok { font-size: 13px; font-weight: 800; color: #047857; margin: 10px 0 0; }
 
-/* the edit modal */
+ 
 .modal-ovl { position: fixed; inset: 0; background: rgba(15, 23, 42, .55);
   z-index: 1200; display: flex; align-items: flex-start; justify-content: center;
   padding: 24px 12px; overflow-y: auto; }
@@ -81,13 +77,13 @@ td.c-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
   outline: 2px solid #a7f3d0; border-color: #059669; }
 .modal-card .form-actions { margin-top: 14px; }
 
-/* narrow screens */
+ 
 @media (max-width: 760px) {
   .m-grid { grid-template-columns: 1fr; }
   .modal-ovl { padding: 12px 8px; }
 }
 
-/* print — clean paper output */
+ 
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .count-line,
   .p-boot, .p-err, .modal-ovl, .act-cell, .copy-btn { display: none !important; }

@@ -1,6 +1,4 @@
-/* T82 - admin field control: (-) hide/restore + (+) fixed values on every
-   input field. Users: hidden fields removed, configured fields become
-   select-only mirrors. State: systemPageConfig/fieldControl */
+ 
 (function () {
   var S = null;
   try { S = JSON.parse(sessionStorage.getItem("JAMALI_SYSTEM_SESSION") || "null"); } catch (e) {}

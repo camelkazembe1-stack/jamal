@@ -1,7 +1,4 @@
-/* JAMALI — page 107 · PDF Sign — the tool's own engine.
-   Convertor tool #43 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   draw your signature on the pad, place it on any page at any size*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

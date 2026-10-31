@@ -1,7 +1,4 @@
-/* JAMALI — page 218 · Video to Images — the tool's own engine.
-   Convertor tool #154 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   seek-sampled frames rendered to PNG and zipped (fps of your choice)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

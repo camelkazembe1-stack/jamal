@@ -1,7 +1,4 @@
-/* JAMALI — page 164 · WebP to JPG — the tool's own engine.
-   Convertor tool #100 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   WebP -> JPG, quality 0.92*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

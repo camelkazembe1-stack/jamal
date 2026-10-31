@@ -1,5 +1,5 @@
-// credit-note-register (page 30) — note register (credit note).
-// A CREDIT note credits the customer's account (reduces the customer's debt).
+
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

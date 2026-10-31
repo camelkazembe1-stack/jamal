@@ -1,7 +1,4 @@
-/* JAMALI — page 150 · Text to Excel — the tool's own engine.
-   Convertor tool #86 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   delimited lines -> worksheet (choose the delimiter)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 191 · OCR Image to Text — the tool's own engine.
-   Convertor tool #127 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   tesseract.js reads the words out of the picture, in your browser*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 258 · JavaScript Beautifier — the tool's own engine.
-   Convertor tool #194 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   brace-based re-indentation (strings respected)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

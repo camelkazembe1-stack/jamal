@@ -1,12 +1,12 @@
-// patient-discharge (page 353) — JAMALI Health — Discharge Details
-// One discharge process from authorization to confirmation. The status is
-// derived honestly from the checklist; the final confirmation is only
-// possible when the clinician has approved AND every checklist step is
-// Completed or Not Applicable. Confirmation runs as ONE atomic batch:
-//   discharge -> Discharged · admission -> Discharged ·
-//   assignment -> Released   · bed -> Cleaning Required (never Available) ·
-//   a maintenance record is opened so page 336 can finish the cleaning.
-// Cancelled / Discharged are final; history is never overwritten or deleted.
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, setDoc, onSnapshot, writeBatch, arrayUnion } from "/firebase.js";
 
 window.__p54 = { page: "353", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -72,7 +72,7 @@ function stBadge(s) {
   return "<span class='st " + (ST_CLASS[s] || "st-none") + "'>" + esc(s || "—") + "</span>";
 }
 
-/* ---------- live data ---------- */
+ 
 let discharges = [];
 let admissions = [];
 let assignments = [];
@@ -113,7 +113,7 @@ onSnapshot(collection(db, "healthPrescriptions"), (snap) => {
 }, (e) => loadErr("healthPrescriptions", e));
 window.__p54.listeners++;
 
-/* ---------- open a discharge ---------- */
+ 
 function openById(id) {
   const d = discharges.find((x) => x.__id === id);
   if (!d) { $("#x-none").textContent = "No discharge with that reference is on record."; return; }
@@ -146,7 +146,7 @@ function maybeAutoOpen() {
   }
 }
 
-/* ---------- status derivation (honest, from the checklist) ---------- */
+ 
 function derivedStatus(d) {
   const items = (Array.isArray(d.checklist) ? d.checklist : []).filter((i) => i && i.key !== "auth");
   const out = items.filter((i) => (i.state || "Pending") === "Pending");
@@ -159,7 +159,7 @@ function derivedStatus(d) {
 }
 function isFinal(s) { return s === "Discharged" || s === "Cancelled"; }
 
-/* ---------- render ---------- */
+ 
 function renderAll() {
   if (!current) return;
   const d = current;
@@ -250,7 +250,7 @@ function renderAll() {
     (d.dischargedAt ? kv("Discharged At", esc(when(d.dischargedAt)) + (d.dischargedBy ? " · by " + esc(d.dischargedBy) : "")) : "") +
     (d.bedReleased ? kv("Bed released", "Yes — sent to cleaning") : "");
 
-  // the final confirmation: authorized AND everything done
+  
   const ready = d.decision === "Approved for Discharge" && d.status === "Ready for Departure";
   $("#x-confirm").hidden = !ready;
   $("#x-confirm-note").textContent = fin
@@ -265,7 +265,7 @@ function renderAll() {
   $("#x-ferr").hidden = true;
 }
 
-/* ---------- actions ---------- */
+ 
 function ferr(msg) { const e = $("#x-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function staffForAction() {
   const s = $("#x-staff").value.trim();
@@ -426,7 +426,7 @@ $("#x-cancelproc").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* ---------- THE confirmation — one atomic batch ---------- */
+ 
 $("#x-confirm").addEventListener("click", async () => {
   if (!current) return;
   ferr("");

@@ -1,10 +1,10 @@
-// patient-discharge (page 351) — JAMALI Health — Start Discharge
-// Opens a discharge process for a CURRENTLY ADMITTED patient (admission
-// status Admitted or Transferred). The record links to the existing patient
-// (patientId = the Registration ID) and to the admission being ended — no
-// patient record is created or changed here. Starting a discharge never
-// ends the stay: the clinician authorizes, the checklist is completed and
-// the confirmation on page 353 does the rest. One OPEN process per admission.
+
+
+
+
+
+
+
 import { requireAuth, db, collection, addDoc, onSnapshot } from "/firebase.js";
 
 window.__p54 = { page: "351", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -57,12 +57,12 @@ function keepStaff(v) { if (v) { try { localStorage.setItem("jamaliStaff", v); }
 
 const FINAL = new Set(["Discharged", "Cancelled"]);
 
-/* ---------- live data ---------- */
+ 
 let admissions = [];
 let assignments = [];
 let discharges = [];
 let regs = [];
-let selected = null;   // the admission being discharged
+let selected = null;   
 
 onSnapshot(collection(db, "healthAdmissions"), (snap) => {
   admissions = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
@@ -107,7 +107,7 @@ function admitLabel(a) {
     " · " + (a.admissionType || "—");
 }
 
-/* ---------- 1 · find the admitted patient ---------- */
+ 
 function renderCands() {
   const box = $("#s-cands");
   if (!box) return;
@@ -153,7 +153,7 @@ function renderSel() {
       : "No active bed placement — the discharge will simply end the admission.") + "</span>";
 }
 
-/* the deep link: /patient-discharge/351?patient=REGID */
+ 
 function maybeAutoOpen() {
   if (selected) return;
   const pid = new URLSearchParams(location.search).get("patient") || "";
@@ -166,12 +166,12 @@ function maybeAutoOpen() {
   }
 }
 
-/* ---------- 2 · save the discharge record ---------- */
+ 
 function ferr(msg) { const e = $("#s-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function v(sel) { return $(sel).value.trim(); }
 
 function freshNumber() {
-  // DIS-YYYYMMDD-XXLL, checked against the live discharges for uniqueness
+  
   for (let t = 0; t < 5; t++) {
     let code = "";
     const D = "0123456789", L = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -182,7 +182,7 @@ function freshNumber() {
   return "DIS-" + todayLocal().replace(/-/g, "") + "-" + Date.now().toString(36).toUpperCase().slice(-5);
 }
 
-/* the checklist the details page walks through (spec §7) */
+ 
 function freshChecklist() {
   return [
     { key: "review",   label: "Required clinical review completed", state: "Pending", by: "", at: "" },
@@ -211,7 +211,7 @@ async function saveDischarge() {
     (dup.dischargeNumber || "") + "). Finish or cancel it before starting another.");
   keepStaff(staff);
   const btn = $("#s-save");
-  if (btn.disabled) return; // duplicate-submission guard
+  if (btn.disabled) return; 
   btn.disabled = true;
   const place = activePlacementOf(selected.patientId);
   const status = decision === "Approved for Discharge" ? "Approved" : "Pending Authorization";

@@ -1,10 +1,10 @@
-// radiology (page 370) — JAMALI Health — Imaging Hub & Dashboard
-// Every number is calculated from the stored imaging requests — never
-// hard-coded. The queue panel follows the task-53 contract: the waiting and
-// completed counters, the current and the next patient, and the speaker,
-// which announces exactly the patient the panel shows using this module's
-// saved destination (healthQueueConfig "radiology"). Urgent requests come
-// first in the queue; calling a patient never completes a request by itself.
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, setDoc, onSnapshot } from "/firebase.js";
 
 window.__p54 = { page: "370", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -41,12 +41,7 @@ try {
   throw e;
 }
 
-/* =====================================================================
-   JAMALI-QUEUE (task 53 contract, task 54 voice) — the shared queue panel.
-   Waiting counts the open requests (urgent first, then waiting time);
-   Completed today counts the requests finished today. The announcement
-   reads the patient shown in the panel — never anybody else — at the speed
-   saved in the settings. */
+ 
 const QA_MODULE = "radiology";
 const QA_DEFAULT = "Radiology";
 let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 };
@@ -202,9 +197,9 @@ try {
     if (window.__p54) window.__p54.errs.push("healthQueueConfig: " + code);
     qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
   });
-} catch (e) { /* the settings listener is optional — the dashboard keeps working */ }
+} catch (e) {   }
 
-/* ---------- live data & the counters ---------- */
+ 
 let reqs = [];
 
 function stBadge(s) {
@@ -239,8 +234,7 @@ function renderDash() {
   set("x-today", today.length);
 }
 
-/* queue order: In Progress first (the current), then urgent before routine,
-   then waiting time, then the request number */
+ 
 function queueOrder(x) {
   return (String(x.priority) === "Urgent" ? 0 : 1);
 }

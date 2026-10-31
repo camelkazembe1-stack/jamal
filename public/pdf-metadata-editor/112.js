@@ -1,7 +1,4 @@
-/* JAMALI — page 112 · PDF Metadata Editor — the tool's own engine.
-   Convertor tool #48 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   title / author / subject / keywords read and rewritten (pdf-lib)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

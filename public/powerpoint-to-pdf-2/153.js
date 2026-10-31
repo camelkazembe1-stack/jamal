@@ -1,7 +1,4 @@
-/* JAMALI — page 153 · PowerPoint to PDF — the tool's own engine.
-   Convertor tool #89 (Presentation Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   slide text -> one PDF page per slide (jsPDF)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

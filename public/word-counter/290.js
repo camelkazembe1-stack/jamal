@@ -1,7 +1,4 @@
-/* JAMALI — page 290 · Word Counter — the tool's own engine.
-   Convertor tool #226 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   words / characters / sentences / reading time, live*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

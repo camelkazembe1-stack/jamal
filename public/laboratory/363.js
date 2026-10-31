@@ -1,13 +1,13 @@
-// laboratory (page 363) — JAMALI Health — Lab Workbench
-// One request at a time. The specimen record, the per-test results and the
-// verification all run on the live stored record; nothing is decided by the
-// software itself. Rules enforced here:
-//   · testing cannot start on a Rejected / Recollection Required specimen
-//   · a result can only be verified after it has been entered
-//   · completing the request requires every test Completed (verified or
-//     explicitly cancelled tests are kept, never silently dropped)
-//   · a critical result must record who was notified, by whom and when,
-//     and the acknowledgement is a separate, named step
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, arrayUnion } from "/firebase.js";
 
 window.__p54 = { page: "363", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -81,7 +81,7 @@ onSnapshot(collection(db, "healthLabRequests"), (snap) => {
 }, (e) => loadErr("healthLabRequests", e));
 window.__p54.listeners++;
 
-/* ---------- open a request ---------- */
+ 
 function openById(id) {
   const d = reqs.find((x) => x.__id === id);
   if (!d) { $("#w-none").textContent = "No request with that reference is on record."; return; }
@@ -114,7 +114,7 @@ function maybeAutoOpen() {
   }
 }
 
-/* ---------- render ---------- */
+ 
 function renderAll() {
   if (!current) return;
   const d = current;
@@ -212,7 +212,7 @@ function renderAll() {
   $("#w-ferr").hidden = true;
 }
 
-/* ---------- actions ---------- */
+ 
 function ferr(msg) { const e = $("#w-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function staffForAction() {
   const s = $("#w-staff").value.trim();
@@ -226,7 +226,7 @@ function touch(fields) {
     Object.assign({ updatedAt: nowISO() }, fields));
 }
 
-/* specimen */
+ 
 $("#w-spsave").addEventListener("click", async () => {
   if (!current) return;
   ferr("");
@@ -260,7 +260,7 @@ $("#w-spcollect").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* test result inputs -> local buffer, saved on the row button */
+ 
 const buf = {};
 $("#w-tests").addEventListener("input", (e) => {
   const el = e.target;
@@ -320,7 +320,7 @@ $("#w-tests").addEventListener("click", async (e) => {
   }
 });
 
-/* critical */
+ 
 $("#w-critflag").addEventListener("click", async () => {
   if (!current) return;
   ferr("");
@@ -351,7 +351,7 @@ $("#w-critack").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* request status */
+ 
 $("#w-starttesting").addEventListener("click", async () => {
   if (!current) return;
   ferr("");

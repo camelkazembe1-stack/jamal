@@ -1,7 +1,4 @@
-/* JAMALI — page 190 · Image Metadata Viewer — the tool's own engine.
-   Convertor tool #126 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   type, size, dimensions, modified date — what the browser sees*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 215 · WebM to MP4 — the tool's own engine.
-   Convertor tool #151 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   MP4 where the encoder exists, honest WebM copy otherwise*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

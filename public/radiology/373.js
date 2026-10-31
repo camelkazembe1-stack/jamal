@@ -1,13 +1,13 @@
-// radiology (page 373) — JAMALI Health — Imaging Workbench
-// One request at a time. Rules enforced here:
-//   · a procedure can only be performed once, and "Not Performed" needs a
-//     reason — nothing disappears silently
-//   · a report can only be finalized after findings exist; the person who
-//     wrote the findings does not verify their own report — an authorized
-//     second person does
-//   · a correction keeps the previous findings in the report's history
-//   · an urgent finding must be notified to a named clinician and
-//     acknowledged by name, in two separate steps
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, arrayUnion } from "/firebase.js";
 
 window.__p54 = { page: "373", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -81,7 +81,7 @@ onSnapshot(collection(db, "healthImagingRequests"), (snap) => {
 }, (e) => loadErr("healthImagingRequests", e));
 window.__p54.listeners++;
 
-/* ---------- open a request ---------- */
+ 
 function openById(id) {
   const d = reqs.find((x) => x.__id === id);
   if (!d) { $("#w-none").textContent = "No request with that reference is on record."; return; }
@@ -114,7 +114,7 @@ function maybeAutoOpen() {
   }
 }
 
-/* ---------- render ---------- */
+ 
 function renderAll() {
   if (!current) return;
   const d = current;
@@ -220,7 +220,7 @@ function renderAll() {
   $("#w-ferr").hidden = true;
 }
 
-/* ---------- actions ---------- */
+ 
 function ferr(msg) { const e = $("#w-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function staffForAction() {
   const s = $("#w-staff").value.trim();
@@ -328,7 +328,7 @@ $("#w-procs").addEventListener("click", async (e) => {
   }
 });
 
-/* urgent findings */
+ 
 $("#w-uflag").addEventListener("click", async () => {
   if (!current) return;
   ferr("");
@@ -360,7 +360,7 @@ $("#w-uack").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* request status */
+ 
 $("#w-startproc").addEventListener("click", async () => {
   if (!current) return;
   ferr("");

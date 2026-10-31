@@ -1,7 +1,4 @@
-/* JAMALI — page 84 · YAML to Text — the tool's own engine.
-   Convertor tool #20 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mini YAML parser (maps, lists, nesting) -> readable key: value lines*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

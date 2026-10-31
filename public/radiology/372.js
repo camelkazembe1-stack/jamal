@@ -1,8 +1,8 @@
-// radiology (page 372) — JAMALI Health — Imaging Requests & Appointments
-// The imaging register with the appointment editor. Scheduling, rescheduling,
-// marking a missed appointment and cancelling all record the reason and the
-// staff member. The register itself is read-only here — performing the
-// procedure and writing the report happen on the workbench (page 373).
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, arrayUnion } from "/firebase.js";
 
 window.__p54 = { page: "372", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -66,7 +66,7 @@ function stBadge(s) {
 
 let rows = [];
 let tab = "open";
-let apFor = null; // the request whose appointment is being edited
+let apFor = null; 
 
 onSnapshot(collection(db, "healthImagingRequests"), (snap) => {
   rows = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
@@ -132,7 +132,7 @@ $("#l-q").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preven
 $("#l-q").addEventListener("input", render);
 $("#l-status").addEventListener("change", render);
 
-/* ---------- the appointment editor ---------- */
+ 
 $("#l-body").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-ap]");
   if (!btn) return;
@@ -232,7 +232,7 @@ $("#a-cancel").addEventListener("click", async () => {
 });
 $("#a-close").addEventListener("click", () => { apFor = null; renderAp(); });
 
-/* deep link: /radiology/372?patient=REGID — highlight via search */
+ 
 function maybeAutoSearch() {
   const pid = new URLSearchParams(location.search).get("patient") || "";
   if (pid) { $("#l-q").value = pid; render(); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 297 · Document Splitter — the tool's own engine.
-   Convertor tool #233 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   splits by lines-per-file or blank-line sections, zips the parts*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

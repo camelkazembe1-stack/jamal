@@ -1,7 +1,7 @@
-// patient-discharge (page 352) — JAMALI Health — Discharge List
-// The discharge register. Current processes are listed separately from
-// completed, cancelled and deferred ones; searching and filtering run on
-// the live stored records only. Opening a row goes to the details page.
+
+
+
+
 import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
 
 window.__p54 = { page: "352", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -70,7 +70,7 @@ onSnapshot(collection(db, "healthDischarges"), (snap) => {
 }, (e) => loadErr("healthDischarges", e));
 window.__p54.listeners++;
 
-/* tabs */
+ 
 $("#l-tabs").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-tab]");
   if (!b) return;

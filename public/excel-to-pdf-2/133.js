@@ -1,7 +1,4 @@
-/* JAMALI — page 133 · Excel to PDF — the tool's own engine.
-   Convertor tool #69 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   SheetJS + jsPDF AutoTable: every sheet becomes a table*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

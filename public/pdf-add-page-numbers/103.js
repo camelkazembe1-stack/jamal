@@ -1,7 +1,4 @@
-/* JAMALI — page 103 · PDF Add Page Numbers — the tool's own engine.
-   Convertor tool #39 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   Page i of N stamped bottom-centre on every page (pdf-lib)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

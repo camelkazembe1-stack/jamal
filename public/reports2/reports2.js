@@ -1,14 +1,14 @@
-// /public/reports2/reports2.js — JAMALI's business-reports engine.
-// Section A of the 24 reports (pages 55-61): General Ledger Report,
-// Accounts Receivable / Payable Report, Customer / Supplier Statement,
-// Aged Receivables / Payables. EVERY report is GENERATED from the books,
-// registers and journals already stored in JAMALI — nothing is re-entered.
-//
-// One source of truth: the party model below reuses the Debtors/Creditors
-// rules (credit sales/purchases raise the balance; returns, credit/debit
-// notes and Cash/Bank settlements from people WITH credit activity reduce
-// it) and adds the Invoice Register and the Note Register as first-class
-// line items, each tagged with its source so no movement is counted twice.
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
 import { classify } from "/journals/journal.js";
 import { buildAccounts, postingsFor, asDate } from "/ledger/postings.js";
@@ -107,7 +107,7 @@ function showEmpty(ui, title, sub) {
   ui.count.textContent = "";
 }
 
-/* ---------- period bar (report rule 6: period selection) ---------- */
+ 
 function periodBar(rootSel, mode) {
   const root = document.querySelector(rootSel);
   const bar = document.createElement("div");
@@ -146,16 +146,16 @@ function acctSelect(ui) {
   return sel;
 }
 
-/* ---------- party model (AR + AP shared, one source of truth) ---------- */
+ 
 function partyModel(txns, invoices, notes, dir) {
-  // dir "sales" -> customers / AR ; "purchases" -> suppliers / AP
+  
   const invDir = dir === "sales" ? "sales" : "purchase";
   const ret = dir === "sales" ? "salesReturns" : "purchasesReturns";
   const pay = dir === "sales" ? "cashReceipts" : "cashPayments";
   const noteDir = dir === "sales" ? "credit" : "debit";
-  // A person enters the model only with real DEBT activity: journalled
-  // credit sales/purchases or register invoices (same rule as the
-  // Debtors/Creditors books — bare payments/other income stay out).
+  
+  
+  
   const debtPeople = new Set(
     txns.filter((t) => classify(t) === dir && t.name).map((t) => t.name));
   invoices.forEach((v) => { if (v.direction === invDir && v.party) debtPeople.add(v.party); });
@@ -195,8 +195,7 @@ function partyModel(txns, invoices, notes, dir) {
   return rows;
 }
 
-/* FIFO settlement: payments + returns + notes settle the OLDEST due
-   invoice first, so every open item carries its own outstanding figure. */
+ 
 function openItems(row) {
   const items = row.events.filter((e) => e.inc > 0).map((e) => ({
     ref: e.ref, date: startOfDay(e.ts),
@@ -228,7 +227,7 @@ function bucketsOf(row, asof) {
 const kvRow = (k, v, hl) => '<div class="kv' + (hl ? " hl" : "") + '"><span class="k">' + esc(k) +
   '</span><span class="v">' + esc(v) + "</span></div>";
 
-/* ============ 55 General Ledger Report ============ */
+ 
 const SERIES = { asset: 100, liability: 200, person: 300, revenue: 400, expense: 500 };
 function acctNumbers(M) {
   const nums = new Map(), next = {};
@@ -302,7 +301,7 @@ export async function initGLReport(cfg) {
   readTx((tx) => { TX = tx; render(); }, (e) => failState(ui, e, "the General Ledger Report"));
 }
 
-/* ============ 56 AR Report / 57 AP Report ============ */
+ 
 function openItemsCard(ui) {
   const ic = document.createElement("div");
   ic.className = "card table-card";
@@ -380,7 +379,7 @@ async function initPartyReport(cfg, dir) {
 export const initARReport = (cfg) => initPartyReport(cfg, "sales");
 export const initAPReport = (cfg) => initPartyReport(cfg, "purchases");
 
-/* ============ 58 Customer Statement / 59 Supplier Statement ============ */
+ 
 async function initStatement(cfg, dir) {
   await requireAuth();
   const isAR = dir === "sales";
@@ -403,8 +402,8 @@ async function initStatement(cfg, dir) {
     sel.innerHTML = names.map((n) => "<option>" + esc(n) + "</option>").join("");
     sel.value = cur && names.includes(cur) ? cur : names[0];
     const row = rows.find((r) => r.party === sel.value);
-    // Balance direction: for customers a positive net = they owe JAMALI (DR);
-    // for suppliers a positive net = JAMALI owes THEM (CR).
+    
+    
     const balStr = (b) => (isAR ? fmtBal(b) : fmtBal(-b));
     const f = pb.from() ? parseDay(pb.from()) : null;
     const tt = pb.to() ? parseDay(pb.to()) : null;
@@ -447,7 +446,7 @@ async function initStatement(cfg, dir) {
 export const initCustomerStatement = (cfg) => initStatement(cfg, "sales");
 export const initSupplierStatement = (cfg) => initStatement(cfg, "purchases");
 
-/* ============ 60 Aged Receivables / 61 Aged Payables ============ */
+ 
 async function initAging(cfg, dir) {
   await requireAuth();
   const isAR = dir === "sales";

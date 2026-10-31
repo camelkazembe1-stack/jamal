@@ -1,10 +1,10 @@
-// ward-management (page 335) — JAMALI Health — Ward & Bed Transfers
-// Moves a placed patient to another bed or ward in ONE atomic batch:
-//   new Active assignment + old assignment Released (reason Transfer) +
-//   old bed back to Available + destination bed to Occupied + the transfer
-//   document itself + the linked admission marked Transferred. The
-//   destination bed is re-checked against the live data at the moment of
-//   saving; history is preserved and the patient record is never duplicated.
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/firebase.js";
 
 window.__p52 = { page: "335", build: "52t1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -57,13 +57,13 @@ function rememberedStaff() {
 }
 function keepStaff(v) { if (v) { try { localStorage.setItem("jamaliStaff", v); } catch (e) {} } }
 
-/* ---------- live data ---------- */
+ 
 let assignments = [];
 let wards = [];
 let beds = [];
 let admissions = [];
 let transfers = [];
-let moving = null; // the active assignment being moved
+let moving = null; 
 
 onSnapshot(collection(db, "healthBedAssignments"), (snap) => {
   assignments = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
@@ -99,7 +99,7 @@ onSnapshot(collection(db, "healthBedTransfers"), (snap) => {
 }, (e) => loadErr("healthBedTransfers", e));
 window.__p52.listeners++;
 
-/* ---------- 1 · pick the patient ---------- */
+ 
 function renderPick() {
   const act = assignments.filter((a) => a.status === "Active");
   $("#t-empty").hidden = act.length > 0;
@@ -131,7 +131,7 @@ function maybeAutoOpen() {
   if (a) { moving = a; renderPick(); renderDest(); renderWards(); renderBeds(); }
 }
 
-/* ---------- 2 · destination ---------- */
+ 
 function renderDest() {
   const card = $("#t-card");
   const panel = $("#t-dpatient");
@@ -205,12 +205,12 @@ $("#t-go").addEventListener("click", async () => {
   keepStaff(staff);
 
   const btn = $("#t-go");
-  if (btn.disabled) return; // duplicate-submission guard
+  if (btn.disabled) return; 
   btn.disabled = true;
   try {
     const ref = doc(collection(db, "healthBedAssignments"));
     const batch = writeBatch(db);
-    // the new placement
+    
     batch.set(ref, {
       assignmentId: ref.id,
       patientId: fresh.patientId || "",
@@ -229,14 +229,14 @@ $("#t-go").addEventListener("click", async () => {
       releasedBy: "",
       releaseReason: ""
     });
-    // the old placement ends
+    
     batch.update(doc(db, "healthBedAssignments", fresh.__id), {
       status: "Released",
       releasedAt: nowISO(),
       releasedBy: staff,
       releaseReason: "Transfer"
     });
-    // the old bed is freed
+    
     const oldBed = beds.find((x) => x.__id === String(fresh.bedId) ||
       (String(x.wardId) === String(fresh.wardId) && x.bedNumber === fresh.bedNumber));
     if (oldBed) {
@@ -248,7 +248,7 @@ $("#t-go").addEventListener("click", async () => {
         updatedAt: nowISO()
       });
     }
-    // the destination bed is taken
+    
     batch.update(doc(db, "healthBeds", b.__id), {
       status: "Occupied",
       currentPatientId: fresh.patientId || "",
@@ -256,7 +256,7 @@ $("#t-go").addEventListener("click", async () => {
       currentAssignmentId: ref.id,
       updatedAt: nowISO()
     });
-    // the transfer record itself
+    
     batch.set(doc(collection(db, "healthBedTransfers")), {
       transferId: "TR" + Date.now().toString(36).toUpperCase() +
         Math.floor(Math.random() * 36).toString(36).toUpperCase(),
@@ -276,7 +276,7 @@ $("#t-go").addEventListener("click", async () => {
       transferredAt: nowISO(),
       status: "Completed"
     });
-    // the linked admission moves to Transferred (never to Discharged)
+    
     const adm = admissions.find((x) => (x.status === "Admitted" || x.status === "Transferred") &&
       (x.admissionNumber === fresh.admissionId || x.__id === fresh.admissionId));
     if (adm) {
@@ -302,7 +302,7 @@ $("#t-go").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
-/* ---------- history ---------- */
+ 
 function renderHistory() {
   $("#h-empty").hidden = transfers.length > 0;
   $("#h-wrap").hidden = transfers.length === 0;

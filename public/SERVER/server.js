@@ -1,42 +1,42 @@
-// ============================================================================
-// SERVER/server.js — JAMALI server configuration (the server brain)
-// ----------------------------------------------------------------------------
-// ARCHITECTURE (task 55):
-//
-//   COMPUTER MODULES --+
-//                      |
-//   BUSINESS MODULES --+--> SERVER/linker.js   (the ONLY connection point)
-//                      |             |
-//   HEALTH MODULES ----+             v
-//                               SERVER/server.js   (this file)
-//                                     |
-//                                     v
-//                         selected server configuration
-//                                     |
-//                                     v
-//                         database and other services
-//
-// This file decides WHICH server the project uses and HOW it behaves:
-// hosting, authentication, database connection, analytics and every other
-// server-dependent arrangement. It is the ONLY file in the whole project
-// allowed to hold server credentials, database SDK imports and connection
-// code. No module may copy anything from here.
-//
-// TO MOVE THE PROJECT TO A DIFFERENT SERVER:
-//   1. add a configuration block under SERVER_CONFIG.servers below
-//   2. add a connector function for it in the CONNECTORS section
-//   3. flip SERVER_CONFIG.active to its name
-// No Computer, Business or Health module changes — they all talk to
-// SERVER/linker.js, and the linker talks to this file.
-//
-// NOTE FOR STATIC HOSTING (Vercel): browsers can only load files the host
-// serves, and Vercel serves the public/ folder. This file therefore also
-// exists at public/SERVER/server.js as an exact byte-for-byte mirror of
-// this canonical copy. After editing this file, refresh the mirror:
-//     cp SERVER/*.js public/SERVER/
-// ============================================================================
 
-// --- SDK imports of the firebase connector (the currently active server) ----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -70,14 +70,14 @@ import {
   deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ---------------------------------------------------------------------------
-// SERVER CONFIGURATION
-// One entry per known server arrangement. Each entry describes the hosting,
-// authentication, database and other server-dependent behaviour an
-// organization requires.
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
 export const SERVER_CONFIG = {
-  // The server the whole project talks to right now.
+  
   active: "firebase",
 
   servers: {
@@ -98,28 +98,28 @@ export const SERVER_CONFIG = {
       }
     }
 
-    // ------------------------------------------------------------------
-    // Example of a future arrangement (placeholder, intentionally not
-    // wired). Copy it, fill it in, add a connector for it below, then
-    // set SERVER_CONFIG.active to its key. Nothing else changes.
-    //
-    // ,ownServer: {
-    //   label: "Organization self-hosted server",
-    //   hosting: "organization data centre",
-    //   auth: "own-accounts",
-    //   database: "postgres-via-rest",
-    //   config: { baseUrl: "https://server.organization.example" }
-    // }
-    // ------------------------------------------------------------------
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
   }
 };
 
-// ---------------------------------------------------------------------------
-// CONNECTORS — one function per server arrangement.
-// A connector receives its configuration block and returns the live
-// connection the linker hands to the modules:
-//   { name, app, auth, provider, db, authApi, firestore }
-// ---------------------------------------------------------------------------
+
+
+
+
+
+
 function firebaseConnector(cfg) {
   const app = initializeApp(cfg.config);
 
@@ -129,7 +129,7 @@ function firebaseConnector(cfg) {
 
   const db = getFirestore(app);
 
-  // Analytics only where the environment supports it
+  
   if (cfg.analytics) {
     isSupported().then((ok) => { if (ok) getAnalytics(app); }).catch(() => {});
   }
@@ -152,10 +152,10 @@ function firebaseConnector(cfg) {
 
 const CONNECTORS = { firebase: firebaseConnector };
 
-// ---------------------------------------------------------------------------
-// START the active connector (synchronous — same timing the old shared
-// module had, so every page keeps its current behaviour).
-// ---------------------------------------------------------------------------
+
+
+
+
 const activeName = SERVER_CONFIG.active;
 const activeCfg = SERVER_CONFIG.servers[activeName];
 if (!activeCfg) {
@@ -170,7 +170,7 @@ if (!connectorFactory) {
 }
 const connector = connectorFactory(activeCfg);
 
-// --- what server.js hands to the linker -------------------------------------
+
 export const server = {
   name: connector.name,
   info: {

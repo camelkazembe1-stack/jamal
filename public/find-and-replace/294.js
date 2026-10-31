@@ -1,7 +1,4 @@
-/* JAMALI — page 294 · Find and Replace — the tool's own engine.
-   Convertor tool #230 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   literal or regex replace, case flag, live match count*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

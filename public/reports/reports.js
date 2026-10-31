@@ -1,17 +1,17 @@
-// /public/reports/reports.js — JAMALI's report & schedule engine.
-// The 14 reports (pages 41-54) are GENERATED from the records — nothing
-// is re-entered. This file carries the shared table shell plus one builder
-// per report family:
-//   initTB       (41)  Trial Balance — from the double-entry postings
-//   initAdjTB    (42)  Adjusted Trial Balance — TB + adjustments collection
-//   initPostTB   (43)  Post-Closing TB — real accounts + Capital (net profit)
-//   initAR / initAP (44/45) — schedules that mirror the Debtors/Creditors books
-//   initStock    (31)  Stock Movement — generated from the goods registers
-//   initInv      (46)  Inventory Valuation — FIFO and Weighted Average
-//   initDep      (33)  Depreciation — straight-line, NBV automatic
-//   initFAS      (47)  Fixed Assets Schedule
-//   initAccDep   (48)  Accumulated Depreciation
-//   initBankRec  (53)  Bank Reconciliation — bank items vs Bank A/C books
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
 import { classify } from "/journals/journal.js";
 import { buildAccounts, accountBalance, asDate } from "/ledger/postings.js";
@@ -103,7 +103,7 @@ function showEmpty(ui, title, sub) {
   ui.empty.querySelector(".empty-sub").textContent = sub || "";
 }
 
-/* ============ 41 Trial Balance ============ */
+ 
 export async function initTB(cfg) {
   await requireAuth();
   const ui = shell(cfg.root, [
@@ -133,7 +133,7 @@ export async function initTB(cfg) {
   }, (e) => failState(ui, e, "the Trial Balance"));
 }
 
-/* ============ 42 Adjusted Trial Balance + 43 Post-Closing ============ */
+ 
 function adjustedModel(txns, adjs) {
   const M = buildAccounts(txns);
   const adjDR = Object.create(null), adjCR = Object.create(null);
@@ -209,7 +209,7 @@ export async function initPostTB(cfg) {
     const rows = adjustedModel(TX, ADJ);
     const real = rows.filter((r) => r.kind !== "revenue" && r.kind !== "expense" && r.bal !== 0);
     const profit = -rows.filter((r) => r.kind === "revenue" || r.kind === "expense")
-      .reduce((s, r) => s + r.bal, 0); // revenue negative, expense positive -> profit > 0
+      .reduce((s, r) => s + r.bal, 0); 
     if (!real.length && !profit) return showEmpty(ui, "No real accounts yet",
       "After the closing entries only assets, liabilities, persons and Capital remain here.");
     let drT = 0, crT = 0, html = "";
@@ -231,12 +231,12 @@ export async function initPostTB(cfg) {
   readColl("adjustments", (a) => { ADJ = a; render(); });
 }
 
-/* ============ 44 AR Schedule / 45 AP Schedule ============ */
+ 
 function partySchedule(txns, book) {
-  // book = "sales" (Debtors) | "purchases" (Creditors) — same rules as the
-  // Debtors/Creditors books: credit sales/purchases raise the balance,
-  // returns and Cash/Bank settlements reduce it (settlement only counts
-  // when the person actually has credit activity).
+  
+  
+  
+  
   const main = book === "sales" ? "sales" : "purchases";
   const ret = book === "sales" ? "salesReturns" : "purchasesReturns";
   const pay = book === "sales" ? "cashReceipts" : "cashPayments";
@@ -325,7 +325,7 @@ export async function initAP(cfg) {
   }, (e) => failState(ui, e, "the AP Schedule"));
 }
 
-/* ============ 31 Stock Movement (generated from goods) ============ */
+ 
 export async function initStock(cfg) {
   await requireAuth();
   const ui = shell(cfg.root, [
@@ -363,7 +363,7 @@ export async function initStock(cfg) {
     ui.tfoot.innerHTML = totalCells([{ label: 1 }, null, null, null, tIn, tOut, null, tVal]);
     ui.card.style.display = "";
     ui.empty.hidden = true;
-    // per-product summary (WA value)
+    
     const per = Object.create(null);
     rows.forEach((g) => {
       const p = g.product || "\u2014";
@@ -388,7 +388,7 @@ export async function initStock(cfg) {
   }, (e) => failState(ui, e, "the Stock Movement"));
 }
 
-/* ============ 46 Inventory Valuation (FIFO + WA) ============ */
+ 
 export async function initInv(cfg) {
   await requireAuth();
   const ui = shell(cfg.root, [
@@ -411,7 +411,7 @@ export async function initInv(cfg) {
         s.layers.push({ q, c: Number(g.unitPrice || 0) });
       } else {
         s.outQ += q;
-        let left = q; // FIFO consumes the OLDEST layer first
+        let left = q; 
         while (left > 0 && s.layers.length) {
           const l = s.layers[0];
           const take = Math.min(l.q, left);
@@ -441,7 +441,7 @@ export async function initInv(cfg) {
   }, (e) => failState(ui, e, "the Inventory Valuation"));
 }
 
-/* ============ asset helpers (straight line) ============ */
+ 
 function assetFigures(a) {
   const cost = Number(a.cost || 0), sal = Number(a.salvage || 0);
   const life = Number(a.life || 1) || 1;
@@ -452,7 +452,7 @@ function assetFigures(a) {
   return { cost, sal, life, annual, years, accum, nbv: cost - accum };
 }
 
-/* ============ 33 Depreciation (this year's charge) ============ */
+ 
 export async function initDep(cfg) {
   await requireAuth();
   const ui = shell(cfg.root, [
@@ -488,7 +488,7 @@ export async function initDep(cfg) {
   }, (e) => failState(ui, e, "the Depreciation report"));
 }
 
-/* ============ 47 Fixed Assets Schedule ============ */
+ 
 export async function initFAS(cfg) {
   await requireAuth();
   const ui = shell(cfg.root, [
@@ -518,7 +518,7 @@ export async function initFAS(cfg) {
   }, (e) => failState(ui, e, "the Fixed Assets Schedule"));
 }
 
-/* ============ 48 Accumulated Depreciation ============ */
+ 
 export async function initAccDep(cfg) {
   await requireAuth();
   const ui = shell(cfg.root, [
@@ -546,20 +546,20 @@ export async function initAccDep(cfg) {
   }, (e) => failState(ui, e, "the Accumulated Depreciation"));
 }
 
-/* ============ 53 Bank Reconciliation ============ */
+ 
 const REC_EFFECT = {
   "Balance per bank statement": null,
   "Deposit in transit": +1,
   "Outstanding cheque": -1,
   "Bank charge": -1,
   "Bank credit": +1,
-  "Error": 0 // signed as entered
+  "Error": 0 
 };
 
 export async function initBankRec(cfg) {
   await requireAuth();
   const ui = shell(cfg.root, [], { icon: "\uD83C\uDFE7", kv: true });
-  ui.card.style.display = "none"; // no table — the items live in the records instance
+  ui.card.style.display = "none"; 
   let BOOK = null, ITEMS = null;
   const render = () => {
     if (!BOOK || !ITEMS) return;
@@ -580,7 +580,7 @@ export async function initBankRec(cfg) {
       else if (i.type === "Error") sums.err += amt;
     });
     const adjusted = stmtAmt + sums.dep - sums.chq - sums.charge + sums.credit + sums.err;
-    const book = accountBalance(BOOK.accts, "Bank"); // DR - CR, negative = overdrawn
+    const book = accountBalance(BOOK.accts, "Bank"); 
     const diff = adjusted - book;
     ui.kvTitle.textContent = "Bank Reconciliation as at " + fmtDay(stmt.date);
     const line = (k, v, cls) => '<div class="kv' + (cls ? " hl" : "") + '"><span class="k">' + esc(k) +

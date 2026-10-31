@@ -1,7 +1,4 @@
-/* JAMALI — page 280 · Base64 Encoder — the tool's own engine.
-   Convertor tool #216 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   text or binary -> base64 (chunked btoa for big files)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 137 · XLSX to ODS — the tool's own engine.
-   Convertor tool #73 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   xlsx -> OpenDocument Spreadsheet (LibreOffice Calc)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

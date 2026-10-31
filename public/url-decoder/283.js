@@ -1,7 +1,4 @@
-/* JAMALI — page 283 · URL Decoder — the tool's own engine.
-   Convertor tool #219 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   percent-escapes (and +) decoded back to text*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

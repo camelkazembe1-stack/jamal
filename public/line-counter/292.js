@@ -1,7 +1,4 @@
-/* JAMALI — page 292 · Line Counter — the tool's own engine.
-   Convertor tool #228 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   lines, empty vs filled, longest line, average length*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

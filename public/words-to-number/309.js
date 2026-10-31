@@ -1,7 +1,4 @@
-/* JAMALI — page 309 · Words to Number — the tool's own engine.
-   Convertor tool #245 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   English words parsed back into digits*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,5 +1,5 @@
-// debit-note-register (page 29) — note register (debit note).
-// A DEBIT note debits the supplier's account (goods returned to them — what we owe falls).
+
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

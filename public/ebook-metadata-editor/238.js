@@ -1,7 +1,4 @@
-/* JAMALI — page 238 · Ebook Metadata Editor — the tool's own engine.
-   Convertor tool #174 (Ebook and Publishing Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   title/author/subject edited in the EPUB's OPF, repacked in place*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 73 · Markdown to PDF — the tool's own engine.
-   Convertor tool #9 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   markdown is flattened to text, then typeset into a .pdf via jsPDF*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

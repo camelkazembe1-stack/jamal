@@ -1,7 +1,4 @@
-/* JAMALI — page 155 · PowerPoint to Images — the tool's own engine.
-   Convertor tool #91 (Presentation Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pulls the real media files out of the .pptx package and zips them*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 159 · Text to PowerPoint — the tool's own engine.
-   Convertor tool #95 (Presentation Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   first line = title, the rest become bullet slides (PptxGenJS)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

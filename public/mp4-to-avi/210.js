@@ -1,7 +1,4 @@
-/* JAMALI — page 210 · MP4 to AVI — the tool's own engine.
-   Convertor tool #146 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   transcodes via the browser encoder — honest WebM output (no AVI writer exists)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

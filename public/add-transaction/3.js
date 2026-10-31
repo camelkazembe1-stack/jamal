@@ -1,13 +1,13 @@
-// add-transaction (page 3) — JAMALI transaction engine
-// Steps: 1 choose (groups shown as LABELS, transactions sit on their group)
-//        -> 2 form -> 3 saved. No page reloads.
-// Every record gets the 6 fields: transactionName, dateTime, flowMethod,
-// transactionType, name, amount. Bank charges save as a SEPARATE record.
+
+
+
+
+
 import { requireAuth, db, collection, doc, writeBatch, serverTimestamp } from "/firebase.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+await requireAuth(); 
 
-/* ============ EDIT ME — transaction lists per type ============ */
+ 
 const TRANSACTIONS = {
   IN: [
     { name: "Sales",                 icon: "\u{1F4B0}" },
@@ -31,19 +31,19 @@ const TRANSACTIONS = {
     { name: "Cash Withdrawal", icon: "\u{1F4B8}" }
   ]
 };
-/* ============================================================== */
+ 
 
 const $ = (s) => document.querySelector(s);
 const state = { type: null, txn: null, method: null, charges: null };
 
-/* ---------- step navigation ---------- */
+ 
 function showStep(n) {
   document.querySelectorAll(".step").forEach((s) => s.classList.remove("is-active"));
   $("#step-" + n).classList.add("is-active");
   window.scrollTo({ top: 0 });
 }
 
-/* ---------- step 1: all groups at once — labels, not buttons ---------- */
+ 
 const TYPE_BADGE = { IN: "b-in", OUT: "b-out", NEUTRAL: "b-neutral", CONTRA: "b-contra" };
 
  $("#groups").innerHTML = Object.keys(TRANSACTIONS).map((t) =>
@@ -58,7 +58,7 @@ const TYPE_BADGE = { IN: "b-in", OUT: "b-out", NEUTRAL: "b-neutral", CONTRA: "b-
      </div>
    </section>`).join("");
 
-/* click a transaction -> hide ALL tiles -> form shows immediately */
+ 
 document.querySelectorAll("#groups .tile").forEach((btn) =>
   btn.addEventListener("click", () => {
     state.type = btn.dataset.type;
@@ -66,7 +66,7 @@ document.querySelectorAll("#groups .tile").forEach((btn) =>
     openForm();
   }));
 
-/* ---------- step 2: dynamic form ---------- */
+ 
 const METHOD_ICONS = { Cash: "\u{1F4B5}", Credit: "\u{1F464}", Bank: "\u{1F3DB}\uFE0F" };
 
 function openForm() {
@@ -150,7 +150,7 @@ function updatePreview() {
   $("#preview").textContent = "Will save: " + p;
 }
 
-/* ---------- save ---------- */
+ 
  $("#save-btn").addEventListener("click", async () => {
   const err = (m) => { const e = $("#form-err"); e.textContent = m; e.hidden = false; };
   $("#form-err").hidden = true;
@@ -176,7 +176,7 @@ function updatePreview() {
                   transactionType: state.type, name: bank, amount: c });
     }
 
-  } else { // IN / OUT
+  } else { 
     if (!state.method) return err("Choose Cash, Credit or Bank.");
     let name = null;
     if (state.method === "Credit") {
@@ -200,7 +200,7 @@ function updatePreview() {
   btn.disabled = true;
   btn.textContent = "Saving\u2026";
   try {
-    const batch = writeBatch(db); // one atomic write -> records share the same timestamp
+    const batch = writeBatch(db); 
     docs.forEach((d) => batch.set(doc(collection(db, "transactions")), d));
     await batch.commit();
     $("#done-note").textContent = docs.length === 1
@@ -217,7 +217,7 @@ function updatePreview() {
   }
 });
 
-/* ---------- back / reset ---------- */
+ 
  $("#back-2").addEventListener("click", () => showStep(1));
  $("#again-btn").addEventListener("click", () => {
   state.type = state.txn = null;

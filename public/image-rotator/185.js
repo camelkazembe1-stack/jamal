@@ -1,7 +1,4 @@
-/* JAMALI — page 185 · Image Rotator — the tool's own engine.
-   Convertor tool #121 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   90° steps or any angle, expanded canvas keeps every pixel*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

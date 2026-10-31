@@ -1,8 +1,4 @@
-/* JAMALI — Computer · All File Viewer (T83)
-   Pick file(s) from the device and open them right here:
-   video plays, audio plays, images, PDF, text/code and Word (.docx) open
-   in place; every other extension opens through a new-tab blob URL.
-   100% client side — files never leave the device, nothing uploads. */
+ 
 (function () {
   var input = document.getElementById("afv-input");
   var choose = document.getElementById("afv-choose");

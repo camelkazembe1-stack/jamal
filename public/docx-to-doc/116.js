@@ -1,7 +1,4 @@
-/* JAMALI — page 116 · DOCX to DOC — the tool's own engine.
-   Convertor tool #52 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   reads the .docx and repacks the text as a Word-openable .doc*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

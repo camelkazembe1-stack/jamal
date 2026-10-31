@@ -1,12 +1,12 @@
-// JAMALI — Account Administration (380) — T74 BUTTONS ACTIVE
-// The table paints instantly and the Approve / Remove-approval buttons
-// are ACTIVE from the first paint — no disabled state, no waiting.
-// The update itself is guarded by the Firestore rules (only a real
-// systemAdmin can change a status). T74 also fixes the T73 bug: the
-// background admin check subscribed but never called verifyAdmin,
-// which left the buttons stuck disabled.
-let F = null;          // firebase module
-let IS_ADMIN = false;  // true only for the real administrator (notes only)
+
+
+
+
+
+
+
+let F = null;          
+let IS_ADMIN = false;  
 let ROWS = [];
 let PHONES = {};
 
@@ -44,7 +44,7 @@ async function readAll() {
       String(x.a.usernameDisplay || x.id).toLowerCase()
         .localeCompare(String(y.a.usernameDisplay || y.id).toLowerCase()));
     PHONES = {};
-    paint(); // instant paint — phones fill in below, one by one
+    paint(); 
     for (const r of ROWS) {
       try {
         const cs = await F.getDoc(F.doc(F.db, "systemCredentials", r.id));
@@ -64,10 +64,10 @@ function checkAdmin() {
   if (F.auth.currentUser) { verifyAdmin(F.auth.currentUser); return; }
   const t = setTimeout(() => { unsub(); verifyAdmin(F.auth.currentUser); }, 4000);
   const unsub = F.onAuthStateChanged(F.auth, (u) => {
-    if (!u) return;              // keep waiting — timeout is the backstop
+    if (!u) return;              
     clearTimeout(t);
     unsub();
-    verifyAdmin(u);              // THE FIX: actually verify the admin
+    verifyAdmin(u);              
   });
 }
 
@@ -154,7 +154,7 @@ async function decide(id, next, btn) {
   if (btn) btn.disabled = true;
   try {
     await F.updateDoc(F.doc(F.db, "systemAccounts", id), { status: next });
-    readAll(); // re-read and repaint with the new status
+    readAll(); 
   } catch (e) {
     const m = txt(e);
     showErr("Could not update " + id + ": " + m +
@@ -166,12 +166,12 @@ async function decide(id, next, btn) {
 }
 
 
-// ============ T76 - PER-USER MODULE SELECTION ============
-// One "Select Modules" button per approved non-admin row. Main
-// modules (menu depth 1), their submodules (depth 2) and pages
-// (depth 3). Ticking a module reveals its submodules; a granted
-// child always carries its parents. Saved to systemAccounts.grants -
-// the SAME array the sidebar, home and the page guards read.
+
+
+
+
+
+
 let MODSEL_ID = "";
 
 function menuTree() {

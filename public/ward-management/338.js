@@ -1,9 +1,9 @@
-// ward-management (page 338) — JAMALI Health — Bed & Transfer History
-// Three read-only registers in tabs: the bed register (every bed with its
-// live status), the bed assignment register (active and released — the
-// release date is kept forever) and the transfer register (every completed
-// move). One search box filters the open tab. No failure can hide: every
-// listener carries an error callback and failures paint the banner.
+
+
+
+
+
+
 import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
 
 window.__p52 = { page: "338", build: "52v1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -56,7 +56,7 @@ const ST_CLASS = {
   "Maintenance Required": "st-maint", "Out of Service": "st-oos"
 };
 
-/* ---------- live data ---------- */
+ 
 let beds = [];
 let assignments = [];
 let transfers = [];
@@ -84,7 +84,7 @@ onSnapshot(collection(db, "healthBedTransfers"), (snap) => {
 }, (e) => loadErr("healthBedTransfers", e));
 window.__p52.listeners++;
 
-/* ---------- tabs + search ---------- */
+ 
 let tab = "beds";
 document.querySelectorAll(".tab").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -98,7 +98,7 @@ document.querySelectorAll(".tab").forEach((btn) => {
   });
 });
 
-/* ---------- render ---------- */
+ 
 function render() {
   const q = $("#v-q").value.trim().toLowerCase();
   const hit = (s) => String(s || "").toLowerCase().includes(q);

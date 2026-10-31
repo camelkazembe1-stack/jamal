@@ -1,7 +1,4 @@
-/* JAMALI — page 122 · HTML to DOCX — the tool's own engine.
-   Convertor tool #58 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   the page's visible text becomes a real .docx (structure flattened)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

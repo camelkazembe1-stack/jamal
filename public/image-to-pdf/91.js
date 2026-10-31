@@ -1,7 +1,4 @@
-/* JAMALI — page 91 · Image to PDF — the tool's own engine.
-   Convertor tool #27 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   JPG/PNG embed directly, every other format is canvas-converted first*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

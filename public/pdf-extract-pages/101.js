@@ -1,7 +1,4 @@
-/* JAMALI — page 101 · PDF Extract Pages — the tool's own engine.
-   Convertor tool #37 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   only the listed pages are copied into a fresh PDF*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

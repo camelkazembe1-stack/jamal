@@ -1,7 +1,4 @@
-/* JAMALI — page 165 · PNG to WebP — the tool's own engine.
-   Convertor tool #101 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   PNG -> WebP*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

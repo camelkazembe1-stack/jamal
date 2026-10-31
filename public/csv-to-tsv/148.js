@@ -1,7 +1,4 @@
-/* JAMALI — page 148 · CSV to TSV — the tool's own engine.
-   Convertor tool #84 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   quoted CSV parsed properly, fields re-joined with tabs*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

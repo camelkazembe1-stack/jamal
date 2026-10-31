@@ -1,7 +1,4 @@
-/* JAMALI — page 318 · XML Validator — the tool's own engine.
-   Convertor tool #254 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   DOMParser strictness + parsererror line/column readout*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 293 · Text Case Converter — the tool's own engine.
-   Convertor tool #229 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   UPPER, lower, Title, Sentence and camelCase in one place*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

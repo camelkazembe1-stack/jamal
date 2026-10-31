@@ -1,33 +1,29 @@
-// doctor-consultation (page 325) — JAMALI Health
-// The stage after the nurse. The doctor pulls the patient by Registration ID,
-// reviews what registration, triage and the nurse already recorded (read only
-// history — nothing is overwritten), examines the patient and records the
-// medical assessment, the diagnosis (working or confirmed), the investigations,
-// the treatment plan, the prescriptions and the treatment / procedure orders.
-// DESTINATION: the doctor decides where the patient goes next. The list is the
-// facility's own — a destination typed once is saved for every future
-// consultation, and duplicates are refused (case-insensitive).
-// PHARMACY REQUESTS: when the pharmacist cannot dispense a prescribed medicine
-// they propose an alternative; the request waits here until the doctor accepts
-// it, rejects it with a replacement, or sends the patient outside the pharmacy.
-// STATUS: a consultation saves as "in-progress", is completed explicitly, and
-// is "sent" once the doctor records the destination. A completed record is
-// never rewritten — a correction is a new consultation.
-// EMERGENCY RULE: documentation never delays urgent care.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, auth, db, collection, query, addDoc, updateDoc, doc, setDoc, onSnapshot, serverTimestamp, writeBatch } from "/firebase.js";
-/* patient chip - non-fatal since Task 47: if /health/patient-info.js cannot
-   load (a missing or stale file), the page loses only the floating chip,
-   never the find, the forms or the saves. */
+ 
 let showPatient = function () {}, hidePatient = function () {};
 try {
   const pi = await import("/health/patient-info.js");
   if (pi && typeof pi.showPatient === "function") showPatient = pi.showPatient;
   if (pi && typeof pi.hidePatient === "function") hidePatient = pi.hidePatient;
-} catch (e) { /* chip unavailable - everything else keeps working */ }
+} catch (e) {   }
 
-/* boot diagnostics (Task 47 - the same contract as the Patient List, build
-   46d): every collection listener carries an error callback and every
-   failure paints itself on the page instead of dying in silence. */
+ 
 window.__p47 = Object.assign(window.__p47 || {}, {
   page: "325", build: "53", queue: true, ran: true, auth: false,
   listeners: 0, need: 7, answered: false, errs: []
@@ -53,7 +49,7 @@ function bootDone() {
 }
 
 try {
-  await requireAuth(); // not logged in? -> bounced to "/"
+  await requireAuth(); 
   window.__p47.auth = true;
 } catch (e) {
   herr("the sign-in check", e);
@@ -64,7 +60,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* ---------- shared helpers (same language as pages 322 to 324) ---------- */
+ 
 function pad(n) { return String(n).padStart(2, "0"); }
 function when(iso) {
   if (!iso) return "—";
@@ -86,19 +82,19 @@ function priBadge(p) {
 }
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 
-/* the doctor on record comes from the signed in account, never typed */
+ 
 const DOCTOR = String((auth && auth.currentUser && (auth.currentUser.email || auth.currentUser.uid)) || "unknown");
 $("#c-doctor").textContent = DOCTOR;
 
-/* ---------- live data ---------- */
+ 
 let regs = [];
 const regMap = new Map();
 let triages = [];
-const lastTriage = new Map();   // regId -> most recent triage doc
-let nurseConsults = [];         // every nursing consultation, newest first
-let docConsults = [];           // every doctor consultation, newest first
-let destinations = [];          // the facility's destination list
-let rxLines = [];               // every prescription line, newest first
+const lastTriage = new Map();   
+let nurseConsults = [];         
+let docConsults = [];           
+let destinations = [];          
+let rxLines = [];               
 
 onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
   regs = snap.docs.map((d) => d.data())
@@ -154,15 +150,7 @@ window.__p47.listeners = 7;
 function qaStart(id) { qerr(""); openPatient(id); }
 
 
-/* =====================================================================
-   JAMALI-QUEUE (task 53) — the queue panel shared by every service stage:
-   waiting and completed counts, the current and the next patient, the
-   speaker announcement, and this module's own announcement settings.
-   Waiting counts patients waiting for THIS service only; Completed counts
-   the patients finished here today. The announcement always reads the
-   patient the panel is showing — never anybody else — and it reads the
-   destination the hospital saved for this module (healthQueueConfig),
-   falling back to the module's own name. No hard-coded rooms or IDs. */
+ 
 const QA_MODULE = "doctor";
 const QA_DEFAULT = "Doctor Consultation";
 let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 };
@@ -181,7 +169,7 @@ function qaLocalDay(stamp) {
 function qaIsToday(stamp) { return String(stamp || "").slice(0, 10) === new Date().toISOString().slice(0, 10); }
 function qaIsTodayLocal(stamp) { return String(stamp || "").slice(0, 10) === qaTodayLocal(); }
 
-/* the destination, composed from the saved settings */
+ 
 function qaText() {
   const dept = String(qaCfg.department || "").trim();
   const staff = String(qaCfg.staffName || "").trim();
@@ -194,13 +182,12 @@ function qaSentence(id) {
   return "Patient number " + String(id) + ", please proceed to " + qaText().dest + ".";
 }
 function qaRate() {
-  /* task 54 voice fix: the saved speed wins; a calm 0.75 is the default */
+   
   const r = Number(qaCfg.voiceRate);
   return (r >= 0.5 && r <= 1.1) ? r : 0.75;
 }
 function qaSpeech(id) {
-  /* spoken letter by letter with real pauses (commas), and the whole
-     sentence is repeated so a waiting patient cannot miss their number */
+   
   const d = String(id).split("").join(", ");
   const dest = qaText().dest;
   return "Patient number " + d + ". Please proceed to " + dest +
@@ -240,7 +227,7 @@ function qaRenderPanel() {
   qaSet("qa-note", nxt ? "Ready to announce: " + qaSentence(nxt.regId) : "");
 }
 
-/* every stage derives its own queue, then calls this */
+ 
 function qaUpdate(waitingRows, current, doneCount) {
   qaState.waitingCount = Array.isArray(waitingRows) ? waitingRows.length : 0;
   qaState.doneCount = doneCount || 0;
@@ -249,7 +236,7 @@ function qaUpdate(waitingRows, current, doneCount) {
   qaRenderPanel();
 }
 
-/* the speaker button announces exactly the patient shown above it */
+ 
 const qaAnnounceBtn = document.getElementById("qa-announce");
 if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
   const id = qaAnnounceBtn.getAttribute("data-regid");
@@ -274,14 +261,14 @@ if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
   }
 });
 
-/* open the next patient straight from the panel */
+ 
 const qaStartBtn = document.getElementById("qa-start");
 if (qaStartBtn) qaStartBtn.addEventListener("click", () => {
   const id = qaStartBtn.getAttribute("data-regid");
   if (id) qaStart(id);
 });
 
-/* this module's announcement settings */
+ 
 const qaSettingsBox = document.getElementById("qa-settings");
 const qaSettingsBtn = document.getElementById("qa-settings-btn");
 if (qaSettingsBtn && qaSettingsBox) {
@@ -330,7 +317,7 @@ if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
   } finally { qaSaveBtn.disabled = false; }
 });
 
-/* live settings — a change here is heard on every device at once */
+ 
 try {
   onSnapshot(doc(db, "healthQueueConfig", QA_MODULE), (s) => {
     qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 },
@@ -343,10 +330,10 @@ try {
     if (window.__p47) window.__p47.errs.push("healthQueueConfig: " + code);
     qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
   });
-} catch (e) { /* the settings listener is optional — the queue keeps working */ }
+} catch (e) {   }
 
 
-/* ---------- STEP 1: search + queue + pharmacy requests ---------- */
+ 
 function qerr(msg) { const e = $("#q-err"); e.hidden = !msg; e.textContent = msg || ""; }
 function serr(msg) { const e = $("#d-err"); e.hidden = !msg; e.textContent = msg || ""; }
 function okk(msg) { const e = $("#d-ok"); e.hidden = !msg; e.textContent = msg || ""; }
@@ -376,10 +363,9 @@ function refreshSearchLine() {
   }
 }
 
-/* the queue: latest nursing consultation completed, no closed doctor
-   consultation after it. Not limited to today — the doctor sees the backlog. */
+ 
 function renderQueue() {
-  const nDone = new Map(); // regId -> latest completed nursing consultation
+  const nDone = new Map(); 
   nurseConsults.forEach((c) => {
     if (c.status === "completed" && c.regId && !nDone.has(String(c.regId))) {
       nDone.set(String(c.regId), c);
@@ -390,7 +376,7 @@ function renderQueue() {
     const closed = docConsults.some((d) => String(d.regId) === regId &&
       (d.status === "completed" || d.status === "sent") &&
       String(d.savedAt || "") > String(nc.savedAt || ""));
-    if (closed) return; // the doctor stage already finished after that nursing record
+    if (closed) return; 
     const open = docConsults.find((d) => String(d.regId) === regId && d.status === "in-progress");
     const t = lastTriage.get(regId);
     rows.push({
@@ -423,7 +409,7 @@ function renderQueue() {
     ? rows.length + (rows.length === 1 ? " patient waiting for the doctor."
                                        : " patients waiting for the doctor.")
     : "";
-  /* JAMALI-QUEUE (task 53): feed the queue panel — waiting, current, completed */
+   
   const qaWait = rows.filter((r) => r.status !== "progress").map((r) => ({
     regId: r.regId,
     sub: (regMap.get(r.regId) ? who(regMap.get(r.regId)) : "—") +
@@ -444,7 +430,7 @@ function renderQueue() {
   qaUpdate(qaWait, qaCur, qaDoneSet.size);
 }
 
-/* pharmacy requests awaiting the doctor's decision */
+ 
 let rejectingId = null;
 function renderAlts() {
   const open = rxLines.filter((r) => r.status === "alternative proposed")
@@ -553,10 +539,10 @@ $("#q-body").addEventListener("click", (e) => {
   if (btn) { qerr(""); openPatient(btn.getAttribute("data-regid")); }
 });
 
-/* ---------- STEP 2: the consultation ---------- */
-let current = null;        // the patient's registration doc
-let openConsult = null;    // an in-progress doctor consultation being resumed
-let lastConsultId = null;  // the consultation just completed, for the Send step
+ 
+let current = null;        
+let openConsult = null;    
+let lastConsultId = null;  
 
 function item(k, v, wide) {
   if (v === "" || v == null) return "";
@@ -564,7 +550,7 @@ function item(k, v, wide) {
     '</div><div class="rec-v">' + v + "</div></div>";
 }
 
-/* JAMALI-NO-SKIP (task 51): the doctor consultation is step 4 — the nursing consultation (step 3) must be completed first */
+ 
 function stepGate(regId) {
   const done = nurseConsults.some((c) => String(c.regId) === String(regId) && c.status === "completed");
   if (!done) {
@@ -575,8 +561,7 @@ function stepGate(regId) {
 function openPatient(regId) {
   const blocked = stepGate(regId);
   if (blocked) { qerr(blocked); return; }
-  /* JAMALI-QUEUE (task 53): one consultation at a time — the next patient
-     stays next until the current patient's work here is completed */
+   
   const qaBusy = docConsults.find((d) => d.status === "in-progress" && String(d.regId) !== String(regId));
   if (qaBusy) {
     qerr("Patient " + qaBusy.regId + " is still in progress at this desk. Complete that consultation first — the queue panel shows them as the current patient. Then the next patient can be seen.");
@@ -588,7 +573,7 @@ function openPatient(regId) {
   openConsult = docConsults.find((d) => String(d.regId) === regId && d.status === "in-progress") || null;
   const t = lastTriage.get(regId) || null;
 
-  /* registration panel — read only */
+   
   const ident = current.isUnidentified
     ? "Unidentified"
     : esc(current.fullName || "Unnamed");
@@ -606,7 +591,7 @@ function openPatient(regId) {
     item("Incident", esc(current.incidentType)) +
     (current.incidentDescription ? item("Incident notes", esc(current.incidentDescription), true) : "");
 
-  /* triage panel — read only */
+   
   if (t) {
     $("#c-triage").innerHTML =
       '<div class="rec-item wide"><div class="rec-k">Priority</div><div class="rec-v pri-line">' +
@@ -629,7 +614,7 @@ function openPatient(regId) {
       '<div class="rec-note">No triage assessment is on record for this patient. The doctor can still assess the patient — emergency care is never delayed by a missing form.</div>';
   }
 
-  /* the latest completed nursing consultation — read only */
+   
   const nLatest = nurseConsults.find((c) => String(c.regId) === regId && c.status === "completed") || null;
   if (nLatest) {
     $("#c-nurse").innerHTML =
@@ -658,7 +643,7 @@ function openPatient(regId) {
       '<div class="rec-note">No completed nursing consultation is on record for this patient. The doctor can still assess the patient — the nursing record can follow, and emergency care is never delayed.</div>';
   }
 
-  /* nursing history table */
+   
   const past = nurseConsults.filter((c) => String(c.regId) === regId);
   $("#c-prev-card").hidden = past.length === 0;
   $("#c-prev").innerHTML = past.map((c) =>
@@ -670,7 +655,7 @@ function openPatient(regId) {
     "<td>" + esc(c.nurse || "—") + "</td></tr>"
   ).join("");
 
-  /* form state */
+   
   clearForm();
   serr(""); okk("");
   if (openConsult) {
@@ -701,7 +686,7 @@ $("#c-back").addEventListener("click", (e) => {
   window.scrollTo(0, 0);
 });
 
-/* ---------- the form ---------- */
+ 
 const FIELDS = ["#d-pc", "#d-hpi", "#d-hist", "#d-meds", "#d-allergies",
   "#d-temp", "#d-pulse", "#d-rr", "#d-bp", "#d-spo2",
   "#d-exam", "#d-findings", "#d-notes",
@@ -798,7 +783,7 @@ function clearForm() {
   $("#ord-rows").innerHTML = "";
 }
 
-/* ---------- save ---------- */
+ 
 async function saveConsult(complete) {
   serr(""); okk("");
   if (!current) return serr("No patient is open — go back and find the patient first.");
@@ -910,10 +895,10 @@ async function saveConsult(complete) {
 $("#d-progress").addEventListener("click", () => saveConsult(false));
 $("#d-complete").addEventListener("click", () => saveConsult(true));
 
-/* ---------- STEP 3: destination ---------- */
+ 
 function derr(msg) { const e = $("#dest-err"); e.hidden = !msg; e.textContent = msg || ""; }
 
-let pendingDest = null; // remembered when a destination is added, applied on the next render
+let pendingDest = null; 
 function renderDestinations() {
   const sel = $("#dest-sel");
   const want = pendingDest || sel.value;
@@ -943,8 +928,8 @@ $("#dest-add").addEventListener("click", async () => {
       savedAt: nowISO(),
       createdAt: serverTimestamp()
     });
-    pendingDest = name;      // the snapshot re-render keeps the selection...
-    $("#dest-sel").value = name; // ...and if it already re-rendered, this holds
+    pendingDest = name;      
+    $("#dest-sel").value = name; 
     $("#dest-line").className = "victim-line ok";
     $("#dest-line").textContent = '"' + name + '" saved — it will be offered on every future consultation.';
     $("#dest-new").value = "";

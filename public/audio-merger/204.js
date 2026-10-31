@@ -1,7 +1,4 @@
-/* JAMALI — page 204 · Audio Merger — the tool's own engine.
-   Convertor tool #140 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   several files decoded and joined (resampled to the first rate)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

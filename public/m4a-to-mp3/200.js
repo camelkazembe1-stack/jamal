@@ -1,7 +1,4 @@
-/* JAMALI — page 200 · M4A to MP3 — the tool's own engine.
-   Convertor tool #136 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   M4A/AAC in -> MP3 out*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

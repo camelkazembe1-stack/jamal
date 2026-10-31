@@ -1,7 +1,4 @@
-/* JAMALI — page 141 · CSV to XML — the tool's own engine.
-   Convertor tool #77 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   header row becomes element names, one <row> per data row*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 291 · Character Counter — the tool's own engine.
-   Convertor tool #227 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   character totals plus letter/digit/punct breakdown, live*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

@@ -1,7 +1,4 @@
-/* JAMALI — page 227 · SRT to VTT — the tool's own engine.
-   Convertor tool #163 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   SubRip -> WebVTT: header, millisecond dots, cue settings kept*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

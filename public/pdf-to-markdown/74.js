@@ -1,7 +1,4 @@
-/* JAMALI — page 74 · PDF to Markdown — the tool's own engine.
-   Convertor tool #10 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pdf.js text layer -> markdown paragraphs (headings kept as text)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

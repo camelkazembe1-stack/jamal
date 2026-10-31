@@ -1,7 +1,4 @@
-/* JAMALI — page 126 · Markdown to DOCX — the tool's own engine.
-   Convertor tool #62 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   markdown flattened to text (headings uppercase) -> real .docx*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

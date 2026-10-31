@@ -1,7 +1,4 @@
-/* JAMALI — page 317 · JSON Validator — the tool's own engine.
-   Convertor tool #253 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   strict JSON.parse with precise error messages*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

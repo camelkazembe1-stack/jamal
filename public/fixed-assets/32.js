@@ -1,4 +1,4 @@
-// fixed-assets (page 32) — the asset register feeding the depreciation reports.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

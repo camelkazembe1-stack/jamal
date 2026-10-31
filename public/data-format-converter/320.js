@@ -1,7 +1,4 @@
-/* JAMALI — page 320 · Data Format Converter — the tool's own engine.
-   Convertor tool #256 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   auto-detects JSON/CSV/XML/YAML in, converts to the chosen out format*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

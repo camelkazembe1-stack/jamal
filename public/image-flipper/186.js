@@ -1,7 +1,4 @@
-/* JAMALI — page 186 · Image Flipper — the tool's own engine.
-   Convertor tool #122 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mirror horizontally and/or vertically*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

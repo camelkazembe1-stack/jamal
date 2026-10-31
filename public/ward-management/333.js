@@ -1,9 +1,9 @@
-// ward-management (page 333) — JAMALI Health — the Ward Occupancy Dashboard
-// Read-only and live: every figure on this page is counted from the ward
-// and bed records at the moment the page loads and on every change. It
-// never trusts a typed-in total. Occupancy % = occupied / usable, where
-// usable beds exclude those out of service. No failure can hide: every
-// listener carries an error callback and failures paint the banner.
+
+
+
+
+
+
 import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
 
 window.__p52 = { page: "333", build: "52o1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -44,7 +44,7 @@ try {
   throw e;
 }
 
-/* ---------- live data ---------- */
+ 
 let wards = [];
 let beds = [];
 let answeredW = false, answeredB = false;
@@ -66,7 +66,7 @@ onSnapshot(collection(db, "healthBeds"), (snap) => {
 }, (e) => loadErr("healthBeds", e));
 window.__p52.listeners++;
 
-/* ---------- the counting rules (one language for the whole module) ---------- */
+ 
 function wardCounts(wardId) {
   const list = beds.filter((b) => String(b.wardId) === String(wardId));
   const occupied = list.filter((b) => b.status === "Occupied").length;
@@ -76,7 +76,7 @@ function wardCounts(wardId) {
   const cleaning = list.filter((b) =>
     b.status === "Cleaning Required" || b.status === "Cleaning in Progress").length;
   const maint = list.filter((b) => b.status === "Maintenance Required").length;
-  const usable = list.length - oos; // out-of-service beds leave the usable capacity
+  const usable = list.length - oos; 
   return { total: list.length, occupied, available, reserved, oos, cleaning, maint,
            unusable: oos + cleaning + maint, usable };
 }
@@ -85,7 +85,7 @@ function pct(occupied, usable) {
   return Math.round((occupied / usable) * 100);
 }
 
-/* ---------- render ---------- */
+ 
 function render() {
   const all = wardCountsAll();
   $("#d-wards").textContent = String(wards.length);

@@ -1,19 +1,19 @@
-// cash-book (page 6) — JAMALI Double-Column Cash Book (Cash + Bank)
-// Rules (user spec):
-//   1. Cash and Bank are FLOW METHODS, not categories — each gets its own
-//      amount column on BOTH sides. Flow Method = Cash or Bank (Credit excluded)
-//   2. NEUTRAL and CONTRA transactions excluded       (only IN / OUT appear)
-//   3. IN transactions  -> DR side, OUT transactions  -> CR side; the amount
-//      lands in the Cash or Bank column matching the transaction's Flow Method
-//   4. Folios numbered sequentially across BOTH sides (chronological order)
-//   5. Balance c/d (carried down): per column, on the side with the SMALLER
-//      total, dated the last transaction date + 1 day; one Total row only —
-//      Cash totals must balance independently and Bank totals independently
-//   6. Balance b/d (brought down): on the side opposite c/d, one day after
-//      c/d, carrying the closing Cash and Bank balances into the next period
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+await requireAuth(); 
 
 const $ = (s) => document.querySelector(s);
 const body = $("#cb-body");
@@ -28,7 +28,7 @@ const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const typeOf = (t) => String(t.transactionType || "").toUpperCase();
-const flowOf = (t) => String(t.flowMethod || "").trim().toLowerCase(); // "cash" | "bank"
+const flowOf = (t) => String(t.flowMethod || "").trim().toLowerCase(); 
 const isIncluded = (t) =>
   (flowOf(t) === "cash" || flowOf(t) === "bank") &&
   (typeOf(t) === "IN" || typeOf(t) === "OUT");
@@ -44,7 +44,7 @@ function asDate(ts) {
 
 function fmtDate(ts) {
   if (!ts) return "\u2014";
-  return asDate(ts).toLocaleDateString("en-GB"); // 21/10/2026
+  return asDate(ts).toLocaleDateString("en-GB"); 
 }
 
 function plusDays(ts, days) {
@@ -55,7 +55,7 @@ function plusDays(ts, days) {
 
 const blanks5 = () => "<td></td><td></td><td></td><td></td><td></td>";
 
-// one side's cells: row = { date, detail, folio, cash, bank }
+
 function cells(row) {
   if (!row) return blanks5();
   return '<td class="c-date">' + esc(row.date) + "</td>" +
@@ -65,7 +65,7 @@ function cells(row) {
          '<td class="c-amount">' + (row.bank ? esc(fmtAmount(row.bank)) : "") + "</td>";
 }
 
-// a Balance row on one side: cash / bank may be null (column not applicable)
+
 function balCells(dateStr, label, cash, bank) {
   return '<td class="c-date">' + esc(dateStr) + "</td>" +
          '<td class="c-detail">Balance</td>' +
@@ -75,7 +75,7 @@ function balCells(dateStr, label, cash, bank) {
 }
 
 function render() {
-  // chronological folios across BOTH sides (1..N over every included txn)
+  
   const dr = [], cr = [];
   BOOK.forEach((t, i) => {
     const isBank = flowOf(t) === "bank";
@@ -93,20 +93,20 @@ function render() {
   const sum = (rows, k) => rows.reduce((s, r) => s + (r[k] || 0), 0);
   const drCash = sum(dr, "cash"), drBank = sum(dr, "bank");
   const crCash = sum(cr, "cash"), crBank = sum(cr, "bank");
-  const cashBal = drCash - crCash; // positive = DR holds the cash balance
-  const bankBal = drBank - crBank; // positive = DR holds the bank balance
+  const cashBal = drCash - crCash; 
+  const bankBal = drBank - crBank; 
 
-  // c/d = last transaction date + 1 day; b/d = one day after c/d
+  
   const cdDate = BOOK.length ? plusDays(BOOK[BOOK.length - 1].dateTime, 1) : "";
   const bdDate = BOOK.length ? plusDays(BOOK[BOOK.length - 1].dateTime, 2) : "";
 
-  // ---- tbody: transaction rows paired by index, then the c/d row(s) ----
+  
   let html = "";
   const n = Math.max(dr.length, cr.length);
   for (let i = 0; i < n; i++) html += "<tr>" + cells(dr[i]) + cells(cr[i]) + "</tr>";
 
-  // per column the c/d sits on the SMALLER side; both columns on the same
-  // side share one row, otherwise each side gets its own c/d row
+  
+  
   const cdOnDr = { cash: cashBal < 0 ? -cashBal : null, bank: bankBal < 0 ? -bankBal : null };
   const cdOnCr = { cash: cashBal > 0 ?  cashBal : null, bank: bankBal > 0 ?  bankBal : null };
   if (cdOnDr.cash != null || cdOnDr.bank != null)
@@ -115,9 +115,9 @@ function render() {
     html += '<tr class="cd-row">' + blanks5() + balCells(cdDate, "c/d", cdOnCr.cash, cdOnCr.bank) + "</tr>";
   body.innerHTML = html;
 
-  // ---- tfoot: ONE Total row per side (transactions + c/d) so that the
-  // Cash totals balance independently and the Bank totals independently;
-  // then the b/d row(s) on the side that HOLDS each closing balance ----
+  
+  
+  
   const totDrCash = drCash + (cdOnDr.cash || 0), totCrCash = crCash + (cdOnCr.cash || 0);
   const totDrBank = drBank + (cdOnDr.bank || 0), totCrBank = crBank + (cdOnCr.bank || 0);
 
@@ -130,8 +130,8 @@ function render() {
     '<td class="c-amount">' + esc(fmtAmount(totCrBank)) + "</td>" +
   "</tr>";
 
-  // b/d: opposite side from c/d = the heavier side, carrying the closing
-  // balances; same-side columns share one row
+  
+  
   const bdOnDr = { cash: cashBal > 0 ? cashBal : null, bank: bankBal > 0 ? bankBal : null };
   const bdOnCr = { cash: cashBal < 0 ? -cashBal : null, bank: bankBal < 0 ? -bankBal : null };
   if (bdOnDr.cash != null || bdOnDr.bank != null)
@@ -148,9 +148,7 @@ function render() {
     : "";
 }
 
-/* live feed — Flow Method Cash OR Bank, types IN/OUT only
-   (Credit flow excluded, NEUTRAL + CONTRA excluded). Sorted client-side so
-   the folios and balance dates are correct no matter what order arrives. */
+ 
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {
   BOOK = snap.docs

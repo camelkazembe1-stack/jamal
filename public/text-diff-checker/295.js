@@ -1,7 +1,4 @@
-/* JAMALI — page 295 · Text Diff Checker — the tool's own engine.
-   Convertor tool #231 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   line-by-line LCS diff, green added / red removed*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

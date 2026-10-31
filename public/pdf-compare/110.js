@@ -1,7 +1,4 @@
-/* JAMALI — page 110 · PDF Compare — the tool's own engine.
-   Convertor tool #46 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   two PDFs' text layers are diffed line by line (LCS)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

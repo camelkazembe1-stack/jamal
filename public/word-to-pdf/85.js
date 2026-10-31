@@ -1,7 +1,4 @@
-/* JAMALI — page 85 · Word to PDF — the tool's own engine.
-   Convertor tool #21 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mammoth.js reads the .docx, jsPDF typesets the text into a .pdf*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

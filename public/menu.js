@@ -1,10 +1,4 @@
-/* JAMALI — menu (the family tree of the app).
-   This is the ONE file to edit when a page is added, renamed or re-ordered:
-   add or change ONE line below. Nothing else ever needs rewriting.
-   sidebar.js reads window.JAMALI_MENU from here and draws the sidebar —
-   sidebar.js holds no page data, calls no file, and is never rewritten.
-   Every page loads menu.js BEFORE sidebar.js (both defer, so this order
-   is guaranteed). index.html (sign-in) loads neither. */
+ 
 window.JAMALI_MENU = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
     { label: "Account Administration", icon: "🛡️", folder: "system-admin", n: 380, d: 0 },
@@ -70,12 +64,12 @@ window.JAMALI_MENU = [
     { label: "Aged Payables", icon: "🗓️", folder: "aged-payables", n: 61, d: 3 },
     { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 1 },
     { label: "Convertor", icon: "🔄", folder: "convertor", n: 63, d: 2 },
-  // --- Convertor: all 256 tools as sidebar children of Convertor (Task 28) ---
-  // ONE line per tool, generated from convertor/tools.js (the hub registry):
-  // same label, family icon, folder = slug, page n = id + 64, depth 3.
-  // sidebar.js rules do the rest: the lines sit one level deeper than the
-  // Convertor line, so Convertor gets a toggle and these 256 entries are
-  // its children; the open tool auto-opens the branch and highlights.
+  
+  
+  
+  
+  
+  
     { label: "Text to PDF", icon: "📄", folder: "text-to-pdf", n: 65, d: 3 },
     { label: "PDF to Text", icon: "📄", folder: "pdf-to-text", n: 66, d: 3 },
     { label: "Text to Word", icon: "📄", folder: "text-to-word", n: 67, d: 3 },

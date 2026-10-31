@@ -1,7 +1,4 @@
-/* JAMALI — page 263 · TAR Extractor — the tool's own engine.
-   Convertor tool #199 (Archive and Compression Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   real ustar/GNU-tar parser (long names supported) — no library needed*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }
@@ -68,7 +65,7 @@
         var type = tarType(u8, off);
         var dataStart = off + 512;
         if (type === "L" || type === "K") {
-          // GNU long name: the next entry carries the real payload
+          
           var longName = "";
           var ld = u8.subarray(dataStart, dataStart + size);
           for (var q = 0; q < ld.length && ld[q]; q++) longName += String.fromCharCode(ld[q]);
@@ -100,7 +97,7 @@
         var head = new Uint8Array(512);
         var nameB = new TextEncoder().encode(f.name);
         if (nameB.length > 100) {
-          // ustar prefix split
+          
           var cut = -1;
           for (var s = 0; s < Math.min(nameB.length, 255); s++) if (nameB[s] === 0x2f && s <= 155) cut = s;
           if (cut > 0 && nameB.length - cut - 1 <= 100) {
@@ -112,16 +109,16 @@
           var s = v.toString(8).padStart(n - 1, "0") + "\0";
           for (var i = 0; i < n; i++) head[at + i] = s.charCodeAt(i) & 0xFF;
         }
-        oct(0o644, 8, 100);         // mode
-        oct(0, 8, 108);             // uid
-        oct(0, 8, 116);             // gid
-        oct(u8.length, 12, 124);    // size
-        oct(Math.floor(Date.now() / 1000), 12, 136); // mtime
-        head[156] = 0x30;           // type '0'
-        str(head, "ustar\0", 257);  // magic
-        str(head, "00", 263);       // version
-        str(head, "jamali", 265);   // uname
-        str(head, "jamali", 297);   // gname
+        oct(0o644, 8, 100);         
+        oct(0, 8, 108);             
+        oct(0, 8, 116);             
+        oct(u8.length, 12, 124);    
+        oct(Math.floor(Date.now() / 1000), 12, 136); 
+        head[156] = 0x30;           
+        str(head, "ustar\0", 257);  
+        str(head, "00", 263);       
+        str(head, "jamali", 265);   
+        str(head, "jamali", 297);   
         var chk = 0;
         for (var c = 0; c < 512; c++) chk += (c >= 148 && c < 156) ? 32 : head[c];
         var chkS = chk.toString(8).padStart(6, "0") + "\0 ";

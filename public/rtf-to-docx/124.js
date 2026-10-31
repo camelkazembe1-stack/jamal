@@ -1,7 +1,4 @@
-/* JAMALI — page 124 · RTF to DOCX — the tool's own engine.
-   Convertor tool #60 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   RTF control words stripped, the text written into a real .docx*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

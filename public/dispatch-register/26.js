@@ -1,6 +1,6 @@
-// dispatch-register (page 26) — goods movement register (out).
-// Inventory falls by the qty DISPATCHED here; the Stock Movement
-// report (page 31) and Inventory Valuation (page 46) read BOTH goods registers.
+
+
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

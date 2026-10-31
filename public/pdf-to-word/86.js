@@ -1,7 +1,4 @@
-/* JAMALI — page 86 · PDF to Word — the tool's own engine.
-   Convertor tool #22 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   pdf.js text layer -> a .doc Word document (text-based)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

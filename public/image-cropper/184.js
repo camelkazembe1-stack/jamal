@@ -1,7 +1,4 @@
-/* JAMALI — page 184 · Image Cropper — the tool's own engine.
-   Convertor tool #120 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   numeric crop box (x, y, width, height) with live size check*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

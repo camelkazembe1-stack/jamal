@@ -7,7 +7,7 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .sub { color: #64748b; font-size: 14px; margin-bottom: 18px; }
 .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
 
-/* account picker */
+ 
 .accounts-card { padding: 18px 20px; margin-bottom: 18px; }
 .accounts-card h2 { font-size: 15px; margin-bottom: 12px; }
 .acct-grid { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -20,7 +20,7 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .acct-bal { font-size: 11.5px; color: #64748b; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .acct-chip.on .acct-bal { color: #0369a1; }
 
-/* ledger table (DR: Date Detail Folio Amount | CR: same) */
+ 
 .acct-title { font-size: 17px; padding: 16px 20px 14px; border-bottom: 1px solid #e2e8f0; }
 .table-wrap { overflow-x: auto; }
 table.lg { width: 100%; border-collapse: collapse; min-width: 900px; }
@@ -30,7 +30,7 @@ thead tr.sides th { text-align: center; font-size: 13px; letter-spacing: .18em; 
 .side-cr { background: #fee2e2; color: #b91c1c; }
 thead th.amt, tbody td.c-amount, tfoot td.c-amount { text-align: right; }
 
-/* strong vertical divider between the DR and CR sides */
+ 
 .lg thead tr:nth-child(2) th:nth-child(4), .lg tbody td:nth-child(4),
 .lg tfoot td:nth-child(4) { border-right: 2px solid #cbd5e1; }
 
@@ -51,7 +51,7 @@ tfoot .bd-row td { color: #475569; }
 tfoot .bd-row .c-detail { font-weight: 700; }
 tfoot .bd-row .c-amount { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
-/* empty state */
+ 
 .empty { padding: 46px 20px; text-align: center; }
 .empty-icon { font-size: 34px; margin-bottom: 10px; }
 .empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }

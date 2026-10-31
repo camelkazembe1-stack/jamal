@@ -1,7 +1,4 @@
-/* JAMALI — page 217 · MP4 to GIF — the tool's own engine.
-   Convertor tool #153 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   gif.js with sampled frames, chosen fps + width, progress bar*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

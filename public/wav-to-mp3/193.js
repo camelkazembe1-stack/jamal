@@ -1,7 +1,4 @@
-/* JAMALI — page 193 · WAV to MP3 — the tool's own engine.
-   Convertor tool #129 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   WAV -> MP3 with the bitrate you choose (lamejs encoder)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

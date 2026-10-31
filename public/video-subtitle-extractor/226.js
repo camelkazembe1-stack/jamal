@@ -1,7 +1,4 @@
-/* JAMALI — page 226 · Video Subtitle Extractor — the tool's own engine.
-   Convertor tool #162 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   honest engine: explains browser limits + offers the sidecar converters*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

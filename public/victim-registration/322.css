@@ -1,24 +1,21 @@
-/* JAMALI — page 322 · Victim Registration (Health)
-   Own stylesheet for this folder — every JAMALI folder ships html + css + js.
-   Base design system lives in /records/records.css (imported below).
-   Family accent: emerald. Sixteen intake fields on a 3-per-row grid. */
+ 
 @import url("/records/records.css");
 
-/* the hidden attribute always wins, even over display rules above */
+ 
 [hidden] { display: none !important; }
 
-/* page accent — Health */
+ 
 h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #059669; }
 
-/* the emergency banner — this page is built around it */
+ 
 .urgent-note { display: flex; align-items: center; gap: 10px;
   background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
   font-weight: 700; font-size: 13.5px; border-radius: 12px;
   padding: 11px 14px; margin-bottom: 14px; }
 
-/* staff select + the little add button (history kept on the device) */
+ 
 .staff-row { display: flex; gap: 8px; }
 .staff-row select { flex: 1; min-width: 0; }
 .staff-add { flex: 0 0 38px; border: 1px solid #cbd5e1; background: #fff;
@@ -26,14 +23,14 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   cursor: pointer; line-height: 1; }
 .staff-add:hover { border-color: #059669; background: #ecfdf5; }
 
-/* unidentified victim checkbox cell */
+ 
 .unid-box { display: flex; gap: 9px; align-items: flex-start;
   font-weight: 600; font-size: 12.5px; color: #475569; line-height: 1.45;
   padding-top: 4px; cursor: pointer; }
 .unid-box input[type="checkbox"] { width: 17px; height: 17px; flex: 0 0 auto;
   margin-top: 1px; accent-color: #059669; cursor: pointer; }
 
-/* priority badges (same language as records.css status badges) */
+ 
 .st-critical { background: #fee2e2; color: #b91c1c; }
 .st-high     { background: #ffedd5; color: #c2410c; }
 .st-medium   { background: #fef3c7; color: #92400e; }
@@ -43,7 +40,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 2px 8px;
   margin-left: 6px; vertical-align: middle; }
 
-/* ---------- saved step ---------- */
+ 
 .done-card { padding: 40px 22px; text-align: center; max-width: 640px; margin: 0 auto; }
 .done-icon { width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%;
   background: #dcfce7; color: #15803d; font-size: 30px; font-weight: 900;
@@ -69,7 +66,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   background: linear-gradient(135deg, #059669, #34d399); color: #fff;
   text-decoration: none; font-weight: 800; font-size: 14px; }
 
-/* print — clean paper output */
+ 
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .urgent-note,
   .form-actions, .staff-add, .count-line { display: none !important; }

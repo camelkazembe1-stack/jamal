@@ -9,7 +9,7 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .sub a:hover { text-decoration: underline; }
 .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
 
-/* single-column cash book table (DR: Date Detail Folio Amount | CR: same) */
+ 
 .table-wrap { overflow-x: auto; }
 table.cb { width: 100%; border-collapse: collapse; min-width: 760px; }
 thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; padding: 11px 14px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
@@ -18,7 +18,7 @@ thead tr.sides th { text-align: center; font-size: 13px; letter-spacing: .18em; 
 .side-cr { background: #fee2e2; color: #b91c1c; }
 thead th.amt, tbody td.c-amount, tfoot td.c-amount { text-align: right; }
 
-/* strong vertical divider between the DR and CR sides */
+ 
 .cb th:nth-child(4), .cb td:nth-child(4) { border-right: 2px solid #cbd5e1; }
 
 tbody td { padding: 11px 14px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
@@ -38,7 +38,7 @@ tfoot .bd-row td { color: #475569; }
 tfoot .bd-row .c-detail { font-weight: 700; }
 tfoot .bd-row .c-amount { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 
-/* empty state */
+ 
 .empty { padding: 46px 20px; text-align: center; }
 .empty-icon { font-size: 34px; margin-bottom: 10px; }
 .empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }

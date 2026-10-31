@@ -1,7 +1,4 @@
-/* JAMALI — page 248 · YAML to JSON — the tool's own engine.
-   Convertor tool #184 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mini YAML parser (maps, lists, nesting, scalars) -> JSON*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

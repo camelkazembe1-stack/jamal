@@ -1,7 +1,4 @@
-/* JAMALI — page 119 · DOCX to TXT — the tool's own engine.
-   Convertor tool #55 (Word and Document Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mammoth.js extractRawText — the cleanest possible .txt*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

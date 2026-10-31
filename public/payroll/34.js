@@ -1,4 +1,4 @@
-// payroll (page 34) — salaries per period.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

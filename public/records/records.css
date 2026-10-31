@@ -1,5 +1,4 @@
-/* JAMALI — shared styles for the registers (records engine) and the
-   reports/schedules (reports engine). Pages 21-54. */
+ 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 body { background: #f1f5f9; color: #0f172a; }
 .wrap { padding: 28px 34px; max-width: 1300px; margin: 0 auto; }
@@ -13,7 +12,7 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .rp-note { font-size: 13.5px; color: #475569; margin: -8px 0 14px; }
 .rp-note b { color: #0f172a; }
 
-/* ---------- add / form card ---------- */
+ 
 .add-card { padding: 16px 20px; margin-bottom: 18px; }
 .add-toggle { border: 1px solid #0ea5e9; color: #0ea5e9; background: #f0f9ff; font-weight: 800; font-size: 13.5px; padding: 9px 16px; border-radius: 9px; cursor: pointer; }
 .add-toggle:hover { background: #e0f2fe; }
@@ -29,14 +28,14 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .btn-ghost { background: #fff; color: #475569; border: 1px solid #cbd5e1; font-weight: 700; padding: 9px 16px; border-radius: 9px; cursor: pointer; font-size: 14px; }
 .save-note { color: #047857; font-size: 13px; font-weight: 700; margin-top: 10px; }
 
-/* ---------- status filter tabs ---------- */
+ 
 .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .tab { border: 1px solid #cbd5e1; background: #fff; border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 700; color: #475569; cursor: pointer; }
 .tab:hover { border-color: #0ea5e9; color: #0ea5e9; }
 .tab.on { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
 .tab .n { opacity: .75; font-weight: 800; margin-left: 4px; }
 
-/* ---------- tables ---------- */
+ 
 .table-wrap { overflow-x: auto; }
 table.bk { width: 100%; border-collapse: collapse; }
 thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; padding: 12px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; background: #f8fafc; }
@@ -58,7 +57,7 @@ tbody tr.is-hl td { background: #f0f9ff; }
 .pos { color: #047857; }
 .neg { color: #b91c1c; }
 
-/* status badges (derived, never stored) */
+ 
 .st { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
 .st-pending { background: #e2e8f0; color: #475569; }
 .st-partial { background: #fef3c7; color: #92400e; }
@@ -67,7 +66,7 @@ tbody tr.is-hl td { background: #f0f9ff; }
 .st-info { background: #e0f2fe; color: #075985; }
 .st-cancel { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; }
 
-/* settle editor row */
+ 
 .settle-btn { border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
 .settle-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }
 tr.settle-row td { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 10px 12px; }
@@ -81,7 +80,7 @@ tfoot .total-row td { border-top: 2px solid #0f172a; font-weight: 800; backgroun
 tfoot .total-row .c-amount { text-align: right; white-space: nowrap; }
 tfoot .total-row .c-desc { font-weight: 800; color: #0f172a; }
 
-/* per-party / per-item summary card */
+ 
 .people-card { padding: 18px 20px; margin-top: 18px; }
 .people-card h2 { font-size: 15px; margin-bottom: 8px; }
 table.people { width: 100%; border-collapse: collapse; }
@@ -90,7 +89,7 @@ table.people tr:last-child td { border-bottom: 0; }
 table.people .c-party { font-weight: 700; }
 table.people .c-amount { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* key-value summary (bank reconciliation etc.) */
+ 
 .kv-card { padding: 18px 20px; margin-top: 18px; }
 .kv-card h2 { font-size: 15px; margin-bottom: 10px; }
 .kv { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
@@ -101,7 +100,7 @@ table.people .c-amount { text-align: right; font-weight: 800; font-variant-numer
 .kv .v.neg { color: #b91c1c; }
 .kv.hl { background: #f0f9ff; margin: 0 -10px; padding: 8px 10px; border-radius: 8px; }
 
-/* empty state */
+ 
 .empty { padding: 46px 20px; text-align: center; }
 .empty-icon { font-size: 34px; margin-bottom: 10px; }
 .empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }

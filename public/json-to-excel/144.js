@@ -1,7 +1,4 @@
-/* JAMALI — page 144 · JSON to Excel — the tool's own engine.
-   Convertor tool #80 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   array of objects -> real .xlsx with a header row*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

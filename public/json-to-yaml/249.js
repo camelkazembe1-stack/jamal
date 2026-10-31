@@ -1,7 +1,4 @@
-/* JAMALI — page 249 · JSON to YAML — the tool's own engine.
-   Convertor tool #185 (Web and Code Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   objects/arrays -> 2-space YAML with correct quoting*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

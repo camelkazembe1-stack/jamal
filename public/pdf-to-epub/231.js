@@ -1,7 +1,4 @@
-/* JAMALI — page 231 · PDF to EPUB — the tool's own engine.
-   Convertor tool #167 (Ebook and Publishing Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   PDF text becomes chapters -> a valid EPUB 2 package*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

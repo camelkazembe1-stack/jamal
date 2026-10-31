@@ -1,7 +1,4 @@
-/* JAMALI — page 302 · Document Watermark — the tool's own engine.
-   Convertor tool #238 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   text -> PDF with a diagonal watermark behind the content*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

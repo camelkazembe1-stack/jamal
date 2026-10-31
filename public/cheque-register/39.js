@@ -1,4 +1,4 @@
-// cheque-register (page 39) — cheques both directions.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

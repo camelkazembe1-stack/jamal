@@ -1,7 +1,4 @@
-/* JAMALI — page 305 · Date Format Converter — the tool's own engine.
-   Convertor tool #241 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   one date -> ISO, US, EU, long form, week number and relative*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

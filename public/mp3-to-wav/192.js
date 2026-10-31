@@ -1,7 +1,4 @@
-/* JAMALI — page 192 · MP3 to WAV — the tool's own engine.
-   Convertor tool #128 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   decoded MP3 -> 16-bit PCM WAV (uncompressed, lossless copy)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

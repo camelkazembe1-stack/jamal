@@ -1,7 +1,4 @@
-/* JAMALI — page 273 · MIME Type Checker — the tool's own engine.
-   Convertor tool #209 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   declared MIME, extension map and magic bytes cross-checked*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

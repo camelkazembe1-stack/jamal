@@ -1,7 +1,4 @@
-/* JAMALI — page 303 · Page Numbering Tool — the tool's own engine.
-   Convertor tool #239 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   text typeset into a PDF with Page i of N on every page*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

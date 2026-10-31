@@ -1,7 +1,4 @@
-/* JAMALI — page 77 · Text to CSV — the tool's own engine.
-   Convertor tool #13 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   lines become CSV rows (delimiter of your choice, auto-quoting)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

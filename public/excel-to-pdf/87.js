@@ -1,7 +1,4 @@
-/* JAMALI — page 87 · Excel to PDF — the tool's own engine.
-   Convertor tool #23 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   SheetJS reads the workbook, jsPDF AutoTable prints every sheet*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

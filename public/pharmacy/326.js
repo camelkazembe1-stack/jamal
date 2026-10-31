@@ -1,25 +1,21 @@
-// pharmacy (page 326) — JAMALI Health
-// The pharmacy desk. Prescriptions written by the doctor arrive here one
-// medicine per line. The pharmacist checks availability (a judgement, not a
-// stock system — stock management is a later module), dispenses, or proposes
-// a safe alternative when the prescribed medicine is unavailable. The
-// proposal waits for the doctor on page 325: accepted alternatives can be
-// dispensed; a rejected line is re-prescribed or sent outside the pharmacy.
-// Every action records who did it and when, against the Registration ID.
+
+
+
+
+
+
+
+
 import { requireAuth, auth, db, collection, query, updateDoc, doc, setDoc, onSnapshot } from "/firebase.js";
-/* patient chip - non-fatal since Task 47: if /health/patient-info.js cannot
-   load (a missing or stale file), the page loses only the floating chip,
-   never the find, the forms or the saves. */
+ 
 let showPatient = function () {}, hidePatient = function () {};
 try {
   const pi = await import("/health/patient-info.js");
   if (pi && typeof pi.showPatient === "function") showPatient = pi.showPatient;
   if (pi && typeof pi.hidePatient === "function") hidePatient = pi.hidePatient;
-} catch (e) { /* chip unavailable - everything else keeps working */ }
+} catch (e) {   }
 
-/* boot diagnostics (Task 47 - the same contract as the Patient List, build
-   46d): every collection listener carries an error callback and every
-   failure paints itself on the page instead of dying in silence. */
+ 
 window.__p47 = Object.assign(window.__p47 || {}, {
   page: "326", build: "53", queue: true, ran: true, auth: false,
   listeners: 0, need: 5, answered: false, errs: []
@@ -45,7 +41,7 @@ function bootDone() {
 }
 
 try {
-  await requireAuth(); // not logged in? -> bounced to "/"
+  await requireAuth(); 
   window.__p47.auth = true;
 } catch (e) {
   herr("the sign-in check", e);
@@ -56,7 +52,7 @@ const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* ---------- shared helpers (same language as pages 322 to 325) ---------- */
+ 
 function pad(n) { return String(n).padStart(2, "0"); }
 function when(iso) {
   if (!iso) return "—";
@@ -70,15 +66,15 @@ function who(r) {
     : (r.fullName || "Unnamed");
 }
 
-/* the pharmacist on record comes from the signed in account, never typed */
+ 
 const PHARM = String((auth && auth.currentUser && (auth.currentUser.email || auth.currentUser.uid)) || "unknown");
 
-/* ---------- live data ---------- */
+ 
 let regs = [];
 const regMap = new Map();
 let triages = [];
 const lastTriage = new Map();
-let rxLines = []; // every prescription line, newest first
+let rxLines = []; 
 
 onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
   regs = snap.docs.map((d) => d.data())
@@ -110,7 +106,7 @@ onSnapshot(query(collection(db, "healthPrescriptions")), (snap) => {
   if (currentId) renderPatient();
 }, (e) => herr("healthPrescriptions", e));
 
-/* JAMALI-NO-SKIP (task 51): the doctor's consultations, to enforce the step order */
+ 
 let docConsults = [];
 onSnapshot(query(collection(db, "healthDoctorConsultations")), (snap) => {
   docConsults = snap.docs.map((d) => d.data())
@@ -122,15 +118,7 @@ window.__p47.listeners = 5;
 function qaStart(id) { qerr(""); openPatient(id); }
 
 
-/* =====================================================================
-   JAMALI-QUEUE (task 53) — the queue panel shared by every service stage:
-   waiting and completed counts, the current and the next patient, the
-   speaker announcement, and this module's own announcement settings.
-   Waiting counts patients waiting for THIS service only; Completed counts
-   the patients finished here today. The announcement always reads the
-   patient the panel is showing — never anybody else — and it reads the
-   destination the hospital saved for this module (healthQueueConfig),
-   falling back to the module's own name. No hard-coded rooms or IDs. */
+ 
 const QA_MODULE = "pharmacy";
 const QA_DEFAULT = "Pharmacy";
 let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 };
@@ -149,7 +137,7 @@ function qaLocalDay(stamp) {
 function qaIsToday(stamp) { return String(stamp || "").slice(0, 10) === new Date().toISOString().slice(0, 10); }
 function qaIsTodayLocal(stamp) { return String(stamp || "").slice(0, 10) === qaTodayLocal(); }
 
-/* the destination, composed from the saved settings */
+ 
 function qaText() {
   const dept = String(qaCfg.department || "").trim();
   const staff = String(qaCfg.staffName || "").trim();
@@ -162,13 +150,12 @@ function qaSentence(id) {
   return "Patient number " + String(id) + ", please proceed to " + qaText().dest + ".";
 }
 function qaRate() {
-  /* task 54 voice fix: the saved speed wins; a calm 0.75 is the default */
+   
   const r = Number(qaCfg.voiceRate);
   return (r >= 0.5 && r <= 1.1) ? r : 0.75;
 }
 function qaSpeech(id) {
-  /* spoken letter by letter with real pauses (commas), and the whole
-     sentence is repeated so a waiting patient cannot miss their number */
+   
   const d = String(id).split("").join(", ");
   const dest = qaText().dest;
   return "Patient number " + d + ". Please proceed to " + dest +
@@ -208,7 +195,7 @@ function qaRenderPanel() {
   qaSet("qa-note", nxt ? "Ready to announce: " + qaSentence(nxt.regId) : "");
 }
 
-/* every stage derives its own queue, then calls this */
+ 
 function qaUpdate(waitingRows, current, doneCount) {
   qaState.waitingCount = Array.isArray(waitingRows) ? waitingRows.length : 0;
   qaState.doneCount = doneCount || 0;
@@ -217,7 +204,7 @@ function qaUpdate(waitingRows, current, doneCount) {
   qaRenderPanel();
 }
 
-/* the speaker button announces exactly the patient shown above it */
+ 
 const qaAnnounceBtn = document.getElementById("qa-announce");
 if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
   const id = qaAnnounceBtn.getAttribute("data-regid");
@@ -242,14 +229,14 @@ if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
   }
 });
 
-/* open the next patient straight from the panel */
+ 
 const qaStartBtn = document.getElementById("qa-start");
 if (qaStartBtn) qaStartBtn.addEventListener("click", () => {
   const id = qaStartBtn.getAttribute("data-regid");
   if (id) qaStart(id);
 });
 
-/* this module's announcement settings */
+ 
 const qaSettingsBox = document.getElementById("qa-settings");
 const qaSettingsBtn = document.getElementById("qa-settings-btn");
 if (qaSettingsBtn && qaSettingsBox) {
@@ -298,7 +285,7 @@ if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
   } finally { qaSaveBtn.disabled = false; }
 });
 
-/* live settings — a change here is heard on every device at once */
+ 
 try {
   onSnapshot(doc(db, "healthQueueConfig", QA_MODULE), (s) => {
     qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 },
@@ -311,10 +298,10 @@ try {
     if (window.__p47) window.__p47.errs.push("healthQueueConfig: " + code);
     qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
   });
-} catch (e) { /* the settings listener is optional — the queue keeps working */ }
+} catch (e) {   }
 
 
-/* ---------- status chips ---------- */
+ 
 function chip(status) {
   const map = {
     "to dispense": ["st-todisp", "To dispense"],
@@ -328,7 +315,7 @@ function chip(status) {
   return '<span class="st ' + m[0] + '">' + esc(m[1]) + "</span>";
 }
 
-/* ---------- STEP 1: search + worklist ---------- */
+ 
 function qerr(msg) { const e = $("#q-err"); e.hidden = !msg; e.textContent = msg || ""; }
 
 function fillIds() {
@@ -357,7 +344,7 @@ function refreshSearchLine() {
 }
 
 const OPEN_STATUSES = ["to dispense", "alternative proposed", "accepted"];
-let edit = { id: null, mode: null }; // which line carries an inline editor
+let edit = { id: null, mode: null }; 
 
 function medCell(l) {
   return "<b>" + esc(l.medicine || "—") + "</b>" +
@@ -380,7 +367,7 @@ function decisionCell(l) {
 }
 
 function lineActions(l, withOpen) {
-  if (edit.id === l.__id) return ""; // the editor row carries the buttons
+  if (edit.id === l.__id) return ""; 
   const btns = [];
   if (l.status === "to dispense" || l.status === "accepted") {
     btns.push('<button type="button" class="ghost-btn a-disp" data-id="' + esc(l.__id) + '">Dispense</button>');
@@ -432,9 +419,7 @@ function renderList() {
     ? open.length + (open.length === 1 ? " prescription line to handle."
                                        : " prescription lines to handle.")
     : "";
-  /* JAMALI-QUEUE (task 53): patients waiting at the counter — a line that
-     waits for the doctor's decision ("alternative proposed") is not waiting
-     for the pharmacy, so it stays out of the waiting count */
+   
   const qaByPatient = new Map();
   open.forEach((l) => {
     const id = String(l.regId || "");
@@ -484,7 +469,7 @@ $("#l-body").addEventListener("click", (e) => {
   lineActionClick(e);
 });
 
-/* ---------- shared line actions (worklist + patient view) ---------- */
+ 
 async function lineActionClick(e) {
   const disp = e.target.closest(".a-disp");
   const alt = e.target.closest(".a-alt");
@@ -510,7 +495,7 @@ async function lineActionClick(e) {
     try {
       if (edit.mode === "dispense") {
         const what = ($("#ed-what") ? $("#ed-what").value : "").trim();
-        if (!what) return; // keep the editor open until a name is entered
+        if (!what) return; 
         await updateDoc(doc(db, "healthPrescriptions", id), {
           status: "dispensed",
           dispensed: { what, by: PHARM, at: new Date().toISOString() }
@@ -518,7 +503,7 @@ async function lineActionClick(e) {
       } else {
         const medicine = ($("#ed-alt") ? $("#ed-alt").value : "").trim();
         const note = ($("#ed-note") ? $("#ed-note").value : "").trim();
-        if (!medicine) return; // keep the editor open until a name is entered
+        if (!medicine) return; 
         await updateDoc(doc(db, "healthPrescriptions", id), {
           status: "alternative proposed",
           alt: { medicine, note, proposedBy: PHARM, proposedAt: new Date().toISOString() }
@@ -535,10 +520,10 @@ function rerender() {
   if (currentId) renderPatient();
 }
 
-/* ---------- STEP 2: the patient's prescriptions ---------- */
+ 
 let currentId = null;
 
-/* JAMALI-NO-SKIP (task 51): the pharmacy is step 5 — the Doctor Consultation (step 4) must be completed first */
+ 
 function stepGate(regId) {
   const done = docConsults.some((c) => String(c.regId) === String(regId) &&
     (c.status === "completed" || c.status === "sent"));

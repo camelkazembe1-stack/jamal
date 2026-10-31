@@ -7,7 +7,7 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .sub { color: #64748b; font-size: 14px; margin-bottom: 18px; }
 .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
 
-/* filter tabs */
+ 
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .tab { padding: 9px 14px; border: 1px solid #e2e8f0; border-radius: 11px; background: #fff; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; font-family: inherit; }
 .tab:hover { border-color: #38bdf8; }
@@ -15,7 +15,7 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .tab.is-active { border-color: #0ea5e9; background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: #fff; box-shadow: 0 4px 12px rgba(14, 165, 233, .3); }
 .tab.is-active .n { background: rgba(255, 255, 255, .25); color: #fff; }
 
-/* table */
+ 
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; min-width: 780px; }
 thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; padding: 13px 14px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
@@ -27,7 +27,7 @@ tbody tr:hover { background: #f8fafc; }
 .col-amount, .c-amount { text-align: right; }
 .c-amount { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* badges */
+ 
 .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
 .b-in { background: #dcfce7; color: #15803d; }
 .b-out { background: #fee2e2; color: #b91c1c; }
@@ -35,7 +35,7 @@ tbody tr:hover { background: #f8fafc; }
 .b-contra { background: #f3e8ff; color: #7e22ce; }
 .b-charge { background: #fef3c7; color: #b45309; margin-left: 6px; }
 
-/* empty state */
+ 
 .empty { padding: 46px 20px; text-align: center; }
 .empty-icon { font-size: 34px; margin-bottom: 10px; }
 .empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }

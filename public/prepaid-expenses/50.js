@@ -1,4 +1,4 @@
-// prepaid-expenses (page 50) — prepaid expenses register.
+
 import { initRecords } from "/records/records.js";
 
 initRecords({

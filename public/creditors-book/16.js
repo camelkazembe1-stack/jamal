@@ -1,24 +1,24 @@
-// creditors-book (page 16) — JAMALI Creditors Book (money the business OWES)
-// Rules (user spec):
-//   1. Credit purchases increase what we owe a supplier    -> Credit Purchases column
-//   2. Purchases returns reduce what we owe                -> Payments column
-//   3. Cash/Bank payments to a supplier reduce what we owe -> Payments column
-//      A payment row counts ONLY if that name also has credit purchase or
-//      purchase-return activity — so plain expenses (rent, salaries, ...)
-//      never enter this book (they already live in the Cash Payments Journal).
-//   4. Balance Owed column = that person's running balance AFTER the row
-//   5. ONE Total row: totals of both columns + total outstanding payable
-//   6. Summary card lists the outstanding balance per creditor
-// Classification reuses /journals/journal.js — one source of truth for what
-// counts as a credit purchase, a purchase return, or a payment.
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 import { classify } from "/journals/journal.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+await requireAuth(); 
 
-const INC = "purchases";          // credit purchases (Credit + OUT)
-const RET = "purchasesReturns";   // purchases returns (Credit + return)
-const PAY = "cashPayments";       // cash/bank payments (Cash|Bank + OUT)
+const INC = "purchases";          
+const RET = "purchasesReturns";   
+const PAY = "cashPayments";       
 
 const $ = (s) => document.querySelector(s);
 const body = $("#bk-body");
@@ -45,7 +45,7 @@ function asDate(ts) {
 
 function fmtDate(ts) {
   if (!ts) return "\u2014";
-  return asDate(ts).toLocaleDateString("en-GB"); // 21/10/2026
+  return asDate(ts).toLocaleDateString("en-GB"); 
 }
 
 const personOf = (t) => t.name || t.transactionName || "\u2014";
@@ -54,14 +54,14 @@ function render() {
   const rows = TXNS.map((t) => ({ t, kind: classify(t) }))
     .filter((r) => r.kind === INC || r.kind === RET || r.kind === PAY);
 
-  // a payment belongs in this book only if the person is a real creditor
-  // (has at least one credit purchase or purchase return)
+  
+  
   const people = new Set(rows.filter((r) => r.kind !== PAY).map((r) => personOf(r.t)));
   const book = rows
     .filter((r) => r.kind !== PAY || people.has(personOf(r.t)))
     .sort((a, b) => asDate(a.t.dateTime) - asDate(b.t.dateTime));
 
-  // running balance PER PERSON, in chronological order
+  
   const bal = Object.create(null);
   let totInc = 0, totDec = 0;
   let html = "";
@@ -69,7 +69,7 @@ function render() {
     const p = personOf(t);
     const amt = Number(t.amount || 0);
     const inc = kind === INC ? amt : 0;
-    const dec = kind === INC ? 0 : amt; // returns AND payments both reduce
+    const dec = kind === INC ? 0 : amt; 
     bal[p] = (bal[p] || 0) + inc - dec;
     totInc += inc;
     totDec += dec;
@@ -92,7 +92,7 @@ function render() {
     '<td class="c-amount">' + esc(fmtAmount(outstanding)) + "</td>" +
   "</tr>";
 
-  // summary: outstanding balance per creditor
+  
   const names = Object.keys(bal).sort((a, b) => bal[b] - bal[a]);
   let ph = "";
   names.forEach((p) => {
@@ -114,7 +114,7 @@ function render() {
     : "";
 }
 
-/* live feed — classified client-side, sorted chronologically */
+ 
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {
   TXNS = snap.docs

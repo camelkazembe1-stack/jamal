@@ -1,7 +1,4 @@
-/* JAMALI — page 99 · PDF Crop — the tool's own engine.
-   Convertor tool #35 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   crops every page by the margins you set (points, pdf-lib crop box)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

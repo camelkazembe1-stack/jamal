@@ -1,10 +1,10 @@
-// patient-discharge (page 350) — JAMALI Health — Discharge Hub & Dashboard
-// Every number below is calculated from the stored discharge records — never
-// hard-coded. The queue panel follows the task-53 contract: the waiting and
-// completed counters, the current and the next patient, and the speaker,
-// which announces exactly the patient the panel shows using this module's
-// saved destination (healthQueueConfig "discharge"). Calling a patient never
-// completes a discharge by itself.
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, setDoc, onSnapshot } from "/firebase.js";
 
 window.__p54 = { page: "350", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -41,11 +41,7 @@ try {
   throw e;
 }
 
-/* =====================================================================
-   JAMALI-QUEUE (task 53 contract, task 54 voice) — the shared queue panel.
-   Waiting counts the open discharge processes; Discharged today counts the
-   stays actually ended today. The announcement reads the patient shown in
-   the panel — never anybody else — at the speed saved in the settings. */
+ 
 const QA_MODULE = "discharge";
 const QA_DEFAULT = "Discharge Office";
 let qaCfg = { department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 };
@@ -205,9 +201,9 @@ try {
     if (window.__p54) window.__p54.errs.push("healthQueueConfig: " + code);
     qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
   });
-} catch (e) { /* the settings listener is optional — the dashboard keeps working */ }
+} catch (e) {   }
 
-/* ---------- live data & the counters ---------- */
+ 
 let discharges = [];
 
 const ACTIVE = new Set(["Pending Authorization", "Approved", "In Progress",
@@ -252,8 +248,7 @@ function renderQueue() {
     __id: x.__id,
     sub: (x.status || "") + (x.wardCode ? " \u00b7 " + x.wardCode + (x.bedNumber ? " bed " + x.bedNumber : "") : "")
   }));
-  /* the first open process is the one being worked on; the next one is who
-     the speaker calls to the discharge office */
+   
   const cur = rows.length ? { patientId: rows[0].patientId, sub: rows[0].sub } : null;
   qaUpdate(rows.slice(1), cur, today.length);
 }

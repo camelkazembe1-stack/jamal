@@ -1,7 +1,4 @@
-/* JAMALI — page 216 · MKV to MP4 — the tool's own engine.
-   Convertor tool #152 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   MKV decoded by the browser (VP8/VP9/H.264 tracks), re-encoded*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

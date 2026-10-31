@@ -1,7 +1,4 @@
-/* JAMALI — page 198 · WAV to FLAC — the tool's own engine.
-   Convertor tool #134 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   honest engine: no browser FLAC encoder — nearest exports offered*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

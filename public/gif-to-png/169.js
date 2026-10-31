@@ -1,7 +1,4 @@
-/* JAMALI — page 169 · GIF to PNG — the tool's own engine.
-   Convertor tool #105 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   GIF -> PNG: the first frame*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

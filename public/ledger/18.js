@@ -1,26 +1,26 @@
-// ledger (page 18) — JAMALI Ledger: one DR/CR account page per account
-// Rules (user spec):
-//   1. Layout = the cash book layout: DR on the left, CR on the right, both
-//      sides with Date | Detail | Folio | Amount
-//   2. Title = the account name + " A/C" (Sales A/C, Rent A/C, Customer A A/C, ...)
-//   3. Every IN/OUT transaction posts to TWO accounts (double entry) — the
-//      posting engine now lives in /ledger/postings.js (shared with the
-//      reports so the Trial Balance etc. always match this page)
-//   4. Personal accounts (Customer/Supplier/Landlord with credit activity)
-//      show transactions on BOTH sides: sales/purchases on one side,
-//      payments and returns on the other
-//   5. Folio = the book the entry comes from (SJ, PJ, SR, PR, GJ, CRJ, CPJ, PB)
-//   6. Detail = the corresponding account (Cash, Bank, the person's name) or
-//      the transaction description in personal accounts
-//   7. Balance c/d on the side with the SMALLER total, dated the account's
-//      last transaction + 1 day; ONE Total row per side (DR = CR); Balance
-//      b/d on the OPPOSITE side, one day after c/d — a credit balance b/d
-//      sits on the CR side
-//   8. NEUTRAL and CONTRA transactions are never posted
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 import { buildAccounts } from "/ledger/postings.js";
 
-await requireAuth(); // not logged in? -> bounced to "/"
+await requireAuth(); 
 
 const $ = (s) => document.querySelector(s);
 const grid = $("#acct-grid");
@@ -56,7 +56,7 @@ function plusDays(ts, days) {
 function render() {
   const MODEL = buildAccounts(TXNS);
 
-  // ---- account chips with closing balance (DR/CR) ----
+  
   grid.innerHTML = MODEL.order.map((name) => {
     const a = MODEL.accts.get(name);
     const drT = a.dr.reduce((s, r) => s + r.amt, 0);
@@ -78,7 +78,7 @@ function render() {
   if (!has) { countLine.textContent = ""; return; }
   if (!SELECTED || !MODEL.accts.has(SELECTED)) SELECTED = MODEL.order[0];
 
-  // ---- the selected account's ledger page ----
+  
   const a = MODEL.accts.get(SELECTED);
   acctTitle.textContent = SELECTED + " A/C";
 
@@ -94,7 +94,7 @@ function render() {
 
   const drT = a.dr.reduce((s, r) => s + r.amt, 0);
   const crT = a.cr.reduce((s, r) => s + r.amt, 0);
-  const bal = drT - crT; // positive = the balance sits on the DR side
+  const bal = drT - crT; 
   const cdDate = a.lastTs ? plusDays(a.lastTs, 1) : "";
   const bdDate = a.lastTs ? plusDays(a.lastTs, 2) : "";
   const balCells = (dateStr, label, amt) =>
@@ -104,7 +104,7 @@ function render() {
     '<td class="c-amount">' + esc(fmtAmount(amt)) + "</td>";
   const blanks = () => "<td></td><td></td><td></td><td></td>";
 
-  // c/d on the SMALLER side so both totals meet
+  
   if (bal < 0) html += '<tr class="cd-row">' + balCells(cdDate, "c/d", -bal) + blanks() + "</tr>";
   if (bal > 0) html += '<tr class="cd-row">' + blanks() + balCells(cdDate, "c/d", bal) + "</tr>";
   body.innerHTML = html;
@@ -116,7 +116,7 @@ function render() {
     '<td class="c-amount">' + esc(fmtAmount(totDr)) + "</td>" +
     "<td></td>" + '<td class="c-detail">Total</td>' + "<td></td>" +
     '<td class="c-amount">' + esc(fmtAmount(totCr)) + "</td></tr>";
-  // b/d on the OPPOSITE side — a credit balance b/d sits on the CR side
+  
   if (bal > 0) f += '<tr class="bd-row">' + balCells(bdDate, "b/d", bal) + blanks() + "</tr>";
   if (bal < 0) f += '<tr class="bd-row">' + blanks() + balCells(bdDate, "b/d", -bal) + "</tr>";
   foot.innerHTML = f;
@@ -127,7 +127,7 @@ function render() {
     " in " + SELECTED + " A/C \u00B7 DR " + a.dr.length + " \u00B7 CR " + a.cr.length + ".";
 }
 
-/* live feed — one snapshot, classified + posted client-side */
+ 
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {
   TXNS = snap.docs

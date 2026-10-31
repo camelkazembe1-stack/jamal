@@ -1,7 +1,4 @@
-/* JAMALI — page 68 · Word to Text — the tool's own engine.
-   Convertor tool #4 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   mammoth.js pulls the plain text out of .docx (and best-effort .doc)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

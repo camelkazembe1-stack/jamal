@@ -67,7 +67,7 @@
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
-    // task 56b: plain-words guidance when the firestore.rules are not published
+    
     function friendly(err) {
       const code = err && err.code ? String(err.code) : "";
       if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
@@ -76,7 +76,7 @@
       return (err && err.message) ? err.message : code;
     }
 
-    // the username travels forward automatically
+    
     const carried = new URLSearchParams(location.search).get("u");
     if (carried) $("ft-username").value = carried;
 
@@ -116,8 +116,8 @@
         await updateDoc(credRef, { tokenHash: newHash });
 
         $("token-value").textContent = newToken;
-        // task 57: one step at a time — the form disappears, only the new
-        // token (and Back to Login) remain on screen.
+        
+        
         $("ft-form").style.display = "none";
         $("token-box").style.display = "block";
         say("");

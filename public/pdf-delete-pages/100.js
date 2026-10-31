@@ -1,7 +1,4 @@
-/* JAMALI — page 100 · PDF Delete Pages — the tool's own engine.
-   Convertor tool #36 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   the listed pages are removed, everything else is kept*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

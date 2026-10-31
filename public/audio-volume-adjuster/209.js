@@ -1,7 +1,4 @@
-/* JAMALI — page 209 · Audio Volume Adjuster — the tool's own engine.
-   Convertor tool #145 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   scales every sample (peak-safe), renders offline*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

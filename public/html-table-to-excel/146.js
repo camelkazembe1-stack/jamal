@@ -1,7 +1,4 @@
-/* JAMALI — page 146 · HTML Table to Excel — the tool's own engine.
-   Convertor tool #82 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   every <table> in the page becomes a worksheet in one .xlsx*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

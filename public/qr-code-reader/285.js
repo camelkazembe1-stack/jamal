@@ -1,7 +1,4 @@
-/* JAMALI — page 285 · QR Code Reader — the tool's own engine.
-   Convertor tool #221 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   jsQR decodes the picture locally — camera-free and private*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

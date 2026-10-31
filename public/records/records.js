@@ -1,30 +1,30 @@
-// /public/records/records.js — JAMALI's universal register engine.
-// ONE engine drives every manual register (pages 21-40, 42's adjustments,
-// 53's reconciling items, 49-54): each page passes a CONFIG (collection,
-// fields, columns, statuses) and the engine renders the Add form, the
-// table, filter tabs, totals, an optional per-party summary card and an
-// optional inline settle editor.
-//
-// Config contract:
-//   root        selector of the container this instance renders into
-//   collection  Firestore collection name
-//   where       optional constant filter, e.g. { field:"direction", equals:"sales" }
-//   noField / noPrefix / noPad   auto number ("SO-001") scanned max+1 per scope
-//   fields      [{key,label,type:"text|number|date|select|textarea",opts,req,pos,def,ph,ro}]
-//   computed    doc => ({ total: ... })  derived on save
-//   columns     [{key,label,cls,fmt:"text|money|date|num|badge|no"}]
-//   statusFn    doc => status label (badge + tabs) | null
-//   tabOrder    preferred tab order, "All" always first
-//   totalCols   keys summed into the Total row
-//   totalLabelKey  column that carries the word "Total"
-//   summary     { title, key(doc), val(doc) } -> per-key card, sorted desc
-//   settle      { baseField, amountField, dateField, partyField, label, btn }
-//   readOnly    true -> no Add card
-//   empty       { icon, title, sub }
-//   entity      word for the count line ("order")
-//   partyField / partyLabel     used by the default count line
-//   countExtra  rows, totals => extra sentence for the count line
-//   validate    doc => error string | null (extra validation on save)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from "/firebase.js";
 
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
@@ -40,7 +40,7 @@ function asDate(ts) {
   return isNaN(d) ? null : d;
 }
 
-// "YYYY-MM-DD" must parse as LOCAL midnight
+
 function parseDay(v) {
   if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const p = v.split("-").map(Number);
@@ -93,14 +93,14 @@ function cellOf(col, docData, row) {
 }
 
 export async function initRecords(cfg) {
-  await requireAuth(); // not logged in? -> bounced to "/"
+  await requireAuth(); 
 
   const root = document.querySelector(cfg.root || "#app");
   const cols = cfg.columns;
   const hasSettle = !!cfg.settle;
   let ROWS = [];
 
-  /* ---------------- build the shell ---------------- */
+   
   root.innerHTML = [
     cfg.readOnly ? "" :
     '<div class="card add-card">' +
@@ -144,8 +144,8 @@ export async function initRecords(cfg) {
   const emptyBox = $(".r-empty");
   const countLine = $(".r-count");
 
-  /* ---------------- the Add form (generated from cfg.fields) ---------------- */
-  // readOnly pages have no Add card -> form/toggle are null; skip form setup
+   
+  
   if (form) {
     form.innerHTML = '<div class="form-grid">' + cfg.fields.map((f) => {
       const id = ' data-f="' + esc(f.key) + '"';
@@ -244,7 +244,7 @@ export async function initRecords(cfg) {
     });
   }
 
-  /* ---------------- settle editor (invoices) ---------------- */
+   
   const balOf = (r) =>
     Math.max(0, Number(r[cfg.settle.baseField] || 0) - Number(r[cfg.settle.amountField] || 0));
 
@@ -298,7 +298,7 @@ export async function initRecords(cfg) {
           [cfg.settle.amountField]: Number(r[cfg.settle.amountField] || 0) + amt,
           [cfg.settle.dateField]: inDate.value || isoToday()
         });
-        // onSnapshot re-render rebuilds the tbody -> editor disappears
+        
       } catch (e) {
         ok.disabled = false; ok.textContent = cfg.settle.btn || "Save";
         msg.textContent = "Save failed: " + ((e && e.message) || e);
@@ -306,7 +306,7 @@ export async function initRecords(cfg) {
     });
   }
 
-  /* ---------------- tabs ---------------- */
+   
   let TAB = "All";
   function renderTabs() {
     if (!cfg.statusFn) { tabsBox.hidden = true; return; }
@@ -323,7 +323,7 @@ export async function initRecords(cfg) {
       b.addEventListener("click", () => { TAB = b.dataset.tab; renderTabs(); renderTable(); }));
   }
 
-  /* ---------------- table ---------------- */
+   
   function renderTable() {
     const rows = ROWS.slice().sort((a, b) => {
       const da = parseDay(a[cfg.dateField || "date"]), db2 = parseDay(b[cfg.dateField || "date"]);
@@ -402,7 +402,7 @@ export async function initRecords(cfg) {
 
   function renderAll() { renderTabs(); renderTable(); }
 
-  /* ---------------- live feed ---------------- */
+   
   onSnapshot(collection(db, cfg.collection), (snap) => {
     ROWS = snap.docs
       .map((d) => {

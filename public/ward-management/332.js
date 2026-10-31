@@ -1,10 +1,10 @@
-// ward-management (page 332) — JAMALI Health — Bed Management
-// Beds belong to wards. Register beds inside a ward, keep their details
-// current, and take them in and out of use. The rules that protect the
-// data: bed numbers are unique inside a ward, a bed is never hand-set to
-// Occupied (assignment owns that), an occupied bed cannot be taken out of
-// service, and an occupied bed cannot be deleted. No failure can hide:
-// every listener carries an error callback and failures paint the banner.
+
+
+
+
+
+
+
 import { requireAuth, db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "/firebase.js";
 
 window.__p52 = { page: "332", build: "52b1", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -52,7 +52,7 @@ function when(iso) {
   return d.toLocaleDateString("en-GB") + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
 }
 
-/* the one bed status language, shared with 333, 334, 335, 336, 337, 338 */
+ 
 const BED_CLASS = {
   "Available": "b-avail", "Occupied": "b-occ", "Reserved": "b-resv",
   "Cleaning Required": "b-clean", "Cleaning in Progress": "b-clean",
@@ -63,12 +63,12 @@ const ST_CLASS = {
   "Cleaning Required": "st-clean", "Cleaning in Progress": "st-clean",
   "Maintenance Required": "st-maint", "Out of Service": "st-oos"
 };
-const ASSIGNABLE = "Available"; // only this status may take a patient
+const ASSIGNABLE = "Available"; 
 
-/* ---------- live data ---------- */
+ 
 let wards = [];
 let beds = [];
-let selWard = ""; // the ward chosen in the selector
+let selWard = ""; 
 
 onSnapshot(collection(db, "healthWards"), (snap) => {
   wards = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
@@ -91,7 +91,7 @@ function bedsOf(wardId) {
     .sort((a, b) => String(a.bedNumber || "").localeCompare(String(b.bedNumber || ""), undefined, { numeric: true }));
 }
 
-/* ---------- the ward picker ---------- */
+ 
 function renderWardPicker() {
   const sel = $("#b-ward");
   const cur = selWard;
@@ -108,7 +108,7 @@ $("#b-ward").addEventListener("change", () => {
   render();
 });
 
-/* ---------- form helpers ---------- */
+ 
 function ferr(msg) { const e = $("#b-ferr"); e.hidden = !msg; e.textContent = msg || ""; }
 function fok(msg) {
   const e = $("#b-fok");
@@ -118,7 +118,7 @@ function fok(msg) {
 }
 function v(sel) { return $(sel).value.trim(); }
 
-/* ---------- render ---------- */
+ 
 function render() {
   const w = wardById(selWard);
   const hasWard = !!w;
@@ -164,7 +164,7 @@ function render() {
   }
 }
 
-/* ---------- register a bed ---------- */
+ 
 function bedNumberTaken(wardId, num, ignoreDocId) {
   const n = String(num).toLowerCase();
   return beds.some((b) => String(b.wardId) === String(wardId) &&
@@ -227,7 +227,7 @@ $("#b-clear").addEventListener("click", () => {
   ferr(""); fok("");
 });
 
-/* ---------- the edit modal ---------- */
+ 
 let editing = null;
 function openEdit(b) {
   editing = b;
@@ -237,7 +237,7 @@ function openEdit(b) {
   $("#m-type").value = b.bedType || "Standard";
   $("#m-status").value = b.status === "Occupied" ? "Available" : (b.status || "Available");
   if (b.status === "Occupied") {
-    // the select cannot show Occupied — the guard below refuses to free a busy bed by hand
+    
     $("#m-status").disabled = true;
   } else {
     $("#m-status").disabled = false;

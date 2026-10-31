@@ -1,7 +1,4 @@
-/* JAMALI — page 90 · PDF to PowerPoint — the tool's own engine.
-   Convertor tool #26 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   each PDF page is rendered and placed full-bleed on a .pptx slide*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

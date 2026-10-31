@@ -1,7 +1,4 @@
-/* JAMALI — page 272 · File Type Detector — the tool's own engine.
-   Convertor tool #208 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   magic-byte signatures checked against the file header*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

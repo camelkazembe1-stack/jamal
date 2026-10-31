@@ -1,6 +1,4 @@
-/* JAMALI — page 64 · the Convertor tool page engine (one page per tool).
-   Every tool folder holds an identical copy of 64.html; the tool's identity
-   comes from its folder name. Base design system via the import below. */
+ 
 @import url("/records/records.css");
 
 h1 { position: relative; padding-left: 15px; }

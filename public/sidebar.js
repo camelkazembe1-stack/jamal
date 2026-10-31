@@ -1,133 +1,5 @@
 
-/* JAMALI — shared sidebar (every page except index.html)
-
-  TASK 68 — THE RED LOGOUT AT THE BOTTOM OF THE SIDEBAR (the TOTAL one):
-  - a red Logout button sits in a FIXED footer at the bottom of the
-    sidebar. The menu tree above it scrolls (floats down); the button
-    never moves — it is always on screen, on every page.
-  - clicking it is the TOTAL logout: the system-account session is
-    dropped AND the Google identity itself is signed out of Firebase
-    (auth sign-out). The next visit lands on the Google sign-in gate,
-    NOT on the account hub.
-  - this is DIFFERENT from the person-icon menu Logout, which ends
-    ONLY the system-account session and keeps the Google sign-in
-    alive (task 65, requirement 3). Both buttons keep every saved
-    account in the database — nothing is ever deleted.
-
-  (task history continues below)
-  — TASK
-63.
-  TASK 63 — THE DASH IS FOR BUTTONS AND INPUT FIELDS
-ONLY:
-  - the red "-" chip now appears ONLY on buttons and on input / select
-/
-    textarea fields (each with its label row) — NEVER on tiles, link
-    cards, sections or the page itself, and NEVER on the Account
-    Administration page (the administrator's own controls — the
-module
-    strip, the user tables, the save buttons — must stay untouchable).
-    Which AREAS and PAGES an account sees is decided by the
-module
-    selection (the per-user grants), not by dashes.
-
-   TASK 62 — the dash became a CORNER chip and hiding became
-TOTAL:
-   - every dash sits at the TOP-RIGHT CORNER of its own button or
-field
-     row (never floating beside it any more);
-   - clicking the dash makes the element DISAPPEAR COMPLETELY
-— for the
-     users AND for the administrator (no strike-through, no dimming, no
-     half-visible leftovers — the exact "remove all abnormalities" ask);
-   - what the dashes hid is listed in the red "Hidden (N)" chip at the
-     bottom-right corner (administrator only): open it, press Show next
-to
-     an entry (or Show all) and the element is back everywhere;
-   - an approved account with NO modules yet sees exactly
-     "Please wait for admin module allowance." instead of any page —
-     the administrator decides what that account will see.
-   THE TWO IRON RULES (unchanged):
-   - this file holds NO page data (the tree comes from menu.js)
-   - this file fetches NO page data (the tree is built from menu.js only)
-   Adding or moving a page is still ONE line in menu.js — never this
-file.
-   The tree is COLLAPSIBLE: any node whose menu entries go one
-level deeper
-   gets a toggle. Home and Business start open, deeper nodes start
-closed,
-   and the path to the page you are on is opened automatically.
-
-  THE TWO-KEY MODEL (task 56):
-  - key to the HOUSE = the Google sign-in; keys to the ROOMS = the
-system
-     account session (sessionStorage "JAMALI_SYSTEM_SESSION",
-written by the
-     start page at account login).
-   - this file renders the tree PER USER: administrators see
-everything;
-     other accounts see only the folders granted to them (all hidden
-until
-     the administrator grants access).
-   - the PERSON ICON sits immediately to the right of JAMAL with a
-small
-     space; clicking it opens the account menu: the user's name +
-Logout
-     and Switch Account. Both return to the start page (Login / Create
-     Account).
-   - folder links whose area the session may not open (home page
-tiles,
-     hub links, cross-page links) are hidden as well.
-
-  TASK 57 — the Admin button:
-  - when the administrator is logged in, a fixed "Admin" button sits at
-    the top-right corner of every page and opens the Account
-    Administration dashboard (/system-admin/380). Everyone else
-never
-    sees it.
-
-  TASK 58 — the session corrects itself:
-  - a STALE session (the administrator changed the role, the grants or
-    the display name after this browser last logged in) used to keep
-    showing the old menu and the old buttons until the next manual
-login.
-    Now, once per page, the sidebar quietly re-reads this browser's
-own
-    account from the stored profile and, if anything changed, saves the
-    corrected session and refreshes the page once. If nothing
-changed,
-    nothing happens — no extra reads, no flicker.
-
-  TASK 60 — the administrator controls what every page shows:
-  - TASK 60B: the red dash "-" lives on the PAGES ONLY — beside
-every
-    input, select, textarea, button and section, one PAGE dash per
-page
-    (pinned to the bottom-right corner) and one dash per home tile.
-    The sidebar stays CLEAN: no dashes there, for anyone.
-  - clicking a dash hides that element from every non-administrator
-    account; the administrator keeps seeing it, with the dash turning
-    SOLID RED while the element is hidden for others.
-  - hiding a PARENT hides its CHILDREN for users automatically: a
-    hidden section hides all the fields and buttons inside it, and a
-    hidden tile (Business / Computer / Health) hides the whole folder
-    branch — in the sidebar AND on the pages (opening a hidden
-page
-    directly shows a notice). The PAGE dash hides the whole page:
-the
-    notice replaces it and its sidebar entry disappears for users.
-  - the administrator's sidebar keeps the FULL tree with hidden entries
-    struck through (never dashes); users never see hidden entries.
-  - normal users never see the dashes and never see hidden
-elements.
-    What a user gets = granted in Users & Access MINUS what the
-    administrator hid with the dashes.
-  - the state lives in ONE Firestore document,
-systemPageConfig/visibility:
-     { fields: { "<page-path>:<element-key>": true },
-       menu: { "<folder>": true } }
-  - the state is read once per page; changes reach users on their next
-    page load. Content a page renders later (new rows, extra buttons)
-    gets its dashes and its hiding too, through a DOM observer. */
+ 
 (function () {
 
  var SESSION_KEY = "JAMALI_SYSTEM_SESSION";
@@ -145,7 +17,7 @@ catch (e) {}
  }
 
  var session = readSession();
- // Folders any account may open without a grant; system-admin is admin-only.
+ 
  var ALWAYS_OPEN = ["home", "account-recovery", "file-viewer"];
  function folderAllowed(folder) {
    if (!session) return false;
@@ -155,22 +27,22 @@ catch (e) {}
    return !!(session.grants && session.grants.indexOf(folder) !== -1);
  }
 
- // Current folder — read BEFORE the address bar is cleaned, so the
- // active page can still be highlighted in the family tree
+ 
+ 
  var current = location.pathname.split("/")[1];
 
-  // ================================================== =================
-  // TASK 65 — THE HOUSE KEY IS CHECKED ON EVERY PAGE (requirement 1):
-  // a JAMALI link opened WITHOUT an active Google authentication
-  // session always lands on the Google sign-in first. A room-key
-  // session that does not belong to the Google identity in THIS
-  // browser — or an old session carrying no identity at all (task 64
-  // relics) — is dropped here and re-chosen on the start page, where
-  // the account hub lists every account of the signed-in Google email.
-  // The recovery pages are excluded: they verify knowledge (password /
-  // phone) on their own, and the security rules already demand a real
-  // Google sign-in for the actual token re-issue.
-  // ================================================== =================
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   if (current !== "account-recovery") {
     if (!session) {
       location.replace("/?need=account");
@@ -187,40 +59,39 @@ res(u); });
 }
           if (session.uid !== u.uid) { session.uid = u.uid; try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
         });
-      }).catch(function () { /* no connection yet — the page still renders
-*/ });
+      }).catch(function () {   });
     }
   }
 
-    // TASK 60: the full page path (e.g. "victim-registration/322"), also
-    // read BEFORE the address bar is cleaned — it keys the field hides.
+    
+    
     var PAGE_ID = location.pathname.replace(/^\//, "")
       .replace(/\.html$/, "").replace(/\/+$/, "");
 
-    // Address bar always shows the bare domain
+    
     try { history.replaceState({}, "", "/"); } catch (e) {}
 
- // The family tree — provided by menu.js. This file holds no page data.
+ 
  var PAGES = window.JAMALI_MENU || [];
 
- // ================================================== =================
- // TASK 60 — visibility state: what the administrator hid from users
- // ================================================== =================
- var VIS = { fields: {}, menu: {} }; // filled by bootVisibility()
+ 
+ 
+ 
+ var VIS = { fields: {}, menu: {} }; 
  var VIS_DOC = ["systemPageConfig", "visibility"];
- var DASHES = {}; // TASK 60B: one dash per key — reused across scans, never duplicated
+ var DASHES = {}; 
 
     function isAdmin() {
       return !!(session && session.role === "admin");
     }
 
     function bootVisibility() {
-      return Promise.resolve(); /* T81: dash hiding removed - the visibility document is never read again */
+      return Promise.resolve();  
 }
 
- // The folder chain of a menu area (its ancestors), e.g.
- // add-transaction -> business. d:0 entries (Home, Account
- // Administration) are never ancestors of a d:1+ folder.
+ 
+ 
+ 
  function chainOf(folder) {
    var out = [folder], idx = -1, myD = 0;
    for (var i = 0; i < PAGES.length; i++) {
@@ -237,7 +108,7 @@ break; }
    return out;
  }
 
- // Is this folder — or one of its ancestors — hidden by the administrator?
+ 
  function menuHidden(folder) {
    var c = chainOf(folder);
    for (var i = 0; i < c.length; i++) {
@@ -246,11 +117,11 @@ break; }
    return false;
  }
 
- // A user may open a folder when it is granted AND not hidden (task 60).
+ 
  function userFolderOpen(folder) {
    return folderAllowed(folder) && !menuHidden(folder);
  }
- // TASK 60B: the page id behind a sidebar entry, e.g. business -> "business/2"
+ 
  function pageIdOfFolder(folder) {
    for (var i = 0; i < PAGES.length; i++) {
      if (PAGES[i].folder === folder) return folder + "/" + PAGES[i].n;
@@ -258,32 +129,32 @@ break; }
    return null;
  }
 
- // TASK 60B: the page-level hide (the PAGE dash stores "<page>:__page__")
+ 
  function pageHidden(pid) {
    return !!(pid && VIS.fields[pid + ":__page__"]);
  }
 
-  // Hide entries the session may not open, BEFORE the tree is drawn:
-  // an ungranted parent hides its whole branch.
+  
+  
   var visible = PAGES.map(function (p) { return folderAllowed(p.folder);
 });
   for (var v = 0; v < PAGES.length; v++) {
     if (visible[v]) continue;
     var my = PAGES[v].d || 0;
-    if (my === 0) continue; /* T80: a standalone page hides nothing below it */
+    if (my === 0) continue;  
     for (var w = v + 1; w < PAGES.length; w++) {
       if ((PAGES[w].d || 0) <= my) break;
-      visible[w] = false; // children of a hidden node stay hidden
+      visible[w] = false; 
     }
   }
 
- // ---- collapsible tree helpers (children derived from the d values) ----
+ 
 
- // Direct children of entry i: the entries after i that sit exactly one
- // level deeper, stopping at the first entry at i's level or higher.
+ 
+ 
  function kidsOf(i) {
    var out = [], my = PAGES[i].d || 0;
-   if (my === 0) return out; /* T80: Home / Account Administration never claim children */
+   if (my === 0) return out;  
    for (var j = i + 1; j < PAGES.length; j++) {
      var dj = PAGES[j].d || 0;
      if (dj <= my) break;
@@ -291,7 +162,7 @@ break; }
    }
    return out;
  }
- // Does this node's whole branch contain the page we are on?
+ 
  function subtreeHasCurrent(i) {
    if (PAGES[i].folder === current) return true;
    var k = kidsOf(i);
@@ -301,7 +172,7 @@ break; }
    return false;
  }
 
- // Render entry i and (if it has children) its collapsible kids box.
+ 
  function render(i) {
    var p = PAGES[i];
    var cls = "lv" + (p.d || 0);
@@ -312,9 +183,9 @@ p.label + "</a>";
    var k = kidsOf(i);
    if (k.length) {
      html += "<button type=\"button\" class=\"tg\" aria-expanded=\"false\"></button></div>";
-     // default: shallow parents (Home, Business) open, deeper ones closed;
-     // the active page's path is always opened
-     var open = true; /* T79: granted tree shows its full parent-child chain */
+     
+     
+     var open = true;  
      html += "<div class=\"kids\"" + (open ? "" : " hidden") + ">";
      for (var x = 0; x < k.length; x++) html += render(k[x]);
      html += "</div>";
@@ -324,12 +195,12 @@ p.label + "</a>";
    return html;
  }
 
- // Draw every visible top-level entry (d: 0), e.g. Home.
+ 
  var nav = "";
  for (var r = 0; r < PAGES.length; r++) {
    if ((PAGES[r].d || 0) <= 1 && visible[r]) nav += render(r);
  }
- if (nav === "") { // defensive: flat list if the menu has no depth at all
+ if (nav === "") { 
    for (var f = 0; f < PAGES.length; f++) { if (visible[f]) nav += render(f);
 }
     }
@@ -437,8 +308,8 @@ p.label + "</a>";
    document.body.classList.remove("jamali-sidebar-open");
  });
 
-  // brand: JAMAL first, then the person icon immediately to its right with
-  // a small space (task 56). The icon opens the account menu.
+  
+  
   var aside = document.createElement("aside");
   aside.id = "jamali-sidebar";
   aside.innerHTML =
@@ -452,7 +323,7 @@ p.label + "</a>";
  document.body.insertBefore(burger, document.body.firstChild);
  document.body.classList.add("jamali-has-sidebar");
 
-  // ---- account menu: name + Logout + Switch Account (task 56) ----------------
+  
   var who = session ? (session.username || "account") : "account";
   var roleLine = session ? (session.role === "admin" ? "administrator" :
 (session.position || "user")) : "";
@@ -476,37 +347,37 @@ function (ev) {
 acct.hidden = true;
   });
 
-  // Switch Account: drop the room keys, keep the house key, back to the start.
+  
   document.getElementById("jamali-switch").addEventListener("click",
 function () {
     clearSession();
     location.href = "/";
   });
 
-  // TASK 65 (requirement 3): LOGOUT ENDS THE SYSTEM-ACCOUNT SESSION
-  // ONLY — it must NOT sign the user out of Google. The Google session
-  // stays active, so the start page opens straight on the account
-  // selection / registration hub, where another saved account can be
-  // chosen or a new one created WITHOUT repeating the Google sign-in.
-  // (Switch Account always behaved this way — now Logout does too.
-  // Signing out of Google itself lives on the hub, behind "Use a
-  // different Google account".) Every saved account stays in the
-  // database: logging out never deletes, overwrites or merges anything.
+  
+  
+  
+  
+  
+  
+  
+  
+  
   document.getElementById("jamali-logout").addEventListener("click",
 function () {
     clearSession();
     location.href = "/";
  });
 
-  // TASK 68: THE RED LOGOUT AT THE BOTTOM OF THE SIDEBAR — the TOTAL
-  // one. Unlike the person-menu Logout above (which ends ONLY the
-  // system-account session and keeps the Google sign-in alive — task
-  // 65, requirement 3), this button drops the room keys AND signs the
-  // Google identity out of Firebase completely: the next visit lands
-  // on the Google sign-in gate, NOT on the account hub. The button
-  // lives in a fixed footer under the scrolling tree, so it stays on
-  // screen while the menu floats above it. Every saved account stays
-  // in the database — nothing is ever deleted.
+  
+  
+  
+  
+  
+  
+  
+  
+  
   document.getElementById("jamali-google-logout").addEventListener("click",
   function () {
     var btn = document.getElementById("jamali-google-logout");
@@ -525,8 +396,8 @@ function () {
     });
   });
 
-  // ---- TASK 57: the Admin button — top-right corner of every page, -----------
-  // ---- administrators only. Opens the Account Administration dashboard.
+  
+  
   function ensureAdminBtn() {
     if (document.getElementById("jamali-admin-btn")) return;
     var abtn = document.createElement("button");
@@ -543,10 +414,10 @@ function () {
     ensureAdminBtn();
   }
 
-  // ---- TASK 58: the session corrects itself against the stored account -------
-  // One quiet read per page. If the stored account changed since this browser
-  // last logged in (role, grants, name, position), the corrected session is
-  // saved and the page refreshes once; the fresh render is then correct.
+  
+  
+  
+  
   if (session && session.username) {
     import("/firebase.js").then(function (fb) {
       var uid = fb.auth && fb.auth.currentUser;
@@ -578,19 +449,19 @@ res(u); });
               JSON.stringify(next.grants) ===
 JSON.stringify(session.grants || []);
      if (!same) {
-       writeSession(next); try { paintNav(); } catch (e) {} /* T79: sidebar repaints in place */
-     /* T77: static display - no reload */
+       writeSession(next); try { paintNav(); } catch (e) {}  
+      
      }
    }).catch(function () {
-     /* a hiccup never breaks the page — the cached session stays */
+      
    });
  }
 
-  // ---- v / ^ toggles: v = children closed (click to open), ^ = open (click to close)
+  
   function sync(btn) {
     var box = btn.parentNode.nextElementSibling;
     var open = !!(box && !box.hasAttribute("hidden"));
-    btn.textContent = open ? "\u25B4" : "\u25BE"; // ^ : v
+    btn.textContent = open ? "\u25B4" : "\u25BE"; 
     btn.setAttribute("aria-expanded", open ? "true" : "false");
   }
   function wireToggles(scope){
@@ -609,8 +480,7 @@ JSON.stringify(session.grants || []);
   }
 }
 wireToggles(aside);
-/* T79: nav repaints from the CURRENT session - grants appear in place,
-   no reload (T77 removed the reload, so the sidebar must repaint) */
+ 
 function paintNav(){
   session=readSession();
   visible=PAGES.map(function(p){return folderAllowed(p.folder);});
@@ -630,19 +500,19 @@ function paintNav(){
   wireToggles(nv);
 }
 
-  // ---- hide folder links the session may not open (tiles, hub links, etc.) --
-  // Runs after the page content exists; also covers links rendered later by
-  // listening once for DOM additions.
+  
+  
+  
   function filterLinks(root) {
     var links = (root || document).querySelectorAll("a[href]");
     for (var i = 0; i < links.length; i++) {
       var href = links[i].getAttribute("href") || "";
       var m = href.match(/^\/([a-z0-9-]+)\//i);
       if (!m) continue;
-      if (m[1] === current) continue;                 // the page you are on
+      if (m[1] === current) continue;                 
       if (!folderAllowed(m[1])) { links[i].style.display = "none"; continue; }
-      // TASK 62: a hidden target page hides its links for EVERYONE — the
-      // administrator included (the Hidden panel brings the page back).
+      
+      
       var rest = href.slice(m[0].length).replace(/\.html$/,
 "").replace(/\/+$/, "");
       if (menuHidden(m[1]) || pageHidden(m[1] + "/" + rest))
@@ -656,10 +526,10 @@ filterLinks(document); });
     filterLinks(document);
   }
 
- // ================================================== =================
- // TASK 60 — engine wiring: once the visibility state has been read,
- // adjust the sidebar and hand the page to the admin / user engine.
- // ================================================== =================
+ 
+ 
+ 
+ 
  bootVisibility().then(function () {
    applySidebarVis();
    if (isAdmin()) { ensureHiddenChip(); ensureVisPanel();
@@ -667,11 +537,11 @@ refreshHiddenChip(); }
    pageBoot();
  });
 
-  // ================================================== =================
-  // TASK 62 — the Hidden panel: everything the dashes hid, in one list.
-  // Hidden means GONE for everyone — so the administrator needs one place
-  // that still knows what was hidden and brings any of it back.
-  // ================================================== =================
+  
+  
+  
+  
+  
   function hiddenItems() {
     var out = [];
     for (var k in VIS.menu) {
@@ -770,8 +640,8 @@ function renderHiddenPanel() {
      p.appendChild(all);
  }
 
- // hidden elements carry data-jamali-gone — clear the marks BEFORE the
- // rescan, or the scan could never see (and re-judge) them again
+ 
+ 
  function clearGoneMarks() {
    var gones = document.querySelectorAll("[data-jamali-gone]");
    for (var g = 0; g < gones.length; g++) {
@@ -818,11 +688,11 @@ VIS_DOC[1])).then(function () {
    });
  }
 
-  // ---- sidebar: hidden branches leave for EVERYONE (TASK 62) ------------
-  // NO dashes in the sidebar — never, for anyone. A hidden area or page is
-  // GONE from the tree for the users AND for the administrator — there is
-  // no strike-through, no dimming (task 60B's half-visible state is gone).
-  // The administrator restores branches from the Hidden panel.
+  
+  
+  
+  
+  
   function applySidebarVis() {
     var nodes = document.querySelectorAll("#jamali-sidebar .node[data-folder]");
     for (var i = 0; i < nodes.length; i++) {
@@ -836,7 +706,7 @@ VIS_DOC[1])).then(function () {
 nx.style.display = "none";
       }
     }
-    // a folder whose every child is hidden must not keep a dead arrow
+    
     var tgl = document.querySelectorAll("#jamali-sidebar .tg");
     for (var j = 0; j < tgl.length; j++) {
       var box = tgl[j].parentNode.nextElementSibling;
@@ -879,7 +749,7 @@ nx.style.display = "none";
    setTimeout(function () { b.textContent = "-"; }, 1500);
  }
 
- // ---- the page itself: admin sees dashes, users get the hides ---------
+ 
  function mainEl() {
    return document.getElementById("app") ||
 document.querySelector("main") || document.body;
@@ -887,9 +757,9 @@ document.querySelector("main") || document.body;
 
   function pageBoot() {
     if (!PAGE_ID) return;
-    // TASK 63: the Account Administration page carries NO dashes — the
-    // administrator's own controls (the module strip, the user tables,
-    // the save buttons) must never be hideable, not even by accident.
+    
+    
+    
     if (current === "system-admin") return;
     var main = mainEl();
     var run = function () {
@@ -907,10 +777,10 @@ document.querySelector("main") || document.body;
     }
   }
 
- // ---- users: block a page the administrator hid, apply the hides ------
- // TASK 62: an APPROVED account the administrator has not allowed any
- // module for yet sees the allowance gate instead of any page — the
- // administrator decides what that account will see, nothing is default.
+ 
+ 
+ 
+ 
  function hasAnyGrant() {
    return !!(session && Array.isArray(session.grants) &&
 session.grants.length);
@@ -927,7 +797,7 @@ return; }
  }
 
  
-  // T75: blank home - hide the page content, add nothing.
+  
   function blankHome(main) {
     try { if (main) main.style.display = "none"; } catch (e) {}
   }
@@ -972,9 +842,9 @@ function blockAllowance() {
    document.body.appendChild(n);
  }
 
-  // ---- element keys: stable across visits ------------------------------
-  // id when the element has one, else a slug of its own text, else a
-  // generated tag. Keys are stored per page: "<page-path>:<key>".
+  
+  
+  
   function slug(text) {
     return String(text || "").trim().toLowerCase().replace(/[^a-z0-9]+/g,
 "-")
@@ -990,11 +860,11 @@ function blockAllowance() {
    return !!(el.offsetWidth || el.offsetHeight ||
 el.getClientRects().length);
  }
-  // TASK 63: the ONLY dash targets left — buttons and input fields
-  // (input / select / textarea, each with its label row). Tiles, link
-  // cards, sections and the page itself are NO LONGER targets: which
-  // areas and pages an account sees is the module selection's job (the
-  // per-user grants on the Account Administration page), not the dash's.
+  
+  
+  
+  
+  
   function scanTargets(root) {
     var map = {}, seq = 0;
     function put(key, el, wrap) {
@@ -1008,7 +878,7 @@ el.getClientRects().length);
 continue;
       var row = c.closest ? c.closest("label") : null;
       if (row && !insideJamaliUi(row)) {
-        // a row holding several controls hides control-by-control
+        
         var multi =
 row.querySelectorAll("input,select,textarea,button").length > 1;
         put(c.id || ("row-" + (slug(row.textContent) || ("x" + (++seq)))), c,
@@ -1040,23 +910,23 @@ k.indexOf(prefix) === 0) {
    return out;
  }
 
- function applyUserHides(root) { return; /* T81: removed - nothing is dash-hidden for users */
+ function applyUserHides(root) { return;  
 }
 
-  // ---- administrator: a dash on every BUTTON and INPUT FIELD, marked live
-  // Dashes live in the DASHES registry and are REUSED across scans — the
-  // observer re-runs this function, but a dash is created and inserted
-  // exactly once (no duplicates, no pile-up).
-  // TASK 62: a hidden element is GONE for the administrator too — the
-  // element gets display:none and its dash disappears with it; the red
-  // "Hidden (N)" panel at the bottom-right brings anything back.
-  // TASK 63: buttons and input fields ONLY — no tiles, no link cards,
-  // no sections, no page dash, and never on the Account Administration
-  // page (pageBoot skips system-admin entirely).
-  function scanAdminPage(root) { return; /* T81: removed - no dash chips, nothing hidden */
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  function scanAdminPage(root) { return;  
 }
 
-// hidden directly, or hidden because a parent section is hidden
+
 function effHidden(key, el, hidden) {
   if (hidden[key]) return true;
   var p = el ? el.parentElement : null;
@@ -1069,13 +939,13 @@ function effHidden(key, el, hidden) {
 }
 
 function placeDash(t, b) {
-   if (b.parentNode) return; // a dash is inserted exactly once
-   // TASK 62: EVERY dash sits at the TOP-RIGHT CORNER of its own target —
-   // button or field row — never floating beside it.
+   if (b.parentNode) return; 
+   
+   
    var host = t.wrap || t.el;
    var tag = host.tagName;
    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
-     // a void control cannot hold children — wrap it first
+     
      var sp = document.createElement("span");
      sp.className = "jamali-ctl-host";
      host.parentNode.insertBefore(sp, host);
@@ -1110,16 +980,16 @@ true;
     };
   }
 
- // TASK 62: every state change funnels through here — the sidebar, the
-  // page scan and the Hidden panel all repaint from the same state.
+ 
+  
   function afterVisChange() {
     applySidebarVis();
     scanAdminPage(mainEl());
     refreshHiddenChip();
   }
 
-  // content a page renders later (new rows, extra buttons) gets its
-  // dashes and its hiding too
+  
+  
   function watchPage(root, fn) {
     if (!window.MutationObserver) return;
     var t = null;

@@ -1,7 +1,4 @@
-/* JAMALI — page 299 · Document Metadata Editor — the tool's own engine.
-   Convertor tool #235 (Document and Office Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   docProps/core.xml edited in place: title, author, subject*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

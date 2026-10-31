@@ -1,7 +1,4 @@
-/* JAMALI — page 92 · PDF to Image — the tool's own engine.
-   Convertor tool #28 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   every page renders to PNG (zip if several pages) via pdf.js*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

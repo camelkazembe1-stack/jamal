@@ -1,23 +1,23 @@
-// /public/ledger/postings.js — JAMALI's double-entry posting engine.
-// Shared by the Ledger (page 18) and the reports (Trial Balance family,
-// AR/AP schedules, Bank Reconciliation) so every page shows the SAME
-// figures from ONE source of truth.
-//
-// Rules (user spec):
-//   1. Every IN/OUT transaction posts to TWO accounts (double entry):
-//        sales              -> CR Sales A/C          (sales returns -> DR Sales Returns A/C)
-//        purchases          -> DR Purchases A/C      (purchases returns -> CR Purchases Returns A/C)
-//        other IN  (income) -> CR <transaction name> A/C   (IN goes to CR)
-//        other OUT (expense)-> DR <transaction name> A/C   (OUT goes to DR)
-//      The opposite side is the value given/received:
-//        Flow Method Cash/Bank -> Cash A/C / Bank A/C (IN lands on DR, OUT on CR)
-//        Flow Method Credit    -> the person's own A/C (credit sale DR, credit purchase CR)
-//      A Cash/Bank payment from/to a person who has credit activity settles
-//      that person's account (customers CR, suppliers DR).
-//   2. NEUTRAL and CONTRA transactions are never posted.
-//   3. Folio = the originating book (SJ, PJ, SR, PR, GJ, CRJ, CPJ, PB).
-// Each account also carries a KIND used by the reports:
-//   asset | liability | revenue | expense | person
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { classify } from "/journals/journal.js";
 
 const FOLIO = { petty: "PB", sales: "SJ", purchases: "PJ", salesReturns: "SR",
@@ -29,7 +29,7 @@ export const asDate = (ts) =>
 
 export function fmtDate(ts) {
   if (!ts) return "\u2014";
-  return asDate(ts).toLocaleDateString("en-GB"); // 21/10/2026
+  return asDate(ts).toLocaleDateString("en-GB"); 
 }
 
 const typeOf = (t) => String(t.transactionType || "").toUpperCase();
@@ -38,7 +38,7 @@ const hayOf = (t) => (String(t.transactionName || "") + " " + String(t.name || "
 
 const hasRet = (t) => hayOf(t).includes("return");
 const purchasy = (t) => hayOf(t).includes("purchas") || hayOf(t).includes("supplier");
-const isSRet = (t) => hasRet(t) && !purchasy(t);   // returns FIRST — "Sales Return" also contains "sales"
+const isSRet = (t) => hasRet(t) && !purchasy(t);   
 const isPRet = (t) => hasRet(t) && purchasy(t);
 const isSale = (t) => typeOf(t) === "IN" && !hasRet(t) &&
   (hayOf(t).includes("sale") || hayOf(t).includes("sold"));
@@ -48,7 +48,7 @@ const isPurchase = (t) => typeOf(t) === "OUT" && !hasRet(t) &&
 const moneyAcct = (t) => (flowOf(t) === "bank" ? "Bank" : "Cash");
 const moneyDetail = (t) =>
   flowOf(t) === "bank" ? "Bank" : flowOf(t) === "cash" ? "Cash" : null;
-const nominal = (t) => (t.transactionName || "General"); // display adds " A/C"
+const nominal = (t) => (t.transactionName || "General"); 
 
 export function postingsFor(t, creditPeople) {
   const type = typeOf(t);
@@ -89,7 +89,7 @@ export function postingsFor(t, creditPeople) {
       : row(moneyAcct(t), "Purchases", "asset");
     return { dr, cr };
   }
-  if (type === "IN") { // other receipts (income)
+  if (type === "IN") { 
     const dr = flow === "credit"
       ? row(person || "Sundry Debtors", txn, person ? "person" : "asset")
       : row(moneyAcct(t), txn || "Receipt", "asset");
@@ -98,7 +98,7 @@ export function postingsFor(t, creditPeople) {
       : row(nominal(t), flow === "credit" ? (person || "Credit") : (person || moneyDetail(t)), "revenue");
     return { dr, cr };
   }
-  // OUT — other payments (expenses)
+  
   const cr = flow === "credit"
     ? row(person || "Sundry Creditors", txn, person ? "person" : "liability")
     : row(moneyAcct(t), txn || "Payment", "asset");
@@ -108,9 +108,9 @@ export function postingsFor(t, creditPeople) {
   return { dr, cr };
 }
 
-// Group every posting into accounts. Returns { order, accts } where accts
-// is a Map name -> { dr[], cr[], lastTs, kind } — identical to what the
-// Ledger renders, plus the account kind for the reports.
+
+
+
 export function buildAccounts(txns) {
   const live = txns.filter((t) => typeOf(t) === "IN" || typeOf(t) === "OUT");
   const creditPeople = new Set(
@@ -138,8 +138,8 @@ export function buildAccounts(txns) {
   return { order, accts, creditPeople };
 }
 
-// Net (DR - CR) balance of one account, e.g. the Bank A/C book balance for
-// the Bank Reconciliation (negative = overdrawn / credit balance).
+
+
 export function accountBalance(accts, name) {
   const a = accts.get(name);
   if (!a) return 0;

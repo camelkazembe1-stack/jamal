@@ -1,6 +1,6 @@
-// purchase-invoice (page 24) — invoice records with subtotal/discount/tax and
-// inline settlement. Statuses are DERIVED, never stored:
-//   Unpaid > Partially Paid > Paid > Overdue (overdue is NOT cancelled).
+
+
+
 import { initRecords } from "/records/records.js";
 
 const T0 = (() => { const t = new Date(); t.setHours(0, 0, 0, 0); return t; })();
@@ -9,7 +9,7 @@ const statusOf = (r) => {
   if (r.status === "Cancelled") return "Cancelled";
   if ((Number(r.total) || 0) > 0 && balOf(r) <= 0.009) return "Paid";
   const due = r.dueDate ? new Date(r.dueDate + "T00:00:00") : null;
-  if (due && due < T0) return "Overdue";           // overdue is NOT cancelled
+  if (due && due < T0) return "Overdue";           
   if ((Number(r.paidAmount) || 0) > 0) return "Partially Paid";
   return "Unpaid";
 };

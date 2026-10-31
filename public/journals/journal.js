@@ -1,24 +1,24 @@
-// /public/journals/journal.js — shared engine for JAMALI's books & journals (pages 7-14)
-// One transaction belongs to exactly ONE book. Classification rules:
-//   NEUTRAL / CONTRA                      -> no journal (never shown)
-//   name contains "petty"                 -> Petty Cash Book        (page 7)
-//   Flow Method = Credit:
-//     name contains "return"
-//       + purchas/supplier                -> Purchases Returns Journal (page 11)
-//       otherwise                         -> Sales Returns Journal     (page 10)
-//     IN  + sale/sold                     -> Sales Journal             (page 8)
-//     OUT + purchas/bought/buy            -> Purchases Journal         (page 9)
-//     anything else                       -> General Journal           (page 12)
-//   Flow Method = Cash or Bank:
-//     IN  -> Cash Receipts Journal (page 13)   OUT -> Cash Payments Journal (page 14)
-// General Journal sides follow ACCOUNTING TREATMENT, not the IN/OUT label:
-//   credit OUT = an expense incurred -> DR side (Rent, Salaries, ...)
-//   credit IN  = an income earned    -> CR side (Commission Received, ...)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 
 export function classify(t) {
   const type = String(t.transactionType || "").toUpperCase();
-  if (type !== "IN" && type !== "OUT") return null; // NEUTRAL / CONTRA never journalled
+  if (type !== "IN" && type !== "OUT") return null; 
   const flow = String(t.flowMethod || "").trim().toLowerCase();
   const hay = (String(t.transactionName || "") + " " + String(t.name || "")).toLowerCase();
   if (hay.includes("petty")) return "petty";
@@ -46,15 +46,15 @@ function asDate(ts) {
 
 function fmtDate(ts) {
   if (!ts) return "\u2014";
-  return asDate(ts).toLocaleDateString("en-GB"); // 21/10/2026
+  return asDate(ts).toLocaleDateString("en-GB"); 
 }
 
-/* simple journals with a "Name" column show the person first, detail as fallback */
+ 
 const NAME_FIRST = { sales: 1, purchases: 1, salesReturns: 1, purchasesReturns: 1,
                      cashReceipts: 1, cashPayments: 1 };
 
 export async function initJournal(journal) {
-  await requireAuth(); // not logged in? -> bounced to "/"
+  await requireAuth(); 
 
   const $ = (s) => document.querySelector(s);
   const body = $("#j-body");
@@ -66,7 +66,7 @@ export async function initJournal(journal) {
   function render(rows) {
     let f = "";
     if (journal === "general") {
-      // accounting treatment: credit OUT = expense -> DR, credit IN = income -> CR
+      
       const dr = rows.filter((t) => String(t.transactionType || "").toUpperCase() === "OUT");
       const cr = rows.filter((t) => String(t.transactionType || "").toUpperCase() === "IN");
       const cell = (t) => t
@@ -115,7 +115,7 @@ export async function initJournal(journal) {
     emptyBox.hidden = has;
   }
 
-  /* live feed — one snapshot per journal page, filtered client-side */
+   
   const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
   onSnapshot(q, (snap) => {
     render(snap.docs

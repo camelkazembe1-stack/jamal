@@ -1,7 +1,4 @@
-/* JAMALI — page 319 · CSV Validator — the tool's own engine.
-   Convertor tool #255 (Number and Data Formats). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   column consistency, quoting, empty rows — a structural report*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

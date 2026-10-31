@@ -1,7 +1,4 @@
-/* JAMALI — page 132 · CSV to Excel — the tool's own engine.
-   Convertor tool #68 (Spreadsheet and Data Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   CSV (auto-detects delimiter) -> a genuine .xlsx workbook*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

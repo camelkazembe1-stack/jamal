@@ -1,7 +1,4 @@
-/* JAMALI — page 179 · AVIF to JPG — the tool's own engine.
-   Convertor tool #115 (Image Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   AVIF -> JPG (decoded by the browser)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }
@@ -70,7 +67,7 @@
   $("run").onclick = async function () {
     var f = oneFile("file"); if (!f) return;
     try {
-      var im = await loadImg(f);  // Chrome/Edge decode AVIF natively
+      var im = await loadImg(f);  
       var out = im.__canvas ? im.__canvas : drawTo(im, im.naturalWidth, im.naturalHeight);
       var blob = await toBlob(fillWhite(out), "image/jpeg", 0.92);
       var name = f.name.replace(/\.[^.]+$/, "") + ".jpg";

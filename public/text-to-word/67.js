@@ -1,7 +1,4 @@
-/* JAMALI — page 67 · Text to Word — the tool's own engine.
-   Convertor tool #3 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   text becomes a Word document (HTML-in-.doc, opens in Word/Docs)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

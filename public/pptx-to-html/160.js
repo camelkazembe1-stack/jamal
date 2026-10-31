@@ -1,7 +1,4 @@
-/* JAMALI — page 160 · PPTX to HTML — the tool's own engine.
-   Convertor tool #96 (Presentation Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   slide texts become <section> blocks in one saved .html page*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

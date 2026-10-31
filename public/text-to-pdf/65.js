@@ -1,7 +1,4 @@
-/* JAMALI — page 65 · Text to PDF — the tool's own engine.
-   Convertor tool #1 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   typed text -> a real .pdf via jsPDF (font size, page breaks)*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

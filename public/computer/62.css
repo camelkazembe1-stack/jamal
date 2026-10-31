@@ -1,17 +1,12 @@
-/* JAMALI — page 62 · Computer (records family)
-   Own stylesheet for this folder — every JAMALI folder ships html + css + js.
-   Base design system lives in /records/records.css (imported below), so this file works
-   standalone too.
-   Task 29: the calculator is gone — Computer is a launcher of SQUARE module
-   tiles, exactly 8 per row (same tile language as Home and Business). */
+ 
 @import url("/records/records.css");
 
-/* page accent — Computer */
+ 
 h1 { position: relative; padding-left: 15px; }
 h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #0d9488; }
 
-/* ---------- module launcher — SQUARE buttons, exactly 8 per row ---------- */
+ 
 .mod-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 14px; margin: 0 0 16px; }
 a.mod { aspect-ratio: 1 / 1; display: flex; flex-direction: column;
@@ -29,7 +24,7 @@ a.mod:active { transform: translateY(0); }
   margin-top: 3px; }
 a.mod:hover .mod-sub { color: #0d9488; }
 
-/* same tile language as the rest of the app on narrow screens */
+ 
 @media (max-width: 1100px) { .mod-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 560px) {
   .mod-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -38,7 +33,7 @@ a.mod:hover .mod-sub { color: #0d9488; }
   .mod-sub { font-size: 9.5px; margin-top: 2px; }
 }
 
-/* print — clean paper output */
+ 
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .add-card,
   .add-toggle, .tabs, .settle-btn, .form-actions, .count-line { display: none !important; }

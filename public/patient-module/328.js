@@ -1,34 +1,31 @@
-// patient-module (page 328) — JAMALI Health — the Patient List (Task 46d)
-// One table of every victim registered on this account, newest first, and
-// nothing else. Each row carries the Registration ID with a one-click Copy
-// button — paste the ID into any stage to find the patient — and it ends
-// with two icon actions: the PEN opens the registration fields in a modal
-// (the ID itself never changes) and the BIN asks once, then removes the
-// registration AND every triage, nurse, doctor, pharmacy and treatment
-// record kept for that ID. No failure can hide any more: every listener
-// carries an error callback, the page shows its build and boot progress,
-// and if the live listener never answers, a one-shot read is tried once.
+
+
+
+
+
+
+
+
+
+
 import { requireAuth, db, collection, query, onSnapshot, updateDoc, writeBatch, doc } from "/firebase.js";
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-/* the boot diagnostic: the inline script in 328.html reads this after 12
-   seconds if the table is still empty, so a silent failure names itself.
-   It stands BEFORE the top-level await on purpose: everything the error
-   paths touch must exist before the module can ever suspend. */
+ 
 window.__p46 = { build: "46d", auth: false, listeners: 0, regDocs: -1, errs: [] };
 
 try {
-  await requireAuth(); // not logged in? -> bounced to "/"
+  await requireAuth(); 
   window.__p46.auth = true;
 } catch (e) {
   loadErr("the sign-in check", e);
   throw e;
 }
 
-/* the two row actions, drawn as icons: the pen edits, the bin deletes */
+ 
 const PEN_SVG = "<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'>" +
   "<path fill='currentColor' d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" +
   "M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 " +
@@ -37,10 +34,10 @@ const BIN_SVG = "<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='tr
   "<path fill='currentColor' d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z" +
   "M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/></svg>";
 
-/* real Firestore or the E2E mock? The real db carries its app. */
+ 
 const REAL = !!(db && db.app);
 
-/* ---------- shared helpers (same language as pages 322 to 327) ---------- */
+ 
 function pad(n) { return String(n).padStart(2, "0"); }
 function when(iso) {
   if (!iso) return "—";
@@ -70,7 +67,7 @@ function ageFromDob(v) {
   return (age >= 0 && age < 140) ? String(age) : "";
 }
 
-/* ---------- live data: every stage, so delete can reach them all ---------- */
+ 
 let regs = [];
 let triages = [];
 let nurseConsults = [];
@@ -81,10 +78,7 @@ const lastTriage = new Map();
 const loaded = { reg: false, tri: false, nur: false, doc: false, rx: false, trt: false };
 function ready() { return loaded.reg && loaded.tri && loaded.nur && loaded.doc && loaded.rx && loaded.trt; }
 
-/* ---------- visible load errors: never swallow a failure again ----------
-   If any collection cannot be read (rules, network, project), the page now
-   paints a red banner carrying the exact error code instead of failing in
-   silence with an empty table. */
+ 
 function loadErr(coll, e) {
   const box = document.getElementById("p-err");
   const boot = document.getElementById("p-boot");
@@ -101,8 +95,7 @@ function loadErr(coll, e) {
       : "");
 }
 
-/* the boot line answered: with rows the line goes, with zero it stays and
-   says so — an empty account is a fact, not a failure */
+ 
 function bootAnswered(n) {
   window.__p46.regDocs = n;
   const b = document.getElementById("p-boot");
@@ -149,8 +142,7 @@ onSnapshot(query(collection(db, "healthTreatmentOrders")), (snap) => {
 }, (e) => loadErr("healthTreatmentOrders", e));
 window.__p46.listeners = 6;
 
-/* the fallback: if the live listener never answers and never errors, try a
-   one-shot read once, six seconds in, instead of waiting in silence */
+ 
 setTimeout(() => {
   if (loaded.reg || window.__p46.errs.length) return;
   import("/firebase.js").then((m) => {
@@ -171,7 +163,7 @@ setTimeout(() => {
   }).catch((e) => loadErr("healthRegistrations (fallback)", e));
 }, 6000);
 
-/* every collection a patient's records can live in, with a live getter */
+ 
 const STAGE_COLLS = [
   ["healthRegistrations", () => regs],
   ["healthTriage", () => triages],
@@ -181,7 +173,7 @@ const STAGE_COLLS = [
   ["healthTreatmentOrders", () => tOrders]
 ];
 
-/* ---------- the table ---------- */
+ 
 function el(id) {
   const n = document.getElementById(id);
   if (!n) loadErr("the page structure", new Error("missing element #" + id +
@@ -218,7 +210,7 @@ function renderTable() {
     : "";
 }
 
-/* ---------- copy the ID ---------- */
+ 
 async function copyText(t) {
   try {
     await navigator.clipboard.writeText(t);
@@ -240,7 +232,7 @@ async function copyText(t) {
   }
 }
 
-/* ---------- edit: the registration fields, the ID never changes ---------- */
+ 
 let editId = null;
 
 function merr(msg) { const e = $("#m-err"); e.hidden = !msg; e.textContent = msg || ""; }
@@ -339,7 +331,7 @@ $("#m-save").addEventListener("click", async () => {
   }
 });
 
-/* ---------- delete: one confirm, then every record for the ID goes ---------- */
+ 
 async function askDelete(regId) {
   const r = regs.find((x) => String(x.regId) === String(regId));
   if (!r) return;
@@ -366,7 +358,7 @@ async function askDelete(regId) {
       }
       if (k) await batch.commit();
     } else {
-      const st = globalThis.__store; // the E2E mock store — keep it consistent too
+      const st = globalThis.__store; 
       if (st) for (const [coll] of STAGE_COLLS) {
         st[coll] = (st[coll] || []).filter((d) => String(d.regId) !== String(regId));
       }
@@ -386,7 +378,7 @@ async function askDelete(regId) {
   }
 }
 
-/* ---------- row actions: copy, edit, delete ---------- */
+ 
 $("#p-body").addEventListener("click", async (e) => {
   const c = e.target.closest(".copy-btn");
   if (c) {

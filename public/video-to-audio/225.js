@@ -1,7 +1,4 @@
-/* JAMALI — page 225 · Video to Audio — the tool's own engine.
-   Convertor tool #161 (Video Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   the audio track is decoded and exported as WAV or MP3*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

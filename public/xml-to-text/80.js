@@ -1,7 +1,4 @@
-/* JAMALI — page 80 · XML to Text — the tool's own engine.
-   Convertor tool #16 (Text Conversion Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   every <cell> becomes a field, rows stay rows; malformed XML reported*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

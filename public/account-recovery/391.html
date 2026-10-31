@@ -66,7 +66,7 @@
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
-    // task 56b: plain-words guidance when the firestore.rules are not published
+    
     function friendly(err) {
       const code = err && err.code ? String(err.code) : "";
       if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
@@ -130,8 +130,8 @@
       try {
         const passHash = await sha(p1);
         await updateDoc(doc(db, "systemCredentials", verifiedId), { passHash: passHash });
-        // task 57: one step at a time — only the saved message and Back to
-        // Login remain on screen.
+        
+        
         $("fp-next").style.display = "none";
         say("Password saved. Go back and login with your username and token.", true);
         $("step-new").classList.add("hidden");

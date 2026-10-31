@@ -1,7 +1,4 @@
-/* JAMALI — page 196 · MP3 to OGG — the tool's own engine.
-   Convertor tool #132 (Audio Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   re-records to OGG/Opus where the browser can, WebM otherwise*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

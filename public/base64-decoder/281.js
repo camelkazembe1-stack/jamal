@@ -1,7 +1,4 @@
-/* JAMALI — page 281 · Base64 Decoder — the tool's own engine.
-   Convertor tool #217 (File Utilities). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   base64 (with or without data: prefix) -> original file downloaded*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

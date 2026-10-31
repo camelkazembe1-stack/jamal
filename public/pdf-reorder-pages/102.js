@@ -1,7 +1,4 @@
-/* JAMALI — page 102 · PDF Reorder Pages — the tool's own engine.
-   Convertor tool #38 (PDF Tools). Everything runs in the browser on this
-   page — files are processed locally and never leave the device.
-   you type the new page order (e.g. 3,1,2) and the PDF is rebuilt*/
+ 
 (function () {
 "use strict";
   function $(id) { return document.getElementById(id); }

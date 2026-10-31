@@ -12,7 +12,7 @@
 <body>
 <main class="wrap">
 
-  <!-- the whole page: one table of every victim -->
+  
   <section id="s-list">
     <a class="back" href="/health/321">&larr; Health</a>
     <h1>Patient List</h1>
@@ -41,7 +41,7 @@
 
 </main>
 
-<!-- the edit modal -->
+
 <div class="modal-ovl" id="m-wrap" hidden>
   <div class="modal-card" role="dialog" aria-modal="true">
     <h2 id="m-title">Edit patient</h2>
@@ -146,9 +146,7 @@
 </div>
 
 <script>
-/* boot line + page-level painters + the 12-second watchdog (Task 46d).
-   The boot line proves which build the browser is running and shows where
-   the boot stopped, so a silent empty table can never hide its cause. */
+ 
 (function () {
   var boot = document.getElementById("p-boot");
   if (boot) {
@@ -157,7 +155,7 @@
   }
   window.__p46html = { build: "46d", t0: Date.now() };
 })();
-/* paints any page-level failure (module import, auth, unexpected) into the banner */
+ 
 function __jamaliPerr(msg) {
   var box = document.getElementById("p-err");
   if (!box || !box.hidden) return;
@@ -165,20 +163,18 @@ function __jamaliPerr(msg) {
   box.textContent = "Page error \u2014 " + msg;
 }
 window.addEventListener("error", function (e) {
-  if (!e || !e.message) return; /* resource errors carry no message */
+  if (!e || !e.message) return;  
   __jamaliPerr(e.message);
 }, true);
 window.addEventListener("unhandledrejection", function (e) {
   var r = e && e.reason;
   __jamaliPerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
 });
-/* the watchdog: if after 12 seconds nothing has answered, say exactly
-   where the boot stopped — before the module, at sign-in, at the
-   listeners, or at Firestore itself */
+ 
 setTimeout(function () {
   var boot = document.getElementById("p-boot");
   var s = window.__p46 || {};
-  if (!boot || boot.hidden || s.regDocs >= 0) return; /* answered - nothing to report */
+  if (!boot || boot.hidden || s.regDocs >= 0) return;  
   var bits = [];
   bits.push("build " + (s.build || "46d") + " script " +
     ((s.auth === true || s.listeners > 0) ? "ran" : "DID NOT run"));
