@@ -33,6 +33,26 @@
     return "\uD83D\uDCE6";
   }
   function size(n) { if (n < 1024) return n + " B"; if (n < 1048576) return (n / 1024).toFixed(1) + " KB"; return (n / 1048576).toFixed(1) + " MB"; }
+  function typeLabel(f) {
+    var e = ext(f.name), t = (f.type || "").toLowerCase();
+    if (e === "pdf") return "PDF document";
+    if (e === "doc" || e === "docx" || e === "odt" || e === "rtf" || e === "docm") return "Word document";
+    if (e === "xls" || e === "xlsx" || e === "xlsm" || e === "ods") return "Excel spreadsheet";
+    if (e === "ppt" || e === "pptx" || e === "pptm" || e === "odp") return "PowerPoint presentation";
+    if (e === "csv" || e === "tsv") return e.toUpperCase() + " data file";
+    if (e === "epub" || e === "mobi" || e === "azw" || e === "azw3") return e.toUpperCase() + " ebook";
+    if (e === "zip" || e === "rar" || e === "7z" || e === "tar" || e === "gz" || e === "bz2" || e === "xz") return e.toUpperCase() + " archive";
+    if (e === "srt" || e === "vtt" || e === "ass" || e === "ssa") return "subtitle file";
+    if (e === "txt" || e === "log") return "text file";
+    if (e === "md" || e === "markdown") return "Markdown file";
+    if (e === "html" || e === "htm" || e === "xhtml") return "HTML file";
+    if (["jpg","jpeg","png","gif","webp","bmp","svg","tif","tiff","heic","heif","avif","ico","psd","ai","eps"].indexOf(e) !== -1 || t.indexOf("image/") === 0) return e ? e.toUpperCase() + " image" : "image";
+    if (["mp4","mkv","webm","avi","mov","wmv","flv","3gp","m4v","mpeg","mpg","ts"].indexOf(e) !== -1 || t.indexOf("video/") === 0) return e ? e.toUpperCase() + " video" : "video";
+    if (["mp3","wav","ogg","m4a","aac","flac","wma","opus","amr","mid","midi"].indexOf(e) !== -1 || t.indexOf("audio/") === 0) return e ? e.toUpperCase() + " audio" : "audio";
+    if (isText(f)) return e ? e.toUpperCase() + " file" : "text file";
+    if (e) return e.toUpperCase() + " file";
+    return "file";
+  }
 
   function revokeAll() { for (var i = 0; i < urls.length; i++) { try { URL.revokeObjectURL(urls[i]); } catch (e) {} } urls = []; }
   function url(f) { var u = URL.createObjectURL(f); urls.push(u); return u; }
@@ -72,7 +92,7 @@
     var f = files[i]; if (!f) return;
     var e = ext(f.name), t = f.type || "";
     for (var k = 0; k < list.children.length; k++) list.children[k].classList.toggle("afv-on", k === i);
-    pname.textContent = f.name;
+    pname.textContent = f.name + " \u2014 " + typeLabel(f);
     pbody.innerHTML = "";
     preview.hidden = false;
     var v = url(f);
@@ -99,12 +119,14 @@
       var li = document.createElement("li"); li.className = "afv-item";
       var ic = document.createElement("span"); ic.className = "afv-ico"; ic.textContent = ico(f);
       var nm = document.createElement("span"); nm.className = "afv-name"; nm.textContent = f.name;
-      var mt = document.createElement("span"); mt.className = "afv-meta"; mt.textContent = size(f.size);
+      var mt = document.createElement("span"); mt.className = "afv-meta"; mt.textContent = size(f.size) + " \u00b7 " + typeLabel(f);
       li.appendChild(ic); li.appendChild(nm); li.appendChild(mt);
       li.addEventListener("click", function () { open(i); });
       list.appendChild(li);
     })(i);
-    count.textContent = files.length ? files.length + " file(s) selected \u2014 tap one to open it" : "";
+    if (!files.length) { count.textContent = ""; }
+    else if (files.length === 1) { count.textContent = "Your file is: " + typeLabel(files[0]) + " \u2014 opening it below"; }
+    else { var labs = []; for (var t = 0; t < files.length && t < 4; t++) labs.push(typeLabel(files[t])); count.textContent = files.length + " files selected: " + labs.join(", ") + (files.length > 4 ? ", \u2026" : "") + " \u2014 tap one to open it"; }
   }
 
   choose.addEventListener("click", function () { input.click(); });
