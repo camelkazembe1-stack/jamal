@@ -1182,6 +1182,5 @@ true;
       t = setTimeout(fn, 350);
     }).observe(root, { childList: true, subtree: true });
   }
-});
   try { import("/field-control.js").catch(function () {}); } catch (e) {}
 })();
