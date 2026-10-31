@@ -13,7 +13,9 @@ body { background: #f1f5f9; color: #0f172a; }
 .tile:active { transform: translateY(0); }
 .tile-icon { font-size: 34px; line-height: 1; }
 .tile.business { background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: #fff; border: 0; }
-.sub-title { margin: 26px 0 12px; font-size: 16px; color: #475569; }
+.back { display: inline-block; margin: 0 0 12px; color: #0ea5e9; font-weight: 700; text-decoration: none; font-size: 14px; }
+.back:hover { text-decoration: underline; }
+.lvl-title { margin: 0 0 16px; font-size: 20px; color: #0f172a; }
 .grid.small { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .tile.sub { aspect-ratio: auto; padding: 16px 10px; font-size: 13px; gap: 6px; }
 .tile.sub .tile-icon { font-size: 24px; }
