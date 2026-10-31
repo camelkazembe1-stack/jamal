@@ -70,6 +70,7 @@ window.JAMALI_MENU = [
     { label: "Aged Payables", icon: "🗓️", folder: "aged-payables", n: 61, d: 3 },
     { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 1 },
     { label: "Convertor", icon: "🔄", folder: "convertor", n: 63, d: 2 },
+    { label: "All File Viewer", icon: "📂", folder: "file-viewer", n: 393, d: 2 },
   // --- Convertor: all 256 tools as sidebar children of Convertor (Task 28) ---
   // ONE line per tool, generated from convertor/tools.js (the hub registry):
   // same label, family icon, folder = slug, page n = id + 64, depth 3.
