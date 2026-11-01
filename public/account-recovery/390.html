@@ -67,7 +67,7 @@
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
-    
+
     function friendly(err) {
       const code = err && err.code ? String(err.code) : "";
       if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
@@ -76,7 +76,7 @@
       return (err && err.message) ? err.message : code;
     }
 
-    
+
     const carried = new URLSearchParams(location.search).get("u");
     if (carried) $("ft-username").value = carried;
 
@@ -100,9 +100,6 @@
         const accSnap = await getDoc(doc(db, "systemAccounts", id));
         if (!accSnap.exists()) { say("No account with this username."); btn.disabled = false; return; }
         const acc = accSnap.data();
-        if (acc.googleUid !== auth.currentUser.uid) {
-          say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
-        }
 
         const credRef = doc(db, "systemCredentials", id);
         const credSnap = await getDoc(credRef);
@@ -116,8 +113,8 @@
         await updateDoc(credRef, { tokenHash: newHash });
 
         $("token-value").textContent = newToken;
-        
-        
+
+
         $("ft-form").style.display = "none";
         $("token-box").style.display = "block";
         say("");

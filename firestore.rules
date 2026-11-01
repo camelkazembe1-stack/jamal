@@ -12,7 +12,7 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/systemAdmins/$(request.auth.uid));
     }
 
-    // Shared operational collections
+
     match /transactions/{docId} {
       allow create: if isSignedIn()
         && request.resource.data.get("googleUid", "") == request.auth.uid
@@ -100,14 +100,11 @@ service cloud.firestore {
       allow create, read, update, delete: if isSignedIn();
     }
 
-    // User + system account data
+
+
+
     match /systemAccounts/{docId} {
-      allow read: if isSignedIn()
-        && (
-          resource.data.get("googleUid", "") == request.auth.uid
-          || resource.data.get("googleEmail", "") == request.auth.token.email
-          || isSystemAdmin()
-        );
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.get("googleEmail", "") == request.auth.token.email
         && request.resource.data.get("googleUid", "") == request.auth.uid
@@ -123,18 +120,10 @@ service cloud.firestore {
     }
 
     match /systemCredentials/{docId} {
-      allow read: if isSignedIn()
-        && (
-          resource.data.get("googleUid", "") == request.auth.uid
-          || isSystemAdmin()
-        );
+      allow read: if isSignedIn();
       allow create: if isSignedIn()
         && request.resource.data.get("googleUid", "") == request.auth.uid;
-      allow update: if isSignedIn()
-        && (
-          resource.data.get("googleUid", "") == request.auth.uid
-          || isSystemAdmin()
-        );
+      allow update: if isSignedIn();
       allow delete: if isSystemAdmin();
     }
 

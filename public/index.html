@@ -11,10 +11,18 @@
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #e2e8f0; padding: 20px;
   }
   .card {
+    position: relative;
     background: #111827; border: 1px solid #1f2937; border-radius: 18px;
     padding: 40px 38px; width: 100%; max-width: 440px;
     box-shadow: 0 24px 60px rgba(0,0,0,.45);
   }
+  .glogout {
+    position: absolute; top: 14px; left: 14px;
+    background: #dc2626; color: #fff; border: 0; border-radius: 10px;
+    padding: 8px 13px; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: .2s;
+  }
+  .glogout:hover { filter: brightness(1.12); }
+  .glogout:disabled { opacity: .6; cursor: wait; }
   .logo {
     width: 62px; height: 62px; margin: 0 auto 18px; border-radius: 16px;
     background: linear-gradient(135deg, #38bdf8, #0ea5e9);
@@ -53,7 +61,7 @@
   .wait-title {
     font-size: 18px; font-weight: 800; color: #fbbf24; text-align: center; margin: 6px 0 10px;
   }
-   
+
   .email-line { font-size: 12.5px; color: #94a3b8; text-align: center; margin: -12px 0 14px; }
   .email-line b { color: #e2e8f0; word-break: break-all; }
   .acc-row {
@@ -76,18 +84,20 @@
 </head>
 <body>
   <div class="card">
+    <button class="glogout" id="google-logout" type="button" hidden title="Signs you out of Google entirely">Google logout</button>
     <div class="logo">JA</div>
     <h1>Welcome to <span>Jamal MultiSystem Management</span></h1>
     <p class="sub" id="sub-line">Login to your account, or create one.</p>
 
     <section id="panel-gate" class="hidden">
       <button class="wide" id="gate-btn" type="button">Continue with Google</button>
-      <p class="google-note">JAMALI opens only for an authenticated Google identity. Your system accounts are separate saved records linked to that Google email — you will pick one or create one next, and logging out of JAMALI never signs you out of Google.</p>
+      <p class="google-note">JAMALI opens only for an authenticated Google identity. Next you pick your system account, log in with its username and token, or create one — from any Google email. Logging out of JAMALI never signs you out of Google.</p>
     </section>
 
     <section id="panel-hub" class="hidden">
       <p class="email-line">Google account: <b id="hub-email"></b></p>
       <div id="hub-list"></div>
+      <button class="wide" id="hub-login" type="button">Log in with a username and token</button>
       <button class="wide" id="hub-create" type="button">Create a new system account</button>
     </section>
 
@@ -115,7 +125,7 @@
       <div class="token-row"><input id="ca-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
       <button class="wide" id="create-btn" type="button">Create Account</button>
       <p class="swap">Already registered? <a id="create-back">Back to my accounts</a></p>
-      <p class="google-note">This account will be saved as a separate record linked to your Google email — one Google email can hold many system accounts. The administrator approves every new account before it can enter.</p>
+      <p class="google-note">This account is saved as its own record, with the Google email that created it kept on file. The administrator approves every new account before it can enter, and after approval it opens with its username and token from any Google sign-in.</p>
     </section>
 
     <section id="panel-wait" class="hidden">
@@ -171,6 +181,7 @@
       $("panel-login").classList.toggle("hidden", which !== "login");
       $("panel-create").classList.toggle("hidden", which !== "create");
       $("panel-wait").classList.toggle("hidden", which !== "wait");
+      $("google-logout").hidden = (which === "gate");
       say("");
     }
 
@@ -189,6 +200,20 @@
         say("Google sign-in was cancelled or failed. Try again.");
       }
       btn.disabled = false;
+    });
+
+    $("google-logout").addEventListener("click", async () => {
+      const btn = $("google-logout");
+      btn.disabled = true;
+      try {
+        await signOut(auth);
+        sessionStorage.removeItem(SESSION_KEY);
+        showPanel("gate");
+        say("Signed out of Google. See you next time.", true);
+      } catch (err) {
+        say("Could not sign out: " + friendly(err));
+        btn.disabled = false;
+      }
     });
 
     let hubUser = null;
@@ -215,7 +240,7 @@
         const p = document.createElement("p");
         p.className = "email-line";
         p.style.margin = "0 0 2px";
-        p.textContent = "No system accounts on this Google email yet — create one below.";
+        p.textContent = "No system accounts on this Google email yet — log in with any username and token below, or create one.";
         list.appendChild(p);
         return;
       }
@@ -308,6 +333,7 @@
 
     $("go-create").addEventListener("click", () => showPanel("create"));
     $("hub-create").addEventListener("click", () => showPanel("create"));
+    $("hub-login").addEventListener("click", () => { showPanel("login"); $("li-username").focus(); });
     $("login-back").addEventListener("click", () => openHub());
     $("create-back").addEventListener("click", () => openHub());
     $("wait-switch").addEventListener("click", () => openHub());
@@ -389,8 +415,6 @@
         try { user = await ensureHouse(); }
         catch (err) { say("Please sign in with Google first."); showPanel("gate"); return; }
       }
-      const email = normEmail(user.email);
-
       btn.disabled = true; say("");
 
       try {
@@ -449,14 +473,6 @@
           btn.disabled = false; return;
         }
         if (acc.status === "rejected") { say("This account was not approved. Ask the administrator."); btn.disabled = false; return; }
-
-        if (acc.googleEmail && email && normEmail(acc.googleEmail) !== email) {
-          say("This account belongs to " + acc.googleEmail + " and cannot open from this Google account.");
-          btn.disabled = false; return;
-        }
-        if (!acc.googleEmail && acc.googleUid && acc.googleUid !== user.uid) {
-          say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
-        }
 
         const credSnap = await getDoc(doc(db, "systemCredentials", id));
         if (!credSnap.exists()) { say("Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
