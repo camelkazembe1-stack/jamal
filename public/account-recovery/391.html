@@ -66,7 +66,7 @@
       return crypto.subtle.digest("SHA-256", new TextEncoder().encode(SALT + v))
         .then((b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join(""));
     }
-    
+
     function friendly(err) {
       const code = err && err.code ? String(err.code) : "";
       if (code.indexOf("permission-denied") !== -1 || (err && err.message && String(err.message).indexOf("insufficient permissions") !== -1)) {
@@ -100,9 +100,6 @@
         const accSnap = await getDoc(doc(db, "systemAccounts", id));
         if (!accSnap.exists()) { say("No account with this username."); btn.disabled = false; return; }
         const acc = accSnap.data();
-        if (acc.googleUid !== auth.currentUser.uid) {
-          say("This account is bound to a different Google sign-in."); btn.disabled = false; return;
-        }
 
         const credSnap = await getDoc(doc(db, "systemCredentials", id));
         if (!credSnap.exists()) { say("Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
@@ -130,8 +127,8 @@
       try {
         const passHash = await sha(p1);
         await updateDoc(doc(db, "systemCredentials", verifiedId), { passHash: passHash });
-        
-        
+
+
         $("fp-next").style.display = "none";
         say("Password saved. Go back and login with your username and token.", true);
         $("step-new").classList.add("hidden");
