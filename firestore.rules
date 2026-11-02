@@ -137,6 +137,11 @@ service cloud.firestore {
       allow delete: if isSystemAdmin();
     }
 
+    match /systemDeleted/{docId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSystemAdmin();
+    }
+
     match /systemAdmins/{uid} {
       allow read: if isSignedIn()
         && (uid == request.auth.uid || isSystemAdmin());
