@@ -461,7 +461,17 @@
 
         const id = norm(username);
         const snap = await getDoc(doc(db, "systemAccounts", id));
-        if (!snap.exists()) { say("No account with this username."); btn.disabled = false; return; }
+        if (!snap.exists()) {
+          const gone = await getDoc(doc(db, "systemDeleted", id));
+          if (gone.exists() && gone.data().was === "approved") {
+            say("This account was disapproved by the administrator and deleted from the system. Please create a new account.");
+          } else if (gone.exists()) {
+            say("This registration was deleted by the administrator before approval. Please create a new account.");
+          } else {
+            say("No account with this username.");
+          }
+          btn.disabled = false; return;
+        }
         const acc = snap.data();
 
         if (acc.status === "pending") {

@@ -135,6 +135,16 @@ function paint() {
       b.addEventListener("click", () => decide(r.id, "approved", b));
     }
     tdAct.appendChild(b);
+    const del = document.createElement("button");
+    del.type = "button";
+    del.textContent = "Delete";
+    del.className = "act";
+    del.style.marginLeft = "6px";
+    del.style.background = "#dc2626";
+    del.style.color = "#ffffff";
+    del.style.borderColor = "#dc2626";
+    del.addEventListener("click", () => delAccount(r.id, a, del));
+    tdAct.appendChild(del);
     if (st === "approved" && a.role !== "admin") {
       const ms = document.createElement("button");
       ms.type = "button";
@@ -147,6 +157,35 @@ function paint() {
     tr.appendChild(tdAct);
 
     body.appendChild(tr);
+  }
+}
+
+async function delAccount(id, a, btn) {
+  const name = a.usernameDisplay || a.username || id;
+  if (!window.confirm("Delete " + name + " from the system? The account disappears from this page and can never log in again.")) return;
+  if (btn) btn.disabled = true;
+  try {
+    const batch = F.writeBatch(F.db);
+    batch.delete(F.doc(F.db, "systemAccounts", id));
+    batch.delete(F.doc(F.db, "systemCredentials", id));
+    batch.delete(F.doc(F.db, "systemNotifications", id));
+    batch.set(F.doc(F.db, "systemDeleted", id), {
+      username: name,
+      usernameLower: id,
+      googleEmail: a.googleEmail || "",
+      was: a.status || "pending",
+      at: F.serverTimestamp()
+    });
+    await batch.commit();
+    note(name + " was deleted from the system. If they try to log in, they will be told to create a new account.");
+    readAll();
+  } catch (e) {
+    const m = txt(e);
+    showErr("Could not delete " + id + ": " + m +
+      (m.indexOf("permission-denied") >= 0
+        ? " — the database allows this only for the administrator."
+        : ""));
+    if (btn) btn.disabled = false;
   }
 }
 
