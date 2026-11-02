@@ -58,28 +58,6 @@
   .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
   .hidden { display: none; }
   .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
-  .wait-title {
-    font-size: 18px; font-weight: 800; color: #fbbf24; text-align: center; margin: 6px 0 10px;
-  }
-
-  .email-line { font-size: 12.5px; color: #94a3b8; text-align: center; margin: -12px 0 14px; }
-  .email-line b { color: #e2e8f0; word-break: break-all; }
-  .acc-row {
-    display: flex; align-items: center; gap: 12px; background: #0b1220;
-    border: 1px solid #1f2937; border-radius: 12px; padding: 12px 14px; margin-top: 10px;
-  }
-  .acc-row .acc-info { flex: 1; min-width: 0; text-align: left; }
-  .acc-row .acc-info b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .acc-row .acc-info span { display: block; font-size: 12px; margin-top: 2px; }
-  .acc-row .st-appr { color: #4ade80; font-weight: 700; }
-  .acc-row .st-pend { color: #fbbf24; font-weight: 700; }
-  .acc-row .st-rej { color: #f87171; font-weight: 700; }
-  .acc-row button.mini {
-    background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #06121f; border: 0;
-    border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 800; cursor: pointer;
-    white-space: nowrap; transition: .2s;
-  }
-  .acc-row button.mini:hover { filter: brightness(1.07); }
 </style>
 </head>
 <body>
@@ -93,13 +71,6 @@
       <button class="wide" id="gate-btn" type="button">Continue with Google</button>
     </section>
 
-    <section id="panel-hub" class="hidden">
-      <p class="email-line">Google account: <b id="hub-email"></b></p>
-      <div id="hub-list"></div>
-      <button class="wide" id="hub-login" type="button">Log in with a username and token</button>
-      <button class="wide" id="hub-create" type="button">Create a new system account</button>
-    </section>
-
     <section id="panel-login" class="hidden">
       <label for="li-username">Username</label>
       <input id="li-username" type="text" autocomplete="username" placeholder="Your username">
@@ -108,7 +79,6 @@
       <p class="links" id="recovery-line" hidden><a id="go-forgot-token">Forgot Token?</a></p>
       <button class="wide" id="login-btn" type="button">Login</button>
       <p class="swap">No account yet? <a id="go-create">Create Account</a></p>
-      <p class="swap"><a id="login-back">Back to my accounts</a></p>
     </section>
 
     <section id="panel-create" class="hidden">
@@ -123,15 +93,8 @@
       <label for="ca-token">Four-digit token</label>
       <div class="token-row"><input id="ca-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
       <button class="wide" id="create-btn" type="button">Create Account</button>
-      <p class="swap">Already registered? <a id="create-back">Back to my accounts</a></p>
+      <p class="swap">Already have an account? <a id="create-back">Back to login</a></p>
       <p class="google-note">This account is saved as its own record, with the Google email that created it kept on file. The administrator approves every new account before it can enter, and after approval it opens with its username and token from any Google sign-in.</p>
-    </section>
-
-    <section id="panel-wait" class="hidden">
-      <p class="wait-title">Waiting for administrator approval.</p>
-      <p class="sub">Your registration is saved, <span id="wait-user"></span>. The administrator has been notified and must approve it before you can enter. The account stays linked to your Google email.</p>
-      <button class="wide" id="check-approval" type="button">Check again</button>
-      <p class="swap"><a id="wait-switch">Back to my accounts</a></p>
     </section>
 
     <p class="status" id="status"></p>
@@ -176,10 +139,8 @@
 
     function showPanel(which) {
       $("panel-gate").classList.toggle("hidden", which !== "gate");
-      $("panel-hub").classList.toggle("hidden", which !== "hub");
       $("panel-login").classList.toggle("hidden", which !== "login");
       $("panel-create").classList.toggle("hidden", which !== "create");
-      $("panel-wait").classList.toggle("hidden", which !== "wait");
       $("google-logout").hidden = (which === "gate");
       say("");
     }
@@ -215,8 +176,6 @@
       }
     });
 
-    let hubUser = null;
-
     async function accountsOfEmail(email, uid) {
       const out = new Map();
       const byMail = await getDocs(query(collection(db, "systemAccounts"), where("googleEmail", "==", email)));
@@ -230,57 +189,6 @@
       const rows = Array.from(out.values());
       rows.sort((x, y) => String(x.usernameLower || x.id).localeCompare(String(y.usernameLower || y.id)));
       return rows;
-    }
-
-    function renderHub(rows) {
-      const list = $("hub-list");
-      list.innerHTML = "";
-      if (!rows.length) {
-        const p = document.createElement("p");
-        p.className = "email-line";
-        p.style.margin = "0 0 2px";
-        p.textContent = "No system accounts on this Google email yet — log in with any username and token below, or create one.";
-        list.appendChild(p);
-        return;
-      }
-      for (const a of rows) {
-        const row = document.createElement("div");
-        row.className = "acc-row";
-        const info = document.createElement("div");
-        info.className = "acc-info";
-        const b = document.createElement("b");
-        b.textContent = a.usernameDisplay || a.username || a.id;
-        const meta = document.createElement("span");
-        const pos = a.position ? " — " + a.position : "";
-        const act = document.createElement("button");
-        act.type = "button";
-        act.className = "mini";
-        if (a.status === "approved") {
-          meta.textContent = "Approved" + pos;
-          meta.className = "st-appr";
-          act.textContent = "Log in";
-          act.addEventListener("click", () => {
-            $("li-username").value = a.usernameDisplay || a.username || a.id;
-            showPanel("login");
-            $("li-token").focus();
-          });
-        } else if (a.status === "pending") {
-          meta.textContent = "Waiting for administrator approval." + pos;
-          meta.className = "st-pend";
-          act.textContent = "View status";
-          act.addEventListener("click", () => waitPanelFor(a));
-        } else {
-          meta.textContent = "This registration was not approved." + pos;
-          meta.className = "st-rej";
-          act.textContent = "Details";
-          act.addEventListener("click", () => say("This registration was not approved. Ask the administrator."));
-        }
-        info.appendChild(b);
-        info.appendChild(meta);
-        row.appendChild(info);
-        row.appendChild(act);
-        list.appendChild(row);
-      }
     }
 
     async function repairNotifications(rows) {
@@ -306,36 +214,16 @@
       }
     }
 
-    async function buildHub(user) {
-      hubUser = user;
-      $("hub-email").textContent = user.email || "(no email on this Google account)";
-      showPanel("hub");
+    async function enterFront(user) {
+      showPanel("login");
       try {
         const rows = await accountsOfEmail(normEmail(user.email), user.uid);
-        if (hubUser === user) renderHub(rows);
-        if (hubUser === user) repairNotifications(rows);
-      } catch (err) {
-        say("Could not load your accounts: " + friendly(err));
-      }
-    }
-
-    function openHub() {
-      if (auth.currentUser) { buildHub(auth.currentUser); return; }
-      showPanel("gate");
-    }
-
-    function waitPanelFor(acc) {
-      $("wait-user").textContent = acc.usernameDisplay || acc.username || acc.id || "";
-      showPanel("wait");
-      say("Waiting for administrator approval.", true);
+        repairNotifications(rows);
+      } catch (err) { }
     }
 
     $("go-create").addEventListener("click", () => showPanel("create"));
-    $("hub-create").addEventListener("click", () => showPanel("create"));
-    $("hub-login").addEventListener("click", () => { showPanel("login"); $("li-username").focus(); });
-    $("login-back").addEventListener("click", () => openHub());
-    $("create-back").addEventListener("click", () => openHub());
-    $("wait-switch").addEventListener("click", () => openHub());
+    $("create-back").addEventListener("click", () => showPanel("login"));
 
     $("go-forgot-token").addEventListener("click", () => {
       const u = $("li-username").value.trim();
@@ -345,37 +233,6 @@
     function showRecovery() { $("recovery-line").hidden = false; }
     $("li-token").addEventListener("focus", showRecovery);
     $("li-token").addEventListener("input", showRecovery);
-
-    let lastRegistered = "";
-    $("check-approval").addEventListener("click", async () => {
-      const btn = $("check-approval");
-      btn.disabled = true;
-      try {
-        if (!lastRegistered) { openHub(); btn.disabled = false; return; }
-        const snap = await getDoc(doc(db, "systemAccounts", lastRegistered));
-        if (!snap.exists()) {
-          openHub();
-          say("No registration found for " + lastRegistered + ".");
-        } else {
-          const a = snap.data(); a.id = snap.id;
-          $("li-username").value = a.usernameDisplay || a.username || lastRegistered;
-          if (a.status === "approved") {
-            showPanel("login");
-            say("Approved! Enter your four-digit token to log in.", true);
-          } else if (a.status === "rejected") {
-            showPanel("login");
-            say("This registration was not approved. Ask the administrator.");
-          } else {
-            waitPanelFor(a);
-            repairNotifications([a]);
-            say("Still waiting for administrator approval.", true);
-          }
-        }
-      } catch (err) {
-        say("Could not check: " + friendly(err));
-      }
-      btn.disabled = false;
-    });
 
     function writeSession(account, user) {
       const s = {
@@ -398,7 +255,7 @@
       } else if (q.get("need") === "house") {
         say("Please sign in with Google to continue.");
       } else if (q.get("need") === "account") {
-        say("Choose your system account, or create one.");
+        say("Log in with your username and token, or create an account.");
       }
     }
 
@@ -475,7 +332,8 @@
         const acc = snap.data();
 
         if (acc.status === "pending") {
-          waitPanelFor(Object.assign({ id }, acc)); repairNotifications([Object.assign({ id }, acc)]);
+          repairNotifications([Object.assign({ id }, acc)]);
+          say("Your account is saved but still waits for the administrator's approval. Try again once it is approved - then your username and token open the system.");
           btn.disabled = false; return;
         }
         if (acc.status === "rejected") { say("This account was not approved. Ask the administrator."); btn.disabled = false; return; }
@@ -521,8 +379,10 @@
           const d = dup.docs[0];
           const a = d.data();
           if (a.status === "pending" && normEmail(a.googleEmail) === normEmail(user.email)) {
-            lastRegistered = d.id;
-            waitPanelFor(Object.assign({ id: d.id }, a)); repairNotifications([Object.assign({ id: d.id }, a)]);
+            repairNotifications([Object.assign({ id: d.id }, a)]);
+            $("li-username").value = a.usernameDisplay || a.username || d.id;
+            showPanel("login");
+            say("This username is already registered and still waits for the administrator's approval - once approved, your token opens the system.");
           } else {
             say("That username is already taken.");
           }
@@ -548,8 +408,10 @@
         });
         await batch.commit();
 
-        lastRegistered = id;
-        waitPanelFor({ id, usernameDisplay: displayName, username: displayName, usernameLower: lowerName });
+        $("li-username").value = displayName;
+        showPanel("login");
+        say("Account created. It now waits for the administrator's approval - once approved, your username and token open the system.", true);
+        $("li-token").focus();
         btn.disabled = false;
       } catch (err) {
         say("Could not create the account: " + friendly(err));
@@ -571,7 +433,7 @@
       } catch (e) { valid = false; }
       if (valid) { location.replace("/home/1"); return; }
       sessionStorage.removeItem(SESSION_KEY);
-      buildHub(user);
+      enterFront(user);
     });
   </script>
 </body>
