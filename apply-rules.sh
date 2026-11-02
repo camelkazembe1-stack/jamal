@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# =====================================================================
-# JAMALI - Task 66 - publish the Firestore rules from the terminal
-# One command fixes every admin screen: counters, request tables,
-# bell, approvals. It signs in to Firebase, publishes firestore.rules
-# to the project your own code uses, commits and pushes, and cleans up.
-# =====================================================================
+
+
+
+
+
+
 set -u
 cd "$(dirname "$0")"
 
@@ -14,13 +14,13 @@ say "======================================================="
 say "JAMALI - publishing the Firestore database rules"
 say "======================================================="
 
-# ---------- 0. preflight ----------
+
 command -v node >/dev/null 2>&1 || { say "FAIL: node is not installed. Install Node.js 18+ (sudo apt install -y nodejs npm) and run this script again."; exit 1; }
 NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
 if [ "$NODE_MAJOR" -lt 18 ]; then say "FAIL: Node.js 18+ is required (found $(node -v)). Update Node and run again."; exit 1; fi
 if [ ! -f firestore.rules ]; then say "FAIL: firestore.rules is not next to this script. Unzip the package inside ~/jamal and run it there."; exit 1; fi
 
-# ---------- 1. which Firebase project does JAMALI really use? ----------
+
 PID=""
 for f in public/SERVER/server.js SERVER/server.js; do
   if [ -f "$f" ]; then
@@ -32,7 +32,7 @@ if [ -z "$PID" ]; then PID="jamal-542b5"; fi
 say "Database project detected from your own code: $PID"
 say "Rules console (for later checks): https://console.firebase.google.com/project/$PID/firestore/rules"
 
-# ---------- 2. firebase.json + .firebaserc (merged, never clobbered) ----------
+
 node -e '
 const fs=require("fs");
 let j={};
@@ -46,7 +46,7 @@ fs.writeFileSync(".firebaserc",JSON.stringify(r,null,2)+"\n");
 ' "$PID"
 say "firebase.json and .firebaserc are ready (any existing keys were preserved)."
 
-# ---------- 4. sign in to Firebase ----------
+
 say "One-time download of the Firebase CLI now (about 1-2 minutes)..."
 say "Step 1 of 2: a sign-in link will appear. Open it and sign in with the"
 say "Google account that OWNS the $PID project (the one that created it)."
@@ -55,7 +55,7 @@ if ! npx -y firebase-tools@latest login --no-localhost; then
   exit 1
 fi
 
-# ---------- 5. publish the rules ----------
+
 say "Step 2 of 2: publishing firestore.rules to project $PID ..."
 if npx -y firebase-tools@latest deploy --only firestore:rules --project "$PID" --non-interactive; then
   say ""
@@ -73,7 +73,7 @@ else
   exit 1
 fi
 
-# ---------- 6. git commit + push ----------
+
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git add firestore.rules firebase.json .firebaserc 2>/dev/null || true
   if git diff --cached --quiet 2>/dev/null; then
@@ -95,7 +95,7 @@ else
   say "git: not a repository here - skipped commit and push."
 fi
 
-# ---------- 7. cleanup: temp files go, project files stay ----------
+
 rm -f -- "$0"
 say "cleanup: apply script removed. Kept: firestore.rules, firebase.json and"
 say ".firebaserc. No backup files were created; git history is the recovery path."

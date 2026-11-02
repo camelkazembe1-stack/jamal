@@ -421,41 +421,38 @@
         if (norm(username) === ADMIN_USERNAME) {
           const tokHash = await sha(token);
           if (tokHash !== ADMIN_TOKEN_HASH) { say("Wrong token for the administrator."); showRecovery(); btn.disabled = false; return; }
-          const admins = await getDocs(collection(db, "systemAdmins"));
-          if (admins.empty) {
-            const id = norm(ADMIN_USERNAME);
-            const batch = writeBatch(db);
-            batch.set(doc(db, "systemSetup", "claim"), {
-              googleUid: user.uid, passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
-            });
-            batch.set(doc(db, "systemAdmins", user.uid), {
-              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
-            });
-            batch.set(doc(db, "systemAccounts", id), {
-              usernameLower: id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin",
-              status: "approved", googleEmail: user.email || "", googleUid: user.uid, grants: [],
-              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
-            });
-            batch.set(doc(db, "systemCredentials", id), {
-              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, phone: "0780526437",
-              googleEmail: user.email || "", googleUid: user.uid
-            });
-            await batch.commit();
-            writeSession({ id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
-            location.href = "/home/1";
-            return;
-          }
-          let mine = false;
-          admins.forEach((d) => { if (d.id === user.uid) mine = true; });
-          if (!mine) {
-            await setDoc(doc(db, "systemAdmins", user.uid), {
-              passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
-            });
-            try {
-              await updateDoc(doc(db, "systemAccounts", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
-              await updateDoc(doc(db, "systemCredentials", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
-            } catch (e) {
-              say("Administrator signed in. (Note: the profile rebinding failed: " + friendly(e) + ")");
+          const mine = await getDoc(doc(db, "systemAdmins", user.uid));
+          if (!mine.exists()) {
+            const claim = await getDoc(doc(db, "systemSetup", "claim"));
+            if (!claim.exists()) {
+              const id = norm(ADMIN_USERNAME);
+              const batch = writeBatch(db);
+              batch.set(doc(db, "systemSetup", "claim"), {
+                googleUid: user.uid, passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+              });
+              batch.set(doc(db, "systemAdmins", user.uid), {
+                passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+              });
+              batch.set(doc(db, "systemAccounts", id), {
+                usernameLower: id, usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin",
+                status: "approved", googleEmail: user.email || "", googleUid: user.uid, grants: [],
+                passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+              });
+              batch.set(doc(db, "systemCredentials", id), {
+                passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, phone: "0780526437",
+                googleEmail: user.email || "", googleUid: user.uid
+              });
+              await batch.commit();
+            } else {
+              await setDoc(doc(db, "systemAdmins", user.uid), {
+                passHash: ADMIN_PASS_HASH, tokenHash: ADMIN_TOKEN_HASH, at: serverTimestamp()
+              });
+              try {
+                await updateDoc(doc(db, "systemAccounts", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
+                await updateDoc(doc(db, "systemCredentials", norm(ADMIN_USERNAME)), { googleEmail: user.email || "", googleUid: user.uid });
+              } catch (e) {
+                say("Administrator signed in. (Note: the profile rebinding failed: " + friendly(e) + ")");
+              }
             }
           }
           writeSession({ id: norm(ADMIN_USERNAME), usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
