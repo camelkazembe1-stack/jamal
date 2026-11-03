@@ -13,18 +13,19 @@ const TRANSACTIONS = {
     { name: "Sales",                 icon: "\u{1F4B0}" },
     { name: "Commission Receivable", icon: "\u{1F9EE}" },
     { name: "Purchase Return",       icon: "\u{21AA}\u{FE0F}" },
-    { name: "Petty Cash",            icon: "\u{1FA99}" }
+    { name: "Petty Cash",            icon: "\u{1FA99}" },
+    { name: "Capital",               icon: "\u{1F3E6}" }
   ],
   OUT: [
     { name: "Purchases",     icon: "\u{1F6D2}" },
     { name: "Rent",          icon: "\u{1F3E0}" },
     { name: "Sales Return",  icon: "\u{21A9}\u{FE0F}" },
-    { name: "Petty Expense", icon: "\u{1F9F9}" }
+    { name: "Petty Expense", icon: "\u{1F9F9}" },
+    { name: "Transport",     icon: "\u{1F69B}" }
   ],
   NEUTRAL: [
-    { name: "Capital", icon: "\u{1F3E6}" },
-    { name: "Loan",    icon: "\u{1F91D}" },
-    { name: "Other",   icon: "\u{1F4E6}" }
+    { name: "Loan",  icon: "\u{1F91D}" },
+    { name: "Other", icon: "\u{1F4E6}" }
   ],
   CONTRA: [
     { name: "Cash Deposit",    icon: "\u{1F3E6}" },

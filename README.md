@@ -12,7 +12,7 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 2. business - the control room: opens Add Transaction and View File. Files: 2.html, 2.css, 2.js.
 
-3. add-transaction - the journal entry engine: every transaction is recorded here, once. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
+3. add-transaction - the journal entry engine: every transaction is recorded here, once, from the tile grid where Capital is picked under IN and Transport under OUT. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
 
 4. view-file - the library: a tile launcher for every book, register and report, plus Computer. Files: 4.html, 4.css, 4.js.
 
@@ -740,7 +740,7 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - public/firebase.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
 
-- public/books/row-actions.js - the shared pen and bin that every book row carries, from All Transactions to the cash books, the journals, petty cash, creditors, debtors and the ledger: the pen opens Add Transaction with that record loaded for editing and returns to the book it came from, the bin asks once and deletes the record, every open book refreshes itself on the spot, and both report the result in a small toast at the bottom of the screen.
+- public/books/row-actions.js - the shared pen and bin that every book row carries, from All Transactions to the cash books, the journals, petty cash, creditors, debtors and the ledger: the pen opens Add Transaction with that record loaded for editing and returns to the book it came from, the bin asks once and deletes the record, and a checkbox beside them marks rows for multi delete - a bar at the bottom right counts the marked rows, selects everything visible at once, clears the marking, and removes every marked record in batched writes, every open book refreshes itself on the spot, and all of it reports the result in a small toast at the bottom of the screen.
 
 - public/menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered; the sidebar reads it and draws.
 
