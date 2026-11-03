@@ -1,0 +1,14 @@
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #475569; }
+
+.prog-card { margin-bottom: 12px; }
+.prog-card .bk td:first-child, .prog-card .bk th:first-child { width: 60px; }
+
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .count-line { display: none !important; }
+  body.jamali-has-sidebar { margin-left: 0 !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+  .card { box-shadow: none; }
+}
