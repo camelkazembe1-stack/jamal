@@ -14,22 +14,7 @@ service cloud.firestore {
 
 
     match /transactions/{docId} {
-      allow create: if isSignedIn()
-        && request.resource.data.get("googleUid", "") == request.auth.uid
-        && request.resource.data.get("googleEmail", "") == request.auth.token.email;
-      allow read: if isSignedIn()
-        && (
-          resource.data.get("googleUid", "") == request.auth.uid
-          || resource.data.get("googleEmail", "") == request.auth.token.email
-          || isSystemAdmin()
-        );
-      allow update: if isSystemAdmin()
-        || (
-          isSignedIn()
-          && resource.data.get("googleUid", "") == request.auth.uid
-          && resource.data.get("googleEmail", "") == request.auth.token.email
-        );
-      allow delete: if isSystemAdmin();
+      allow read, create, update, delete: if isSignedIn();
     }
 
     match /healthRegistrations/{docId} {

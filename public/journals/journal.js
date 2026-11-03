@@ -15,6 +15,7 @@
 
 
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
+import { actsHTML, wireActions } from "/books/row-actions.js";
 
 export function classify(t) {
   const type = String(t.transactionType || "").toUpperCase();
@@ -73,7 +74,7 @@ export async function initJournal(journal) {
         ? '<td class="j-date">' + esc(fmtDate(t.dateTime)) + "</td>" +
           '<td class="j-name">' + esc(t.transactionName || "\u2014") + "</td>" +
           '<td class="j-nm">' + esc(t.name || "\u2014") + "</td>" +
-          '<td class="j-amount">' + esc(fmtAmount(t.amount)) + "</td>"
+          '<td class="j-amount">' + esc(fmtAmount(t.amount)) + actsHTML(t.id) + "</td>"
         : "<td></td><td></td><td></td><td></td>";
       let html = "";
       const n = Math.max(dr.length, cr.length);
@@ -100,7 +101,7 @@ export async function initJournal(journal) {
         total += Number(t.amount || 0);
         html += '<tr><td class="j-date">' + esc(fmtDate(t.dateTime)) + "</td>" +
                 '<td class="j-name">' + esc(label) + "</td>" +
-                '<td class="j-amount">' + esc(fmtAmount(t.amount)) + "</td></tr>";
+                '<td class="j-amount">' + esc(fmtAmount(t.amount)) + actsHTML(t.id) + "</td></tr>";
       });
       body.innerHTML = html;
       f = '<tr class="total-row"><td></td><td class="j-name">Total</td>' +
@@ -116,10 +117,11 @@ export async function initJournal(journal) {
   }
 
    
+  wireActions(body);
   const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
   onSnapshot(q, (snap) => {
     render(snap.docs
-      .map((d) => d.data({ serverTimestamps: "estimate" }))
+      .map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })))
       .filter((t) => classify(t) === journal)
       .sort((a, b) => asDate(a.dateTime) - asDate(b.dateTime)));
   }, (e) => {
