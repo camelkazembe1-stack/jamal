@@ -10,7 +10,7 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 1. home - the landing page after sign in: three square tiles, Business, Computer and Health. Files: 1.html, 1.css, 1.js.
 
-2. business - the control room: opens Add Transaction and View File. Files: 2.html, 2.css, 2.js.
+2. business - the control room: opens Add Transaction, View File and Stock Management. Files: 2.html, 2.css, 2.js.
 
 3. add-transaction - the journal entry engine: every transaction is recorded here, once, from the tile grid where Capital is picked under IN and Transport under OUT. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
 
@@ -732,6 +732,14 @@ THE MEDICAL WING, THE ADMIN DESK AND THE VIEWER, 330 TO 393
 
 393. file-viewer - All File Viewer: pick any file from the device and the page names its type out loud - Your file is: PDF document - then opens it right there: video plays, audio plays, pictures show, Word documents open, anything else opens in a new tab. It sits on the Computer page next to Convertor, stays open in the sidebar for every account, and nothing uploads anywhere - the file is read in the browser only. Files: 393.html, 393.css, 393.js.
 
+396. stock-management - Stock Management: the stock hub under Business with three buttons - Stock Register to register what the business keeps in stock, Stock Progress to watch what is present, and Stock Change to record every movement in and out. Files: 396.html, 396.css, 396.js.
+
+397. stock register, under Stock Management - registers every stock item with its Name, Buying Price per Package, Units per Package and Unit Selling Price; the registered prices feed Stock Progress and Stock Change, and Units per Package is the bridge that converts between packages and units wherever a quantity is typed. Files: 397.html, 397.js.
+
+398. stock progress, under Stock Management - the live position of every registered stock: S/N, Stock Name, Units Present, Unit SP and Package BP, with Units Present updated the moment a Stock Change is saved. Files: 398.html, 398.css, 398.js.
+
+399. stock change, under Stock Management - all fourteen stock-change buttons in four groups: Stock IN with money (Purchases, Sales Returns), Stock IN without money (Free Stock Received, Stock Transfers IN, Stock Adjustments IN), Stock OUT with money (Sales, Purchases Returns) and Stock OUT without money (Stock Damage, Stock Expiry, Theft, Internal Use, Free Samples, Stock Transfers OUT, Stock Adjustments OUT). Pick a cause, pick the stock from the search grid, type the quantity as Packages or as Units - the two calculate each other from Units per Package - and save: the stock quantity moves in one batch (IN adds, OUT deducts, never below zero), the movement lands in stockChanges, and a transaction record joins the business transactions - the cause as its Transaction Name, Cash / Credit / Bank following the Add Transaction process for the money causes, type IN and the amount at Unit SP when money comes in, type OUT at BP when money goes out, and type NEUTRAL at BP with no flow method when no money moves. Files: 399.html, 399.css, 399.js.
+
 THE FILES WITHOUT A PAGE NUMBER
 
 - public/index.html - the front door: the Google gate, and where signed out visitors land. One authenticated Google identity opens the plain login straight away: log in with any username and four-digit token - from any Google email at all - or follow the Create Account link below the button. Nothing about the people who use the device is ever displayed: no account list, no email, no waiting screen - a refresh always shows the same login and create-account forms, and approval is told only as a message on the login itself. A pending account that tries to log in is told it is saved but still waits for the administrator's approval; a rejected one that it was not approved; a deleted one that it was disapproved by the administrator and deleted from the system when it had been approved, or that the registration was removed before approval when it had not, and to please create a new account. Creating an account lands on the login with the username filled in and the same waiting message, so trying to log in is itself the status check: approved opens the system, not approved explains itself. The administrator credentials are shared the same way: any of your Google emails that logs in with the administrator username and token takes the administrator seat, and on a brand-new database (a whole server change) the first administrator login builds the administrator account, the claim marker and the credentials in one batch by itself. A red Google logout button sits at the top left of the card on every screen after the gate, and the next sign in always asks Google which account to use.
@@ -780,4 +788,4 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - .git - git's own filing cabinet, not part of the app and never served: the commit history, the branches, the hooks and the object store. Nothing in here is edited by hand.
 
-That is the whole tree: 1078 project files, 1066 of them under public, and every one of them is named above.
+That is the whole tree: 1089 project files, 1077 of them under public, and every one of them is named above.

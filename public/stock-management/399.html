@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Change — JAMALI</title>
+<link rel="stylesheet" href="/records/records.css">
+<link rel="stylesheet" href="/stock-management/399.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+
+  <section class="step is-active" id="step-1">
+    <a class="back" href="/stock-management/396">&larr; Stock Management</a>
+    <h1>Stock Change</h1>
+    <p class="sub">Step 1 of 3 &mdash; pick what happened. Stock IN adds units to the stock, Stock OUT deducts them.</p>
+    <div id="groups"></div>
+  </section>
+
+  <section class="step" id="step-2">
+    <button class="back" id="back-2" type="button">&larr; Causes</button>
+    <h1 id="cause-title">Pick the stock</h1>
+    <p class="sub" id="cause-sub"></p>
+
+    <div class="field search-field">
+      <input id="stock-search" type="text" placeholder="Search stock by name…">
+    </div>
+    <div class="grid stock-grid" id="stock-grid"></div>
+
+    <div class="card empty" id="stock-empty" hidden>
+      <div class="empty-icon">📦</div>
+      <p class="empty-title">No stock registered yet</p>
+      <p class="empty-sub">Open the <a href="/stock-management/397">Stock Register</a> to add the first item, then come back here.</p>
+    </div>
+  </section>
+
+  <section class="step" id="step-3">
+    <button class="back" id="back-3" type="button">&larr; Stocks</button>
+    <h1 id="form-title">Stock</h1>
+    <p class="sub" id="form-sub"></p>
+
+    <div class="card form-card">
+      <div class="field">
+        <label>Quantity</label>
+        <div class="qty-pair">
+          <div class="qty-box"><span>Packages</span>
+            <input id="in-packages" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+          <div class="qty-link">=</div>
+          <div class="qty-box"><span>Units</span>
+            <input id="in-units" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+        </div>
+        <p class="qty-hint" id="qty-hint"></p>
+      </div>
+
+      <div class="field" id="f-method" hidden>
+        <label>Flow Method</label>
+        <div class="seg seg-3" id="method-seg"></div>
+      </div>
+
+      <div class="field" id="f-person" hidden>
+        <label for="in-person">Person's Name</label>
+        <input id="in-person" type="text" placeholder="e.g. Customer A">
+      </div>
+
+      <div class="field" id="f-bank" hidden>
+        <label for="in-bank">Bank Name</label>
+        <input id="in-bank" type="text" placeholder="e.g. Bank A">
+      </div>
+
+      <p class="preview" id="preview"></p>
+      <p class="form-err" id="form-err" hidden></p>
+      <button class="save-btn" id="save-btn" type="button">Save Stock Change</button>
+    </div>
+  </section>
+
+  <section class="step" id="step-4">
+    <div class="card done-card">
+      <div class="done-icon">&#10003;</div>
+      <h1>Stock Change Saved</h1>
+      <p class="sub" id="done-note"></p>
+      <div class="done-actions">
+        <button class="ghost-btn" id="again-btn" type="button">Record Another</button>
+        <a class="cta-btn" href="/stock-management/398">View Stock Progress</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+<script type="module" src="/stock-management/399.js"></script>
+</body>
+</html>

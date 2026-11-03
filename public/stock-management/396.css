@@ -1,0 +1,23 @@
+@import url("/records/records.css");
+
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #475569; }
+
+.hub-btn { display: flex; align-items: center; gap: 16px; background: #fff;
+  border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+  padding: 18px 20px; margin-bottom: 14px; text-decoration: none; color: inherit;
+  transition: border-color .15s ease, transform .15s ease; }
+.hub-btn:hover { border-color: #38bdf8; transform: translateY(-2px); }
+.hub-icon { font-size: 30px; line-height: 1; }
+.hub-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.hub-text b { font-size: 16px; }
+.hub-text small { color: #64748b; font-size: 13px; line-height: 1.5; }
+.hub-arrow { color: #0ea5e9; font-size: 20px; font-weight: 800; }
+
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .hub-btn { display: none !important; }
+  body.jamali-has-sidebar { margin-left: 0 !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+}
