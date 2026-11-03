@@ -13,6 +13,7 @@
 
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 import { classify } from "/journals/journal.js";
+import { actsHTML, wireActions } from "/books/row-actions.js";
 
 await requireAuth(); 
 
@@ -79,7 +80,7 @@ function render() {
       '<td class="c-name">' + esc(p) + "</td>" +
       '<td class="c-amount">' + (inc ? esc(fmtAmount(inc)) : "") + "</td>" +
       '<td class="c-amount">' + (dec ? esc(fmtAmount(dec)) : "") + "</td>" +
-      '<td class="c-amount">' + esc(fmtAmount(bal[p])) + "</td>" +
+      '<td class="c-amount">' + esc(fmtAmount(bal[p])) + actsHTML(t.id) + "</td>" +
     "</tr>";
   });
   body.innerHTML = html;
@@ -114,11 +115,12 @@ function render() {
     : "";
 }
 
+wireActions(body);
  
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {
   TXNS = snap.docs
-    .map((d) => d.data({ serverTimestamps: "estimate" }))
+    .map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })))
     .sort((a, b) => asDate(a.dateTime) - asDate(b.dateTime));
   render();
 }, (e) => {

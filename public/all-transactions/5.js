@@ -2,6 +2,7 @@
 
 
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
+import { actsHTML, wireActions } from "/books/row-actions.js";
 
 await requireAuth(); 
 
@@ -50,7 +51,7 @@ function rowHTML(t) {
     "<td>" + esc(flowLabel(t.flowMethod)) + "</td>" +
     '<td><span class="badge ' + (TYPE_CLASS[type] || "b-neutral") + '">' + esc(type) + "</span></td>" +
     "<td>" + (t.name ? esc(t.name) : "\u2014") + "</td>" +
-    '<td class="c-amount">' + esc(fmtAmount(t.amount)) + "</td>" +
+    '<td class="c-amount">' + esc(fmtAmount(t.amount)) + actsHTML(t.id) + "</td>" +
   "</tr>";
 }
 
@@ -70,6 +71,7 @@ function render() {
   });
 }
 
+wireActions(body);
  
 document.querySelectorAll(".tab").forEach((btn) =>
   btn.addEventListener("click", () => {
@@ -82,7 +84,7 @@ document.querySelectorAll(".tab").forEach((btn) =>
  
 const q = query(collection(db, "transactions"), orderBy("dateTime", "desc"));
 onSnapshot(q, (snap) => {
-  ALL = snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }));
+  ALL = snap.docs.map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })));
   ALL.sort((a, b) => { 
     const ta = a.dateTime && a.dateTime.toDate ? a.dateTime.toDate().getTime() : 0;
     const tb = b.dateTime && b.dateTime.toDate ? b.dateTime.toDate().getTime() : 0;

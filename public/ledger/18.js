@@ -19,6 +19,7 @@
 
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
 import { buildAccounts } from "/ledger/postings.js";
+import { actsHTML, wireActions } from "/books/row-actions.js";
 
 await requireAuth(); 
 
@@ -86,7 +87,7 @@ function render() {
     ? '<td class="c-date">' + esc(r.date) + "</td>" +
       '<td class="c-detail">' + esc(r.detail) + "</td>" +
       '<td class="c-folio">' + esc(r.folio) + "</td>" +
-      '<td class="c-amount">' + esc(fmtAmount(r.amt)) + "</td>"
+      '<td class="c-amount">' + esc(fmtAmount(r.amt)) + actsHTML(r.id) + "</td>"
     : "<td></td><td></td><td></td><td></td>";
   let html = "";
   const n = Math.max(a.dr.length, a.cr.length);
@@ -127,11 +128,12 @@ function render() {
     " in " + SELECTED + " A/C \u00B7 DR " + a.dr.length + " \u00B7 CR " + a.cr.length + ".";
 }
 
+wireActions(body);
  
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {
   TXNS = snap.docs
-    .map((d) => d.data({ serverTimestamps: "estimate" }))
+    .map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })))
     .sort((x, y) => asDate(x.dateTime) - asDate(y.dateTime));
   render();
 }, (e) => {

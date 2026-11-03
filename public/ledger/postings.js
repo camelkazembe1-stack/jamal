@@ -58,7 +58,7 @@ export function postingsFor(t, creditPeople) {
   const folio = FOLIO[classify(t)] || "\u2014";
   const date = fmtDate(t.dateTime);
   const amt = Number(t.amount || 0);
-  const row = (acct, detail, kind) => ({ acct, detail: detail || "\u2014", folio, date, amt, kind });
+  const row = (acct, detail, kind) => ({ acct, detail: detail || "\u2014", folio, date, amt, kind, id: t.id || null });
 
   if (isSRet(t)) {
     const dr = row("Sales Returns", person || moneyDetail(t), "expense");

@@ -12,6 +12,7 @@
 
 
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
+import { actsHTML, wireActions } from "/books/row-actions.js";
 
 await requireAuth(); 
 
@@ -62,7 +63,7 @@ function cells(row) {
          '<td class="c-detail">' + esc(row.detail) + "</td>" +
          '<td class="c-folio">' + esc(row.folio) + "</td>" +
          '<td class="c-amount">' + (row.cash ? esc(fmtAmount(row.cash)) : "") + "</td>" +
-         '<td class="c-amount">' + (row.bank ? esc(fmtAmount(row.bank)) : "") + "</td>";
+         '<td class="c-amount">' + (row.bank ? esc(fmtAmount(row.bank)) : "") + actsHTML(row.id) + "</td>";
 }
 
 
@@ -81,6 +82,7 @@ function render() {
     const isBank = flowOf(t) === "bank";
     const amt = Number(t.amount || 0);
     const row = {
+      id: t.id,
       date: fmtDate(t.dateTime),
       detail: t.transactionName || "\u2014",
       folio: i + 1,
@@ -148,11 +150,12 @@ function render() {
     : "";
 }
 
+wireActions(body);
  
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {
   BOOK = snap.docs
-    .map((d) => d.data({ serverTimestamps: "estimate" }))
+    .map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })))
     .filter(isIncluded)
     .sort((a, b) => asDate(a.dateTime) - asDate(b.dateTime));
   render();

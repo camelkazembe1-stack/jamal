@@ -12,37 +12,37 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 2. business - the control room: opens Add Transaction and View File. Files: 2.html, 2.css, 2.js.
 
-3. add-transaction - the journal entry engine: every transaction is recorded here, once. Files: 3.html, 3.css, 3.js.
+3. add-transaction - the journal entry engine: every transaction is recorded here, once. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
 
 4. view-file - the library: a tile launcher for every book, register and report, plus Computer. Files: 4.html, 4.css, 4.js.
 
-5. all-transactions - the full journal: every recorded transaction, filterable in one table. Files: 5.html, 5.css, 5.js.
+5. all-transactions - the full journal: every recorded transaction, filterable in one table. Every row carries a pen to edit and a bin to delete the record, with the counts and table updating live. Files: 5.html, 5.css, 5.js.
 
-6. cash-book - the double column cash book: bank and cash side by side, DR and CR. Files: 6.html, 6.css, 6.js.
+6. cash-book - the double column cash book: bank and cash side by side, DR and CR. Every posting on both sides carries a pen to edit and a bin to delete it. Files: 6.html, 6.css, 6.js.
 
-7. petty-cash - the petty cash book: small day to day spend. Names containing Petty land here. Files: 7.html, 7.css, 7.js.
+7. petty-cash - the petty cash book: small day to day spend. Names containing Petty land here. Every row carries a pen to edit and a bin to delete. Files: 7.html, 7.css, 7.js.
 
-8. sales-journal - the sales journal: credit sales at a glance. Files: 8.html, 8.css, 8.js.
+8. sales-journal - the sales journal: credit sales at a glance. Every row carries a pen to edit and a bin to delete. Files: 8.html, 8.css, 8.js.
 
-9. purchases-journal - the purchases journal: credit purchases at a glance. Files: 9.html, 9.css, 9.js.
+9. purchases-journal - the purchases journal: credit purchases at a glance. Every row carries a pen to edit and a bin to delete. Files: 9.html, 9.css, 9.js.
 
-10. sales-returns - the sales returns journal: goods customers sent back. Files: 10.html, 10.css, 10.js.
+10. sales-returns - the sales returns journal: goods customers sent back. Every row carries a pen to edit and a bin to delete. Files: 10.html, 10.css, 10.js.
 
-11. purchases-returns - the purchases returns journal: goods sent back to suppliers. Files: 11.html, 11.css, 11.js.
+11. purchases-returns - the purchases returns journal: goods sent back to suppliers. Every row carries a pen to edit and a bin to delete. Files: 11.html, 11.css, 11.js.
 
-12. general-journal - the general journal: everything that fits nowhere else, two sided DR and CR. Files: 12.html, 12.css, 12.js.
+12. general-journal - the general journal: everything that fits nowhere else, two sided DR and CR. Each side of every row carries its own pen and bin. Files: 12.html, 12.css, 12.js.
 
-13. cash-receipts - the cash receipts journal: money coming in. Files: 13.html, 13.css, 13.js.
+13. cash-receipts - the cash receipts journal: money coming in. Every row carries a pen to edit and a bin to delete. Files: 13.html, 13.css, 13.js.
 
-14. cash-payments - the cash payments journal: money going out. Files: 14.html, 14.css, 14.js.
+14. cash-payments - the cash payments journal: money going out. Every row carries a pen to edit and a bin to delete. Files: 14.html, 14.css, 14.js.
 
-15. cash-book-single - the single column cash book: cash movements only. Files: 15.html, 15.css, 15.js.
+15. cash-book-single - the single column cash book: cash movements only. Every posting on both sides carries a pen to edit and a bin to delete it. Files: 15.html, 15.css, 15.js.
 
-16. creditors-book - what JAMALI owes: a running balance per supplier. Files: 16.html, 16.css, 16.js.
+16. creditors-book - what JAMALI owes: a running balance per supplier. Every row carries a pen to edit and a bin to delete. Files: 16.html, 16.css, 16.js.
 
-17. debtors-book - what customers owe JAMALI: a running balance per customer. Files: 17.html, 17.css, 17.js.
+17. debtors-book - what customers owe JAMALI: a running balance per customer. Every row carries a pen to edit and a bin to delete. Files: 17.html, 17.css, 17.js.
 
-18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down. Also home of the shared postings.js engine. Files: 18.html, 18.css, 18.js, plus postings.js - the shared posting engine the other book pages import.
+18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down. Every posting on both sides carries a pen to edit and a bin to delete it. Also home of the shared postings.js engine. Files: 18.html, 18.css, 18.js, plus postings.js - the shared posting engine the other book pages import.
 
 19. bills receivable (folder pending) - bills drawn on customers, tracked to settlement. The bills collection is already in the security rules. Files: none yet - the folder is still pending.
 
@@ -739,6 +739,8 @@ THE FILES WITHOUT A PAGE NUMBER
 - public/favicon.ico - the small icon the browser tab shows.
 
 - public/firebase.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
+
+- public/books/row-actions.js - the shared pen and bin that every book row carries, from All Transactions to the cash books, the journals, petty cash, creditors, debtors and the ledger: the pen opens Add Transaction with that record loaded for editing and returns to the book it came from, the bin asks once and deletes the record, every open book refreshes itself on the spot, and both report the result in a small toast at the bottom of the screen.
 
 - public/menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered; the sidebar reads it and draws.
 
