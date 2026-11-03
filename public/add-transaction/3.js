@@ -38,9 +38,12 @@ const $ = (s) => document.querySelector(s);
 const state = { type: null, txn: null, method: null, charges: null };
 
 const URL_PARAMS = new URLSearchParams(location.search);
-const EDIT_ID = URL_PARAMS.get("edit") || "";
-const BACK_URL = URL_PARAMS.get("back") || "";
-let editing = Boolean(EDIT_ID);
+let editId = URL_PARAMS.get("edit") ||
+  (() => { try { return sessionStorage.getItem("jamaliEditTxn") || ""; } catch (e) { return ""; } })();
+const BACK_URL = URL_PARAMS.get("back") ||
+  (() => { try { return sessionStorage.getItem("jamaliEditBack") || ""; } catch (e) { return ""; } })();
+let editing = Boolean(editId);
+let loadingEdit = editing;
 let savedBack = "";
 
  
@@ -68,6 +71,10 @@ const TYPE_BADGE = { IN: "b-in", OUT: "b-out", NEUTRAL: "b-neutral", CONTRA: "b-
  
 document.querySelectorAll("#groups .tile").forEach((btn) =>
   btn.addEventListener("click", () => {
+    if (loadingEdit) return;
+    if (editing && !confirm("You are editing a saved transaction. Forget it and record a new one instead?")) return;
+    editing = false;
+    editId = "";
     state.type = btn.dataset.type;
     state.txn = btn.dataset.txn;
     openForm();
@@ -82,6 +89,8 @@ function openForm() {
   $("#txn-title").textContent = state.txn;
   $("#txn-sub").textContent = "Step 2 of 2 \u00B7 " + state.type +
     (state.type === "NEUTRAL" ? " \u00B7 no flow method" : "");
+  $("#save-btn").textContent = "Save Transaction";
+  $("#back-2").textContent = "\u2190 Transactions";
   $("#in-amount").value = "";
   $("#in-person").value = "";
   $("#in-bank").value = "";
@@ -169,28 +178,38 @@ function prefillEdit(d) {
   $("#f-charges").hidden = true;
   $("#f-charges-amount").hidden = true;
   $("#txn-title").textContent = "Edit: " + state.txn;
-  $("#txn-sub").textContent = "Change what you need, then save. The date stays as it was.";
+  $("#txn-sub").textContent = "Step 2 of 2 \u00B7 " + state.type +
+    " \u2014 change the amount or method, then update. The date stays as it was.";
+  $("#save-btn").textContent = "Update Transaction";
+  $("#back-2").textContent = "\u2190 Cancel edit";
   updatePreview();
   showStep(2);
 }
 
-if (EDIT_ID) {
+if (editId) {
   document.querySelector("#step-1 .sub").textContent = "Loading the saved transaction\u2026";
   try {
-    const snap = await getDoc(doc(db, "transactions", EDIT_ID));
+    const snap = await getDoc(doc(db, "transactions", editId));
     if (!snap.exists()) {
       document.querySelector("#step-1 .sub").textContent =
         "That transaction no longer exists - it may have been deleted. Pick a transaction to record a new one.";
       editing = false;
+      editId = "";
+      try { sessionStorage.removeItem("jamaliEditTxn"); } catch (e) { }
     } else {
       prefillEdit(snap.data());
+      try { sessionStorage.removeItem("jamaliEditTxn"); } catch (e) { }
+      try { sessionStorage.removeItem("jamaliEditBack"); } catch (e) { }
     }
   } catch (e) {
     document.querySelector("#step-1 .sub").textContent =
       "Could not load the transaction: " + ((e && e.message) || e);
     editing = false;
+    editId = "";
+    try { sessionStorage.removeItem("jamaliEditTxn"); } catch (e) { }
   }
 }
+loadingEdit = false;
 
 const fmt = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
 
@@ -270,11 +289,12 @@ function updatePreview() {
     if (editing) {
       const main = docs[0];
       delete main.dateTime;
-      await updateDoc(doc(db, "transactions", EDIT_ID), main);
+      await updateDoc(doc(db, "transactions", editId), main);
       editing = false;
+      editId = "";
       savedBack = BACK_URL;
       document.querySelector("#step-3 h1").textContent = "Transaction Updated";
-      $("#done-note").textContent = "1 record updated \u2014 every book now shows the new figures.";
+      $("#done-note").textContent = "The original record was replaced \u2014 every book now shows the new figures.";
       $("#again-btn").textContent = savedBack ? "Back to the book" : "Add Another";
     } else {
       const batch = writeBatch(db); 
@@ -298,7 +318,11 @@ function updatePreview() {
 });
 
  
- $("#back-2").addEventListener("click", () => showStep(1));
+ $("#back-2").addEventListener("click", () => {
+  if (editing && savedBack) { location.href = savedBack; return; }
+  if (editing) { editing = false; editId = ""; }
+  showStep(1);
+});
  $("#again-btn").addEventListener("click", () => {
   if (savedBack) { location.href = savedBack; return; }
   state.type = state.txn = null;
