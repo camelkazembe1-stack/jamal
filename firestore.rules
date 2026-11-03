@@ -17,6 +17,10 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn();
     }
 
+    match /stockItems/{docId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
+
     match /healthRegistrations/{docId} {
       allow create, read, update, delete: if isSignedIn();
     }

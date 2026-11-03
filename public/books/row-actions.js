@@ -193,6 +193,10 @@ export function wireActions(scopeEl) {
     if (!id) return;
 
     if (btn.dataset.ra === "edit") {
+      try {
+        sessionStorage.setItem("jamaliEditTxn", id);
+        sessionStorage.setItem("jamaliEditBack", location.pathname);
+      } catch (e) { }
       location.href = "/add-transaction/3?edit=" + encodeURIComponent(id) +
         "&back=" + encodeURIComponent(location.pathname);
       return;

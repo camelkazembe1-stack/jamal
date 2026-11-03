@@ -7,9 +7,26 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
   width: 5px; border-radius: 3px; background: #475569; }
 
  
+.hub-btn {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  padding: 16px 18px; margin: 14px 0 20px; text-decoration: none; color: #0f172a;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .06); transition: .15s;
+}
+.hub-btn:hover { transform: translateY(-2px); border-color: #38bdf8; }
+.hub-btn:active { transform: translateY(0); }
+.hub-icon { font-size: 30px; line-height: 1; }
+.hub-text { display: flex; flex-direction: column; gap: 3px; }
+.hub-text b { font-size: 15.5px; }
+.hub-text small { color: #64748b; font-size: 12.5px; line-height: 1.45; }
+.hub-arrow { margin-left: auto; font-size: 20px; color: #94a3b8; }
+.sect { margin: 4px 0 2px; font-size: 17px; }
+
+ 
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .add-card,
-  .add-toggle, .tabs, .settle-btn, .form-actions, .count-line { display: none !important; }
+  .add-toggle, .tabs, .settle-btn, .form-actions, .count-line,
+  .hub-btn, .hub-arrow { display: none !important; }
   body.jamali-has-sidebar { margin-left: 0 !important; }
   body { background: #fff; }
   .wrap { max-width: none; padding: 0; }
