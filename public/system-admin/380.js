@@ -287,26 +287,68 @@ function renderModsel(grants) {
     const mainCb = mainLab.querySelector("input");
     const kidBox = document.createElement("div");
     kidBox.style.display = "none";
-    const reveals = [];
+    const kids = [];
     for (const k of t.kids) {
       const kLab = mkCheck((k.icon || "") + " " + k.label, k.folder, grants, 22);
       const kCb = kLab.querySelector("input");
       kidBox.appendChild(kLab);
+      const g3s = [];
+      let g3Box = null;
       if (k.kids.length) {
-        const g3Box = document.createElement("div");
+        g3Box = document.createElement("div");
         g3Box.style.display = "none";
-        for (const g3 of k.kids) g3Box.appendChild(mkCheck(g3.label, g3.folder, grants, 44));
+        for (const g3 of k.kids) {
+          const g3Lab = mkCheck(g3.label, g3.folder, grants, 44);
+          const g3Cb = g3Lab.querySelector("input");
+          g3Box.appendChild(g3Lab);
+          g3s.push(g3Cb);
+          g3Cb.addEventListener("change", () => {
+            if (!g3Cb.checked) return;
+            if (!kCb.checked) kCb.checked = true;
+            if (!mainCb.checked) mainCb.checked = true;
+            g3Box.style.display = "block";
+            kidBox.style.display = "block";
+          });
+        }
         kidBox.appendChild(g3Box);
-        kCb.addEventListener("change", () => { g3Box.style.display = kCb.checked ? "block" : "none"; });
-        reveals.push([kCb, g3Box]);
       }
+      kCb.addEventListener("change", () => {
+        if (g3Box) g3Box.style.display = kCb.checked ? "block" : "none";
+        if (kCb.checked && !mainCb.checked) {
+          mainCb.checked = true;
+          kidBox.style.display = "block";
+        }
+      });
+      kids.push([kCb, g3s]);
     }
-    mainCb.addEventListener("change", () => { kidBox.style.display = mainCb.checked ? "block" : "none"; });
+    mainCb.addEventListener("change", () => {
+      kidBox.style.display = mainCb.checked ? "block" : "none";
+      for (const kk of kids) {
+        const kCb = kk[0];
+        if (kCb.checked !== mainCb.checked) {
+          kCb.checked = mainCb.checked;
+          kCb.dispatchEvent(new Event("change"));
+        }
+        for (const g3 of kk[1]) {
+          if (g3.checked !== mainCb.checked) {
+            g3.checked = mainCb.checked;
+            g3.dispatchEvent(new Event("change"));
+          }
+        }
+      }
+    });
     box.appendChild(mainLab);
     box.appendChild(kidBox);
     body.appendChild(box);
     if (mainCb.checked) kidBox.style.display = "block";
-    for (const r of reveals) if (r[0].checked) r[1].style.display = "block";
+    for (const k of t.kids) {
+      const kCb = kidBox.querySelector("input[data-folder='" + k.folder + "']");
+      if (!kCb || !kCb.checked) continue;
+      const wrap = kCb.closest("label");
+      if (wrap && wrap.nextElementSibling && wrap.nextElementSibling.tagName === "DIV") {
+        wrap.nextElementSibling.style.display = "block";
+      }
+    }
   }
   if (!tops.length) body.textContent = "The menu tree is empty.";
 }
@@ -335,6 +377,13 @@ async function saveModsel() {
 document.getElementById("modsel-all").addEventListener("click", () => {
   document.querySelectorAll("#modsel-body input[type=checkbox]").forEach((cb) => {
     cb.checked = true;
+    cb.dispatchEvent(new Event("change"));
+  });
+});
+document.getElementById("modsel-none").addEventListener("click", () => {
+  document.querySelectorAll("#modsel-body input[type=checkbox]").forEach((cb) => {
+    if (!cb.checked) return;
+    cb.checked = false;
     cb.dispatchEvent(new Event("change"));
   });
 });
