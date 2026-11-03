@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stock Management — JAMALI</title>
+<title>Stock Movement — JAMALI</title>
 <link rel="stylesheet" href="/records/records.css">
   <link rel="stylesheet" href="/stock-movement/31.css">
 <script src="/menu.js" defer></script>
@@ -12,20 +12,8 @@
 <body>
 <main class="wrap">
   <a class="back" href="/view-file/4">&larr; View File</a>
-  <h1>Stock Management</h1>
-  <p class="sub">Everything stock in one place. Open the <b>Stock Register</b> to keep every item with its prices and its package / unit quantity, and read the <b>Stock Movement</b> report below &mdash; real movements only, <b>never double-counted</b>. Updates live.</p>
-
-  <a class="hub-btn" href="/stock-register/395">
-    <span class="hub-icon">📦</span>
-    <span class="hub-text">
-      <b>Stock Register</b>
-      <small>Name, Buying Price per Package, Units per Package, Unit Selling Price &mdash; the quantity can be typed as Package or as Unit, and either one calculates the other.</small>
-    </span>
-    <span class="hub-arrow">&rarr;</span>
-  </a>
-
-  <h2 class="sect">Stock Movement</h2>
-  <p class="sub">Generated from the <a href="/grn-register/25">GRN Register</a> and <a href="/dispatch-register/26">Dispatch Register</a> &mdash; the running Stock After column follows each product; the card values stock on hand at weighted average.</p>
+  <h1>Stock Movement</h1>
+  <p class="sub">Generated from the <a href="/grn-register/25">GRN Register</a> and <a href="/dispatch-register/26">Dispatch Register</a> &mdash; real movements only, <b>never double-counted</b>. The running Stock After column follows each product; the card values stock on hand at weighted average. Updates live.</p>
   <div id="app"></div>
 
 </main>
