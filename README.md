@@ -10,7 +10,7 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 1. home - the landing page after sign in: three square tiles, Business, Computer and Health. Files: 1.html, 1.css, 1.js.
 
-2. business - the control room: opens Add Transaction and View File. Files: 2.html, 2.css, 2.js.
+2. business - the control room: opens Add Transaction, View File and Stock Management. Files: 2.html, 2.css, 2.js.
 
 3. add-transaction - the journal entry engine: every transaction is recorded here, once, from the tile grid where Capital is picked under IN and Transport under OUT. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
 
