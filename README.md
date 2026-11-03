@@ -10,9 +10,9 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 1. home - the landing page after sign in: three square tiles, Business, Computer and Health. Files: 1.html, 1.css, 1.js.
 
-2. business - the control room: opens Add Transaction, View File and Stock Management. Files: 2.html, 2.css, 2.js.
+2. business - the control room: opens Add Transaction and View File. Files: 2.html, 2.css, 2.js.
 
-3. add-transaction - the journal entry engine: every transaction is recorded here, once, from the tile grid where Capital is picked under IN and Transport under OUT. Every book's pen icon lands here straight on step 2 with that record loaded - the title names the transaction, the amount and method arrive filled and can be changed, Update Transaction replaces the original record (never a new one), and Cancel edit returns to the book; the edit id also travels through the session, so the record loads even if the link's query is lost. Files: 3.html, 3.css, 3.js.
+3. add-transaction - the journal entry engine: every transaction is recorded here, once, from the tile grid where Capital is picked under IN and Transport under OUT. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
 
 4. view-file - the library: a tile launcher for every book, register and report, plus Computer. Files: 4.html, 4.css, 4.js.
 
@@ -68,7 +68,7 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 30. credit-note-register - credit notes: corrections that reduce what customers owe us. Files: 30.html, 30.css, 30.js.
 
-31. stock-movement - Stock Management, the stock hub: it sits in the sidebar as the first module under Business (right above Add Transaction, named Stock Management with the box icon, and the grants editor manages it there too), the View File page and the Business page both carry its tile, and opening it shows a Stock Register button that leads to page 395; below that button the Stock Movement report - goods in, goods out and the running quantity per stock item, generated from the GRN and Dispatch registers. Files: 31.html, 31.css, 31.js.
+31. stock-movement - goods in, goods out and the running quantity per stock item. Files: 31.html, 31.css, 31.js.
 
 32. fixed-assets - what the business owns: each asset at cost, in service. Files: 32.html, 32.css, 32.js.
 
@@ -731,8 +731,6 @@ THE MEDICAL WING, THE ADMIN DESK AND THE VIEWER, 330 TO 393
 392. account-recovery, page 392 - Forgot Phone Number: the recovery page for a changed phone number. Files: 392.html.
 
 393. file-viewer - All File Viewer: pick any file from the device and the page names its type out loud - Your file is: PDF document - then opens it right there: video plays, audio plays, pictures show, Word documents open, anything else opens in a new tab. It sits on the Computer page next to Convertor, stays open in the sidebar for every account, and nothing uploads anywhere - the file is read in the browser only. Files: 393.html, 393.css, 393.js.
-
-395. stock-register - Stock Register: opens from the Stock Register button on Stock Management (page 31). Every stock item keeps its Name, Buying Price per Package, Units per Package and Unit Selling Price, and the quantity can be typed as Package or as Unit - the two are representations of the same stock quantity, so entering either one calculates the other from Units per Package (packages x units per package = units), clearing one side clears the other, and a live hint spells out the conversion. Records land in the stockItems collection and the list refreshes live. Files: 395.html, 395.css, 395.js, link.js.
 
 THE FILES WITHOUT A PAGE NUMBER
 
