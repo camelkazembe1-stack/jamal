@@ -68,7 +68,7 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 30. credit-note-register - credit notes: corrections that reduce what customers owe us. Files: 30.html, 30.css, 30.js.
 
-31. stock-movement - Stock Management, the stock hub: it opens on a Stock Register button that leads to page 395, and below it the Stock Movement report - goods in, goods out and the running quantity per stock item, generated from the GRN and Dispatch registers. Files: 31.html, 31.css, 31.js.
+31. stock-movement - Stock Management, the stock hub: it sits in the sidebar as the first module under Business (right above Add Transaction, named Stock Management with the box icon, and the grants editor manages it there too), the View File page and the Business page both carry its tile, and opening it shows a Stock Register button that leads to page 395; below that button the Stock Movement report - goods in, goods out and the running quantity per stock item, generated from the GRN and Dispatch registers. Files: 31.html, 31.css, 31.js.
 
 32. fixed-assets - what the business owns: each asset at cost, in service. Files: 32.html, 32.css, 32.js.
 
