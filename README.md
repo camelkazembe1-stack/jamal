@@ -734,7 +734,7 @@ THE MEDICAL WING, THE ADMIN DESK AND THE VIEWER, 330 TO 393
 
 396. stock-management - Stock Management: the stock hub under Business with three buttons - Stock Register to register what the business keeps in stock, Stock Progress to watch what is present, and Stock Change to record every movement in and out. Files: 396.html, 396.css, 396.js.
 
-397. stock-register - Stock Register, opened from the Stock Management hub - registers every stock item with its Name, Buying Price per Package, Units per Package and Unit Selling Price; the registered prices feed Stock Progress and Stock Change, and Units per Package is the bridge that converts between packages and units wherever a quantity is typed. Files: 397.html, 397.js.
+397. stock-register - Stock Register, opened from the Stock Management hub - registers every stock item with its Name, the Units Present it starts with, Buying Price per Package, Units per Package and Unit Selling Price; the registered prices feed Stock Progress and Stock Change, and Units per Package is the bridge that converts between packages and units wherever a quantity is typed. Files: 397.html, 397.js.
 
 398. stock-progress - Stock Progress, opened from the Stock Management hub - the live position of every registered stock: S/N, Stock Name, Units Present, Unit SP and Package BP, with Units Present updated the moment a Stock Change is saved. Files: 398.html, 398.css, 398.js.
 

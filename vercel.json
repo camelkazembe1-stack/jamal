@@ -12,6 +12,36 @@
       "source": "/home/",
       "destination": "/",
       "permanent": false
+    },
+    {
+      "source": "/stock-management/397",
+      "destination": "/stock-register/397",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/397/",
+      "destination": "/stock-register/397",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/398",
+      "destination": "/stock-progress/398",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/398/",
+      "destination": "/stock-progress/398",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/399",
+      "destination": "/stock-change/399",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/399/",
+      "destination": "/stock-change/399",
+      "permanent": false
     }
   ]
 }
