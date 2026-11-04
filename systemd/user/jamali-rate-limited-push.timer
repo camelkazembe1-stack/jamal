@@ -1,9 +1,9 @@
 [Unit]
-Description=Check JAMALI pending changes every 10 seconds
+Description=Check JAMALI pending changes every 60 seconds
 
 [Timer]
-OnBootSec=10s
-OnUnitInactiveSec=10s
+OnBootSec=60s
+OnUnitInactiveSec=60s
 AccuracySec=1s
 Unit=jamali-rate-limited-push.service
 
