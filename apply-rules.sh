@@ -22,7 +22,7 @@ if [ ! -f firestore.rules ]; then say "FAIL: firestore.rules is not next to this
 
 
 PID=""
-for f in public/SERVER/server.js SERVER/server.js; do
+for f in public/SERVER/server.js; do
   if [ -f "$f" ]; then
     DETECTED=$(node -e 'const s=require("fs").readFileSync(process.argv[1],"utf8");const m=s.match(/projectId\s*:\s*"([^"]+)"/);console.log(m?m[1]:"");' "$f" 2>/dev/null || true)
     if [ -n "$DETECTED" ]; then PID="$DETECTED"; break; fi

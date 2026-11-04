@@ -4,7 +4,7 @@ Plain, honest bookkeeping for a small trading business, a Health desk for the ho
 
 HOW TO READ THIS GUIDE
 
-One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js, addressed without the extension, for example /petty-cash/7. This guide names every file in the repository. One entry per page, and the entry numbers are the page numbers themselves: 1. home, 2. business, and so on, up to 393. The convertor tools are entries 65 to 320, one entry per tool, in the order the hub shows them. Every entry is followed by a blank line before the next number, and each entry ends with the files the folder carries.
+One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js, addressed without the extension, for example /petty-cash/7. This guide names every file in the repository. One entry per page, and the entry numbers are the page numbers themselves: 1. home, 2. business, and so on, up to 399. The convertor tools are entries 65 to 320, one entry per tool, in the order the hub shows them. Every entry is followed by a blank line before the next number, and each entry ends with the files the folder carries.
 
 THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL PENDING)
 
@@ -654,7 +654,7 @@ The convertor tools, pages 65 to 320, in 14 families, in hub order:
 
 THE HEALTH FAMILY, 321 TO 328
 
-321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html, 321.css, 321.js.
+321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html, 321.css, 321.js, plus the shared patient-info.css and patient-info.js that the stage pages load.
 
 322. victim-registration - victim registration at the hospital door: sixteen fields laid out three per row, the age computed from the date of birth, arrival time recorded automatically, referral and payment captured, and the registering staff member remembered on the device. The Registration ID, four digits and four letters (for example 4827ABCD), is issued only after the form saves. Unidentified victims register without a name - the Registration ID is the one and only identifier the victim ever has (the temporary ID was removed in Task 45). Emergency treatment is never delayed by an incomplete form. Files: 322.html, 322.css, 322.js.
 
@@ -732,6 +732,8 @@ THE MEDICAL WING, THE ADMIN DESK AND THE VIEWER, 330 TO 393
 
 393. file-viewer - All File Viewer: pick any file from the device and the page names its type out loud - Your file is: PDF document - then opens it right there: video plays, audio plays, pictures show, Word documents open, anything else opens in a new tab. It sits on the Computer page next to Convertor, stays open in the sidebar for every account, and nothing uploads anywhere - the file is read in the browser only. Files: 393.html, 393.css, 393.js.
 
+THE STOCK PAGES, 396 TO 399
+
 396. stock-management - Stock Management: the stock hub under Business with three buttons - Stock Register to register what the business keeps in stock, Stock Progress to watch what is present, and Stock Change to record every movement in and out. Files: 396.html, 396.css, 396.js.
 
 397. stock-register - Stock Register, opened from the Stock Management hub - registers every stock item with its Name, the Units Present it starts with, Buying Price per Package, Units per Package and Unit Selling Price; the registered prices feed Stock Progress and Stock Change, and Units per Package is the bridge that converts between packages and units wherever a quantity is typed. Files: 397.html, 397.js.
@@ -758,21 +760,19 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - public/system-page-config.js - the quiet half of the field control pair: carries each page's identity and applies the saved field configuration, so the admin's - and + decisions become the form the user actually sees.
 
-- public/3.html and public/6.html - two leftovers from before the one folder per page convention, sitting directly at the public root: working copies of Add Transaction (3) and the Double Column Cash Book (6). They stay so nothing that links to them breaks.
-
 - public/journals - the engine folder (journal.js and journal.css) that renders the eight journals, pages 7 to 14.
 
 - public/records - the engine folder (records.js and records.css) behind the register pages 21 to 40, and the design base for the report pages too.
 
-- public/reports and public/reports2 - the two engine folders behind the report and schedule pages 41 to 61: reports/reports.js, and reports2/reports2.js with reports2/reports2.css, which adds the period bar, the account selector and the aging buckets. Views only, no data entry.
+- public/reports - the one engine folder behind every report page (31, 33, 41 to 48, 53 and 55 to 61): core.js is the shared foundation (table shell, side panel, key-value card, empty and failure states, period bar, account selector); ledger.js carries the ledger views (Trial Balance, Adjusted Trial Balance, Post-Closing Trial Balance, General Ledger Report, Bank Reconciliation); parties.js carries the people views (AR and AP Schedules, AR and AP Reports, customer and supplier statements, Aged Receivables and Aged Payables - one party engine underneath); assets.js carries the register views (Stock Movement, Inventory Valuation, Depreciation, Fixed Assets Schedule, Accumulated Depreciation); reports.css carries the period bar and selector styles. Views only, no data entry.
 
 - public/convertor, the extra files - besides pages 63 and 64 the folder carries tools.js (the registry of all 256 tools with id, label, slug and page number - the hub grid and the sidebar children both read it, so buttons and tree can never drift apart) and slugs.txt and pages.txt (the two folder building lists).
 
 - public/health, the extra files - besides page 321 the folder carries patient-info.js and patient-info.css - the shared chip the health stage pages load to show a patient's every record by Registration ID.
 
-- public/SERVER - the server brain mirrored inside the web root: server.js picks the Firebase project and configuration, linker.js is the only connection point the modules talk through.
+- public/SERVER - the one server folder, inside the web root where the browser can reach it: server.js picks the Firebase project and configuration, linker.js is the only connection point the modules talk through, and public/firebase.js hands all of it to every page.
 
-- SERVER (repo root) - the original of the same two files, the copy that lives outside the web root.
+- apply-rules.sh - the one-shot publisher for the Firestore rules: it reads the database project from public/SERVER/server.js, writes firebase.json and .firebaserc, walks you through the Firebase sign in and publishes firestore.rules, then removes itself - kept out of the app, nothing on the website imports it.
 
 - firestore.rules - the guard dog. Decides who may read or write each collection: reads on the account and credential records are open to every signed-in Google identity so a system account opens with its username and token from any sign-in, account creation stays bound to the Google email that made it and always starts pending, approvals, grants and deletes stay administrator only through the systemAdmins check, and anything not matched is denied. The systemDeleted tombstones are written, changed and removed by the administrator only, and read by every signed-in identity so the login can explain a deleted account. One extra door: on a database where the systemSetup claim marker does not exist yet (a fresh server), the first administrator login may create the approved administrator account, and the door closes again the moment the claim marker exists.
 
@@ -782,10 +782,10 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - README.md - this guide.
 
-- scripts and systemd - the rate limited push tooling: scripts/jamali-rate-limited-push.sh plus its systemd user service and timer, so deployments stay steady instead of bursty.
+- scripts and systemd - the rate limited push tooling: scripts/jamali-rate-limited-push.sh with systemd/user/jamali-rate-limited-push.service and systemd/user/jamali-rate-limited-push.timer, so deployments stay steady instead of bursty.
 
 - .gitignore - keeps the delivery scripts out of the repo.
 
 - .git - git's own filing cabinet, not part of the app and never served: the commit history, the branches, the hooks and the object store. Nothing in here is edited by hand.
 
-That is the whole tree: 1089 project files, 1077 of them under public, and every one of them is named above.
+That is the whole tree: 1091 project files, 1082 of them under public, and every one of them is named above.
