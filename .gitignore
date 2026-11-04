@@ -1,6 +1,6 @@
 
 task*.sh
-jamali-*.sh
+/jamali-*.sh
 
 # local data and firebase artifacts - stay on the machine
 local-data/
