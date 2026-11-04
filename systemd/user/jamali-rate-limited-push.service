@@ -3,4 +3,4 @@ Description=JAMALI rate-limited Git push
 
 [Service]
 Type=oneshot
-ExecStart=%h/jamali/scripts/jamali-rate-limited-push.sh
+ExecStart=%h/jamal/scripts/jamali-rate-limited-push.sh
