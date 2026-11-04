@@ -30,9 +30,12 @@ const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
 
 const typeOf = (t) => String(t.transactionType || "").toUpperCase();
 const flowOf = (t) => String(t.flowMethod || "").trim().toLowerCase(); 
+const tnOf = (t) => String(t.transactionName || "").trim().toLowerCase();
 const isIncluded = (t) =>
-  (flowOf(t) === "cash" || flowOf(t) === "bank") &&
-  (typeOf(t) === "IN" || typeOf(t) === "OUT");
+  ((flowOf(t) === "cash" || flowOf(t) === "bank") &&
+   (typeOf(t) === "IN" || typeOf(t) === "OUT")) ||
+  (typeOf(t) === "CONTRA" && (tnOf(t) === "cash deposit" || tnOf(t) === "cash withdrawal" ||
+                              tnOf(t) === "bank charges"));
 
 function fmtAmount(n) {
   const v = Number(n || 0);
@@ -81,6 +84,28 @@ function render() {
   BOOK.forEach((t, i) => {
     const isBank = flowOf(t) === "bank";
     const amt = Number(t.amount || 0);
+    const tn = tnOf(t);
+
+    
+    if (typeOf(t) === "CONTRA") {
+      if (tn === "cash deposit") {
+        dr.push({ id: t.id, date: fmtDate(t.dateTime), detail: t.transactionName || "\u2014",
+                  folio: "C", cash: 0, bank: amt });
+        cr.push({ id: t.id, date: fmtDate(t.dateTime), detail: t.transactionName || "\u2014",
+                  folio: "C", cash: amt, bank: 0 });
+      } else if (tn === "cash withdrawal") {
+        dr.push({ id: t.id, date: fmtDate(t.dateTime), detail: t.transactionName || "\u2014",
+                  folio: "C", cash: amt, bank: 0 });
+        cr.push({ id: t.id, date: fmtDate(t.dateTime), detail: t.transactionName || "\u2014",
+                  folio: "C", cash: 0, bank: amt });
+      } else {
+        
+        cr.push({ id: t.id, date: fmtDate(t.dateTime), detail: t.transactionName || "\u2014",
+                  folio: "C", cash: 0, bank: amt });
+      }
+      return;
+    }
+
     const row = {
       id: t.id,
       date: fmtDate(t.dateTime),
