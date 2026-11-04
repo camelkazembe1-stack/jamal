@@ -48,6 +48,8 @@ window.JAMALI_MENU = [
     { label: "Trial Balance", icon: "⚖️", folder: "trial-balance", n: 41, d: 3 },
     { label: "Adjusted Trial Balance", icon: "🧮", folder: "adjusted-trial-balance", n: 42, d: 3 },
     { label: "Post-Closing Trial Balance", icon: "🔒", folder: "post-closing-trial-balance", n: 43, d: 3 },
+    { label: "Income Statement", icon: "📊", folder: "income-statement", n: 424, d: 3 },
+    { label: "Balance Sheet", icon: "🏛️", folder: "balance-sheet", n: 425, d: 3 },
     { label: "AR Schedule", icon: "🤝", folder: "ar-schedule", n: 44, d: 3 },
     { label: "AP Schedule", icon: "🏦", folder: "ap-schedule", n: 45, d: 3 },
     { label: "Inventory Valuation", icon: "🏷️", folder: "inventory-valuation", n: 46, d: 3 },
