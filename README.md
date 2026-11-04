@@ -12,13 +12,13 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 2. business - the control room: opens Add Transaction, View File and Stock Management. Files: 2.html, 2.css, 2.js.
 
-3. add-transaction - the journal entry engine: every transaction is recorded here, once, from the tile grid where Capital is picked under IN and Transport under OUT. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
+3. add-transaction - the journal entry engine: every transaction is recorded here, once, from the tile grid where Capital is picked under IN and Transport under OUT. The CONTRA tiles move money between cash and bank: Cash Withdrawal adds to cash and reduces the bank, Cash Deposit the reverse, and with charges the bank charge is recorded as its own separate Bank Charges record. Every book's pen icon also lands here: the saved record is loaded into the same form, the date stays as it was, and saving updates that one record everywhere. Files: 3.html, 3.css, 3.js.
 
 4. view-file - the library: a tile launcher for every book, register and report, plus Computer. Files: 4.html, 4.css, 4.js.
 
 5. all-transactions - the full journal: every recorded transaction, filterable in one table. Every row carries a pen to edit and a bin to delete the record, with the counts and table updating live. Files: 5.html, 5.css, 5.js.
 
-6. cash-book - the double column cash book: bank and cash side by side, DR and CR. Every posting on both sides carries a pen to edit and a bin to delete it. Files: 6.html, 6.css, 6.js.
+6. cash-book - the double column cash book: bank and cash side by side, DR and CR. Contra entries sit on both sides at once, each half carrying the folio C: a withdrawal adds to the Cash column on DR and reduces the Bank column on CR, a deposit the reverse, and a Bank Charges record lands on the CR bank side. Every posting on both sides carries a pen to edit and a bin to delete it. Files: 6.html, 6.css, 6.js.
 
 7. petty-cash - the petty cash book: small day to day spend. Names containing Petty land here. Every row carries a pen to edit and a bin to delete. Files: 7.html, 7.css, 7.js.
 
@@ -36,7 +36,7 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 14. cash-payments - the cash payments journal: money going out. Every row carries a pen to edit and a bin to delete. Files: 14.html, 14.css, 14.js.
 
-15. cash-book-single - the single column cash book: cash movements only. Every posting on both sides carries a pen to edit and a bin to delete it. Files: 15.html, 15.css, 15.js.
+15. cash-book-single - the single column cash book: cash movements only. The cash leg of a contra entry appears here with the folio C - a Cash Withdrawal on the DR side, a Cash Deposit on the CR side - while bank-only movements such as Bank Charges never enter. Every posting on both sides carries a pen to edit and a bin to delete it. Files: 15.html, 15.css, 15.js.
 
 16. creditors-book - what JAMALI owes: a running balance per supplier. The + Register creditor button brings forward a supplier the business already owed before the books began: name and amount become one Creditors Opening entry that raises the supplier's balance, and the Sales-side journals never see it. Every row carries a pen to edit and a bin to delete. Files: 16.html, 16.css, 16.js.
 

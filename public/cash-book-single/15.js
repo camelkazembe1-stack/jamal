@@ -29,8 +29,11 @@ const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
 
 const typeOf = (t) => String(t.transactionType || "").toUpperCase();
 const flowOf = (t) => String(t.flowMethod || "").trim().toLowerCase();
+const tnOf = (t) => String(t.transactionName || "").trim().toLowerCase();
 const isIncluded = (t) =>
-  flowOf(t) === "cash" && (typeOf(t) === "IN" || typeOf(t) === "OUT");
+  (flowOf(t) === "cash" && (typeOf(t) === "IN" || typeOf(t) === "OUT")) ||
+  (typeOf(t) === "CONTRA" &&
+   (tnOf(t) === "cash withdrawal" || tnOf(t) === "cash deposit"));
 
 function fmtAmount(n) {
   const v = Number(n || 0);
@@ -82,7 +85,15 @@ function render() {
       folio: i + 1,
       amt: Number(t.amount || 0)
     };
-    (typeOf(t) === "IN" ? dr : cr).push(row);
+    let side;
+    if (typeOf(t) === "CONTRA") {
+      
+      row.folio = "C";
+      side = tnOf(t) === "cash withdrawal" ? dr : cr;
+    } else {
+      side = typeOf(t) === "IN" ? dr : cr;
+    }
+    side.push(row);
   });
 
   const sum = (rows) => rows.reduce((s, r) => s + r.amt, 0);

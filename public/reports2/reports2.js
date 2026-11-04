@@ -266,7 +266,7 @@ export async function initGLReport(cfg) {
     const rows = [];
     TX.forEach((t) => {
       const ty = String(t.transactionType || "").toUpperCase();
-      if (ty !== "IN" && ty !== "OUT") return;
+      if (ty !== "IN" && ty !== "OUT" && ty !== "CONTRA") return;
       const p = postingsFor(t, M.creditPeople);
       const ts = asDate(t.dateTime);
       if (p.dr.acct === acct) rows.push({ ts, detail: p.dr.detail, folio: p.dr.folio, amt: p.dr.amt, side: "dr" });

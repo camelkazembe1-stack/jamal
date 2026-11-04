@@ -56,7 +56,7 @@ export function postingsFor(t, creditPeople) {
   const flow = flowOf(t);
   const person = t.name || null;
   const txn = t.transactionName || "";
-  const folio = FOLIO[classify(t)] || "\u2014";
+  const folio = FOLIO[classify(t)] || (typeOf(t) === "CONTRA" ? "C" : "\u2014");
   const date = fmtDate(t.dateTime);
   const amt = Number(t.amount || 0);
   const row = (acct, detail, kind) => ({ acct, detail: detail || "\u2014", folio, date, amt, kind, id: t.id || null });
@@ -73,6 +73,20 @@ export function postingsFor(t, creditPeople) {
     return {
       dr: row("Opening Balance", person || "Creditors Opening", "asset"),
       cr: row(person || "Sundry Creditors", "Creditors Opening", person ? "person" : "liability")
+    };
+  }
+
+  
+  if (type === "CONTRA") {
+    if (tn === "cash deposit") {
+      return { dr: row("Bank", "Cash Deposit", "asset"), cr: row("Cash", "Cash Deposit", "asset") };
+    }
+    if (tn === "cash withdrawal") {
+      return { dr: row("Cash", "Cash Withdrawal", "asset"), cr: row("Bank", "Cash Withdrawal", "asset") };
+    }
+    return {
+      dr: row(nominal(t), person || "Bank", "expense"),
+      cr: row("Bank", nominal(t), "asset")
     };
   }
 
@@ -128,7 +142,10 @@ export function postingsFor(t, creditPeople) {
 
 
 export function buildAccounts(txns) {
-  const live = txns.filter((t) => typeOf(t) === "IN" || typeOf(t) === "OUT");
+  const live = txns.filter((t) => {
+    const ty = typeOf(t);
+    return ty === "IN" || ty === "OUT" || ty === "CONTRA";
+  });
   const creditPeople = new Set(
     live.filter((t) => flowOf(t) === "credit" && t.name).map((t) => t.name));
   const accts = new Map();
