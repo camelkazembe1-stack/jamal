@@ -3,7 +3,9 @@
 
 
 
-import { requireAuth, db, collection, doc, getDoc, updateDoc, writeBatch, serverTimestamp } from "/firebase.js";
+import { requireAuth, db, collection, doc, getDoc, updateDoc, writeBatch, serverTimestamp,
+         query, orderBy, onSnapshot } from "/firebase.js";
+import { classify } from "/journals/journal.js";
 
 await requireAuth(); 
 
@@ -14,14 +16,16 @@ const TRANSACTIONS = {
     { name: "Commission Receivable", icon: "\u{1F9EE}" },
     { name: "Purchase Return",       icon: "\u{21AA}\u{FE0F}" },
     { name: "Petty Cash",            icon: "\u{1FA99}" },
-    { name: "Capital",               icon: "\u{1F3E6}" }
+    { name: "Capital",               icon: "\u{1F3E6}" },
+    { name: "Debtors Recover",    icon: "\u{1F4B8}" }
   ],
   OUT: [
     { name: "Purchases",     icon: "\u{1F6D2}" },
     { name: "Rent",          icon: "\u{1F3E0}" },
     { name: "Sales Return",  icon: "\u{21A9}\u{FE0F}" },
     { name: "Petty Expense", icon: "\u{1F9F9}" },
-    { name: "Transport",     icon: "\u{1F69B}" }
+    { name: "Transport",     icon: "\u{1F69B}" },
+    { name: "Creditors Recover", icon: "\u{1F4B3}" }
   ],
   NEUTRAL: [
     { name: "Loan",  icon: "\u{1F91D}" },
@@ -35,7 +39,12 @@ const TRANSACTIONS = {
  
 
 const $ = (s) => document.querySelector(s);
-const state = { type: null, txn: null, method: null, charges: null };
+const state = { type: null, txn: null, method: null, charges: null, person: null, owed: 0 };
+
+const RECOVERS = { "Debtors Recover": 1, "Creditors Recover": 1 };
+const isRecover = () => !!RECOVERS[state.txn];
+
+const fmt = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
 
 const URL_PARAMS = new URLSearchParams(location.search);
 let editId = URL_PARAMS.get("edit") ||
@@ -77,6 +86,7 @@ document.querySelectorAll("#groups .tile").forEach((btn) =>
     editId = "";
     state.type = btn.dataset.type;
     state.txn = btn.dataset.txn;
+    if (isRecover()) { state.person = null; state.owed = 0; showPick(); return; }
     openForm();
   }));
 
@@ -86,21 +96,26 @@ const METHOD_ICONS = { Cash: "\u{1F4B5}", Credit: "\u{1F464}", Bank: "\u{1F3DB}\
 function openForm() {
   state.method = null;
   state.charges = null;
-  $("#txn-title").textContent = state.txn;
-  $("#txn-sub").textContent = "Step 2 of 2 \u00B7 " + state.type +
-    (state.type === "NEUTRAL" ? " \u00B7 no flow method" : "");
+  const rec = isRecover();
+  $("#txn-title").textContent = rec && state.person ? state.txn + " \u00B7 " + state.person : state.txn;
+  $("#txn-sub").textContent = rec && state.person
+    ? "Step 3 of 3 \u00B7 " + (state.type === "IN" ? "owed to you: " : "you owe: ") + fmt(state.owed) +
+      " \u2014 enter the paid amount, then Cash or Bank."
+    : "Step 2 of 2 \u00B7 " + state.type +
+      (state.type === "NEUTRAL" ? " \u00B7 no flow method" : "");
   $("#save-btn").textContent = "Save Transaction";
-  $("#back-2").textContent = "\u2190 Transactions";
+  $("#back-2").textContent = rec ? "\u2190 Names" : "\u2190 Transactions";
   $("#in-amount").value = "";
   $("#in-person").value = "";
   $("#in-bank").value = "";
   $("#in-charges").value = "";
   $("#form-err").hidden = true;
+  $("#amount-label").textContent = rec ? "Paid Amount" : "Amount";
 
   const needsMethod = state.type === "IN" || state.type === "OUT";
   $("#f-method").hidden = !needsMethod;
   if (needsMethod) {
-    $("#method-seg").innerHTML = ["Cash", "Credit", "Bank"].map((m) =>
+    $("#method-seg").innerHTML = (rec ? ["Cash", "Bank"] : ["Cash", "Credit", "Bank"]).map((m) =>
       `<button class="seg-btn" type="button" data-v="${m}">${METHOD_ICONS[m]} ${m}</button>`).join("");
     document.querySelectorAll("#method-seg .seg-btn").forEach((b) =>
       b.addEventListener("click", () => {
@@ -141,6 +156,75 @@ document.querySelectorAll("#charges-seg .seg-btn").forEach((b) =>
 ["#in-amount", "#in-person", "#in-bank", "#in-charges"].forEach((s) =>
   $(s).addEventListener("input", updatePreview));
 
+// ---- Debtors Recover / Creditors Recover -----------------------------------
+// The names and owed figures come straight from the books: a debtor owes
+// what the credit sales left after credit returns and everything already
+// received from them; a creditor is the mirror image on purchases.
+const escAttr = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+let TXNS = [];
+
+onSnapshot(query(collection(db, "transactions"), orderBy("dateTime", "asc")), (snap) => {
+  TXNS = snap.docs.map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })));
+  if ($("#step-pick") && $("#step-pick").classList.contains("is-active")) renderPick();
+}, () => { TXNS = []; });
+
+function personBalances(kind) {
+  const bal = Object.create(null);
+  TXNS.forEach((t) => {
+    const k = classify(t);
+    if (!k || !t.name) return;
+    const amt = Number(t.amount || 0);
+    if (kind === "debtors") {
+      if (k === "sales") bal[t.name] = (bal[t.name] || 0) + amt;
+      else if (k === "salesReturns" || k === "cashReceipts") bal[t.name] = (bal[t.name] || 0) - amt;
+    } else {
+      if (k === "purchases") bal[t.name] = (bal[t.name] || 0) + amt;
+      else if (k === "purchasesReturns" || k === "cashPayments") bal[t.name] = (bal[t.name] || 0) - amt;
+    }
+  });
+  return bal;
+}
+
+function showPick() {
+  document.querySelectorAll(".step").forEach((s) => s.classList.remove("is-active"));
+  $("#step-pick").classList.add("is-active");
+  window.scrollTo({ top: 0 });
+  renderPick();
+}
+
+function renderPick() {
+  const isDebtor = state.type === "IN";
+  const bal = personBalances(isDebtor ? "debtors" : "creditors");
+  const names = Object.keys(bal).filter((p) => bal[p] > 0)
+    .sort((a, b) => bal[b] - bal[a] || a.localeCompare(b));
+  $("#pick-title").textContent = isDebtor ? "Pick the debtor" : "Pick the creditor";
+  $("#pick-sub").textContent = "Step 2 of 3 \u00B7 " +
+    (isDebtor ? "money coming in \u2014 every debtor with the amount owed to you."
+              : "money going out \u2014 every creditor with the amount you owe.");
+  $("#rec-grid").innerHTML = names.map((p) =>
+    '<button class="tile" type="button" data-p="' + escAttr(p) + '">' +
+      '<span class="tile-icon">' + (isDebtor ? "\u{1F4B8}" : "\u{1F4B3}") + "</span>" +
+      '<span class="tile-label">' + escAttr(p) + "</span>" +
+      '<span class="tile-units">' + (isDebtor ? "owes you " : "you owe ") + fmt(bal[p]) + "</span>" +
+    "</button>").join("");
+  $("#rec-grid").querySelectorAll(".tile").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      state.person = btn.dataset.p;
+      state.owed = bal[btn.dataset.p] || 0;
+      openForm();
+    }));
+  $("#rec-empty-icon").textContent = isDebtor ? "\u{1F4B8}" : "\u{1F4B3}";
+  $("#rec-empty").hidden = names.length > 0;
+  if (!names.length)
+    $("#rec-empty-title").textContent = isDebtor
+      ? "No debtor owes the business right now"
+      : "The business owes no creditor right now";
+}
+
+$("#back-pick").addEventListener("click", () => showStep(1));
+
 function findEntry(name) {
   for (const g of Object.keys(TRANSACTIONS))
     for (const x of TRANSACTIONS[g])
@@ -154,6 +238,7 @@ function prefillEdit(d) {
   if (hit) {
     state.type = hit.type;
     state.txn = hit.txn;
+    if (isRecover()) state.person = String(d.name || "");
   } else if (/charge/i.test(name)) {
     state.type = String(d.transactionType || "").toUpperCase() === "OUT" ? "OUT" : "CONTRA";
     state.txn = name;
@@ -177,7 +262,8 @@ function prefillEdit(d) {
   }
   $("#f-charges").hidden = true;
   $("#f-charges-amount").hidden = true;
-  $("#txn-title").textContent = "Edit: " + state.txn;
+  $("#txn-title").textContent = "Edit: " + state.txn +
+    (isRecover() && state.person ? " \u00B7 " + state.person : "");
   $("#txn-sub").textContent = "Step 2 of 2 \u00B7 " + state.type +
     " \u2014 change the amount or method, then update. The date stays as it was.";
   $("#save-btn").textContent = "Update Transaction";
@@ -211,8 +297,6 @@ if (editId) {
 }
 loadingEdit = false;
 
-const fmt = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
-
 function updatePreview() {
   if (!state.type || !state.txn) return;
   let p = state.txn + " \u00B7 " + state.type;
@@ -223,6 +307,19 @@ function updatePreview() {
     if ($("#in-bank").value.trim()) p += " \u00B7 " + $("#in-bank").value.trim();
     p += " \u00B7 " + fmt($("#in-amount").value);
     if (chargesAllowed() && state.charges === "WITH" && Number($("#in-charges").value) > 0)
+      p += "   +   Bank Charges \u00B7 " + fmt($("#in-charges").value);
+  } else if (isRecover() && state.person) {
+    p += " \u00B7 " + state.person;
+    if (state.method) p += " \u00B7 " + state.method;
+    if (state.method === "Bank" && $("#in-bank").value.trim()) p += " \u00B7 " + $("#in-bank").value.trim();
+    p += " \u00B7 " + fmt($("#in-amount").value);
+    const owedV = Math.max(0, Number(state.owed) || 0);
+    const paidV = Number($("#in-amount").value) || 0;
+    p += "   (owed " + (state.type === "IN" ? "to you" : "by you") + ": " + fmt(owedV) + ")";
+    if (paidV > owedV)
+      p += "   \u2014 " + fmt(paidV - owedV) + " above it needs confirming as " +
+           (state.type === "IN" ? "Interest Received" : "Interest Allowed");
+    if (state.type === "OUT" && state.method === "Bank" && state.charges === "WITH" && Number($("#in-charges").value) > 0)
       p += "   +   Bank Charges \u00B7 " + fmt($("#in-charges").value);
   } else {
     if (state.method) p += " \u00B7 " + state.method;
@@ -263,22 +360,67 @@ function updatePreview() {
     }
 
   } else { 
-    if (!state.method) return err("Choose Cash, Credit or Bank.");
+    if (!state.method) return err(isRecover()
+      ? "Choose Cash or Bank - Credit is not available here."
+      : "Choose Cash, Credit or Bank.");
     let name = null;
-    if (state.method === "Credit") {
+    if (isRecover()) {
+      name = state.person || null;
+      if (!name) return err("Pick the name first.");
+    } else if (state.method === "Credit") {
       name = $("#in-person").value.trim();
       if (!name) return err("Enter the person's name.");
     } else if (state.method === "Bank") {
       name = $("#in-bank").value.trim();
       if (!name) return err("Enter the bank name.");
     }
-    docs.push({ transactionName: state.txn, dateTime: serverTimestamp(), flowMethod: state.method,
-                transactionType: state.type, name, amount });
-    if (state.type === "OUT" && !editing && state.method === "Bank" && state.charges === "WITH") {
-      const c = Number($("#in-charges").value);
-      if (!c || c <= 0) return err("Enter the charges amount.");
-      docs.push({ transactionName: "Bank Charges", dateTime: serverTimestamp(), flowMethod: "Bank",
-                  transactionType: state.type, name, amount: c });
+
+    if (isRecover() && !editing) {
+      // The overpay rule: the owed figure is recovered first. Anything
+      // above it becomes interest only after a YES - declining saves
+      // nothing at all, and the paid amount is never recorded as-is.
+      const owed = Math.max(0, Number(state.owed) || 0);
+      const over = Math.round((amount - owed) * 100) / 100;
+      const isDebtor = state.type === "IN";
+      const intName = isDebtor ? "Interest Received" : "Interest Allowed";
+      if (over > 0) {
+        const oweTxt = owed > 0
+          ? (isDebtor ? state.person + " owes you " + fmt(owed)
+                      : "you owe " + state.person + " " + fmt(owed))
+          : (isDebtor ? state.person + " does not owe you anything right now"
+                      : "you do not owe " + state.person + " anything right now");
+        const ask = owed > 0
+          ? "Save " + fmt(owed) + " as " + state.txn + " and record the extra " + fmt(over) + " as " + intName + "?"
+          : "Record the whole " + fmt(amount) + " as " + intName + "?";
+        if (!confirm(oweTxt + ". " + ask))
+          return err("Nothing was saved - enter an amount up to the " + fmt(owed) +
+                     " owed, or confirm to record the extra as " + intName + ".");
+        if (owed > 0)
+          docs.push({ transactionName: state.txn, dateTime: serverTimestamp(), flowMethod: state.method,
+                      transactionType: state.type, name, amount: owed });
+        docs.push({ transactionName: intName, dateTime: serverTimestamp(), flowMethod: state.method,
+                    transactionType: state.type,
+                    name: state.method === "Bank" ? ($("#in-bank").value.trim() || null) : null,
+                    amount: over });
+      } else {
+        docs.push({ transactionName: state.txn, dateTime: serverTimestamp(), flowMethod: state.method,
+                    transactionType: state.type, name, amount });
+      }
+      if (state.type === "OUT" && state.method === "Bank" && state.charges === "WITH") {
+        const c = Number($("#in-charges").value);
+        if (!c || c <= 0) return err("Enter the charges amount.");
+        docs.push({ transactionName: "Bank Charges", dateTime: serverTimestamp(), flowMethod: "Bank",
+                    transactionType: state.type, name: $("#in-bank").value.trim() || null, amount: c });
+      }
+    } else {
+      docs.push({ transactionName: state.txn, dateTime: serverTimestamp(), flowMethod: state.method,
+                  transactionType: state.type, name, amount });
+      if (state.type === "OUT" && !editing && state.method === "Bank" && state.charges === "WITH") {
+        const c = Number($("#in-charges").value);
+        if (!c || c <= 0) return err("Enter the charges amount.");
+        docs.push({ transactionName: "Bank Charges", dateTime: serverTimestamp(), flowMethod: "Bank",
+                    transactionType: state.type, name: $("#in-bank").value.trim() || null, amount: c });
+      }
     }
   }
 
@@ -301,9 +443,10 @@ function updatePreview() {
       docs.forEach((d) => batch.set(doc(collection(db, "transactions")), d));
       await batch.commit();
       document.querySelector("#step-3 h1").textContent = "Transaction Saved";
+      const parts = docs.map((d) => d.transactionName + " " + fmt(d.amount));
       $("#done-note").textContent = docs.length === 1
-        ? "1 record saved to Firestore."
-        : "2 records saved \u2014 the transaction and its bank charges are separate records.";
+        ? "1 record saved to Firestore \u2014 " + parts[0] + "."
+        : docs.length + " records saved \u2014 " + parts.join("  +  ") + ".";
       $("#again-btn").textContent = "Add Another";
     }
     showStep(3);
@@ -321,10 +464,13 @@ function updatePreview() {
  $("#back-2").addEventListener("click", () => {
   if (editing && savedBack) { location.href = savedBack; return; }
   if (editing) { editing = false; editId = ""; }
+  if (isRecover()) { showPick(); return; }
   showStep(1);
 });
  $("#again-btn").addEventListener("click", () => {
   if (savedBack) { location.href = savedBack; return; }
   state.type = state.txn = null;
+  state.person = null;
+  state.owed = 0;
   showStep(1);
 });
