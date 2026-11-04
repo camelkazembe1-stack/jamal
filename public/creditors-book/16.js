@@ -11,7 +11,7 @@
 
 
 
-import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
+import { requireAuth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "/firebase.js";
 import { classify } from "/journals/journal.js";
 import { actsHTML, wireActions } from "/books/row-actions.js";
 
@@ -20,6 +20,7 @@ await requireAuth();
 const INC = "purchases";          
 const RET = "purchasesReturns";   
 const PAY = "cashPayments";       
+const OPEN = "creditorsOpening";
 
 const $ = (s) => document.querySelector(s);
 const body = $("#bk-body");
@@ -53,7 +54,7 @@ const personOf = (t) => t.name || t.transactionName || "\u2014";
 
 function render() {
   const rows = TXNS.map((t) => ({ t, kind: classify(t) }))
-    .filter((r) => r.kind === INC || r.kind === RET || r.kind === PAY);
+    .filter((r) => r.kind === INC || r.kind === RET || r.kind === PAY || r.kind === OPEN);
 
   
   
@@ -69,8 +70,8 @@ function render() {
   book.forEach(({ t, kind }) => {
     const p = personOf(t);
     const amt = Number(t.amount || 0);
-    const inc = kind === INC ? amt : 0;
-    const dec = kind === INC ? 0 : amt; 
+    const inc = (kind === INC || kind === OPEN) ? amt : 0;
+    const dec = (kind === INC || kind === OPEN) ? 0 : amt; 
     bal[p] = (bal[p] || 0) + inc - dec;
     totInc += inc;
     totDec += dec;
@@ -116,6 +117,79 @@ function render() {
 }
 
 wireActions(body);
+
+const regCard = $("#register-card");
+const openBtn = $("#plus-btn");
+const regErr = $("#reg-err");
+const regOk = $("#reg-ok");
+const regName = $("#reg-name");
+const regAmount = $("#reg-amount");
+const regSave = $("#reg-save");
+const regCancel = $("#reg-cancel");
+
+function closeReg() {
+  regCard.hidden = true;
+  openBtn.setAttribute("aria-expanded", "false");
+  regErr.hidden = true;
+  regOk.hidden = true;
+  regName.value = "";
+  regAmount.value = "";
+}
+
+openBtn.addEventListener("click", () => {
+  const show = regCard.hidden;
+  regCard.hidden = !show;
+  openBtn.setAttribute("aria-expanded", String(show));
+  if (show) { regErr.hidden = true; regOk.hidden = true; regName.focus(); }
+  else closeReg();
+});
+
+regCancel.addEventListener("click", closeReg);
+
+regSave.addEventListener("click", async () => {
+  regErr.hidden = true;
+  regOk.hidden = true;
+  const name = regName.value.trim();
+  const amt = Number(regAmount.value);
+  if (!name) {
+    regErr.textContent = "Enter the supplier's name first.";
+    regErr.hidden = false;
+    regName.focus();
+    return;
+  }
+  if (!amt || amt <= 0) {
+    regErr.textContent = "Enter the amount you owe \u2014 more than zero.";
+    regErr.hidden = false;
+    regAmount.focus();
+    return;
+  }
+  regSave.disabled = true;
+  try {
+    await addDoc(collection(db, "transactions"), {
+      transactionName: "Creditors Opening",
+      dateTime: serverTimestamp(),
+      flowMethod: "Credit",
+      transactionType: "OUT",
+      name,
+      amount: amt
+    });
+    regOk.textContent = name + " registered \u2014 the brought-forward balance of " +
+      fmtAmount(amt) + " now sits in the book.";
+    regOk.hidden = false;
+    regName.value = "";
+    regAmount.value = "";
+    regName.focus();
+  } catch (e) {
+    const deny = e && (e.code === "permission-denied" ||
+      String(e && e.message).indexOf("insufficient permissions") !== -1);
+    regErr.textContent = deny
+      ? "Save blocked: the database rules are not published yet. Open the Firebase console -> Firestore Database -> Rules, paste the latest rules, press Publish."
+      : "Could not save: " + ((e && e.message) || e);
+    regErr.hidden = false;
+  } finally {
+    regSave.disabled = false;
+  }
+});
  
 const q = query(collection(db, "transactions"), orderBy("dateTime", "asc"));
 onSnapshot(q, (snap) => {

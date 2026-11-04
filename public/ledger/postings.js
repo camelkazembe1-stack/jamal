@@ -21,7 +21,8 @@
 import { classify } from "/journals/journal.js";
 
 const FOLIO = { petty: "PB", sales: "SJ", purchases: "PJ", salesReturns: "SR",
-                purchasesReturns: "PR", general: "GJ", cashReceipts: "CRJ", cashPayments: "CPJ" };
+                purchasesReturns: "PR", general: "GJ", cashReceipts: "CRJ", cashPayments: "CPJ",
+                debtorsOpening: "OB", creditorsOpening: "OB" };
 export const CORE = ["Cash", "Bank", "Sales", "Purchases", "Sales Returns", "Purchases Returns"];
 
 export const asDate = (ts) =>
@@ -38,11 +39,11 @@ const hayOf = (t) => (String(t.transactionName || "") + " " + String(t.name || "
 
 const hasRet = (t) => hayOf(t).includes("return");
 const purchasy = (t) => hayOf(t).includes("purchas") || hayOf(t).includes("supplier");
-const isSRet = (t) => hasRet(t) && !purchasy(t);   
-const isPRet = (t) => hasRet(t) && purchasy(t);
-const isSale = (t) => typeOf(t) === "IN" && !hasRet(t) &&
+const isSRet = (t) => flowOf(t) === "credit" && hasRet(t) && !purchasy(t);   
+const isPRet = (t) => flowOf(t) === "credit" && hasRet(t) && purchasy(t);
+const isSale = (t) => flowOf(t) === "credit" && typeOf(t) === "IN" && !hasRet(t) &&
   (hayOf(t).includes("sale") || hayOf(t).includes("sold"));
-const isPurchase = (t) => typeOf(t) === "OUT" && !hasRet(t) &&
+const isPurchase = (t) => flowOf(t) === "credit" && typeOf(t) === "OUT" && !hasRet(t) &&
   (hayOf(t).includes("purchas") || hayOf(t).includes("bought") || hayOf(t).includes("buy"));
 
 const moneyAcct = (t) => (flowOf(t) === "bank" ? "Bank" : "Cash");
@@ -59,6 +60,21 @@ export function postingsFor(t, creditPeople) {
   const date = fmtDate(t.dateTime);
   const amt = Number(t.amount || 0);
   const row = (acct, detail, kind) => ({ acct, detail: detail || "\u2014", folio, date, amt, kind, id: t.id || null });
+
+  
+  const tn = txn.trim().toLowerCase();
+  if (tn === "debtors opening") {
+    return {
+      dr: row(person || "Sundry Debtors", "Debtors Opening", person ? "person" : "asset"),
+      cr: row("Opening Balance", person || "Debtors Opening", "liability")
+    };
+  }
+  if (tn === "creditors opening") {
+    return {
+      dr: row("Opening Balance", person || "Creditors Opening", "asset"),
+      cr: row(person || "Sundry Creditors", "Creditors Opening", person ? "person" : "liability")
+    };
+  }
 
   if (isSRet(t)) {
     const dr = row("Sales Returns", person || moneyDetail(t), "expense");

@@ -18,6 +18,9 @@ import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/fireba
 import { actsHTML, wireActions } from "/books/row-actions.js";
 
 export function classify(t) {
+  const tn = String(t.transactionName || "").trim().toLowerCase();
+  if (tn === "debtors opening") return "debtorsOpening";
+  if (tn === "creditors opening") return "creditorsOpening";
   const type = String(t.transactionType || "").toUpperCase();
   if (type !== "IN" && type !== "OUT") return null; 
   const flow = String(t.flowMethod || "").trim().toLowerCase();
