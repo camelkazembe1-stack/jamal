@@ -15,7 +15,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 
 /* bin & pen row actions */
 .prog-card .bk th.act, .prog-card .bk td.act { text-align: right; white-space: nowrap; }
-.row-btn { border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.row-btn { border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 13px; line-height: 1; padding: 4px 8px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
 .row-btn + .row-btn { margin-left: 6px; }
 .row-btn.pen-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }
 .row-btn.bin-btn:hover { border-color: #ef4444; color: #b91c1c; }

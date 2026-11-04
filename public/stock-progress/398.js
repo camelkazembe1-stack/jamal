@@ -136,9 +136,9 @@ onSnapshot(query(collection(db, "stockItems"), orderBy("name")), (snap) => {
     '<td class="amt">' + fmtM(r.buyPrice) + "</td>" +
     '<td class="act">' +
     '<button class="row-btn pen-btn" type="button" data-id="' + esc(r.id) +
-    '" title="Edit this stock item">\u270F\uFE0F Pen</button>' +
+    '" title="Edit this stock item" aria-label="Edit this stock item (Pen)">\u270F\uFE0F</button>' +
     '<button class="row-btn bin-btn" type="button" data-id="' + esc(r.id) +
-    '" title="Delete this stock item">\uD83D\uDDD1\uFE0F Bin</button>' +
+    '" title="Delete this stock item" aria-label="Delete this stock item (Bin)">\uD83D\uDDD1\uFE0F</button>' +
     "</td>" +
     "</tr>"
   ).join("");
