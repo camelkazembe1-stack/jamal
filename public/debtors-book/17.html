@@ -11,8 +11,32 @@
 <body>
 <main class="wrap">
   <a class="back" href="/view-file/4">&larr; View File</a>
-  <h1>Debtors Book</h1>
-  <p class="sub">Money <b>owed to the business</b>: credit sales increase a customer's balance; payments received and sales returns reduce it. Balances are tracked per customer, with the total outstanding receivable at the end. Updates live.</p>
+  <div class="head-row">
+    <div class="head-text">
+      <h1>Debtors Book</h1>
+      <p class="sub">Money <b>owed to the business</b>: credit sales increase a customer's balance; payments received and sales returns reduce it. Balances are tracked per customer, with the total outstanding receivable at the end. Updates live.</p>
+    </div>
+    <button class="plus-btn" id="plus-btn" type="button" aria-expanded="false" aria-controls="register-card">+ Register debtor</button>
+  </div>
+
+  <div class="card register-card" id="register-card" hidden>
+    <h2>Register a debtor brought forward</h2>
+    <p class="reg-sub">For a customer who <b>already owed the business money before these books began</b> - before the business or before JAMALI. Their balance enters the book as one <b>Debtors Opening</b> entry, dated today, and every later payment reduces it. It is not a sale: the Sales Journal never sees it.</p>
+    <div class="reg-grid">
+      <div class="reg-field">
+        <label for="reg-name">Customer name</label>
+        <input id="reg-name" type="text" placeholder="e.g. Mama Halima" autocomplete="off">
+      </div>
+      <div class="reg-field">
+        <label for="reg-amount">Amount they owe</label>
+        <input id="reg-amount" type="number" min="0" step="any" placeholder="0" inputmode="decimal">
+      </div>
+      <button class="reg-save" id="reg-save" type="button">Register</button>
+      <button class="reg-cancel" id="reg-cancel" type="button">Cancel</button>
+    </div>
+    <p class="reg-msg err" id="reg-err" hidden></p>
+    <p class="reg-msg ok" id="reg-ok" hidden></p>
+  </div>
 
   <div class="card table-card" id="table-card">
     <div class="table-wrap">
@@ -41,7 +65,7 @@
   <div class="card empty" id="empty-state" hidden>
     <div class="empty-icon">&#128101;</div>
     <p class="empty-title">No debtor transactions yet</p>
-    <p class="empty-sub">Credit sales (Flow Method <b>Credit</b>, type IN) and payments received from customers appear here automatically. Other income never enters this book.</p>
+    <p class="empty-sub">Credit sales (Flow Method <b>Credit</b>, type IN) and payments received from customers appear here automatically. To bring forward a customer who already owed money before the business, press <b>+ Register debtor</b> above. Other income never enters this book.</p>
   </div>
 
   <p class="count-line" id="count-line"></p>

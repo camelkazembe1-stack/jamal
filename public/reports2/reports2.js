@@ -153,11 +153,13 @@ function partyModel(txns, invoices, notes, dir) {
   const ret = dir === "sales" ? "salesReturns" : "purchasesReturns";
   const pay = dir === "sales" ? "cashReceipts" : "cashPayments";
   const noteDir = dir === "sales" ? "credit" : "debit";
+  const open = dir === "sales" ? "debtorsOpening" : "creditorsOpening";
   
   
   
   const debtPeople = new Set(
-    txns.filter((t) => classify(t) === dir && t.name).map((t) => t.name));
+    txns.filter((t) => { const k = classify(t); return (k === dir || k === open) && t.name; })
+      .map((t) => t.name));
   invoices.forEach((v) => { if (v.direction === invDir && v.party) debtPeople.add(v.party); });
 
   const ev = new Map();
@@ -169,6 +171,7 @@ function partyModel(txns, invoices, notes, dir) {
     const ts = asDate(t.dateTime);
     const amt = Number(t.amount || 0);
     if (c === dir) add(p, { ts, kind: "main", detail: t.transactionName || "Sale", ref: dir === "sales" ? "SJ" : "PJ", src: "Journal", inc: amt, dec: 0 });
+    else if (c === open) add(p, { ts, kind: "main", detail: t.transactionName || "Opening", ref: "OB", src: "Journal", inc: amt, dec: 0 });
     else if (c === ret && debtPeople.has(p)) add(p, { ts, kind: "ret", detail: t.transactionName || "Return", ref: dir === "sales" ? "SR" : "PR", src: "Journal", inc: 0, dec: amt });
     else if (c === pay && debtPeople.has(p)) add(p, { ts, kind: "pay", detail: t.transactionName || "Payment", ref: dir === "sales" ? "CRJ" : "CPJ", src: "Journal", inc: 0, dec: amt });
   });

@@ -38,9 +38,9 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 15. cash-book-single - the single column cash book: cash movements only. Every posting on both sides carries a pen to edit and a bin to delete it. Files: 15.html, 15.css, 15.js.
 
-16. creditors-book - what JAMALI owes: a running balance per supplier. Every row carries a pen to edit and a bin to delete. Files: 16.html, 16.css, 16.js.
+16. creditors-book - what JAMALI owes: a running balance per supplier. The + Register creditor button brings forward a supplier the business already owed before the books began: name and amount become one Creditors Opening entry that raises the supplier's balance, and the Sales-side journals never see it. Every row carries a pen to edit and a bin to delete. Files: 16.html, 16.css, 16.js.
 
-17. debtors-book - what customers owe JAMALI: a running balance per customer. Every row carries a pen to edit and a bin to delete. Files: 17.html, 17.css, 17.js.
+17. debtors-book - what customers owe JAMALI: a running balance per customer. The + Register debtor button brings forward a customer who already owed the business before the books began: name and amount become one Debtors Opening entry that raises the customer's balance, and the Sales Journal never sees it. Every row carries a pen to edit and a bin to delete. Files: 17.html, 17.css, 17.js.
 
 18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down. Every posting on both sides carries a pen to edit and a bin to delete it. Also home of the shared postings.js engine. Files: 18.html, 18.css, 18.js, plus postings.js - the shared posting engine the other book pages import.
 

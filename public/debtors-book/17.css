@@ -44,3 +44,47 @@ table.people .c-amount { text-align: right; font-weight: 800; font-variant-numer
 
 .count-line { color: #94a3b8; font-size: 12.5px; margin-top: 12px; }
 @media (max-width: 640px) { .wrap { padding: 20px 14px; } }
+
+ 
+.head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.head-text { min-width: 0; }
+.head-text .sub { margin-bottom: 0; }
+.plus-btn {
+  display: inline-flex; align-items: center; gap: 8px; flex: none;
+  background: #0f172a; color: #fff; border: 0; border-radius: 10px;
+  padding: 10px 16px; font-weight: 800; font-size: 13.5px; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .18); transition: .15s;
+}
+.plus-btn:hover { background: #1e293b; transform: translateY(-1px); }
+.plus-btn:active { transform: translateY(0); }
+
+.register-card { padding: 18px 20px; margin-bottom: 18px; }
+.register-card h2 { font-size: 15px; margin-bottom: 4px; }
+.register-card .reg-sub { color: #64748b; font-size: 13px; line-height: 1.5; margin-bottom: 14px; }
+.reg-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto; gap: 10px; align-items: end; }
+.reg-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 700; margin-bottom: 5px; }
+.reg-field input {
+  width: 100%; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff;
+  padding: 10px 12px; font-size: 14px; color: #0f172a; outline: none; transition: .15s;
+}
+.reg-field input:focus { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, .15); }
+.reg-save {
+  border: 0; border-radius: 9px; background: #0f172a; color: #fff;
+  padding: 10px 18px; font-weight: 800; font-size: 13.5px; cursor: pointer; transition: .15s;
+}
+.reg-save:hover { background: #1e293b; }
+.reg-save:disabled { opacity: .5; cursor: wait; }
+.reg-cancel {
+  border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #475569;
+  padding: 10px 16px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: .15s;
+}
+.reg-cancel:hover { border-color: #94a3b8; color: #0f172a; }
+.reg-msg { margin-top: 10px; font-size: 13px; font-weight: 600; }
+.reg-msg.err { color: #dc2626; }
+.reg-msg.ok { color: #059669; }
+@media (max-width: 720px) {
+  .head-row { flex-direction: column; }
+  .plus-btn { align-self: flex-start; }
+  .reg-grid { grid-template-columns: 1fr; }
+  .reg-save, .reg-cancel { width: 100%; }
+}

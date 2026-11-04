@@ -240,15 +240,17 @@ function partySchedule(txns, book) {
   const main = book === "sales" ? "sales" : "purchases";
   const ret = book === "sales" ? "salesReturns" : "purchasesReturns";
   const pay = book === "sales" ? "cashReceipts" : "cashPayments";
+  const open = book === "sales" ? "debtorsOpening" : "creditorsOpening";
   const withCredit = new Set(
-    txns.filter((t) => classify(t) === main && t.name).map((t) => t.name));
+    txns.filter((t) => { const k = classify(t); return (k === main || k === open) && t.name; })
+      .map((t) => t.name));
   const rows = Object.create(null);
   txns.forEach((t) => {
     const c = classify(t);
     const person = t.name;
     if (!person) return;
     const amt = Number(t.amount || 0);
-    if (c === main) {
+    if (c === main || c === open) {
       const r = rows[person] = rows[person] || { main: 0, ret: 0, pay: 0 };
       r.main += amt;
     } else if (c === ret && person) {
@@ -606,185 +608,4 @@ export async function initBankRec(cfg) {
     render();
   }, (e) => failState(ui, e, "the Bank Reconciliation"));
   readColl("bankrec", (i) => { ITEMS = i; render(); });
-}
-
-
- 
-const stmtLine = (t, v, cls) => '<tr><td class="c-desc ' + (cls || "") + '">' + esc(t) +
-  '</td><td class="c-amount' + (v < 0 ? " neg" : "") + '">' + esc(money(v)) + "</td></tr>";
-const stmtStrong = (t, v) => '<tr class="total-row"><td class="c-desc"><strong>' + esc(t) +
-  '</strong></td><td class="c-amount' + (v < 0 ? " neg" : "") + '"><strong>' + esc(money(v)) + "</strong></td></tr>";
-const stmtSec = (t) => '<tr><td class="c-desc is-sec" colspan="2">' + esc(t) + "</td></tr>";
-
- 
-export async function initIS(cfg) {
-  await requireAuth();
-  const ui = shell(cfg.root, [
-    { label: "Particulars" }, { label: "Amount", amt: true }
-  ], { icon: "\uD83D\uDCCA" });
-  onSnapshot(collRef("transactions"), (snap) => {
-    const txns = snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }));
-    const M = buildAccounts(txns);
-    if (!M.order.length) return showEmpty(ui, "No postings yet",
-      "The Income Statement builds itself from the same double-entry postings as the Trial Balance and the Ledger - add transactions on the Add Transaction page and it fills in live.");
-    const P = (x) => Math.round(Number(x || 0) * 100) / 100;
-    const bal = Object.create(null);
-    M.order.forEach((n) => { bal[n] = P(accountBalance(M.accts, n)); });
-    const kindOf = (n) => (M.accts.get(n) || {}).kind || "asset";
-
-    const sales = -(bal["Sales"] || 0);
-    const sret = bal["Sales Returns"] || 0;
-    const netSales = sales - sret;
-    const purch = bal["Purchases"] || 0;
-    const pret = -(bal["Purchases Returns"] || 0);
-    const cogs = purch - pret;
-    const gross = netSales - cogs;
-
-    const otherInc = [], expenses = [];
-    M.order.forEach((n) => {
-      if (n === "Capital" || n === "Petty Cash" ||
-          n === "Sales" || n === "Sales Returns" ||
-          n === "Purchases" || n === "Purchases Returns") return; 
-      const k = kindOf(n), b = bal[n];
-      if (!b || Math.abs(b) < 0.005) return;
-      if (k === "revenue") otherInc.push({ n, v: -b });
-      else if (k === "expense") expenses.push({ n, v: b });
-    });
-    otherInc.sort((a, b) => b.v - a.v || a.n.localeCompare(b.n));
-    expenses.sort((a, b) => b.v - a.v || a.n.localeCompare(b.n));
-    const tInc = P(otherInc.reduce((s, r) => s + r.v, 0));
-    const tExp = P(expenses.reduce((s, r) => s + r.v, 0));
-    const profit = P(gross + tInc - tExp);
-
-    let html = stmtSec("Trading account");
-    html += stmtLine("Sales", sales);
-    if (sret) html += stmtLine("Less: Sales Returns", -sret, "is-ind");
-    html += stmtStrong("Net sales", netSales);
-    html += stmtLine("Purchases", purch);
-    if (pret) html += stmtLine("Less: Purchases Returns", -pret, "is-ind");
-    html += stmtStrong("Cost of sales", cogs);
-    html += stmtStrong("Gross profit", gross);
-    if (otherInc.length) {
-      html += stmtSec("Other income");
-      otherInc.forEach((r) => { html += stmtLine(r.n, r.v); });
-      html += stmtStrong("Total other income", tInc);
-    }
-    if (expenses.length) {
-      html += stmtSec("Expenses");
-      expenses.forEach((r) => { html += stmtLine(r.n, r.v); });
-      html += stmtStrong("Total expenses", tExp);
-    }
-    html += stmtStrong(profit >= 0 ? "Net profit" : "Net loss", profit);
-    ui.tbody.innerHTML = html;
-    ui.tfoot.innerHTML = "";
-    ui.card.style.display = "";
-    ui.empty.hidden = true;
-    ui.count.textContent = "Net sales " + money(netSales) + " \u00B7 other income " + money(tInc) +
-      " \u00B7 expenses " + money(tExp) + " \u00B7 " +
-      (profit >= 0 ? "net profit " : "net loss ") + money(profit) +
-      " \u2014 same postings as the Trial Balance, always up to date.";
-  }, (e) => failState(ui, e, "the Income Statement"));
-}
-
- 
-export async function initBS(cfg) {
-  await requireAuth();
-  const ui = shell(cfg.root, [
-    { label: "Particulars" }, { label: "Amount", amt: true }
-  ], { icon: "\uD83C\uDFDB\uFE0F", kv: true });
-  let GOODS = null;
-  const kvLine = (k, v) => '<div class="kv"><span class="k">' + esc(k) +
-    '</span><span class="v">' + esc(money(v)) + "</span></div>";
-  const memo = () => {
-    if (!GOODS) return;
-    if (!GOODS.length) { ui.kv.style.display = "none"; return; }
-    const per = Object.create(null);
-    GOODS.forEach((g) => {
-      const p = g.product || "\u2014", q = Number(g.qty || 0);
-      const s = per[p] = per[p] || { inQ: 0, outQ: 0, val: 0, layers: [] };
-      if (g.direction === "in") {
-        s.inQ += q; s.val += q * Number(g.unitPrice || 0);
-        s.layers.push({ q, c: Number(g.unitPrice || 0) });
-      } else {
-        s.outQ += q;
-        let left = q;
-        while (left > 0 && s.layers.length) {
-          const l = s.layers[0];
-          const take = Math.min(l.q, left);
-          l.q -= take; left -= take;
-          if (l.q <= 0) s.layers.shift();
-        }
-      }
-    });
-    let wa = 0, fifo = 0;
-    Object.keys(per).forEach((p) => {
-      const s = per[p];
-      const on = Math.max(0, s.inQ - s.outQ);
-      wa += on * (s.inQ ? s.val / s.inQ : 0);
-      fifo += s.layers.reduce((sum, l) => sum + l.q * l.c, 0);
-    });
-    ui.kvTitle.textContent = "Memo \u2014 stock on hand (from the Inventory Valuation)";
-    ui.kvRows.innerHTML =
-      kvLine("Closing stock \u2014 weighted average", wa) +
-      kvLine("Closing stock \u2014 FIFO", fifo) +
-      '<div class="kv"><span class="k">Note</span><span class="v">stock is valued from the goods movements - it is not a ledger account in the postings yet.</span></div>';
-    ui.kv.style.display = "";
-  };
-  readColl("goods", (g) => { GOODS = g; memo(); }, () => { GOODS = []; memo(); });
-  onSnapshot(collRef("transactions"), (snap) => {
-    const txns = snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }));
-    const M = buildAccounts(txns);
-    if (!M.order.length) return showEmpty(ui, "No postings yet",
-      "The Balance Sheet builds itself from the same double-entry postings as the Trial Balance - add transactions first and it balances itself live.");
-    const P = (x) => Math.round(Number(x || 0) * 100) / 100;
-    const bal = Object.create(null);
-    M.order.forEach((n) => { bal[n] = P(accountBalance(M.accts, n)); });
-    const kindOf = (n) => (M.accts.get(n) || {}).kind || "asset";
-
-    const assets = [], liabs = [];
-    M.order.forEach((n) => {
-      const b = bal[n];
-      if (!b || Math.abs(b) < 0.005) return;
-      const k = kindOf(n);
-      if (k === "asset") { if (b > 0) assets.push({ n, v: b }); else liabs.push({ n: n + " (short)", v: -b }); }
-      else if (k === "liability") { if (b < 0) liabs.push({ n, v: -b }); else assets.push({ n: n + " (recoverable)", v: b }); }
-      else if (k === "person") { if (b > 0) assets.push({ n: n + " (debtor)", v: b }); else liabs.push({ n: n + " (creditor)", v: -b }); }
-    });
-    assets.sort((x, y) => y.v - x.v || x.n.localeCompare(y.n));
-    liabs.sort((x, y) => y.v - x.v || x.n.localeCompare(y.n));
-    const capital = -(bal["Capital"] || 0);
-    const petty = -(bal["Petty Cash"] || 0);
-    let profit = 0;
-    M.order.forEach((n) => {
-      if (n === "Capital" || n === "Petty Cash") return;
-      const k = kindOf(n);
-      if (k === "revenue" || k === "expense") profit += -(bal[n] || 0);
-    });
-    profit = P(profit);
-    const tA = P(assets.reduce((s, r) => s + r.v, 0));
-    const tL = P(liabs.reduce((s, r) => s + r.v, 0));
-    const tE = P(capital + petty + profit);
-    const diff = P(tA - tL - tE);
-
-    let html = stmtSec("Assets");
-    if (!assets.length) html += stmtLine("No asset balances yet", 0, "is-ind");
-    assets.forEach((r) => { html += stmtLine(r.n, r.v); });
-    html += stmtStrong("Total assets", tA);
-    html += stmtSec("Liabilities");
-    if (!liabs.length) html += stmtLine("No liabilities yet", 0, "is-ind");
-    liabs.forEach((r) => { html += stmtLine(r.n, r.v); });
-    html += stmtStrong("Total liabilities", tL);
-    html += stmtSec("Equity");
-    html += stmtLine("Capital", capital);
-    if (Math.abs(petty) >= 0.005) html += stmtLine("Petty Cash fund", petty);
-    html += stmtLine("Net profit to date", profit);
-    html += stmtStrong("Total equity", tE);
-    ui.tbody.innerHTML = html;
-    ui.tfoot.innerHTML = "";
-    ui.card.style.display = "";
-    ui.empty.hidden = true;
-    ui.count.textContent = "Assets " + money(tA) + " = Liabilities " + money(tL) +
-      " + Equity " + money(tE) +
-      (diff === 0 ? " \u2014 balances." : " \u2014 difference " + money(diff) + ".");
-  }, (e) => failState(ui, e, "the Balance Sheet"));
 }
