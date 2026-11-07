@@ -134,7 +134,7 @@ THE TOOLS FAMILY, 62 TO 320
 
 62. computer - the tools launcher: square tiles only, today two of them - Convertor with its 256 tools, and All File Viewer (393) beside it. Files: 62.html, 62.css, 62.js.
 
-63. convertor - the Convertor hub: all 256 tools as same size square buttons, 8 per row, in 14 families, with a live search and a star on the 14 essential tools. Files: 63.html, 63.css and 63.js (the hub), 64.html, 64.css and 64.js (the not-found fallback page itself), tools.js (the catalogue of all 256 tools), and slugs.txt and pages.txt (the two folder building lists). Nine files in all, every one named here.
+63. convertor - the Convertor hub: all 256 tools as same size square buttons, 8 per row, in 14 families, with a live search and a star on the 14 essential tools. Files: 63.html, 63.css and 63.js (the hub), 64.html, 64.css and 64.js (the not-found fallback page itself), and tools.js (the catalogue of all 256 tools). Seven files in all, every one named here.
 
 64. convertor not found page - the friendly fallback when a tool address does not exist. It lives inside the convertor folder as its 64.html, 64.css and 64.js. The identical redirect copies that once sat in every tool folder to catch the old /slug/64 addresses were removed on 25 October 2026 on the user's order, so an old tool address ending in /64 now simply finds no page.
 
@@ -654,7 +654,7 @@ The convertor tools, pages 65 to 320, in 14 families, in hub order:
 
 THE HEALTH FAMILY, 321 TO 328
 
-321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html, 321.css, 321.js, plus the shared patient-info.css and patient-info.js that the stage pages load.
+321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html and 321.css, plus the shared patient-info.css and patient-info.js that the stage pages load.
 
 322. victim-registration - victim registration at the hospital door: sixteen fields laid out three per row, the age computed from the date of birth, arrival time recorded automatically, referral and payment captured, and the registering staff member remembered on the device. The Registration ID, four digits and four letters (for example 4827ABCD), is issued only after the form saves. Unidentified victims register without a name - the Registration ID is the one and only identifier the victim ever has (the temporary ID was removed in Task 45). Emergency treatment is never delayed by an incomplete form. Files: 322.html, 322.css, 322.js.
 
@@ -724,11 +724,11 @@ THE MEDICAL WING, THE ADMIN DESK AND THE VIEWER, 330 TO 393
 
 380. system-admin - Account Administration: the registered users table with the grants editor - tick the main modules a user may open (clicking a parent with nothing selected under it selects the parent and every child and grandchild at once, clicking it again deselects the whole branch), tick its submodules individually (a granted submodule always carries its parent), and Select all and Deselect all sweep every checkbox, and only the selected modules appear for that user on Home and in the sidebar. Every row also carries a red Delete button: one click removes the account, its credentials and its notification in a single batch and leaves a tombstone in systemDeleted, so the account vanishes from this page and from the hub at once, and if that person tries to log in or recover later the front door tells them the account was disapproved by the administrator and deleted from the system when it had been approved, or that the registration was removed before approval when it had not, and asks them to create a new account. This is also the page that checks whether the Firestore rules are live. Files: 380.html, 380.css, 380.js.
 
-390. account-recovery, page 390 - Forgot Token: the first of the three recovery pages, for a lost sign in token. Files: 390.html (this folder's pages carry no css or js of their own).
+355. account-recovery, page 355 - Forgot Token: the first of the three recovery pages, for a lost sign in token. Files: 355.html, 355.css and 355.js.
 
-391. account-recovery, page 391 - Forgot Password: the recovery page for a lost password. Files: 391.html.
+356. account-recovery, page 356 - Forgot Password: the recovery page for a lost password. Files: 356.html, 356.css and 356.js.
 
-392. account-recovery, page 392 - Forgot Phone Number: the recovery page for a changed phone number. Files: 392.html.
+357. account-recovery, page 357 - Forgot Phone Number: the recovery page for a changed phone number. Files: 357.html, 357.css and 357.js.
 
 393. file-viewer - All File Viewer: pick any file from the device and the page names its type out loud - Your file is: PDF document - then opens it right there: video plays, audio plays, pictures show, Word documents open, anything else opens in a new tab. It sits on the Computer page next to Convertor, stays open in the sidebar for every account, and nothing uploads anywhere - the file is read in the browser only. Files: 393.html, 393.css, 393.js.
 
@@ -736,7 +736,7 @@ THE STOCK PAGES, 396 TO 399
 
 396. stock-management - Stock Management: the stock hub under Business with three buttons - Stock Register to register what the business keeps in stock, Stock Progress to watch what is present, and Stock Change to record every movement in and out. Files: 396.html, 396.css, 396.js.
 
-397. stock-register - Stock Register, opened from the Stock Management hub - registers every stock item with its Name, the Units Present it starts with, Buying Price per Package, Units per Package and Unit Selling Price; the registered prices feed Stock Progress and Stock Change, and Units per Package is the bridge that converts between packages and units wherever a quantity is typed. Files: 397.html, 397.js.
+397. stock-register - Stock Register, opened from the Stock Management hub - registers every stock item with its Name, the Units Present it starts with, Buying Price per Package, Units per Package and Unit Selling Price; the registered prices feed Stock Progress and Stock Change, and Units per Package is the bridge that converts between packages and units wherever a quantity is typed. Files: 397.html, 397.css (the page's own copy of the records base style with the stock tweaks on top) and 397.js.
 
 398. stock-progress - Stock Progress, opened from the Stock Management hub - the live position of every registered stock: S/N, Stock Name, Units Present, Unit SP and Package BP, with Units Present updated the moment a Stock Change is saved. Files: 398.html, 398.css, 398.js.
 
@@ -766,7 +766,7 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - public/reports - the one engine folder behind every report page (31, 33, 41 to 48, 53 and 55 to 61): core.js is the shared foundation (table shell, side panel, key-value card, empty and failure states, period bar, account selector); ledger.js carries the ledger views (Trial Balance, Adjusted Trial Balance, Post-Closing Trial Balance, General Ledger Report, Bank Reconciliation); parties.js carries the people views (AR and AP Schedules, AR and AP Reports, customer and supplier statements, Aged Receivables and Aged Payables - one party engine underneath); assets.js carries the register views (Stock Movement, Inventory Valuation, Depreciation, Fixed Assets Schedule, Accumulated Depreciation); reports.css carries the period bar and selector styles. Views only, no data entry.
 
-- public/convertor, the extra files - besides pages 63 and 64 the folder carries tools.js (the registry of all 256 tools with id, label, slug and page number - the hub grid and the sidebar children both read it, so buttons and tree can never drift apart) and slugs.txt and pages.txt (the two folder building lists).
+- public/convertor, the extra files - besides pages 63 and 64 the folder carries tools.js (the registry of all 256 tools with id, label, slug and page number - the hub grid and the sidebar children both read it, so buttons and tree can never drift apart).
 
 - public/health, the extra files - besides page 321 the folder carries patient-info.js and patient-info.css - the shared chip the health stage pages load to show a patient's every record by Registration ID.
 

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forgot Password — JAMALI</title>
+<link rel="stylesheet" href="/account-recovery/356.css">
+</head>
+<body>
+  <div class="card">
+    <h1>Forgot <span>Password</span></h1>
+    <p class="sub">Prove it is you with your phone number, then set a new password.</p>
+
+    <section id="step-verify">
+      <label for="fp-username">Username</label>
+      <input id="fp-username" type="text" autocomplete="username" placeholder="Your username">
+      <label for="fp-phone">Phone number</label>
+      <input id="fp-phone" type="tel" placeholder="The phone number on the account">
+      <button class="wide" id="fp-btn" type="button">Submit</button>
+    </section>
+
+    <section id="step-new" class="hidden">
+      <label for="fp-new1">New password</label>
+      <input id="fp-new1" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+      <label for="fp-new2">Repeat the new password</label>
+      <input id="fp-new2" type="password" autocomplete="new-password" placeholder="Same again">
+      <button class="wide" id="fp-save" type="button">Save New Password</button>
+    </section>
+
+    <p class="status" id="status"></p>
+    <p class="next" id="fp-next">Cannot remember the phone number? <a id="go-forgot-phone">Forgot Phone Number?</a></p>
+    <a class="back" href="/">&larr; Back to Login</a>
+  </div>
+
+  <script type="module" src="/account-recovery/356.js"></script>
+</body>
+</html>

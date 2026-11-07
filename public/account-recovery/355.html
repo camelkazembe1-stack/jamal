@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forgot Token — JAMALI</title>
+<link rel="stylesheet" href="/account-recovery/355.css">
+</head>
+<body>
+  <div class="card">
+    <h1>Forgot <span>Token</span></h1>
+    <p class="sub">Prove it is you with your password, and a new four-digit token will be issued.</p>
+
+    <div id="ft-form">
+      <label for="ft-username">Username</label>
+      <input id="ft-username" type="text" autocomplete="username" placeholder="Your username">
+      <label for="ft-password">Password</label>
+      <input id="ft-password" type="password" autocomplete="current-password" placeholder="Your password">
+      <button class="wide" id="ft-btn" type="button">Submit</button>
+
+      <p class="status" id="status"></p>
+      <p class="next">Still stuck? <a id="go-forgot-password">Forgot Password?</a></p>
+    </div>
+
+    <div class="token-box" id="token-box">
+      <p>Your new four-digit token — write it down now, it is shown only once:</p>
+      <div class="tk" id="token-value">••••</div>
+    </div>
+
+    <a class="back" href="/">&larr; Back to Login</a>
+  </div>
+
+  <script type="module" src="/account-recovery/355.js"></script>
+</body>
+</html>
