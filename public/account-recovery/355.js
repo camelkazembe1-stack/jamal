@@ -1,62 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forgot Token — JAMALI</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  body { min-height:100vh; display:flex; align-items:center; justify-content:center;
-         background:linear-gradient(135deg,#0f172a,#1e293b); color:#e2e8f0; padding:20px; }
-  .card { background:#111827; border:1px solid #1f2937; border-radius:18px; padding:38px 36px;
-          width:100%; max-width:430px; box-shadow:0 24px 60px rgba(0,0,0,.45); }
-  h1 { font-size:20px; text-align:center; margin-bottom:6px; }
-  h1 span { color:#38bdf8; }
-  .sub { font-size:13.5px; color:#94a3b8; text-align:center; margin-bottom:20px; }
-  label { display:block; font-size:13px; color:#94a3b8; margin:12px 0 5px; }
-  input { width:100%; background:#0b1220; color:#e2e8f0; border:1px solid #334155; border-radius:10px;
-          padding:11px 13px; font-size:15px; outline:none; }
-  input:focus { border-color:#38bdf8; }
-  button.wide { width:100%; margin-top:18px; background:linear-gradient(135deg,#38bdf8,#0ea5e9); color:#06121f;
-                border:0; border-radius:12px; padding:13px 16px; font-size:15px; font-weight:800; cursor:pointer; }
-  button.wide:disabled { opacity:.6; cursor:wait; }
-  .next { margin-top:16px; text-align:center; font-size:13px; color:#94a3b8; }
-  .next a { color:#38bdf8; cursor:pointer; text-decoration:none; font-weight:700; }
-  .status { margin-top:14px; font-size:13px; color:#f87171; min-height:18px; text-align:center; }
-  .status.ok { color:#4ade80; }
-  .token-box { margin-top:14px; display:none; text-align:center; background:#0b1220; border:1px dashed #38bdf8;
-               border-radius:12px; padding:16px; }
-  .token-box .tk { font-size:34px; font-weight:900; letter-spacing:12px; color:#38bdf8; margin-top:6px; }
-  .token-box p { font-size:12.5px; color:#94a3b8; }
-  a.back { display:block; margin-top:18px; text-align:center; font-size:13px; color:#64748b; text-decoration:none; }
-  a.back:hover { color:#38bdf8; }
-</style>
-</head>
-<body>
-  <div class="card">
-    <h1>Forgot <span>Token</span></h1>
-    <p class="sub">Prove it is you with your password, and a new four-digit token will be issued.</p>
-
-    <div id="ft-form">
-      <label for="ft-username">Username</label>
-      <input id="ft-username" type="text" autocomplete="username" placeholder="Your username">
-      <label for="ft-password">Password</label>
-      <input id="ft-password" type="password" autocomplete="current-password" placeholder="Your password">
-      <button class="wide" id="ft-btn" type="button">Submit</button>
-
-      <p class="status" id="status"></p>
-      <p class="next">Still stuck? <a id="go-forgot-password">Forgot Password?</a></p>
-    </div>
-
-    <div class="token-box" id="token-box">
-      <p>Your new four-digit token — write it down now, it is shown only once:</p>
-      <div class="tk" id="token-value">••••</div>
-    </div>
-
-    <a class="back" href="/">&larr; Back to Login</a>
-  </div>
-
-  <script type="module">
     import { auth, provider, signInWithPopup, db, doc, getDoc, updateDoc } from "/firebase.js";
 
     const SALT = "JAMALI::v1::";
@@ -82,7 +23,7 @@
 
     $("go-forgot-password").addEventListener("click", () => {
       const u = $("ft-username").value.trim();
-      location.href = "/account-recovery/391" + (u ? "?u=" + encodeURIComponent(u) : "");
+      location.href = "/account-recovery/356" + (u ? "?u=" + encodeURIComponent(u) : "");
     });
 
     $("ft-btn").addEventListener("click", async () => {
@@ -134,6 +75,4 @@
         btn.disabled = false;
       }
     });
-  </script>
-</body>
-</html>
+  

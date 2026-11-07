@@ -1,10 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forgot Phone Number — JAMALI</title>
-<style>
+/* account-recovery — page 357: own stylesheet, extracted from the page it belongs to. */
   * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   body { min-height:100vh; display:flex; align-items:center; justify-content:center;
          background:linear-gradient(135deg,#0f172a,#1e293b); color:#e2e8f0; padding:20px; }
@@ -24,35 +18,3 @@
   .message b { color:#38bdf8; }
   a.back { display:block; margin-top:18px; font-size:13px; color:#64748b; text-decoration:none; }
   a.back:hover { color:#38bdf8; }
-</style>
-</head>
-<body>
-  <div class="card">
-    <h1>Forgot <span>Phone Number</span></h1>
-    <p class="sub">The last step of the recovery chain.</p>
-
-    <div id="fph-form">
-      <label for="fph-username">Username</label>
-      <input id="fph-username" type="text" autocomplete="username" placeholder="Your username">
-      <button class="wide" id="fph-btn" type="button">Submit</button>
-    </div>
-
-    <div class="message" id="message">
-      Please go to the system administrator's office.
-    </div>
-
-    <a class="back" href="/">&larr; Back to Login</a>
-  </div>
-
-  <script>
-    const carried = new URLSearchParams(location.search).get("u");
-    if (carried) document.getElementById("fph-username").value = carried;
-    document.getElementById("fph-btn").addEventListener("click", function () {
-      
-      
-      document.getElementById("fph-form").style.display = "none";
-      document.getElementById("message").style.display = "block";
-    });
-  </script>
-</body>
-</html>
