@@ -48,7 +48,7 @@ import {
   SYSTEM_SESSION_KEY,
   readSystemSession,
   clearSystemSession
-} from "/SERVER/linker.js";
+} from "./401.js";
 
 export {
   activeServer,

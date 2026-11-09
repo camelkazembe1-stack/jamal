@@ -103,7 +103,7 @@ function qaRenderPanel() {
   }
   const op = document.getElementById("qa-open");
   if (op) {
-    if (nxt) { op.hidden = false; op.href = "/radiology/373?id=" + encodeURIComponent(nxt.__id); }
+    if (nxt) { op.hidden = false; op.href = "/imaging-workbench/373?id=" + encodeURIComponent(nxt.__id); }
     else op.hidden = true;
   }
   qaSet("qa-note", nxt ? "Ready to announce: " + qaSentence(nxt.regId) : "");

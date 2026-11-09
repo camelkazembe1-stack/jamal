@@ -148,7 +148,7 @@ setTimeout(() => {
   import("/firebase.js").then((m) => {
     if (typeof m.getDocs !== "function") {
       loadErr("healthRegistrations (fallback)",
-        new Error("the live listener never answered and this firebase.js has no getDocs"));
+        new Error("the live listener never answered and this 502.js has no getDocs"));
       return undefined;
     }
     return m.getDocs(query(collection(db, "healthRegistrations"))).then((s) => {

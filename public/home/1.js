@@ -44,7 +44,8 @@ function tree() {
   return tops;
 }
 
-const on = (n) => isAdmin || grants.indexOf(n.folder) !== -1;
+const PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
+const on = (n) => isAdmin || grants.indexOf(n.folder) !== -1 || (PARENT[n.folder] && grants.indexOf(PARENT[n.folder]) !== -1);
 const grantedKids = (n) => (n.kids || []).filter(on);
 
 function path() {

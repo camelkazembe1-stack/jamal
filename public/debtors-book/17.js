@@ -12,8 +12,8 @@
 
 
 import { requireAuth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "/firebase.js";
-import { classify } from "/journals/journal.js";
-import { actsHTML, wireActions } from "/books/row-actions.js";
+
+
 
 await requireAuth(); 
 

@@ -1,6 +1,4 @@
 
-import { initAdjTB } from "/reports/reports.js";
-import { initRecords } from "/records/records.js";
 
 initAdjTB({ root: "#app" });
 
@@ -26,3 +24,708 @@ initRecords({
   empty: { icon: "\uD83E\uDDEE", title: "No adjustments yet",
     sub: "Add adjusting entries here — the Adjusted and Post-Closing Trial Balances pick them up." }
 });
+
+/* jamali-inline:501.js */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { requireAuth, db, collection, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from "/firebase.js";
+
+const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const money = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
+
+function asDate(ts) {
+  if (!ts) return null;
+  if (typeof ts.toDate === "function") return ts.toDate();
+  if (ts instanceof Date) return ts;
+  const d = new Date(ts);
+  return isNaN(d) ? null : d;
+}
+
+
+function parseDay(v) {
+  if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const p = v.split("-").map(Number);
+    return new Date(p[0], p[1] - 1, p[2]);
+  }
+  return asDate(v);
+}
+
+function fmtDay(v) {
+  const d = parseDay(v);
+  return d ? d.toLocaleDateString("en-GB") : "\u2014";
+}
+
+const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const today = () => startOfDay(new Date());
+function isoToday() {
+  const t = today();
+  const p = (n) => String(n).padStart(2, "0");
+  return t.getFullYear() + "-" + p(t.getMonth() + 1) + "-" + p(t.getDate());
+}
+
+const ST_CLS = {
+  "Paid": "st-paid", "Completed": "st-paid", "Delivered": "st-paid", "Cleared": "st-paid",
+  "Pending": "st-pending", "Unpaid": "st-pending", "Issued": "st-pending", "Deposited": "st-pending",
+  "Confirmed": "st-info",
+  "Partially Paid": "st-partial", "Partially Fulfilled": "st-partial",
+  "Overdue": "st-overdue", "Bounced": "st-overdue",
+  "Cancelled": "st-cancel", "Void": "st-cancel"
+};
+const stCls = (label) => ST_CLS[label] || "st-pending";
+
+function cellOf(col, docData, row) {
+  const raw = col.val ? col.val(docData) : docData[col.key];
+  switch (col.fmt) {
+    case "money":
+      return '<td class="c-amount">' + (raw ? esc(money(raw)) : '<span class="d-none">0</span>') + "</td>";
+    case "num":
+      return '<td class="c-num">' + (raw == null || raw === "" ? "" : esc(raw)) + "</td>";
+    case "date":
+      return '<td class="c-date">' + esc(fmtDay(raw)) + "</td>";
+    case "badge": {
+      const label = row.__status || "";
+      return '<td><span class="st ' + stCls(label) + '">' + esc(label) + "</span></td>";
+    }
+    case "no":
+      return '<td class="c-no">' + esc(raw || "\u2014") + "</td>";
+    default:
+      return '<td class="' + (col.cls || "c-desc") + '">' + esc(raw == null || raw === "" ? "" : raw) + "</td>";
+  }
+}
+
+export async function initRecords(cfg) {
+  await requireAuth(); 
+
+  const root = document.querySelector(cfg.root || "#app");
+  const cols = cfg.columns;
+  const hasSettle = !!cfg.settle;
+  let ROWS = [];
+
+   
+  root.innerHTML = [
+    cfg.readOnly ? "" :
+    '<div class="card add-card">' +
+      '<button class="add-toggle r-toggle" type="button">\uFF0B ' + esc(cfg.addLabel || "Add Record") + "</button>" +
+      '<form class="r-form" hidden></form>' +
+      '<p class="form-err r-err" hidden></p>' +
+      '<p class="save-note r-note" hidden></p>' +
+    "</div>",
+    '<div class="tabs r-tabs" hidden></div>',
+    '<div class="card table-card r-card" style="display:none">' +
+      '<div class="table-wrap"><table class="bk">' +
+        "<thead><tr class=\"r-thead\">" +
+          cols.map((c) => '<th scope="col" class="' + (c.fmt === "money" || c.fmt === "num" ? "amt" : "") + '">' + esc(c.label) + "</th>").join("") +
+          (hasSettle ? '<th scope="col" aria-hidden="true"></th>' : "") +
+        "</tr></thead>" +
+        '<tbody class="r-body"></tbody>' +
+        '<tfoot class="r-foot"></tfoot>' +
+      "</table></div>" +
+    "</div>",
+    cfg.summary
+      ? '<div class="card people-card r-people" style="display:none"><h2>' + esc(cfg.summary.title) + '</h2><table class="people"><tbody class="r-people-body"></tbody></table></div>'
+      : "",
+    '<div class="card empty r-empty" hidden>' +
+      '<div class="empty-icon">' + ((cfg.empty && cfg.empty.icon) || "\uD83D\uDCCB") + "</div>" +
+      '<p class="empty-title"></p><p class="empty-sub"></p>' +
+    "</div>",
+    '<p class="count-line r-count"></p>'
+  ].join("");
+
+  const $ = (s) => root.querySelector(s);
+  const toggle = $(".r-toggle");
+  const form = $(".r-form");
+  const formErr = $(".r-err");
+  const saveNote = $(".r-note");
+  const tabsBox = $(".r-tabs");
+  const tableCard = $(".r-card");
+  const body = $(".r-body");
+  const foot = $(".r-foot");
+  const peopleCard = $(".r-people");
+  const peopleBody = $(".r-people-body");
+  const emptyBox = $(".r-empty");
+  const countLine = $(".r-count");
+
+   
+  
+  if (form) {
+    form.innerHTML = '<div class="form-grid">' + cfg.fields.map((f) => {
+      const id = ' data-f="' + esc(f.key) + '"';
+      const req = f.req ? " required" : "";
+      const ph = f.ph ? ' placeholder="' + esc(f.ph) + '"' : "";
+      let inp;
+      if (f.type === "select") {
+        inp = "<select" + id + req + ">" +
+          f.opts.map((o) => '<option value="' + esc(o) + '">' + esc(o) + "</option>").join("") +
+          "</select>";
+      } else if (f.type === "textarea") {
+        inp = "<textarea" + id + ' rows="2"' + ph + "></textarea>";
+      } else {
+        inp = "<input" + id + ' type="' + (f.type || "text") + '"' + (f.pos ? ' min="1"' : "") +
+          ' step="any"' + req + ph + (f.ro ? " readonly" : "") + ">";
+      }
+      return "<label>" + esc(f.label) + inp + "</label>";
+    }).join("") + "</div>" +
+      '<div class="form-actions">' +
+        '<button class="btn-primary r-save" type="submit">' + esc(cfg.saveLabel || "Save") + "</button>" +
+        '<button class="btn-ghost r-cancel" type="button">Cancel</button>' +
+      "</div>";
+    const saveBtn = $(".r-save");
+    const inputOf = (key) => form.querySelector('[data-f="' + key + '"]');
+
+    function nextNo() {
+      if (!cfg.noField) return null;
+      let max = 0;
+      ROWS.forEach((r) => {
+        const m = String(r[cfg.noField] || "").match(/(\d+)\s*$/);
+        if (m) max = Math.max(max, parseInt(m[1], 10));
+      });
+      return cfg.noPrefix + "-" + String(max + 1).padStart(cfg.noPad || 3, "0");
+    }
+
+    function openForm() {
+      form.reset();
+      if (cfg.noField) inputOf(cfg.noField).value = nextNo() || "";
+      cfg.fields.forEach((f) => {
+        if (f.def === "today") inputOf(f.key).value = isoToday();
+        else if (f.def != null) inputOf(f.key).value = f.def;
+      });
+      formErr.hidden = true;
+      saveNote.hidden = true;
+      form.hidden = false;
+      toggle.textContent = "\u00D7 Close";
+      const first = cfg.fields.find((f) => !f.ro && f.type !== "date");
+      if (first) inputOf(first.key).focus();
+    }
+    function closeForm() {
+      form.hidden = true;
+      toggle.textContent = "\uFF0B " + (cfg.addLabel || "Add Record");
+    }
+    toggle.addEventListener("click", () => (form.hidden ? openForm() : closeForm()));
+    $(".r-cancel").addEventListener("click", closeForm);
+
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      formErr.hidden = true;
+      const err = (m) => { formErr.textContent = m; formErr.hidden = false; };
+      const docData = {};
+      for (const f of cfg.fields) {
+        const el = inputOf(f.key);
+        let v = el.value;
+        if (f.type === "number") {
+          v = v === "" ? NaN : Number(v);
+          if (f.req && (v == null || isNaN(v))) return err("Enter " + f.label.toLowerCase() + ".");
+          if (!isNaN(v) && f.pos && v <= 0) return err(f.label + " must be more than zero.");
+          if (isNaN(v)) v = null;
+        } else {
+          v = String(v || "").trim();
+          if (f.req && !v) return err("Enter " + f.label.toLowerCase() + ".");
+        }
+        docData[f.key] = v;
+      }
+      if (cfg.computed) Object.assign(docData, cfg.computed(docData));
+      if (cfg.validate) { const m = cfg.validate(docData); if (m) return err(m); }
+      if (cfg.where) docData[cfg.where.field] = cfg.where.equals;
+      const no = nextNo();
+      if (cfg.noField) docData[cfg.noField] = no;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving\u2026";
+      try {
+        await addDoc(collection(db, cfg.collection),
+          Object.assign(docData, { createdAt: serverTimestamp() }));
+        saveNote.textContent = (cfg.entity || "Record") + " " + (no || "") + " saved.";
+        closeForm();
+      } catch (e) {
+        err("Save failed: " + (e && e.code === "permission-denied"
+          ? "check your Firestore rules (" + cfg.collection + " collection) and sign in again."
+          : (e && e.message) || e));
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = cfg.saveLabel || "Save";
+      }
+    });
+  }
+
+   
+  const balOf = (r) =>
+    Math.max(0, Number(r[cfg.settle.baseField] || 0) - Number(r[cfg.settle.amountField] || 0));
+
+  body.addEventListener("click", (ev) => {
+    const btn = ev.target.closest(".settle-btn");
+    if (btn) openSettle(btn.dataset.id);
+  });
+
+  function openSettle(id) {
+    const old = body.querySelector("tr.settle-row");
+    if (old) old.remove();
+    const r = ROWS.find((x) => x.__id === id);
+    if (!r) return;
+    const out = balOf(r);
+
+    const tr = document.createElement("tr");
+    tr.className = "settle-row";
+    const td = document.createElement("td");
+    td.colSpan = cols.length + 1;
+    const f = document.createElement("div");
+    f.className = "settle-form";
+    const info = document.createElement("span");
+    info.textContent = (cfg.settle.label || "Settle") + " " + (r[cfg.noField] || "") +
+      " \u00B7 " + (r[cfg.settle.partyField] || "") + " \u2014 outstanding " + money(out);
+    const inDate = document.createElement("input");
+    inDate.type = "date"; inDate.value = isoToday();
+    const inAmt = document.createElement("input");
+    inAmt.type = "number"; inAmt.min = "1"; inAmt.step = "any"; inAmt.value = String(out);
+    inAmt.style.maxWidth = "130px";
+    const ok = document.createElement("button");
+    ok.type = "button"; ok.className = "btn-primary"; ok.textContent = cfg.settle.btn || "Save";
+    const cancel = document.createElement("button");
+    cancel.type = "button"; cancel.className = "btn-ghost"; cancel.textContent = "Cancel";
+    const msg = document.createElement("span");
+    msg.className = "settle-msg";
+
+    f.append(info, inDate, inAmt, ok, cancel, msg);
+    td.appendChild(f); tr.appendChild(td);
+    const row = body.querySelector('tr[data-id="' + id + '"]');
+    if (row) row.insertAdjacentElement("afterend", tr);
+
+    cancel.addEventListener("click", () => tr.remove());
+    ok.addEventListener("click", async () => {
+      msg.textContent = "";
+      const amt = Number(inAmt.value);
+      if (!amt || amt <= 0) { msg.textContent = "Enter a valid amount."; return; }
+      if (amt > out + 0.009) { msg.textContent = "More than the outstanding " + money(out) + "."; return; }
+      ok.disabled = true; ok.textContent = "Saving\u2026";
+      try {
+        await updateDoc(doc(db, cfg.collection, id), {
+          [cfg.settle.amountField]: Number(r[cfg.settle.amountField] || 0) + amt,
+          [cfg.settle.dateField]: inDate.value || isoToday()
+        });
+        
+      } catch (e) {
+        ok.disabled = false; ok.textContent = cfg.settle.btn || "Save";
+        msg.textContent = "Save failed: " + ((e && e.message) || e);
+      }
+    });
+  }
+
+   
+  let TAB = "All";
+  function renderTabs() {
+    if (!cfg.statusFn) { tabsBox.hidden = true; return; }
+    const counts = Object.create(null);
+    ROWS.forEach((r) => { const s = cfg.statusFn(r); counts[s] = (counts[s] || 0) + 1; });
+    const order = cfg.tabOrder || [];
+    const keys = ["All"].concat(order.filter((k) => counts[k]),
+      Object.keys(counts).filter((k) => k !== "All" && !order.includes(k)).sort());
+    tabsBox.innerHTML = keys.map((k) =>
+      '<button type="button" class="tab' + (k === TAB ? " on" : "") + '" data-tab="' + esc(k) + '">' +
+      esc(k) + '<span class="n">' + (k === "All" ? ROWS.length : counts[k] || 0) + "</span></button>").join("");
+    tabsBox.hidden = false;
+    tabsBox.querySelectorAll(".tab").forEach((b) =>
+      b.addEventListener("click", () => { TAB = b.dataset.tab; renderTabs(); renderTable(); }));
+  }
+
+   
+  function renderTable() {
+    const rows = ROWS.slice().sort((a, b) => {
+      const da = parseDay(a[cfg.dateField || "date"]), db2 = parseDay(b[cfg.dateField || "date"]);
+      const ta = da ? da.getTime() : 0, tb = db2 ? db2.getTime() : 0;
+      if (ta !== tb) return ta - tb;
+      return String(a[cfg.noField || ""] || "").localeCompare(String(b[cfg.noField || ""] || ""));
+    }).filter((r) => {
+      if (!cfg.statusFn || TAB === "All") return true;
+      return cfg.statusFn(r) === TAB;
+    });
+
+    let html = "";
+    const tot = Object.create(null);
+    (cfg.totalCols || []).forEach((k) => (tot[k] = 0));
+    const colVal = (r, k) => {
+      const c = cols.find((x) => x.key === k);
+      return c && c.val ? Number(c.val(r) || 0) : Number(r[k] || 0);
+    };
+    rows.forEach((r) => {
+      if (cfg.statusFn) r.__status = cfg.statusFn(r);
+      (cfg.totalCols || []).forEach((k) => (tot[k] += colVal(r, k)));
+      html += '<tr data-id="' + esc(r.__id) + '"' + (r.__status === "Overdue" ? ' class="is-overdue"' : "") + ">" +
+        cols.map((c) => cellOf(c, r, r)).join("") +
+        (hasSettle
+          ? '<td class="c-act">' + (balOf(r) > 0.009
+              ? '<button class="settle-btn" type="button" data-id="' + esc(r.__id) + '">\uFF0B ' + esc(cfg.settle.btn || "Settle") + "</button>"
+              : "") + "</td>"
+          : "") +
+        "</tr>";
+    });
+    body.innerHTML = html;
+
+    if (cfg.totalCols && cfg.totalCols.length) {
+      const labelKey = cfg.totalLabelKey ||
+        (cols.find((c) => c.fmt === "text" || !c.fmt) || cols[0]).key;
+      foot.innerHTML = '<tr class="total-row">' +
+        cols.map((c) =>
+          c.key === labelKey ? '<td class="c-desc">Total</td>'
+          : cfg.totalCols.includes(c.key) ? '<td class="c-amount">' + esc(money(tot[c.key])) + "</td>"
+          : "<td></td>").join("") +
+        (hasSettle ? "<td></td>" : "") +
+        "</tr>";
+    } else foot.innerHTML = "";
+
+    if (cfg.summary) {
+      const byKey = Object.create(null);
+      rows.forEach((r) => {
+        const k = cfg.summary.key(r) || "\u2014";
+        byKey[k] = (byKey[k] || 0) + Number(cfg.summary.val(r) || 0);
+      });
+      const keys = Object.keys(byKey).sort((a, b) => byKey[b] - byKey[a]);
+      peopleBody.innerHTML = keys.map((k) =>
+        "<tr><td class=\"c-party\">" + esc(k) + '</td><td class="c-amount">' + esc(money(byKey[k])) + "</td></tr>").join("");
+      peopleCard.style.display = keys.length ? "" : "none";
+    }
+
+    const has = rows.length > 0;
+    tableCard.style.display = has ? "" : "none";
+    emptyBox.hidden = has;
+    if (!has) {
+      emptyBox.querySelector(".empty-title").textContent = (cfg.empty && cfg.empty.title) || "Nothing here yet";
+      emptyBox.querySelector(".empty-sub").textContent = (cfg.empty && cfg.empty.sub) || "";
+    }
+    const parties = cfg.summary
+      ? new Set(rows.map((r) => cfg.summary.key(r))).size
+      : (cfg.partyField ? new Set(rows.map((r) => r[cfg.partyField])).size : 0);
+    const pl = (cfg.partyLabel || "party").toLowerCase();
+    const plN = pl === "party" ? "parties" : pl + "s";
+    countLine.textContent = has
+      ? "Showing " + rows.length + " " + (cfg.entity || "record") + (rows.length === 1 ? "" : "s") +
+        (parties ? " across " + parties + " " + (parties === 1 ? pl : plN) : "") +
+        ". " + (cfg.countExtra ? cfg.countExtra(rows, tot) : "") +
+        (cfg.statusFn && TAB !== "All" ? " Filter: " + TAB + "." : "")
+      : "";
+  }
+
+  function renderAll() { renderTabs(); renderTable(); }
+
+   
+  onSnapshot(collection(db, cfg.collection), (snap) => {
+    ROWS = snap.docs
+      .map((d) => {
+        const r = d.data({ serverTimestamps: "estimate" });
+        r.__id = d.id;
+        return r;
+      })
+      .filter((r) => !cfg.where || r[cfg.where.field] === cfg.where.equals);
+    renderAll();
+  }, (e) => {
+    tableCard.style.display = "none";
+    if (peopleCard) peopleCard.style.display = "none";
+    emptyBox.hidden = false;
+    emptyBox.querySelector(".empty-title").textContent = "Could not load the " + (cfg.entity || "records");
+    emptyBox.querySelector(".empty-sub").textContent =
+      e && e.code === "permission-denied"
+        ? "Sign in again, then deploy the updated Firestore rules (" + cfg.collection + " collection)."
+        : (e && e.message) || String(e);
+    countLine.textContent = "";
+  });
+}
+
+/* jamali-inline:507.js */
+// ---------------------------------------------------------------------------
+// JAMALI - Ledger reports (public/507.js)
+// Every view that reads the double-entry postings built by /510.js
+// and turns them into a balanced statement: Trial Balance, Adjusted Trial
+// Balance, Post-Closing Trial Balance, General Ledger Report and Bank
+// Reconciliation. Pages 41, 42, 43, 53 and 55 import from here.
+// ---------------------------------------------------------------------------
+
+import { requireAuth, onSnapshot } from "/firebase.js";
+
+import {
+  shell, rowCells, totalCells, collRef, readColl, readTx, failState, showEmpty,
+  money, parseDay, fmtDay, fmtBal, esc, periodBar, acctSelect
+} from "./core.js";
+
+export async function initTB(cfg) {
+  await requireAuth();
+  const ui = shell(cfg.root, [
+    { label: "Account" }, { label: "Debit", amt: true }, { label: "Credit", amt: true }
+  ], { icon: "\u2696\uFE0F" });
+  onSnapshot(collRef("transactions"), (snap) => {
+    const txns = snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }));
+    const M = buildAccounts(txns);
+    if (!M.order.length) return showEmpty(ui, "No postings yet",
+      "Add transactions (IN / OUT) and the Trial Balance builds itself from the double-entry postings.");
+    let drT = 0, crT = 0, html = "";
+    M.order.forEach((name) => {
+      const a = M.accts.get(name);
+      const dr = a.dr.reduce((s, r) => s + r.amt, 0);
+      const cr = a.cr.reduce((s, r) => s + r.amt, 0);
+      const bal = dr - cr;
+      if (bal > 0) { drT += bal; html += rowCells([{ v: name + " A/C", strong: true }, { v: money(bal), amt: true }, ""]); }
+      else if (bal < 0) { crT += -bal; html += rowCells([{ v: name + " A/C", strong: true }, "", { v: money(-bal), amt: true }]); }
+      else html += rowCells([{ v: name + " A/C", strong: true }, "", ""]);
+    });
+    ui.tbody.innerHTML = html;
+    ui.tfoot.innerHTML = totalCells([{ label: 1 }, drT, crT]);
+    ui.card.style.display = "";
+    ui.empty.hidden = true;
+    ui.count.textContent = M.order.length + " accounts \u00B7 Debits " + money(drT) +
+      " = Credits " + money(crT) + (drT === crT ? " \u2014 balanced." : " \u2014 OUT OF BALANCE.");
+  }, (e) => failState(ui, e, "the Trial Balance"));
+}
+
+function adjustedModel(txns, adjs) {
+  const M = buildAccounts(txns);
+  const adjDR = Object.create(null), adjCR = Object.create(null);
+  adjs.forEach((a) => {
+    const amt = Number(a.amount || 0);
+    if (a.drAcct) adjDR[a.drAcct] = (adjDR[a.drAcct] || 0) + amt;
+    if (a.crAcct) adjCR[a.crAcct] = (adjCR[a.crAcct] || 0) + amt;
+  });
+  const names = [...new Set(M.order.concat(Object.keys(adjDR), Object.keys(adjCR)))].sort((a, b) => {
+    const ka = M.accts.has(a) ? 0 : 1, kb = M.accts.has(b) ? 0 : 1;
+    return ka - kb || a.localeCompare(b);
+  });
+  const rows = names.map((name) => {
+    const a = M.accts.get(name);
+    const dr = a ? a.dr.reduce((s, r) => s + r.amt, 0) : 0;
+    const cr = a ? a.cr.reduce((s, r) => s + r.amt, 0) : 0;
+    const ad = adjDR[name] || 0, ac = adjCR[name] || 0;
+    const bal = dr + ad - cr - ac;
+    return { name, kind: a ? a.kind : "asset", dr, cr, ad, ac, bal };
+  });
+  return rows;
+}
+
+export async function initAdjTB(cfg) {
+  await requireAuth();
+  const ui = shell(cfg.root, [
+    { label: "Account" }, { label: "TB Debit", amt: true }, { label: "TB Credit", amt: true },
+    { label: "Adj DR", amt: true }, { label: "Adj CR", amt: true },
+    { label: "Adjusted DR", amt: true }, { label: "Adjusted CR", amt: true }
+  ], { icon: "\uD83E\uDDEE" });
+  let TX = null, ADJ = null;
+  const render = () => {
+    if (!TX || !ADJ) return;
+    const rows = adjustedModel(TX, ADJ);
+    if (!rows.length) return showEmpty(ui, "Nothing to adjust yet",
+      "The Adjusted Trial Balance = Trial Balance + adjusting entries. Add an adjustment below.");
+    let t = [0, 0, 0, 0, 0, 0], html = "";
+    rows.forEach((r) => {
+      const adj = r.ad > 0 || r.ac > 0;
+      html += rowCells([
+        { v: r.name + " A/C", strong: true },
+        r.dr ? { v: money(r.dr), amt: true } : "",
+        r.cr ? { v: money(r.cr), amt: true } : "",
+        r.ad ? { v: money(r.ad), amt: true } : "",
+        r.ac ? { v: money(r.ac), amt: true } : "",
+        r.bal > 0 ? { v: money(r.bal), amt: true } : "",
+        r.bal < 0 ? { v: money(-r.bal), amt: true } : ""
+      ]);
+      t[0] += r.dr; t[1] += r.cr; t[2] += r.ad; t[3] += r.ac;
+      if (r.bal > 0) t[4] += r.bal; else t[5] += -r.bal;
+      void adj;
+    });
+    ui.tbody.innerHTML = html;
+    ui.tfoot.innerHTML = totalCells([{ label: 1 }, t[0], t[1], t[2], t[3], t[4], t[5]]);
+    ui.card.style.display = "";
+    ui.empty.hidden = true;
+    ui.count.textContent = rows.length + " accounts \u00B7 adjustments " + ADJ.length +
+      " \u00B7 adjusted totals " + money(t[4]) + " = " + money(t[5]) + (t[4] === t[5] ? " \u2014 balanced." : " \u2014 OUT OF BALANCE.");
+  };
+  onSnapshot(collRef("transactions"), (s) => { TX = s.docs.map((d) => d.data({ serverTimestamps: "estimate" })); render(); },
+    (e) => failState(ui, e, "the Adjusted Trial Balance"));
+  readColl("adjustments", (a) => { ADJ = a; render(); });
+}
+
+export async function initPostTB(cfg) {
+  await requireAuth();
+  const ui = shell(cfg.root, [
+    { label: "Account" }, { label: "Debit", amt: true }, { label: "Credit", amt: true }
+  ], { icon: "\uD83D\uDD12" });
+  let TX = null, ADJ = null;
+  const render = () => {
+    if (!TX || !ADJ) return;
+    const rows = adjustedModel(TX, ADJ);
+    const real = rows.filter((r) => r.kind !== "revenue" && r.kind !== "expense" && r.bal !== 0);
+    const profit = -rows.filter((r) => r.kind === "revenue" || r.kind === "expense")
+      .reduce((s, r) => s + r.bal, 0); 
+    if (!real.length && !profit) return showEmpty(ui, "No real accounts yet",
+      "After the closing entries only assets, liabilities, persons and Capital remain here.");
+    let drT = 0, crT = 0, html = "";
+    real.forEach((r) => {
+      if (r.bal > 0) { drT += r.bal; html += rowCells([{ v: r.name + " A/C", strong: true }, { v: money(r.bal), amt: true }, ""]); }
+      else { crT += -r.bal; html += rowCells([{ v: r.name + " A/C", strong: true }, "", { v: money(-r.bal), amt: true }]); }
+    });
+    if (profit > 0) { crT += profit; html += rowCells([{ v: "Capital A/C", strong: true }, "", { v: money(profit), amt: true }]); }
+    else if (profit < 0) { drT += -profit; html += rowCells([{ v: "Capital A/C", strong: true }, { v: money(-profit), amt: true }, ""]); }
+    ui.tbody.innerHTML = html;
+    ui.tfoot.innerHTML = totalCells([{ label: 1 }, drT, crT]);
+    ui.card.style.display = "";
+    ui.empty.hidden = true;
+    ui.count.textContent = "Nominal accounts closed to Capital \u00B7 net profit " + money(profit) +
+      " \u00B7 totals " + money(drT) + " = " + money(crT) + (drT === crT ? " \u2014 balanced." : " \u2014 OUT OF BALANCE.");
+  };
+  onSnapshot(collRef("transactions"), (s) => { TX = s.docs.map((d) => d.data({ serverTimestamps: "estimate" })); render(); },
+    (e) => failState(ui, e, "the Post-Closing Trial Balance"));
+  readColl("adjustments", (a) => { ADJ = a; render(); });
+}
+
+const SERIES = { asset: 100, liability: 200, person: 300, revenue: 400, expense: 500 };
+
+function acctNumbers(M) {
+  const nums = new Map(), next = {};
+  M.order.forEach((n) => {
+    const k = M.accts.get(n).kind || "asset";
+    next[k] = (next[k] || SERIES[k]) + 1;
+    nums.set(n, next[k]);
+  });
+  return nums;
+}
+
+export async function initGLReport(cfg) {
+  await requireAuth();
+  const ui = shell(cfg.root, [
+    { label: "Date" }, { label: "Folio" }, { label: "Detail" },
+    { label: "Debit", amt: true }, { label: "Credit", amt: true }, { label: "Balance", amt: true },
+  ], { icon: "\uD83D\uDCD7" });
+  const pb = periodBar(cfg.root, "range");
+  const sel = acctSelect(ui);
+  let TX = null;
+  const render = () => {
+    if (!TX) return;
+    const M = buildAccounts(TX);
+    if (!M.order.length) { sel.style.display = "none"; return showEmpty(ui, "No postings yet",
+      "Add transactions and the General Ledger Report builds itself from the double-entry postings behind the Ledger."); }
+    sel.style.display = "";
+    const nums = acctNumbers(M);
+    const cur = sel.value;
+    sel.innerHTML = M.order.map((n) =>
+      '<option value="' + esc(n) + '">' + esc(nums.get(n) + " \u2014 " + n + " A/C") + "</option>").join("");
+    sel.value = cur && nums.has(cur) ? cur : M.order[0];
+    const acct = sel.value;
+    const rows = [];
+    TX.forEach((t) => {
+      const ty = String(t.transactionType || "").toUpperCase();
+      if (ty !== "IN" && ty !== "OUT" && ty !== "CONTRA") return;
+      const p = postingsFor(t, M.creditPeople);
+      const ts = asDate(t.dateTime);
+      if (p.dr.acct === acct) rows.push({ ts, detail: p.dr.detail, folio: p.dr.folio, amt: p.dr.amt, side: "dr" });
+      if (p.cr.acct === acct) rows.push({ ts, detail: p.cr.detail, folio: p.cr.folio, amt: p.cr.amt, side: "cr" });
+    });
+    rows.sort((a, b) => a.ts - b.ts || (a.side === b.side ? 0 : a.side === "dr" ? -1 : 1));
+    const f = pb.from() ? parseDay(pb.from()) : null;
+    const tt = pb.to() ? parseDay(pb.to()) : null;
+    if (tt) tt.setHours(23, 59, 59, 999);
+    const opening = rows.filter((r) => f && r.ts < f)
+      .reduce((s, r) => s + (r.side === "dr" ? r.amt : -r.amt), 0);
+    const per = rows.filter((r) => (!f || r.ts >= f) && (!tt || r.ts <= tt));
+    let run = opening, dT = 0, cT = 0, html = "";
+    html += rowCells([{ v: "\u2014", date: 1 }, "\u2014", { v: "Opening balance", strong: true }, "", "", { v: fmtBal(opening), amt: true }]);
+    per.forEach((r) => {
+      run += r.side === "dr" ? r.amt : -r.amt;
+      if (r.side === "dr") dT += r.amt; else cT += r.amt;
+      html += rowCells([{ v: fmtDay(r.ts), date: 1 }, r.folio, r.detail,
+        r.side === "dr" ? { v: money(r.amt), amt: true } : "",
+        r.side === "cr" ? { v: money(r.amt), amt: true } : "",
+        { v: fmtBal(run), amt: true }]);
+    });
+    ui.tbody.innerHTML = html;
+    ui.tfoot.innerHTML = '<tr class="total-row"><td class="c-desc">Period total</td><td></td><td></td>' +
+      '<td class="c-amount">' + esc(money(dT)) + '</td><td class="c-amount">' + esc(money(cT)) +
+      '</td><td class="c-amount">' + esc(fmtBal(run)) + "</td></tr>";
+    ui.card.style.display = "";
+    ui.empty.hidden = true;
+    ui.count.textContent = "Account " + nums.get(acct) + " \u00B7 " + per.length +
+      " entr" + (per.length === 1 ? "y" : "ies") + " in the period \u00B7 opening " + fmtBal(opening) +
+      " \u00B7 closing " + fmtBal(run) + ".";
+  };
+  pb.onChange(render);
+  sel.addEventListener("change", render);
+  readTx((tx) => { TX = tx; render(); }, (e) => failState(ui, e, "the General Ledger Report"));
+}
+
+const REC_EFFECT = {
+  "Balance per bank statement": null,
+  "Deposit in transit": +1,
+  "Outstanding cheque": -1,
+  "Bank charge": -1,
+  "Bank credit": +1,
+  "Error": 0 
+};
+
+export async function initBankRec(cfg) {
+  await requireAuth();
+  const ui = shell(cfg.root, [], { icon: "\uD83C\uDFE7", kv: true });
+  ui.card.style.display = "none"; 
+  let BOOK = null, ITEMS = null;
+  const render = () => {
+    if (!BOOK || !ITEMS) return;
+    if (!ITEMS.length) return showEmpty(ui, "No reconciling items yet",
+      "Add the balance per bank statement and the reconciling items below \u2014 JAMALI compares them with the Bank A/C in the books.");
+    const sorted = ITEMS.slice().sort((a, b) => (parseDay(a.date) || 0) - (parseDay(b.date) || 0));
+    const stmt = [...sorted].reverse().find((i) => i.type === "Balance per bank statement");
+    if (!stmt) return showEmpty(ui, "No bank statement balance yet",
+      "Add an item of type \u201CBalance per bank statement\u201D first \u2014 the reconciliation starts from it.");
+    const stmtAmt = Number(stmt.amount || 0);
+    const sums = { dep: 0, chq: 0, charge: 0, credit: 0, err: 0 };
+    ITEMS.forEach((i) => {
+      const amt = Number(i.amount || 0);
+      if (i.type === "Deposit in transit") sums.dep += amt;
+      else if (i.type === "Outstanding cheque") sums.chq += amt;
+      else if (i.type === "Bank charge") sums.charge += amt;
+      else if (i.type === "Bank credit") sums.credit += amt;
+      else if (i.type === "Error") sums.err += amt;
+    });
+    const adjusted = stmtAmt + sums.dep - sums.chq - sums.charge + sums.credit + sums.err;
+    const book = accountBalance(BOOK.accts, "Bank"); 
+    const diff = adjusted - book;
+    ui.kvTitle.textContent = "Bank Reconciliation as at " + fmtDay(stmt.date);
+    const line = (k, v, cls) => '<div class="kv' + (cls ? " hl" : "") + '"><span class="k">' + esc(k) +
+      '</span><span class="v ' + (cls ? (diff === 0 ? "pos" : "neg") : "") + '">' + esc(money(v)) + "</span></div>";
+    ui.kvRows.innerHTML =
+      line("Balance per bank statement", stmtAmt) +
+      (sums.dep ? line("Add: deposits in transit", sums.dep) : "") +
+      (sums.chq ? line("Less: outstanding cheques", sums.chq) : "") +
+      (sums.charge ? line("Less: bank charges", sums.charge) : "") +
+      (sums.credit ? line("Add: bank credits", sums.credit) : "") +
+      (sums.err ? line("Add/Less: errors", sums.err) : "") +
+      line("Adjusted bank balance", adjusted, 1) +
+      line("Balance as per books (Bank A/C)", book) +
+      line("Difference (must be zero)", diff, 1);
+    ui.kv.style.display = "";
+    ui.empty.hidden = true;
+    ui.count.textContent = ITEMS.length + " items \u00B7 book balance " + money(book) +
+      (book < 0 ? " (overdrawn)" : "") + " \u00B7 difference " + money(diff) +
+      (diff === 0 ? " \u2014 reconciled." : " \u2014 record the missing items.");
+  };
+  onSnapshot(collRef("transactions"), (s) => {
+    BOOK = buildAccounts(s.docs.map((d) => d.data({ serverTimestamps: "estimate" })));
+    render();
+  }, (e) => failState(ui, e, "the Bank Reconciliation"));
+  readColl("bankrec", (i) => { ITEMS = i; render(); });
+}

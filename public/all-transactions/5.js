@@ -2,7 +2,7 @@
 
 
 import { requireAuth, db, collection, query, orderBy, onSnapshot } from "/firebase.js";
-import { actsHTML, wireActions } from "/books/row-actions.js";
+
 
 await requireAuth(); 
 
