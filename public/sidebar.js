@@ -19,12 +19,13 @@ catch (e) {}
  var session = readSession();
  
  var ALWAYS_OPEN = ["home", "account-recovery", "file-viewer"];
+var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
  function folderAllowed(folder) {
    if (!session) return false;
    if (session.role === "admin") return true;
    if (folder === "system-admin") return false;
    if (ALWAYS_OPEN.indexOf(folder) !== -1) return true;
-   return !!(session.grants && session.grants.indexOf(folder) !== -1);
+   var par = PARENT[folder]; if (par && session.grants.indexOf(par) !== -1) return true; return !!(session.grants && session.grants.indexOf(folder) !== -1);
  }
 
  
@@ -43,7 +44,7 @@ catch (e) {}
   
   
   
-  if (current !== "account-recovery") {
+  if (ALWAYS_OPEN.indexOf(current) === -1) {
     if (!session) {
       location.replace("/?need=account");
     } else {
@@ -789,7 +790,7 @@ session.grants.length);
  function guardUserPage(main) {
    if (menuHidden(current) || pageHidden(PAGE_ID)) { blockPage();
 return; }
-   if (current !== "account-recovery" && !hasAnyGrant()) { if (current === "home") { blankHome(main); return; } blockAllowance(); return; }
+   if (ALWAYS_OPEN.indexOf(current) === -1 && !hasAnyGrant()) { if (current === "home") { blankHome(main); return; } blockAllowance(); return; }
    if (!folderAllowed(current) && ALWAYS_OPEN.indexOf(current)
 === -1) { blockPage(); return; }
    applyUserHides(main);
@@ -998,5 +999,5 @@ true;
       t = setTimeout(fn, 350);
     }).observe(root, { childList: true, subtree: true });
   }
-  try { import("/field-control.js").catch(function () {}); } catch (e) {}
+  try { import("/502.js").catch(function () {}); } catch (e) {}
 })();

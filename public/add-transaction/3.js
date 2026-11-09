@@ -5,7 +5,7 @@
 
 import { requireAuth, db, collection, doc, getDoc, updateDoc, writeBatch, serverTimestamp,
          query, orderBy, onSnapshot } from "/firebase.js";
-import { classify } from "/journals/journal.js";
+
 
 await requireAuth(); 
 

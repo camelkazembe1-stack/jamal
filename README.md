@@ -42,7 +42,7 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 17. debtors-book - what customers owe JAMALI: a running balance per customer. The + Register debtor button brings forward a customer who already owed the business before the books began: name and amount become one Debtors Opening entry that raises the customer's balance, and the Sales Journal never sees it. Every row carries a pen to edit and a bin to delete. Files: 17.html, 17.css, 17.js.
 
-18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down. Every posting on both sides carries a pen to edit and a bin to delete it. Also home of the shared postings.js engine. Files: 18.html, 18.css, 18.js, plus postings.js - the shared posting engine the other book pages import.
+18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down. Every posting on both sides carries a pen to edit and a bin to delete it. Also home of the shared 512.js engine. Files: 18.html, 18.css, 18.js, plus 512.js - the shared posting engine the other book pages import.
 
 19. bills receivable (folder pending) - bills drawn on customers, tracked to settlement. The bills collection is already in the security rules. Files: none yet - the folder is still pending.
 
@@ -134,9 +134,13 @@ THE TOOLS FAMILY, 62 TO 320
 
 62. computer - the tools launcher: square tiles only, today two of them - Convertor with its 256 tools, and All File Viewer (393) beside it. Files: 62.html, 62.css, 62.js.
 
+<<<<<<< Updated upstream
 63. convertor - the Convertor hub: all 256 tools as same size square buttons, 8 per row, in 14 families, with a live search and a star on the 14 essential tools. Files: 63.html, 63.css and 63.js (the hub), 64.html, 64.css and 64.js (the not-found fallback page itself), and tools.js (the catalogue of all 256 tools). Seven files in all, every one named here.
+=======
+63. convertor - the Convertor hub: all 255 tools as same size square buttons, in 14 families, with a live search and a star on the essential tools. Files: 63.html, 63.css and 63.js.
+>>>>>>> Stashed changes
 
-64. convertor not found page - the friendly fallback when a tool address does not exist. It lives inside the convertor folder as its 64.html, 64.css and 64.js. The identical redirect copies that once sat in every tool folder to catch the old /slug/64 addresses were removed on 25 October 2026 on the user's order, so an old tool address ending in /64 now simply finds no page.
+64. tool - the friendly fallback page of the convertor, in its own folder like every page. Files: 64.html, 64.css, 64.js.
 
 The convertor tools, pages 65 to 320, in 14 families, in hub order:
 
@@ -654,7 +658,11 @@ The convertor tools, pages 65 to 320, in 14 families, in hub order:
 
 THE HEALTH FAMILY, 321 TO 328
 
+<<<<<<< Updated upstream
 321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html and 321.css, plus the shared patient-info.css and patient-info.js that the stage pages load.
+=======
+321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html, 321.css, 321.js, plus the shared 513.css and 514.js that the stage pages load.
+>>>>>>> Stashed changes
 
 322. victim-registration - victim registration at the hospital door: sixteen fields laid out three per row, the age computed from the date of birth, arrival time recorded automatically, referral and payment captured, and the registering staff member remembered on the device. The Registration ID, four digits and four letters (for example 4827ABCD), is issued only after the form saves. Unidentified victims register without a name - the Registration ID is the one and only identifier the victim ever has (the temporary ID was removed in Task 45). Emergency treatment is never delayed by an incomplete form. Files: 322.html, 322.css, 322.js.
 
@@ -672,63 +680,67 @@ THE HEALTH FAMILY, 321 TO 328
 
 THE MEDICAL WING, THE ADMIN DESK AND THE VIEWER, 330 TO 393
 
-330. ward-management - the ward hub, the placement half of the medical wing: wards, beds, occupancy, assignments, transfers and cleaning. Occupancy is always counted from the bed records, never typed in, and emergency treatment always comes first - no form here holds up care. The folder carries nine pages, 330 to 338, sharing one stylesheet. Files: 330.html, 330.js, ward.css.
+330. ward-management - the ward hub page, the placement half of the medical wing: wards, beds, occupancy, assignments, transfers and cleaning open from its eight buttons. Occupancy is always counted from the bed records, never typed in, and emergency treatment always comes first - no form here holds up care. Files: 330.html, 330.css, 330.js.
 
-331. ward registration - Ward Registration: registers the wards the hospital runs, the first step before its beds can be placed on the map. Files: 331.html, 331.js.
+331. ward-registration - Ward Registration: registers the wards the hospital runs, the first step before its beds can be placed on the map. Files: 331.html, 331.css, 331.js.
 
-332. bed management - Bed Management: places and manages the beds of each ward the way the map needs them. Files: 332.html, 332.js.
+332. bed-management - Bed Management: places and manages the beds of each ward the way the map needs them. Files: 332.html, 332.css, 332.js.
 
-333. occupancy dashboard - Ward Occupancy: counts every bed by its status; a bed is assignable only while it is marked Available. Files: 333.html, 333.js.
+333. ward-occupancy - Ward Occupancy: counts every bed by its status; a bed is assignable only while it is marked Available. Files: 333.html, 333.css, 333.js.
 
-334. bed assignment - Bed Assignment: connects an existing patient to a free bed - it never creates a second patient record. Files: 334.html, 334.js.
+334. bed-assignment - Bed Assignment: connects an existing patient to a free bed - it never creates a second patient record. Files: 334.html, 334.css, 334.js.
 
-335. transfers - Ward and Bed Transfers: moves a patient to another ward or another bed, and every move is kept. Files: 335.html, 335.js.
+335. ward-bed-transfers - Ward and Bed Transfers: moves a patient to another ward or another bed, and every move is kept. Files: 335.html, 335.css, 335.js.
 
-336. cleaning and maintenance - Cleaning and Maintenance: a bed freed by discharge lands here as Cleaning Required - never straight to Available - and returns to Available only when this desk clears it. Files: 336.html, 336.js.
+336. cleaning-maintenance - Cleaning and Maintenance: a bed freed by discharge lands here as Cleaning Required - never straight to Available - and returns to Available only when this desk clears it. Files: 336.html, 336.css, 336.js.
 
-337. ward register - Ward Register: every ward with its beds and their status in one table. Files: 337.html, 337.js.
+337. ward-register - Ward Register: every ward with its beds and their status in one table. Files: 337.html, 337.css, 337.js.
 
-338. bed and transfer history - Bed and Transfer History: the full history of assignments and transfers, kept per patient and per bed. Files: 338.html, 338.js.
+338. bed-transfer-history - Bed and Transfer History: the full history of assignments and transfers, kept per patient and per bed. Files: 338.html, 338.css, 338.js.
 
-340. patient-admission - the admission hub: records hospital admissions for existing patients, from the admission decision until it is completed, cancelled or handed over to discharge. Admissions link to the patient, ward and bed records that already exist - nothing here registers a patient twice. The folder carries four pages sharing one stylesheet. Files: 340.html, 340.js, adm.css.
+340. patient-admission - the admission hub page: records hospital admissions for existing patients, from the admission decision until it is completed, cancelled or handed over to discharge. Admissions link to the patient, ward and bed records that already exist - nothing here registers a patient twice. Files: 340.html, 340.css, 340.js.
 
-341. new admission - New Admission: find the patient from the Patient List (never register them again), record the date, time, reason and the clinician's diagnosis, choose Emergency or Planned, then save - Pending when the process has started, Admitted once confirmed. Files: 341.html, 341.js.
+341. new-admission - New Admission: find the patient from the Patient List (never register them again), record the date, time, reason and the clinician diagnosis, choose Emergency or Planned, then save - Pending when the process has started, Admitted once confirmed. Files: 341.html, 341.css, 341.js.
 
-342. admission list - Admission List: every admission with its status, updated the moment an admission is saved. Files: 342.html, 342.js.
+342. admission-list - Admission List: every admission with its status, updated the moment an admission is saved. Files: 342.html, 342.css, 342.js.
 
-343. admission details - Admission Details: the complete record of one admission, every field in one view. Files: 343.html, 343.js.
+343. admission-details - Admission Details: the complete record of one admission, every field in one view. Files: 343.html, 343.css, 343.js.
 
-350. patient-discharge - the discharge hub: the discharge queue of admitted patients, with a voice announce button for calling the patient. Discharging releases the bed to Cleaning Required - never straight to Available - and keeps every historical record; a patient who leaves a bed does not automatically make the bed ready for the next patient. The folder carries four pages sharing one stylesheet. Files: 350.html, 350.js, dis.css.
+350. patient-discharge - the discharge hub page: the discharge queue of admitted patients, with a voice announce button for calling the patient. Discharging releases the bed to Cleaning Required - never straight to Available - and keeps every historical record; a patient who leaves a bed does not automatically make the bed ready for the next patient. Files: 350.html, 350.css, 350.js.
 
-351. start discharge - Start Discharge: begins the discharge of an admitted patient and closes the admission properly. Files: 351.html, 351.js.
+351. start-discharge - Start Discharge: begins the discharge of an admitted patient and closes the admission properly. Files: 351.html, 351.css, 351.js.
 
-352. discharge list - Discharge List: every discharge with its status in one table. Files: 352.html, 352.js.
+352. discharge-list - Discharge List: every discharge with its status in one table. Files: 352.html, 352.css, 352.js.
 
-353. discharge details - Discharge Details: the complete record of one discharge. Files: 353.html, 353.js.
+353. discharge-details - Discharge Details: the complete record of one discharge. Files: 353.html, 353.css, 353.js.
 
-360. laboratory - the laboratory hub: the laboratory queue, with a voice announce button for calling the next patient, from the new request to the workbench. The folder carries four pages sharing one stylesheet. Files: 360.html, 360.js, lab.css.
+360. laboratory - the laboratory hub page: the laboratory queue, with a voice announce button for calling the next patient, from the new request to the workbench. Files: 360.html, 360.css, 360.js.
 
-361. new lab request - New Lab Request: raises a laboratory request for a patient. Files: 361.html, 361.js.
+361. new-lab-request - New Lab Request: raises a laboratory request for a patient. Files: 361.html, 361.css, 361.js.
 
-362. lab request list - Lab Request List: every laboratory request with its status. Files: 362.html, 362.js.
+362. lab-request-list - Lab Request List: every laboratory request with its status. Files: 362.html, 362.css, 362.js.
 
-363. lab workbench - Lab Workbench: where the laboratory performs the request and records the result. Files: 363.html, 363.js.
+363. lab-workbench - Lab Workbench: where the laboratory performs the request and records the result. Files: 363.html, 363.css, 363.js.
 
-370. radiology - the radiology and imaging hub: the imaging queue, with a voice announce button for calling the next patient. The imaging report is recorded per patient, and corrections are kept in the report's history - nothing is silently overwritten. The folder carries four pages sharing one stylesheet. Files: 370.html, 370.js, rad.css.
+370. radiology - the radiology and imaging hub page: the imaging queue, with a voice announce button for calling the next patient. The imaging report is recorded per patient, and corrections are kept in the report history - nothing is silently overwritten. Files: 370.html, 370.css, 370.js.
 
-371. new imaging request - New Imaging Request: raises an imaging request for a patient. Files: 371.html, 371.js.
+371. new-imaging-request - New Imaging Request: raises an imaging request for a patient. Files: 371.html, 371.css, 371.js.
 
-372. imaging requests - Imaging Requests: every imaging request with its status. Files: 372.html, 372.js.
+372. imaging-requests - Imaging Requests: every imaging request with its status. Files: 372.html, 372.css, 372.js.
 
-373. imaging workbench - Imaging Workbench: where the imaging is performed and the report is written. Files: 373.html, 373.js.
+373. imaging-workbench - Imaging Workbench: where the imaging is performed and the report is written. Files: 373.html, 373.css, 373.js.
 
 380. system-admin - Account Administration: the registered users table with the grants editor - tick the main modules a user may open (clicking a parent with nothing selected under it selects the parent and every child and grandchild at once, clicking it again deselects the whole branch), tick its submodules individually (a granted submodule always carries its parent), and Select all and Deselect all sweep every checkbox, and only the selected modules appear for that user on Home and in the sidebar. Every row also carries a red Delete button: one click removes the account, its credentials and its notification in a single batch and leaves a tombstone in systemDeleted, so the account vanishes from this page and from the hub at once, and if that person tries to log in or recover later the front door tells them the account was disapproved by the administrator and deleted from the system when it had been approved, or that the registration was removed before approval when it had not, and asks them to create a new account. This is also the page that checks whether the Firestore rules are live. Files: 380.html, 380.css, 380.js.
 
+<<<<<<< Updated upstream
 355. account-recovery, page 355 - Forgot Token: the first of the three recovery pages, for a lost sign in token. Files: 355.html, 355.css and 355.js.
 
 356. account-recovery, page 356 - Forgot Password: the recovery page for a lost password. Files: 356.html, 356.css and 356.js.
 
 357. account-recovery, page 357 - Forgot Phone Number: the recovery page for a changed phone number. Files: 357.html, 357.css and 357.js.
+=======
+390. account-recovery - the user recovery page, one page for the whole recovery chain: the forgot token desk issues a new four digit token after the password proves it is you, the forgot password desk verifies the phone number and sets a new password, and the forgot phone desk hands over to the system administrator office. All three desks run on one js file. Files: 390.html, 390.css, 390.js.
+>>>>>>> Stashed changes
 
 393. file-viewer - All File Viewer: pick any file from the device and the page names its type out loud - Your file is: PDF document - then opens it right there: video plays, audio plays, pictures show, Word documents open, anything else opens in a new tab. It sits on the Computer page next to Convertor, stays open in the sidebar for every account, and nothing uploads anywhere - the file is read in the browser only. Files: 393.html, 393.css, 393.js.
 
@@ -746,33 +758,35 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - public/index.html - the front door: the Google gate, and where signed out visitors land. One authenticated Google identity opens the plain login straight away: log in with any username and four-digit token - from any Google email at all - or follow the Create Account link below the button. Nothing about the people who use the device is ever displayed: no account list, no email, no waiting screen - a refresh always shows the same login and create-account forms, and approval is told only as a message on the login itself. A pending account that tries to log in is told it is saved but still waits for the administrator's approval; a rejected one that it was not approved; a deleted one that it was disapproved by the administrator and deleted from the system when it had been approved, or that the registration was removed before approval when it had not, and to please create a new account. Creating an account lands on the login with the username filled in and the same waiting message, so trying to log in is itself the status check: approved opens the system, not approved explains itself. The administrator credentials are shared the same way: any of your Google emails that logs in with the administrator username and token takes the administrator seat, and on a brand-new database (a whole server change) the first administrator login builds the administrator account, the claim marker and the credentials in one batch by itself. A red Google logout button sits at the top left of the card on every screen after the gate, and the next sign in always asks Google which account to use.
 
-- public/favicon.ico - the small icon the browser tab shows.
 
-- public/firebase.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
+- public/502.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
 
-- public/books/row-actions.js - the shared pen and bin that every book row carries, from All Transactions to the cash books, the journals, petty cash, creditors, debtors and the ledger: the pen opens Add Transaction with that record loaded for editing and returns to the book it came from, the bin asks once and deletes the record, and a checkbox beside them marks rows for multi delete - a bar at the bottom right counts the marked rows, selects everything visible at once, clears the marking, and removes every marked record in batched writes, every open book refreshes itself on the spot, and all of it reports the result in a small toast at the bottom of the screen.
 
 - public/menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered; the sidebar reads it and draws.
 
 - public/sidebar.js - the frozen tree renderer shared by every page: draws the collapsible sidebar from the menu.js data, highlights the active page, opens its path, cleans the address bar and folds away behind a burger button on the phone. Also carries the grant filter that decides which links an account sees, with the ALWAYS_OPEN list (home, account-recovery, file-viewer).
 
-- public/field-control.js - the admin's field editor: for a signed in admin it shows the - and + chips beside form field labels. The - chip removes a field from the user's view, the + chip adds a configured dropdown; every other account sees the configured form only.
 
-- public/system-page-config.js - the quiet half of the field control pair: carries each page's identity and applies the saved field configuration, so the admin's - and + decisions become the form the user actually sees.
+- public/504.js - the quiet half of the field control pair: carries each page's identity and applies the saved field configuration, so the admin's - and + decisions become the form the user actually sees.
 
-- public/journals - the engine folder (journal.js and journal.css) that renders the eight journals, pages 7 to 14.
+- public/journals - the engine folder (510.js and 511.css) that renders the eight journals, pages 7 to 14.
 
-- public/records - the engine folder (records.js and records.css) behind the register pages 21 to 40, and the design base for the report pages too.
+- public/records - the engine folder (501.js and 500.css) behind the register pages 21 to 40, and the design base for the report pages too.
 
-- public/reports - the one engine folder behind every report page (31, 33, 41 to 48, 53 and 55 to 61): core.js is the shared foundation (table shell, side panel, key-value card, empty and failure states, period bar, account selector); ledger.js carries the ledger views (Trial Balance, Adjusted Trial Balance, Post-Closing Trial Balance, General Ledger Report, Bank Reconciliation); parties.js carries the people views (AR and AP Schedules, AR and AP Reports, customer and supplier statements, Aged Receivables and Aged Payables - one party engine underneath); assets.js carries the register views (Stock Movement, Inventory Valuation, Depreciation, Fixed Assets Schedule, Accumulated Depreciation); reports.css carries the period bar and selector styles. Views only, no data entry.
+- public/reports - the one engine folder behind every report page (31, 33, 41 to 48, 53, 424 and 425): 507.js carries the whole engine - the table shell, side panel, key-value card, empty and failure states, period bar, account selector, the ledger views, the people views and the register views. One file, no stylesheet of its own. Views only, no data entry.
+- public/reports2 - the second engine folder (508.js and 509.css) behind the party report pages 55 to 61: the general ledger report, the AR and AP reports, the customer and supplier statements and the aged receivables and payables.
 
+<<<<<<< Updated upstream
 - public/convertor, the extra files - besides pages 63 and 64 the folder carries tools.js (the registry of all 256 tools with id, label, slug and page number - the hub grid and the sidebar children both read it, so buttons and tree can never drift apart).
+=======
+- public/convertor, the extra files - besides pages 63 and 64 the folder carries 506.js (the registry of all 256 tools with id, label, slug and page number - the hub grid and the sidebar children both read it, so buttons and tree can never drift apart).
+>>>>>>> Stashed changes
 
-- public/health, the extra files - besides page 321 the folder carries patient-info.js and patient-info.css - the shared chip the health stage pages load to show a patient's every record by Registration ID.
+- public/health, the extra files - besides page 321 the folder carries 514.js and 513.css - the shared chip the health stage pages load to show a patient's every record by Registration ID.
 
-- public/SERVER - the one server folder, inside the web root where the browser can reach it: server.js picks the Firebase project and configuration, linker.js is the only connection point the modules talk through, and public/firebase.js hands all of it to every page.
+- SERVER - the server folder at the repository root, outside the web root: server.js picks the Firebase project and configuration, linker.js is the connection point the modules talk through, and public/502.js - the only module pages import - carries the same wiring into every page.
 
-- apply-rules.sh - the one-shot publisher for the Firestore rules: it reads the database project from public/SERVER/server.js, writes firebase.json and .firebaserc, walks you through the Firebase sign in and publishes firestore.rules, then removes itself - kept out of the app, nothing on the website imports it.
+- apply-rules.sh - the one-shot publisher for the Firestore rules: it reads the database project from SERVER/server.js, writes firebase.json and .firebaserc, walks you through the Firebase sign in and publishes firestore.rules, then removes itself - kept out of the app, nothing on the website imports it.
 
 - firestore.rules - the guard dog. Decides who may read or write each collection: reads on the account and credential records are open to every signed-in Google identity so a system account opens with its username and token from any sign-in, account creation stays bound to the Google email that made it and always starts pending, approvals, grants and deletes stay administrator only through the systemAdmins check, and anything not matched is denied. The systemDeleted tombstones are written, changed and removed by the administrator only, and read by every signed-in identity so the login can explain a deleted account. One extra door: on a database where the systemSetup claim marker does not exist yet (a fresh server), the first administrator login may create the approved administrator account, and the door closes again the moment the claim marker exists.
 

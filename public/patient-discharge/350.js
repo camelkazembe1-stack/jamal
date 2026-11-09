@@ -107,7 +107,7 @@ function qaRenderPanel() {
   }
   const op = document.getElementById("qa-open");
   if (op) {
-    if (nxt) { op.hidden = false; op.href = "/patient-discharge/353?id=" + encodeURIComponent(nxt.__id); }
+    if (nxt) { op.hidden = false; op.href = "/discharge-details/353?id=" + encodeURIComponent(nxt.__id); }
     else op.hidden = true;
   }
   qaSet("qa-note", nxt ? "Ready to announce: " + qaSentence(nxt.patientId) : "");

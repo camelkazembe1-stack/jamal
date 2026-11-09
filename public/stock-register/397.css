@@ -1,3 +1,19 @@
+<<<<<<< Updated upstream
+=======
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #475569; }
+
+@media print {
+  #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .count-line { display: none !important; }
+  body.jamali-has-sidebar { margin-left: 0 !important; }
+  body { background: #fff; }
+  .wrap { max-width: none; padding: 0; }
+  .card { box-shadow: none; }
+}
+
+/* jamali-inline:500.css */
+>>>>>>> Stashed changes
  
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 body { background: #f1f5f9; color: #0f172a; }
@@ -111,6 +127,7 @@ table.people .c-amount { text-align: right; font-weight: 800; font-variant-numer
   .wrap { padding: 20px 14px; }
   .form-grid { grid-template-columns: 1fr; }
 }
+<<<<<<< Updated upstream
 
 
 /* ---- stock-register specific (397) ----
@@ -118,3 +135,5 @@ table.people .c-amount { text-align: right; font-weight: 800; font-variant-numer
    tweaks land here without touching the 425 pages that share /records/records.css. */
 table.bk td.c-amount, table.bk td.c-num { font-variant-numeric: tabular-nums; }
 table.bk td.c-party { min-width: 180px; }
+=======
+>>>>>>> Stashed changes
