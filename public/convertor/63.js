@@ -369,3 +369,104 @@
     window.JAMALI_TOOLS.push(fam);
   });
 })();
+
+/* jamali-inline: imgpdf.js — IMG to PDF button on the Convertor page */
+ 
+(function () {
+  var btn = document.getElementById("imgpdf-btn");
+  var panel = document.getElementById("imgpdf-panel");
+  if (!btn || !panel) return;
+  var drop = document.getElementById("ip-drop");
+  var fileIn = document.getElementById("ip-file");
+  var ul = document.getElementById("ip-files");
+  var runBtn = document.getElementById("ip-run");
+  var msg = document.getElementById("ip-msg");
+  var xBtn = document.getElementById("ip-x");
+
+  function say(m, cls) { if (msg) { msg.textContent = m; msg.className = "ip-msg" + (cls ? " " + cls : ""); } }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function fb(n) { var u = ["B", "KB", "MB", "GB"], i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (i ? n.toFixed(n < 10 ? 2 : 1) : n) + " " + u[i]; }
+
+  btn.addEventListener("click", function () { panel.hidden = !panel.hidden; });
+  xBtn.addEventListener("click", function () { panel.hidden = true; });
+  drop.addEventListener("click", function () { fileIn.click(); });
+  drop.addEventListener("dragover", function (e) { e.preventDefault(); drop.classList.add("over"); });
+  drop.addEventListener("dragleave", function () { drop.classList.remove("over"); });
+  drop.addEventListener("drop", function (e) { e.preventDefault(); drop.classList.remove("over");
+    if (e.dataTransfer.files.length) { fileIn.files = e.dataTransfer.files; show(); } });
+  fileIn.addEventListener("change", show);
+
+  function show() {
+    ul.innerHTML = "";
+    var fs = fileIn.files; if (!fs.length) return;
+    var tot = 0;
+    Array.prototype.forEach.call(fs, function (f) {
+      tot += f.size;
+      var li = document.createElement("li");
+      li.innerHTML = "<span>" + esc(f.name) + "</span><span>" + fb(f.size) + "</span>";
+      ul.appendChild(li);
+    });
+    say(fs.length + " image(s) ready · " + fb(tot) + " total — press Convert to PDF.");
+  }
+
+  function ensureLib(ok, fail) {
+    if (window.PDFLib) { ok(); return; }
+    say("Loading the PDF engine…");
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js";
+    s.onload = ok; s.onerror = fail;
+    document.head.appendChild(s);
+  }
+  function loadImg(blob) {
+    return new Promise(function (res, rej) {
+      var im = new Image();
+      im.onload = function () { res(im); };
+      im.onerror = function () { rej(new Error("cannot decode " + "this image")); };
+      im.src = URL.createObjectURL(blob);
+    });
+  }
+  function dl(blob, name) { var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 800); }
+
+  runBtn.addEventListener("click", async function () {
+    var fs = fileIn.files;
+    if (!fs || !fs.length) { say("Choose at least one image first.", "warn"); return; }
+    runBtn.disabled = true;
+    try {
+      await new Promise(function (res, rej) { ensureLib(res, function () {
+        rej(new Error("pdf-lib engine could not load — reconnect and reload the page.")); }); });
+      var doc = await PDFLib.PDFDocument.create();
+      var list = Array.prototype.slice.call(fs);
+      for (var i = 0; i < list.length; i++) {
+        var f = list[i];
+        say("Adding " + f.name + " (" + (i + 1) + "/" + list.length + ")…");
+        var bytes = new Uint8Array(await f.arrayBuffer());
+        var type = f.type, img;
+        if (/\.gif$/i.test(f.name)) type = "image/gif";
+        if (type === "image/jpeg" || /\.jpe?g$/i.test(f.name)) img = await doc.embedJpg(bytes);
+        else if (type === "image/png" || /\.png$/i.test(f.name)) img = await doc.embedPng(bytes);
+        else {
+          var im = await loadImg(f);
+          var cv = document.createElement("canvas");
+          cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+          cv.getContext("2d").drawImage(im, 0, 0);
+          var d = cv.toDataURL("image/png");
+          var bin = atob(d.split(",")[1]), u = new Uint8Array(bin.length);
+          for (var k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+          img = await doc.embedPng(u);
+        }
+        var page = doc.addPage([img.width, img.height]);
+        page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+      }
+      var out = await doc.save();
+      dl(new Blob([out], { type: "application/pdf" }), "images.pdf");
+      say("Done — images.pdf downloaded · " + list.length + " image(s), one page each at full size.", "ok");
+    } catch (e) { say("Could not build the PDF: " + (e && e.message ? e.message : e), "err"); }
+    runBtn.disabled = false;
+  });
+})();

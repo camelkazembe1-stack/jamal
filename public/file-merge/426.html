@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merge Files — JAMALI Computer</title>
+<link rel="stylesheet" href="/file-merge/426.css">
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/computer/62">&larr; Computer</a>
+  <div class="t-head"><h1>Merge Files</h1></div>
+  <div class="t-chips">
+    <span class="t-chip t-fam">🧩 Computer tools</span>
+    <span class="t-chip">same extension → one file</span>
+    <span class="t-chip">/file-merge/426</span>
+  </div>
+  <p class="t-note">MERGE joins two or more files that share the <b>same extension</b> into one file. Supported: text &amp; code (txt, md, html, js…), csv/tsv, json, PDF, images (jpg, png, webp), wav and mp3. Nothing uploads — everything happens on this device.</p>
+<div class="t-panel">
+  <div class="t-drop" id="drop">Drop the files here or click to choose<small id="drop-hint">Choose 2 or more files with the same extension</small></div>
+  <input type="file" id="file" multiple hidden>
+  <div class="t-row">
+    <label class="t-lab-inline"><input type="checkbox" id="nohdr" checked> csv / tsv: keep only the first file&rsquo;s header row</label>
+  </div>
+  <div class="t-row"><button class="t-btn" id="run">Merge</button></div>
+  <p class="t-msg" id="t-msg"></p>
+  <ul class="t-files" id="files"></ul>
+  <div class="t-out-card" id="outcard" hidden>
+    <span class="t-out-info" id="outinfo"></span>
+    <button class="t-btn" id="dl" type="button">Download merged file</button>
+  </div>
+</div>
+  <div class="t-links">
+    <a class="t-btn ghost" href="/computer/62">Computer</a>
+    <a class="t-btn ghost" href="/file-split/427">Need the opposite? Split a file ✂️</a>
+  </div>
+</main>
+<script src="/file-merge/426.js" defer></script>
+</body>
+</html>

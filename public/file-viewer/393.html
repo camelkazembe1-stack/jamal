@@ -12,7 +12,7 @@
 <main class="wrap">
   <a class="back" href="/computer/62">&larr; Computer</a>
   <h1>All File Viewer</h1>
-  <p class="sub">Choose file(s) from this device and open them right here &mdash; video plays, audio plays, images, PDF, text and Word documents open in place. Nothing uploads; files never leave this device.</p>
+  <p class="sub">Choose file(s) from this device and open them right here &mdash; ANY file works: video and audio play, images, PDF, Word, Excel, PowerPoint data, CSV, JSON, Markdown, HTML, ZIP contents, text and code open in place, and every other file still shows its details with a hex peek. Nothing uploads; files never leave this device.</p>
 
   <div class="card afv-card">
     <input type="file" id="afv-input" multiple hidden>
@@ -25,6 +25,7 @@
       <div class="afv-phead">
         <b class="afv-pname" id="afv-pname"></b>
         <span class="afv-pactions">
+          <button type="button" class="afv-mini" id="afv-dl">Download</button>
           <button type="button" class="afv-mini" id="afv-tab">Open in new tab</button>
           <button type="button" class="afv-mini" id="afv-close">Close</button>
         </span>

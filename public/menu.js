@@ -72,6 +72,8 @@ window.JAMALI_MENU = [
     { label: "Aged Payables", icon: "🗓️", folder: "aged-payables", n: 61, d: 3 },
     { label: "Computer", icon: "🖥️", folder: "computer", n: 62, d: 1 },
     { label: "Convertor", icon: "🔄", folder: "convertor", n: 63, d: 2 },
+    { label: "Merge Files", icon: "🧩", folder: "file-merge", n: 426, d: 2 },
+    { label: "Split File", icon: "✂️", folder: "file-split", n: 427, d: 2 },
   
   
   

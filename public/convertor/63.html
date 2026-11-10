@@ -15,7 +15,16 @@
   <p class="sub">The file &amp; data workshop: 255 tools in 14 families — documents, PDFs, images, spreadsheets, audio, video and more. Every tool opens its own page, and the address is the tool's name. &#9733; marks the first priority tools.</p>
   <div class="conv-topbar">
     <input id="tool-search" type="text" placeholder="Search the tools… e.g. pdf, word, csv" autocomplete="off">
+    <button type="button" class="imgpdf-btn" id="imgpdf-btn" title="Turn images into one PDF right here">🖼️ IMG to PDF</button>
     <span id="tool-count"></span>
+  </div>
+  <div class="imgpdf-panel" id="imgpdf-panel" hidden>
+    <div class="ip-head"><b>🖼️ IMG to PDF — images in, one PDF out</b><button type="button" class="ip-x" id="ip-x">✕ close</button></div>
+    <div class="ip-drop" id="ip-drop">Drop images here or click to choose<small>jpg, png, webp, gif, bmp… — several images become one PDF, one full-size page each</small></div>
+    <input type="file" id="ip-file" accept="image/*" multiple hidden>
+    <ul class="ip-files" id="ip-files"></ul>
+    <div class="ip-row"><button type="button" class="ip-btn" id="ip-run">Convert to PDF</button></div>
+    <p class="ip-msg" id="ip-msg"></p>
   </div>
   <div id="tool-cats"></div>
 </main>
