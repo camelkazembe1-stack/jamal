@@ -86,7 +86,7 @@ export const SYSTEM_SESSION_KEY = "JAMALI_SYSTEM_SESSION";
 
 
 
-const ALWAYS_OPEN = ["home", "account-recovery"];
+const ALWAYS_OPEN = ["home"];
 
 export function readSystemSession() {
   try {

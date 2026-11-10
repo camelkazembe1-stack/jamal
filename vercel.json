@@ -3,65 +3,385 @@
   "trailingSlash": true,
   "outputDirectory": "public",
   "redirects": [
-    { "source": "/home", "destination": "/", "permanent": false },
-    { "source": "/home/", "destination": "/", "permanent": false },
-    { "source": "/stock-management/397", "destination": "/stock-register/397", "permanent": false },
-    { "source": "/stock-management/397/", "destination": "/stock-register/397", "permanent": false },
-    { "source": "/stock-management/398", "destination": "/stock-progress/398", "permanent": false },
-    { "source": "/stock-management/398/", "destination": "/stock-progress/398", "permanent": false },
-    { "source": "/stock-management/399", "destination": "/stock-change/399", "permanent": false },
-    { "source": "/stock-management/399/", "destination": "/stock-change/399", "permanent": false },
-    { "source": "/ward-management/331", "destination": "/ward-registration/331", "permanent": false },
-    { "source": "/ward-management/331/", "destination": "/ward-registration/331", "permanent": false },
-    { "source": "/ward-management/332", "destination": "/bed-management/332", "permanent": false },
-    { "source": "/ward-management/332/", "destination": "/bed-management/332", "permanent": false },
-    { "source": "/ward-management/333", "destination": "/ward-occupancy/333", "permanent": false },
-    { "source": "/ward-management/333/", "destination": "/ward-occupancy/333", "permanent": false },
-    { "source": "/ward-management/334", "destination": "/bed-assignment/334", "permanent": false },
-    { "source": "/ward-management/334/", "destination": "/bed-assignment/334", "permanent": false },
-    { "source": "/ward-management/335", "destination": "/ward-bed-transfers/335", "permanent": false },
-    { "source": "/ward-management/335/", "destination": "/ward-bed-transfers/335", "permanent": false },
-    { "source": "/ward-management/336", "destination": "/cleaning-maintenance/336", "permanent": false },
-    { "source": "/ward-management/336/", "destination": "/cleaning-maintenance/336", "permanent": false },
-    { "source": "/ward-management/337", "destination": "/ward-register/337", "permanent": false },
-    { "source": "/ward-management/337/", "destination": "/ward-register/337", "permanent": false },
-    { "source": "/ward-management/338", "destination": "/bed-transfer-history/338", "permanent": false },
-    { "source": "/ward-management/338/", "destination": "/bed-transfer-history/338", "permanent": false },
-    { "source": "/patient-admission/341", "destination": "/new-admission/341", "permanent": false },
-    { "source": "/patient-admission/341/", "destination": "/new-admission/341", "permanent": false },
-    { "source": "/patient-admission/342", "destination": "/admission-list/342", "permanent": false },
-    { "source": "/patient-admission/342/", "destination": "/admission-list/342", "permanent": false },
-    { "source": "/patient-admission/343", "destination": "/admission-details/343", "permanent": false },
-    { "source": "/patient-admission/343/", "destination": "/admission-details/343", "permanent": false },
-    { "source": "/patient-discharge/351", "destination": "/start-discharge/351", "permanent": false },
-    { "source": "/patient-discharge/351/", "destination": "/start-discharge/351", "permanent": false },
-    { "source": "/patient-discharge/352", "destination": "/discharge-list/352", "permanent": false },
-    { "source": "/patient-discharge/352/", "destination": "/discharge-list/352", "permanent": false },
-    { "source": "/patient-discharge/353", "destination": "/discharge-details/353", "permanent": false },
-    { "source": "/patient-discharge/353/", "destination": "/discharge-details/353", "permanent": false },
-    { "source": "/laboratory/361", "destination": "/new-lab-request/361", "permanent": false },
-    { "source": "/laboratory/361/", "destination": "/new-lab-request/361", "permanent": false },
-    { "source": "/laboratory/362", "destination": "/lab-request-list/362", "permanent": false },
-    { "source": "/laboratory/362/", "destination": "/lab-request-list/362", "permanent": false },
-    { "source": "/laboratory/363", "destination": "/lab-workbench/363", "permanent": false },
-    { "source": "/laboratory/363/", "destination": "/lab-workbench/363", "permanent": false },
-    { "source": "/radiology/371", "destination": "/new-imaging-request/371", "permanent": false },
-    { "source": "/radiology/371/", "destination": "/new-imaging-request/371", "permanent": false },
-    { "source": "/radiology/372", "destination": "/imaging-requests/372", "permanent": false },
-    { "source": "/radiology/372/", "destination": "/imaging-requests/372", "permanent": false },
-    { "source": "/radiology/373", "destination": "/imaging-workbench/373", "permanent": false },
-    { "source": "/radiology/373/", "destination": "/imaging-workbench/373", "permanent": false },
-    { "source": "/convertor/64", "destination": "/tool/64", "permanent": false },
-    { "source": "/convertor/64/", "destination": "/tool/64", "permanent": false },
-    { "source": "/account-recovery/391", "destination": "/account-recovery/390?mode=password", "permanent": false },
-    { "source": "/account-recovery/391/", "destination": "/account-recovery/390?mode=password", "permanent": false },
-    { "source": "/account-recovery/392", "destination": "/account-recovery/390?mode=phone", "permanent": false },
-    { "source": "/account-recovery/392/", "destination": "/account-recovery/390?mode=phone", "permanent": false },
-    { "source": "/forgot-token/390", "destination": "/account-recovery/390", "permanent": false },
-    { "source": "/forgot-token/390/", "destination": "/account-recovery/390", "permanent": false },
-    { "source": "/forgot-password/391", "destination": "/account-recovery/390?mode=password", "permanent": false },
-    { "source": "/forgot-password/391/", "destination": "/account-recovery/390?mode=password", "permanent": false },
-    { "source": "/forgot-phone-number/392", "destination": "/account-recovery/390?mode=phone", "permanent": false },
-    { "source": "/forgot-phone-number/392/", "destination": "/account-recovery/390?mode=phone", "permanent": false }
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/home/",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/397",
+      "destination": "/stock-register/397",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/397/",
+      "destination": "/stock-register/397",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/398",
+      "destination": "/stock-progress/398",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/398/",
+      "destination": "/stock-progress/398",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/399",
+      "destination": "/stock-change/399",
+      "permanent": false
+    },
+    {
+      "source": "/stock-management/399/",
+      "destination": "/stock-change/399",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/331",
+      "destination": "/ward-registration/331",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/331/",
+      "destination": "/ward-registration/331",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/332",
+      "destination": "/bed-management/332",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/332/",
+      "destination": "/bed-management/332",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/333",
+      "destination": "/ward-occupancy/333",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/333/",
+      "destination": "/ward-occupancy/333",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/334",
+      "destination": "/bed-assignment/334",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/334/",
+      "destination": "/bed-assignment/334",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/335",
+      "destination": "/ward-bed-transfers/335",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/335/",
+      "destination": "/ward-bed-transfers/335",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/336",
+      "destination": "/cleaning-maintenance/336",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/336/",
+      "destination": "/cleaning-maintenance/336",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/337",
+      "destination": "/ward-register/337",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/337/",
+      "destination": "/ward-register/337",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/338",
+      "destination": "/bed-transfer-history/338",
+      "permanent": false
+    },
+    {
+      "source": "/ward-management/338/",
+      "destination": "/bed-transfer-history/338",
+      "permanent": false
+    },
+    {
+      "source": "/patient-admission/341",
+      "destination": "/new-admission/341",
+      "permanent": false
+    },
+    {
+      "source": "/patient-admission/341/",
+      "destination": "/new-admission/341",
+      "permanent": false
+    },
+    {
+      "source": "/patient-admission/342",
+      "destination": "/admission-list/342",
+      "permanent": false
+    },
+    {
+      "source": "/patient-admission/342/",
+      "destination": "/admission-list/342",
+      "permanent": false
+    },
+    {
+      "source": "/patient-admission/343",
+      "destination": "/admission-details/343",
+      "permanent": false
+    },
+    {
+      "source": "/patient-admission/343/",
+      "destination": "/admission-details/343",
+      "permanent": false
+    },
+    {
+      "source": "/patient-discharge/351",
+      "destination": "/start-discharge/351",
+      "permanent": false
+    },
+    {
+      "source": "/patient-discharge/351/",
+      "destination": "/start-discharge/351",
+      "permanent": false
+    },
+    {
+      "source": "/patient-discharge/352",
+      "destination": "/discharge-list/352",
+      "permanent": false
+    },
+    {
+      "source": "/patient-discharge/352/",
+      "destination": "/discharge-list/352",
+      "permanent": false
+    },
+    {
+      "source": "/patient-discharge/353",
+      "destination": "/discharge-details/353",
+      "permanent": false
+    },
+    {
+      "source": "/patient-discharge/353/",
+      "destination": "/discharge-details/353",
+      "permanent": false
+    },
+    {
+      "source": "/laboratory/361",
+      "destination": "/new-lab-request/361",
+      "permanent": false
+    },
+    {
+      "source": "/laboratory/361/",
+      "destination": "/new-lab-request/361",
+      "permanent": false
+    },
+    {
+      "source": "/laboratory/362",
+      "destination": "/lab-request-list/362",
+      "permanent": false
+    },
+    {
+      "source": "/laboratory/362/",
+      "destination": "/lab-request-list/362",
+      "permanent": false
+    },
+    {
+      "source": "/laboratory/363",
+      "destination": "/lab-workbench/363",
+      "permanent": false
+    },
+    {
+      "source": "/laboratory/363/",
+      "destination": "/lab-workbench/363",
+      "permanent": false
+    },
+    {
+      "source": "/radiology/371",
+      "destination": "/new-imaging-request/371",
+      "permanent": false
+    },
+    {
+      "source": "/radiology/371/",
+      "destination": "/new-imaging-request/371",
+      "permanent": false
+    },
+    {
+      "source": "/radiology/372",
+      "destination": "/imaging-requests/372",
+      "permanent": false
+    },
+    {
+      "source": "/radiology/372/",
+      "destination": "/imaging-requests/372",
+      "permanent": false
+    },
+    {
+      "source": "/radiology/373",
+      "destination": "/imaging-workbench/373",
+      "permanent": false
+    },
+    {
+      "source": "/radiology/373/",
+      "destination": "/imaging-workbench/373",
+      "permanent": false
+    },
+    {
+      "source": "/convertor/64",
+      "destination": "/tool/64",
+      "permanent": false
+    },
+    {
+      "source": "/convertor/64/",
+      "destination": "/tool/64",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery/",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery/390",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery/390/",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-token",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-token/",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-token/355",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-token/355/",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-token/390",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-token/390/",
+      "destination": "/?mode=token",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery/391",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery/391/",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-password/",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-password/356",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-password/356/",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-password/391",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-password/391/",
+      "destination": "/?mode=password",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery/392",
+      "destination": "/?mode=phone",
+      "permanent": false
+    },
+    {
+      "source": "/account-recovery/392/",
+      "destination": "/?mode=phone",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-phone-number",
+      "destination": "/?mode=phone",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-phone-number/",
+      "destination": "/?mode=phone",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-phone-number/357",
+      "destination": "/?mode=phone",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-phone-number/357/",
+      "destination": "/?mode=phone",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-phone-number/392",
+      "destination": "/?mode=phone",
+      "permanent": false
+    },
+    {
+      "source": "/forgot-phone-number/392/",
+      "destination": "/?mode=phone",
+      "permanent": false
+    }
   ]
 }

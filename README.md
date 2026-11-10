@@ -134,11 +134,7 @@ THE TOOLS FAMILY, 62 TO 320
 
 62. computer - the tools launcher: square tiles only, today two of them - Convertor with its 256 tools, and All File Viewer (393) beside it. Files: 62.html, 62.css, 62.js.
 
-<<<<<<< Updated upstream
-63. convertor - the Convertor hub: all 256 tools as same size square buttons, 8 per row, in 14 families, with a live search and a star on the 14 essential tools. Files: 63.html, 63.css and 63.js (the hub), 64.html, 64.css and 64.js (the not-found fallback page itself), and tools.js (the catalogue of all 256 tools). Seven files in all, every one named here.
-=======
-63. convertor - the Convertor hub: all 255 tools as same size square buttons, in 14 families, with a live search and a star on the essential tools. Files: 63.html, 63.css and 63.js.
->>>>>>> Stashed changes
+63. convertor - the Convertor hub: all 256 tools as same size square buttons, 8 per row, in 14 families, with a live search and a star on the 14 essential tools. Files: 63.html, 63.css and 63.js.
 
 64. tool - the friendly fallback page of the convertor, in its own folder like every page. Files: 64.html, 64.css, 64.js.
 
@@ -658,11 +654,7 @@ The convertor tools, pages 65 to 320, in 14 families, in hub order:
 
 THE HEALTH FAMILY, 321 TO 328
 
-<<<<<<< Updated upstream
-321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html and 321.css, plus the shared patient-info.css and patient-info.js that the stage pages load.
-=======
-321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html, 321.css, 321.js, plus the shared 513.css and 514.js that the stage pages load.
->>>>>>> Stashed changes
+321. health - the Health hub, the doorway to the medical wing: seven square buttons, Registration, Triage, Nurse Consultation, Doctor Consultation, Pharmacy, Treatment / Procedures and Patient List, in the same tile language as every launcher. Files: 321.html, 321.css and 321.js.
 
 322. victim-registration - victim registration at the hospital door: sixteen fields laid out three per row, the age computed from the date of birth, arrival time recorded automatically, referral and payment captured, and the registering staff member remembered on the device. The Registration ID, four digits and four letters (for example 4827ABCD), is issued only after the form saves. Unidentified victims register without a name - the Registration ID is the one and only identifier the victim ever has (the temporary ID was removed in Task 45). Emergency treatment is never delayed by an incomplete form. Files: 322.html, 322.css, 322.js.
 
@@ -732,15 +724,7 @@ THE MEDICAL WING, THE ADMIN DESK AND THE VIEWER, 330 TO 393
 
 380. system-admin - Account Administration: the registered users table with the grants editor - tick the main modules a user may open (clicking a parent with nothing selected under it selects the parent and every child and grandchild at once, clicking it again deselects the whole branch), tick its submodules individually (a granted submodule always carries its parent), and Select all and Deselect all sweep every checkbox, and only the selected modules appear for that user on Home and in the sidebar. Every row also carries a red Delete button: one click removes the account, its credentials and its notification in a single batch and leaves a tombstone in systemDeleted, so the account vanishes from this page and from the hub at once, and if that person tries to log in or recover later the front door tells them the account was disapproved by the administrator and deleted from the system when it had been approved, or that the registration was removed before approval when it had not, and asks them to create a new account. This is also the page that checks whether the Firestore rules are live. Files: 380.html, 380.css, 380.js.
 
-<<<<<<< Updated upstream
-355. account-recovery, page 355 - Forgot Token: the first of the three recovery pages, for a lost sign in token. Files: 355.html, 355.css and 355.js.
-
-356. account-recovery, page 356 - Forgot Password: the recovery page for a lost password. Files: 356.html, 356.css and 356.js.
-
-357. account-recovery, page 357 - Forgot Phone Number: the recovery page for a changed phone number. Files: 357.html, 357.css and 357.js.
-=======
-390. account-recovery - the user recovery page, one page for the whole recovery chain: the forgot token desk issues a new four digit token after the password proves it is you, the forgot password desk verifies the phone number and sets a new password, and the forgot phone desk hands over to the system administrator office. All three desks run on one js file. Files: 390.html, 390.css, 390.js.
->>>>>>> Stashed changes
+355-390. account-recovery - retired as folders: the whole recovery chain now lives on the front door itself. The account recovery panel - the forgot token desk, the forgot password desk and the forgot phone desk on three tabs - is now a section of public/index.html, the same page that carries the create account and login panels, so recovering an account never leaves the front door any more. The old account-recovery, forgot-token, forgot-password and forgot-phone-number folders are removed, and their old addresses redirect to the front door with the right tab pre-selected. Files: none - the panel runs inside index.html.
 
 393. file-viewer - All File Viewer: pick any file from the device and the page names its type out loud - Your file is: PDF document - then opens it right there: video plays, audio plays, pictures show, Word documents open, anything else opens in a new tab. It sits on the Computer page next to Convertor, stays open in the sidebar for every account, and nothing uploads anywhere - the file is read in the browser only. Files: 393.html, 393.css, 393.js.
 
@@ -764,7 +748,7 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - public/menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered; the sidebar reads it and draws.
 
-- public/sidebar.js - the frozen tree renderer shared by every page: draws the collapsible sidebar from the menu.js data, highlights the active page, opens its path, cleans the address bar and folds away behind a burger button on the phone. Also carries the grant filter that decides which links an account sees, with the ALWAYS_OPEN list (home, account-recovery, file-viewer).
+- public/sidebar.js - the frozen tree renderer shared by every page: draws the collapsible sidebar from the menu.js data, highlights the active page, opens its path, cleans the address bar and folds away behind a burger button on the phone. Also carries the grant filter that decides which links an account sees, with the ALWAYS_OPEN list (home, file-viewer).
 
 
 - public/504.js - the quiet half of the field control pair: carries each page's identity and applies the saved field configuration, so the admin's - and + decisions become the form the user actually sees.
@@ -776,11 +760,6 @@ THE FILES WITHOUT A PAGE NUMBER
 - public/reports - the one engine folder behind every report page (31, 33, 41 to 48, 53, 424 and 425): 507.js carries the whole engine - the table shell, side panel, key-value card, empty and failure states, period bar, account selector, the ledger views, the people views and the register views. One file, no stylesheet of its own. Views only, no data entry.
 - public/reports2 - the second engine folder (508.js and 509.css) behind the party report pages 55 to 61: the general ledger report, the AR and AP reports, the customer and supplier statements and the aged receivables and payables.
 
-<<<<<<< Updated upstream
-- public/convertor, the extra files - besides pages 63 and 64 the folder carries tools.js (the registry of all 256 tools with id, label, slug and page number - the hub grid and the sidebar children both read it, so buttons and tree can never drift apart).
-=======
-- public/convertor, the extra files - besides pages 63 and 64 the folder carries 506.js (the registry of all 256 tools with id, label, slug and page number - the hub grid and the sidebar children both read it, so buttons and tree can never drift apart).
->>>>>>> Stashed changes
 
 - public/health, the extra files - besides page 321 the folder carries 514.js and 513.css - the shared chip the health stage pages load to show a patient's every record by Registration ID.
 

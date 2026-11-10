@@ -58,6 +58,26 @@
   .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
   .hidden { display: none; }
   .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
+  /* ---- account recovery panel (merged from the old recovery folders) ---- */
+  .panel-title { font-size: 19px; text-align: center; margin-bottom: 14px; }
+  .panel-title span { color: #38bdf8; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+  .tabs button { flex: 1; background: #0b1220; color: #94a3b8; border: 1px solid #334155;
+                 border-radius: 10px; padding: 9px 4px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  .tabs button.on { background: #0c2a45; color: #38bdf8; border-color: #38bdf8; }
+  section.mode { display: none; }
+  section.mode.on { display: block; }
+  .next { margin-top: 16px; text-align: center; font-size: 13px; color: #94a3b8; }
+  .next a { color: #38bdf8; cursor: pointer; text-decoration: none; font-weight: 700; }
+  .token-box { margin-top: 14px; display: none; text-align: center; background: #0b1220;
+               border: 1px dashed #38bdf8; border-radius: 12px; padding: 16px; }
+  .token-box .tk { font-size: 34px; font-weight: 900; letter-spacing: 12px; color: #38bdf8; margin-top: 6px; }
+  .token-box p { font-size: 12.5px; color: #94a3b8; }
+  .message { margin-top: 18px; background: #0b1220; border: 1px solid #334155; border-radius: 12px;
+             padding: 18px 16px; font-size: 14.5px; color: #e2e8f0; display: none; text-align: center; }
+  a.panel-back { display: block; margin-top: 18px; text-align: center; font-size: 13px;
+                 color: #64748b; text-decoration: none; cursor: pointer; }
+  a.panel-back:hover { color: #38bdf8; }
 </style>
 </head>
 <body>
@@ -95,6 +115,68 @@
       <button class="wide" id="create-btn" type="button">Create Account</button>
       <p class="swap">Already have an account? <a id="create-back">Back to login</a></p>
       <p class="google-note">This account is saved as its own record, with the Google email that created it kept on file. The administrator approves every new account before it can enter, and after approval it opens with its username and token from any Google sign-in.</p>
+    </section>
+
+    <section id="panel-recovery" class="hidden">
+      <h2 class="panel-title">Account <span>Recovery</span></h2>
+      <p class="sub">One place for the whole recovery chain: a lost token, a lost password or a changed phone number.</p>
+
+      <div class="tabs">
+        <button type="button" id="tab-token" class="on">Forgot Token</button>
+        <button type="button" id="tab-password">Forgot Password</button>
+        <button type="button" id="tab-phone">Forgot Phone</button>
+      </div>
+
+      <section class="mode on" id="mode-token">
+        <p class="sub">Prove it is you with your password, and a new four-digit token will be issued.</p>
+        <div id="ft-form">
+          <label for="ft-username">Username</label>
+          <input id="ft-username" type="text" autocomplete="username" placeholder="Your username">
+          <label for="ft-password">Password</label>
+          <input id="ft-password" type="password" autocomplete="current-password" placeholder="Your password">
+          <button class="wide" id="ft-btn" type="button">Submit</button>
+          <p class="status" id="status-token"></p>
+          <p class="next">Still stuck? <a id="go-forgot-password">Forgot Password?</a></p>
+        </div>
+        <div class="token-box" id="token-box">
+          <p>Your new four-digit token &mdash; write it down now, it is shown only once:</p>
+          <div class="tk" id="token-value">&bull;&bull;&bull;&bull;</div>
+        </div>
+      </section>
+
+      <section class="mode" id="mode-password">
+        <p class="sub">Prove it is you with your phone number, then set a new password.</p>
+        <section id="step-verify">
+          <label for="fp-username">Username</label>
+          <input id="fp-username" type="text" autocomplete="username" placeholder="Your username">
+          <label for="fp-phone">Phone number</label>
+          <input id="fp-phone" type="tel" placeholder="The phone number on the account">
+          <button class="wide" id="fp-btn" type="button">Submit</button>
+        </section>
+        <section id="step-new" class="hidden">
+          <label for="fp-new1">New password</label>
+          <input id="fp-new1" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+          <label for="fp-new2">Repeat the new password</label>
+          <input id="fp-new2" type="password" autocomplete="new-password" placeholder="Same again">
+          <button class="wide" id="fp-save" type="button">Save New Password</button>
+        </section>
+        <p class="status" id="status-password"></p>
+        <p class="next" id="fp-next">Cannot remember the phone number? <a id="go-forgot-phone">Forgot Phone Number?</a></p>
+      </section>
+
+      <section class="mode" id="mode-phone">
+        <p class="sub">The last step of the recovery chain.</p>
+        <div id="fph-form">
+          <label for="fph-username">Username</label>
+          <input id="fph-username" type="text" autocomplete="username" placeholder="Your username">
+          <button class="wide" id="fph-btn" type="button">Submit</button>
+        </div>
+        <div class="message" id="message">
+          Please go to the system administrator's office.
+        </div>
+      </section>
+
+      <a class="panel-back" id="recovery-back">&larr; Back to Login</a>
     </section>
 
     <p class="status" id="status"></p>
@@ -141,7 +223,11 @@
       $("panel-gate").classList.toggle("hidden", which !== "gate");
       $("panel-login").classList.toggle("hidden", which !== "login");
       $("panel-create").classList.toggle("hidden", which !== "create");
+      $("panel-recovery").classList.toggle("hidden", which !== "recovery");
       $("google-logout").hidden = (which === "gate");
+      $("sub-line").textContent = which === "recovery"
+        ? "Recover your token, your password or your phone number."
+        : "Login to your account, or create one.";
       say("");
     }
 
@@ -227,12 +313,178 @@
 
     $("go-forgot-token").addEventListener("click", () => {
       const u = $("li-username").value.trim();
-      location.href = "/account-recovery/355" + (u ? "?u=" + encodeURIComponent(u) : "");
+      if (u) {
+        $("ft-username").value = u;
+        $("fp-username").value = u;
+        $("fph-username").value = u;
+      }
+      const want = new URLSearchParams(location.search).get("mode");
+      recShow(REC_MODES.indexOf(want) !== -1 ? want : "token");
+      showPanel("recovery");
     });
 
     function showRecovery() { $("recovery-line").hidden = false; }
     $("li-token").addEventListener("focus", showRecovery);
     $("li-token").addEventListener("input", showRecovery);
+
+    // ---------- account recovery (merged from the old recovery folders) ----------
+    const REC_MODES = ["token", "password", "phone"];
+    function recShow(mode) {
+      REC_MODES.forEach((m) => {
+        $("mode-" + m).classList.toggle("on", m === mode);
+        $("tab-" + m).classList.toggle("on", m === mode);
+      });
+    }
+    function sayR(el, m, ok) { el.textContent = m || ""; el.className = "status" + (ok ? " ok" : ""); }
+
+    const carriedUser = new URLSearchParams(location.search).get("u");
+    if (carriedUser) {
+      $("ft-username").value = carriedUser;
+      $("fp-username").value = carriedUser;
+      $("fph-username").value = carriedUser;
+    }
+    const startMode = new URLSearchParams(location.search).get("mode");
+    recShow(REC_MODES.indexOf(startMode) !== -1 ? startMode : "token");
+
+    $("tab-token").addEventListener("click", () => recShow("token"));
+    $("tab-password").addEventListener("click", () => recShow("password"));
+    $("tab-phone").addEventListener("click", () => recShow("phone"));
+
+    $("go-forgot-password").addEventListener("click", () => {
+      const u = $("ft-username").value.trim();
+      if (u) $("fp-username").value = u;
+      recShow("password");
+    });
+
+    $("go-forgot-phone").addEventListener("click", () => {
+      const u = $("fp-username").value.trim();
+      if (u) $("fph-username").value = u;
+      recShow("phone");
+    });
+
+    $("recovery-back").addEventListener("click", () => showPanel("login"));
+
+    // the token desk: the password proves it is you, a new token comes out
+    $("ft-btn").addEventListener("click", async () => {
+      const btn = $("ft-btn");
+      const rstatus = $("status-token");
+      const username = $("ft-username").value.trim();
+      const password = $("ft-password").value;
+      if (!username) { sayR(rstatus, "Enter your username."); return; }
+      if (!password) { sayR(rstatus, "Enter your password."); return; }
+      btn.disabled = true; sayR(rstatus, "");
+
+      try {
+        if (!auth.currentUser) await signInWithPopup(auth, provider);
+
+        const id = username.toLowerCase();
+        const accSnap = await getDoc(doc(db, "systemAccounts", id));
+        if (!accSnap.exists()) {
+          const gone = await getDoc(doc(db, "systemDeleted", id));
+          if (gone.exists() && gone.data().was === "approved") {
+            sayR(rstatus, "This account was disapproved by the administrator and deleted from the system. Please create a new account.");
+          } else if (gone.exists()) {
+            sayR(rstatus, "This registration was deleted by the administrator before approval. Please create a new account.");
+          } else {
+            sayR(rstatus, "No account with this username.");
+          }
+          btn.disabled = false; return;
+        }
+
+        const credRef = doc(db, "systemCredentials", id);
+        const credSnap = await getDoc(credRef);
+        if (!credSnap.exists()) { sayR(rstatus, "Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
+
+        const passHash = await sha(password);
+        if (credSnap.data().passHash !== passHash) { sayR(rstatus, "Wrong password."); btn.disabled = false; return; }
+
+        const newToken = String(Math.floor(1000 + Math.random() * 9000));
+        const newHash = await sha(newToken);
+        await updateDoc(credRef, { tokenHash: newHash });
+
+        $("token-value").textContent = newToken;
+        $("ft-form").style.display = "none";
+        $("token-box").style.display = "block";
+        sayR(rstatus, "");
+        btn.disabled = false;
+      } catch (err) {
+        sayR(rstatus, "Could not reset the token: " + friendly(err));
+        btn.disabled = false;
+      }
+    });
+
+    // the password desk: the phone number proves it is you, then a new password
+    let verifiedId = null;
+
+    $("fp-btn").addEventListener("click", async () => {
+      const btn = $("fp-btn");
+      const rstatus = $("status-password");
+      const username = $("fp-username").value.trim();
+      const phone = $("fp-phone").value.trim();
+      if (!username) { sayR(rstatus, "Enter your username."); return; }
+      if (!phone) { sayR(rstatus, "Enter your phone number."); return; }
+      btn.disabled = true; sayR(rstatus, "");
+
+      try {
+        if (!auth.currentUser) await signInWithPopup(auth, provider);
+
+        const id = username.toLowerCase();
+        const accSnap = await getDoc(doc(db, "systemAccounts", id));
+        if (!accSnap.exists()) {
+          const gone = await getDoc(doc(db, "systemDeleted", id));
+          if (gone.exists() && gone.data().was === "approved") {
+            sayR(rstatus, "This account was disapproved by the administrator and deleted from the system. Please create a new account.");
+          } else if (gone.exists()) {
+            sayR(rstatus, "This registration was deleted by the administrator before approval. Please create a new account.");
+          } else {
+            sayR(rstatus, "No account with this username.");
+          }
+          btn.disabled = false; return;
+        }
+
+        const credSnap = await getDoc(doc(db, "systemCredentials", id));
+        if (!credSnap.exists()) { sayR(rstatus, "Account data is incomplete. Ask the administrator."); btn.disabled = false; return; }
+        if (credSnap.data().phone !== phone) { sayR(rstatus, "That phone number does not match the account."); btn.disabled = false; return; }
+
+        verifiedId = id;
+        $("step-verify").classList.add("hidden");
+        $("step-new").classList.remove("hidden");
+        sayR(rstatus, "Phone verified. Now choose a new password.", true);
+        btn.disabled = false;
+      } catch (err) {
+        sayR(rstatus, "Could not verify: " + friendly(err));
+        btn.disabled = false;
+      }
+    });
+
+    $("fp-save").addEventListener("click", async () => {
+      const btn = $("fp-save");
+      const rstatus = $("status-password");
+      const p1 = $("fp-new1").value, p2 = $("fp-new2").value;
+      if (!verifiedId) { sayR(rstatus, "Verify your phone number first."); return; }
+      if (p1.length < 6) { sayR(rstatus, "Password must be at least 6 characters."); return; }
+      if (p1 !== p2) { sayR(rstatus, "The two passwords do not match."); return; }
+      btn.disabled = true; sayR(rstatus, "");
+
+      try {
+        const passHash = await sha(p1);
+        await updateDoc(doc(db, "systemCredentials", verifiedId), { passHash: passHash });
+
+        $("fp-next").style.display = "none";
+        sayR(rstatus, "Password saved. Go back and login with your username and token.", true);
+        $("step-new").classList.add("hidden");
+        btn.disabled = false;
+      } catch (err) {
+        sayR(rstatus, "Could not save the password: " + friendly(err));
+        btn.disabled = false;
+      }
+    });
+
+    // the phone desk: the chain ends at the administrator's office
+    $("fph-btn").addEventListener("click", () => {
+      $("fph-form").style.display = "none";
+      $("message").style.display = "block";
+    });
 
     function writeSession(account, user) {
       const s = {
@@ -424,6 +676,8 @@
         sessionStorage.removeItem(SESSION_KEY);
         showPanel("gate");
         handleDeniedAndNeed();
+        const deepMode = new URLSearchParams(location.search).get("mode");
+        if (REC_MODES.indexOf(deepMode) !== -1) showPanel("recovery");
         return;
       }
       let valid = false;
