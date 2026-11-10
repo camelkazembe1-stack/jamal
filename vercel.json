@@ -383,5 +383,6 @@
       "destination": "/?mode=phone",
       "permanent": false
     }
-  ]
+  ],
+  "buildCommand": "cp -f server/firebase.js public/firebase.js"
 }

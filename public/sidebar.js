@@ -70,7 +70,7 @@ res(u); });
       .replace(/\.html$/, "").replace(/\/+$/, "");
 
     
-    try { history.replaceState({}, "", "/"); } catch (e) {}
+    /* URL kept: the address bar stays on the real page */
 
  
  var PAGES = window.JAMALI_MENU || [];
@@ -522,9 +522,10 @@ links[i].style.display = "none";
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
-filterLinks(document); });
+  try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
+  });
   } else {
-    filterLinks(document);
+    try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
   }
 
  
