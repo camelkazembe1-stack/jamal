@@ -45,6 +45,31 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .afv-fallback { text-align: center; padding: 26px 12px; color: #475569;
   font-weight: 700; font-size: 13.5px; }
 .afv-big { font-size: 40px; margin-bottom: 8px; }
+.afv-note { font-size: 12.5px; font-weight: 700; color: #475569; background: #f0f9ff;
+  border: 1px solid #bae6fd; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; }
+.afv-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.afv-sel { border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 10px; font-size: 13px;
+  font-weight: 700; background: #fff; color: #0f172a; }
+.afv-twrap { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  overflow: auto; max-height: 62vh; }
+table.afv-t { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.afv-twrap table { border-collapse: collapse; width: auto; min-width: 60%; font-size: 12.5px; margin: 4px; }
+.afv-twrap td, .afv-twrap th { border: 1px solid #e2e8f0; padding: 5px 9px; text-align: left;
+  white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.afv-twrap thead td, .afv-twrap thead th { background: #f8fafc; color: #475569; font-weight: 800; }
+table.afv-t th, table.afv-t td { border-bottom: 1px solid #f1f5f9; padding: 6px 10px;
+  text-align: left; white-space: nowrap; max-width: 320px; overflow: hidden;
+  text-overflow: ellipsis; }
+table.afv-t thead th { background: #f8fafc; color: #475569; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .06em; position: sticky; top: 0; }
+.afv-hex { white-space: pre; overflow: auto; background: #0f172a; color: #e2e8f0;
+  padding: 12px; border-radius: 8px; font-size: 12px; line-height: 1.5; max-height: 55vh; }
+.afv-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px; margin-bottom: 12px; }
+.afv-kv { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; }
+.afv-kv .k { color: #64748b; font-weight: 700; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .06em; }
+.afv-kv .v { font-weight: 800; font-size: 13.5px; word-break: break-all; }
 @media print {
   #jamali-sidebar, #jamali-burger, #jamali-overlay, .back, .afv-actions,
   .afv-pactions { display: none !important; }
