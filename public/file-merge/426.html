@@ -18,12 +18,32 @@
     <span class="t-chip">same extension → one file</span>
     <span class="t-chip">/file-merge/426</span>
   </div>
-  <p class="t-note">MERGE joins two or more files that share the <b>same extension</b> into one file. Supported: text &amp; code (txt, md, html, js…), csv/tsv, json, PDF, images (jpg, png, webp), wav and mp3. Nothing uploads — everything happens on this device.</p>
+  <p class="t-note">MERGE joins two or more files that share the <b>same extension</b> into one file. Supported: text &amp; code (txt, md, html, js…), csv/tsv, json, PDF, images (jpg, png, webp), wav and mp3. Images are joined edge-to-edge at <b>one matching width</b> — no gaps, no squeezed strips — or tick <b>Output a PDF instead</b> to put every image on its own full page (easiest to read on a phone). A live preview appears before you download. Nothing uploads — everything happens on this device.</p>
 <div class="t-panel">
   <div class="t-drop" id="drop">Drop the files here or click to choose<small id="drop-hint">Choose 2 or more files with the same extension</small></div>
   <input type="file" id="file" multiple hidden>
   <div class="t-row">
     <label class="t-lab-inline"><input type="checkbox" id="nohdr" checked> csv / tsv: keep only the first file&rsquo;s header row</label>
+  </div>
+  <div class="t-row" id="imgopts" hidden>
+    <label class="t-lab-inline">Layout
+      <select class="t-sel t-sel-sm" id="img-layout">
+        <option value="vertical" selected>Vertical — one under another</option>
+        <option value="horizontal">Horizontal — side by side</option>
+        <option value="grid2">Grid — 2 columns</option>
+        <option value="grid3">Grid — 3 columns</option>
+      </select>
+    </label>
+    <label class="t-lab-inline">Page width
+      <select class="t-sel t-sel-sm" id="img-width">
+        <option value="orig" selected>Original (widest image)</option>
+        <option value="2000">2000 px</option>
+        <option value="1600">1600 px</option>
+        <option value="1200">1200 px</option>
+        <option value="800">800 px</option>
+      </select>
+    </label>
+    <label class="t-lab-inline"><input type="checkbox" id="img-pdf"> Output a PDF instead (1 image = 1 full page)</label>
   </div>
   <div class="t-row"><button class="t-btn" id="run">Merge</button></div>
   <p class="t-msg" id="t-msg"></p>
@@ -32,6 +52,7 @@
     <span class="t-out-info" id="outinfo"></span>
     <button class="t-btn" id="dl" type="button">Download merged file</button>
   </div>
+  <div class="t-prevcard" id="outprev" hidden></div>
 </div>
   <div class="t-links">
     <a class="t-btn ghost" href="/computer/62">Computer</a>

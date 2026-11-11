@@ -10,7 +10,34 @@
   var tabBtn = document.getElementById("afv-tab");
   var dlBtn = document.getElementById("afv-dl");
   var closeBtn = document.getElementById("afv-close");
+  var zoomBox = document.getElementById("afv-zoombox");
+  var zOut = document.getElementById("afv-zoomout"), zIn = document.getElementById("afv-zoomin");
+  var zFit = document.getElementById("afv-zoomfit"), zVal = document.getElementById("afv-zval");
   if (!input || !choose || !list || !pbody) return;
+
+  /* ---------- image zoom (Fit / + / −) so big merged sheets can be read 1:1 ---------- */
+  var zImg = null, zScale = 1;
+  function zoomApply() {
+    if (!zImg) return;
+    if (zScale <= 1) {
+      zScale = 1; zImg.style.maxWidth = ""; zImg.style.width = "";
+      if (zVal) zVal.textContent = "Fit";
+    } else {
+      zImg.style.maxWidth = "none";
+      zImg.style.width = Math.round(zScale * 100) + "%";
+      if (zVal) zVal.textContent = "\u00d7" + (Math.round(zScale * 10) / 10);
+    }
+  }
+  function zoomReset(img) {
+    zImg = img || null; zScale = 1;
+    if (zoomBox) zoomBox.hidden = !zImg;
+    if (zImg) zoomApply(); else if (zVal) zVal.textContent = "Fit";
+  }
+  if (zoomBox && zOut && zIn && zFit) {
+    zOut.addEventListener("click", function () { zScale = Math.max(1, zScale - 0.5); zoomApply(); });
+    zIn.addEventListener("click", function () { zScale = Math.min(6, zScale + 0.5); zoomApply(); });
+    zFit.addEventListener("click", function () { zScale = 1; zoomApply(); });
+  }
   var files = [], urls = [], current = -1;
 
   /* ---------- detection tables (extension FIRST, MIME as backup) ---------- */
@@ -345,6 +372,7 @@
     pname.textContent = f.name + " \u2014 " + typeLabel(f);
     pbody.innerHTML = "";
     preview.hidden = false;
+    zoomReset(null);
     var v = url(f);
     tabBtn.onclick = function () { window.open(v, "_blank"); };
     dlBtn.onclick = function () {
@@ -359,7 +387,10 @@
     if (isImage(f)) {
       var im = document.createElement("img"); im.src = v; im.alt = f.name;
       im.onerror = function () { pbody.innerHTML = ""; fallback(files[current], "This browser cannot decode this image format."); };
-      pbody.appendChild(im); return;
+      pbody.appendChild(im);
+      im.addEventListener("dblclick", function () { zScale = zScale === 1 ? 2 : 1; zoomApply(); });
+      zoomReset(im);
+      return;
     }
     if (isPdf(f)) { var fr = document.createElement("iframe"); fr.src = v; pbody.appendChild(fr); return; }
     if (e === "docx") { docx(v); return; }
@@ -406,7 +437,7 @@
     input.value = "";
   });
   closeBtn.addEventListener("click", function () {
-    preview.hidden = true; pbody.innerHTML = ""; current = -1;
+    preview.hidden = true; pbody.innerHTML = ""; current = -1; zoomReset(null);
     for (var k = 0; k < list.children.length; k++) list.children[k].classList.remove("afv-on");
   });
   window.addEventListener("beforeunload", revokeAll);

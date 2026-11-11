@@ -50,6 +50,14 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .t-out-card { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 14px;
   border: 1px solid #99f6e4; background: #f0fdfa; border-radius: 12px; padding: 12px 14px; }
 .t-out-info { font-size: 13.5px; font-weight: 800; color: #0f766e; word-break: break-all; }
+
+/* image options + merged-result preview */
+.t-sel-sm { width: auto; padding: 7px 10px; font-size: 13px; }
+.t-prevcard { margin-top: 12px; border: 1px solid #e2e8f0; background: #fff; border-radius: 12px;
+  padding: 10px; max-width: 880px; max-height: 480px; overflow: auto; }
+.t-prevcard img { display: block; width: 100%; height: auto; border-radius: 8px; }
+.t-prevcard iframe { width: 100%; height: 430px; border: 0; border-radius: 8px; background: #fff; }
+.t-prevcap { font-size: 12px; font-weight: 700; color: #64748b; text-align: center; padding: 8px 4px 2px; }
 @media (max-width: 640px) { .t-grid2, .t-grid3 { grid-template-columns: 1fr; } }
 
 /* jamali-inline:500.css */
