@@ -53,6 +53,7 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 
 /* image options + merged-result preview */
 .t-sel-sm { width: auto; padding: 7px 10px; font-size: 13px; }
+[hidden] { display: none !important; }
 .t-prevcard { margin-top: 12px; border: 1px solid #e2e8f0; background: #fff; border-radius: 12px;
   padding: 10px; max-width: 880px; max-height: 480px; overflow: auto; }
 .t-prevcard img { display: block; width: 100%; height: auto; border-radius: 8px; }
