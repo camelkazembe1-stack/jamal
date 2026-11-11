@@ -193,13 +193,18 @@
      common height / grid cell) so nothing ends up small in a corner of a huge
      canvas — the old raw-pixel stacking is what made results look squeezed.
      Positions are accumulated while placing, so tiles always sit flush. */
-  var MAXPX = 16000000; /* canvas pixel budget that even a phone can draw */
-  async function buildImage(fs, opts) {
+  var MAXPX = 16000000;  /* canvas pixel budget that even a phone can draw */
+  var MAXSIDE = 16384;   /* phone GPU texture limit - a sheet taller/wider than this will not open in a gallery app */
+  async function decodeAll(fs) {
     var imgs = [], i;
     for (i = 0; i < fs.length; i++) {
       st("Decoding " + fs[i].name + " (" + (i + 1) + "/" + fs.length + ")…");
       imgs.push(await loadImg(fs[i]));
     }
+    return imgs;
+  }
+  function planLayout(imgs, opts) {
+    var i;
     var maxW = 0;
     for (i = 0; i < imgs.length; i++) maxW = Math.max(maxW, imgs[i].naturalWidth || 1);
     function makeLayout(TW, THx) {
@@ -268,15 +273,24 @@
       }
       note = "The joined sheet was larger than this device can draw, so it was scaled to " + lay.W + "×" + lay.H + " px.";
     }
+    return { lay: lay, TW: TW, note: note };
+  }
+  async function drawLayout(lay, mime) {
     var cv = document.createElement("canvas"); cv.width = lay.W; cv.height = lay.H;
     var ctx = cv.getContext("2d");
-    if (opts.mime === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, lay.W, lay.H); }
-    for (i = 0; i < lay.items.length; i++) {
+    if (mime === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, lay.W, lay.H); }
+    for (var i = 0; i < lay.items.length; i++) {
       ctx.drawImage(lay.items[i].im, lay.items[i].x, lay.items[i].y, lay.items[i].w, lay.items[i].h);
     }
-    var blob = await new Promise(function (res) { cv.toBlob(res, opts.mime, 0.92); });
-    if (!blob) throw new Error("this browser cannot encode ." + opts.outExt + " images");
-    return { blob: blob, outExt: opts.outExt, note: note };
+    var blob = await new Promise(function (res) { cv.toBlob(res, mime, 0.92); });
+    if (!blob) throw new Error("this browser cannot encode this image format");
+    return blob;
+  }
+  async function buildImage(fs, opts) {
+    var imgs = await decodeAll(fs);
+    var p = planLayout(imgs, opts);
+    var blob = await drawLayout(p.lay, opts.mime);
+    return { blob: blob, outExt: opts.outExt, note: p.note };
   }
 
   /* one image → one embedded PDF page (orientation-safe) */
@@ -386,11 +400,23 @@
           var mime = (e === "webp") ? "image/webp" : (e === "jpg" || e === "jpeg") ? "image/jpeg" : "image/png";
           var outExt = (e === "webp") ? "webp" : (e === "jpg" || e === "jpeg") ? "jpg" : "png";
           st("Joining " + list.length + " images (" + imgLayout.options[imgLayout.selectedIndex].text.toLowerCase() + ")…");
-          var r = await buildImage(list, { layout: imgLayout.value, width: imgWidth.value, mime: mime, outExt: outExt });
-          blob = r.blob;
-          if (r.note) note = r.note;
-          if (outExt !== e) note = (note ? note + " " : "") + "This browser cannot encode ." + e + " — the merged image is saved as ." + outExt + ".";
-          e = outExt;
+          var imgs = await decodeAll(list);
+          var p = planLayout(imgs, { layout: imgLayout.value, width: imgWidth.value, mime: mime, outExt: outExt });
+          var tooBig = Math.max(p.lay.W, p.lay.H) > MAXSIDE;
+          if (tooBig && window.PDFLib) {
+            /* A sheet over the phone limit would never open in a gallery app —
+               give something readable instead: one full PDF page per image. */
+            st("The joined image would be " + p.lay.W + "×" + p.lay.H + " px — taller than a phone can display. Building a PDF instead…");
+            blob = await imagesToPdf(list, e);
+            note = "The joined image would be " + p.lay.W + "×" + p.lay.H + " px — over the " + MAXSIDE + " px phone limit — so every image was placed on its own full PDF page instead (easy to read, opens everywhere). Want an image file after all? Pick a smaller Page width or merge fewer pages at a time.";
+            e = "pdf";
+          } else {
+            blob = await drawLayout(p.lay, mime);
+            if (p.note) note = p.note;
+            if (tooBig) note = (note ? note + " " : "") + "Careful: the sheet is " + p.lay.W + "×" + p.lay.H + " px — bigger than most phones can display.";
+            if (outExt !== e) note = (note ? note + " " : "") + "This browser cannot encode ." + e + " — the merged image is saved as ." + outExt + ".";
+            e = outExt;
+          }
         }
       } else if (e === "wav") {
         var bufs = [];
