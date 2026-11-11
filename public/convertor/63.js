@@ -428,6 +428,51 @@
       im.src = URL.createObjectURL(blob);
     });
   }
+  /* EXIF orientation of a JPEG (1 = normal). Raw bytes embedded into a PDF keep the
+     stored rotation, so a phone photo would show sideways — re-encode when != 1. */
+  function jpgOrientation(u) {
+    if (!u || u.length < 4 || u[0] !== 0xff || u[1] !== 0xd8) return 1;
+    var o = 2;
+    while (o + 4 <= u.length) {
+      if (u[o] !== 0xff) { o++; continue; }
+      var m = u[o + 1];
+      if (m === 0xff) { o++; continue; }
+      if (m === 0x01 || m === 0xd8 || (m >= 0xd0 && m <= 0xd7)) { o += 2; continue; }
+      if (m === 0xd9 || m === 0xda) break;
+      var len = (u[o + 2] << 8) | u[o + 3];
+      if (len < 2) return 1;
+      if (m === 0xe1 && o + 10 <= u.length && u[o + 4] === 0x45 && u[o + 5] === 0x78 &&
+          u[o + 6] === 0x69 && u[o + 7] === 0x66 && u[o + 8] === 0x00) {
+        var t = o + 10;
+        if (t + 8 > u.length) return 1;
+        var le = (u[t] === 0x49 && u[t + 1] === 0x49);
+        function g16(p) { return le ? (u[p] | (u[p + 1] << 8)) : ((u[p] << 8) | u[p + 1]); }
+        function g32(p) { return le ? ((u[p] | (u[p + 1] << 8) | (u[p + 2] << 16) | (u[p + 3] << 24)) >>> 0)
+          : (((u[p] << 24) | (u[p + 1] << 16) | (u[p + 2] << 8) | u[p + 3]) >>> 0); }
+        var ifd = t + g32(t + 4);
+        if (ifd + 2 > u.length) return 1;
+        var n = g16(ifd), k, en;
+        for (k = 0; k < n && ifd + 2 + k * 12 + 8 <= u.length; k++) {
+          en = ifd + 2 + k * 12;
+          if (g16(en) === 0x0112) { var v = g16(en + 8); return (v >= 1 && v <= 8) ? v : 1; }
+        }
+        return 1;
+      }
+      o += 2 + len;
+    }
+    return 1;
+  }
+  function u8(abuf) { return new Uint8Array(abuf); }
+  async function reencodeJpg(blob) {
+    var im = await loadImg(blob);
+    var cv = document.createElement("canvas");
+    cv.width = Math.max(1, im.naturalWidth); cv.height = Math.max(1, im.naturalHeight);
+    var ctx = cv.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(im, 0, 0);
+    var b = await new Promise(function (res) { cv.toBlob(res, "image/jpeg", 0.92); });
+    return u8(await b.arrayBuffer());
+  }
   function dl(blob, name) { var a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click();
@@ -448,7 +493,10 @@
         var bytes = new Uint8Array(await f.arrayBuffer());
         var type = f.type, img;
         if (/\.gif$/i.test(f.name)) type = "image/gif";
-        if (type === "image/jpeg" || /\.jpe?g$/i.test(f.name)) img = await doc.embedJpg(bytes);
+        if (type === "image/jpeg" || /\.jpe?g$/i.test(f.name)) {
+          img = (jpgOrientation(bytes) === 1) ? await doc.embedJpg(bytes)
+                                              : await doc.embedJpg(await reencodeJpg(f));
+        }
         else if (type === "image/png" || /\.png$/i.test(f.name)) img = await doc.embedPng(bytes);
         else {
           var im = await loadImg(f);

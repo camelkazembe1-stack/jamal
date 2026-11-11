@@ -12,7 +12,7 @@
 <main class="wrap">
   <a class="back" href="/computer/62">&larr; Computer</a>
   <h1>All File Viewer</h1>
-  <p class="sub">Choose file(s) from this device and open them right here &mdash; ANY file works: video and audio play, images, PDF, Word, Excel, PowerPoint data, CSV, JSON, Markdown, HTML, ZIP contents, text and code open in place, and every other file still shows its details with a hex peek. Nothing uploads; files never leave this device.</p>
+  <p class="sub">Choose file(s) from this device and open them right here &mdash; ANY file works: video and audio play, images, PDF, Word, Excel, PowerPoint data, CSV, JSON, Markdown, HTML, ZIP contents, text and code open in place, and every other file still shows its details with a hex peek. Images get a real ZOOM (&minus; / + / Fit) so even a very long merged sheet can be read 1:1. Nothing uploads; files never leave this device.</p>
 
   <div class="card afv-card">
     <input type="file" id="afv-input" multiple hidden>
@@ -25,6 +25,12 @@
       <div class="afv-phead">
         <b class="afv-pname" id="afv-pname"></b>
         <span class="afv-pactions">
+          <span class="afv-zoom" id="afv-zoombox" hidden>
+            <button type="button" class="afv-mini" id="afv-zoomout" title="Zoom out">&minus;</button>
+            <span class="afv-zval" id="afv-zval">Fit</span>
+            <button type="button" class="afv-mini" id="afv-zoomin" title="Zoom in">+</button>
+            <button type="button" class="afv-mini" id="afv-zoomfit" title="Back to fit width">Fit</button>
+          </span>
           <button type="button" class="afv-mini" id="afv-dl">Download</button>
           <button type="button" class="afv-mini" id="afv-tab">Open in new tab</button>
           <button type="button" class="afv-mini" id="afv-close">Close</button>

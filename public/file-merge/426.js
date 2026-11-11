@@ -20,7 +20,10 @@
 
   var drop = $("drop"), fileIn = $("file"), runBtn = $("run"), ul = $("files");
   var outcard = $("outcard"), outinfo = $("outinfo"), dlBtn = $("dl"), nohdr = $("nohdr");
-  var outBlob = null, outName = "";
+  var imgopts = $("imgopts"), imgLayout = $("img-layout"), imgWidth = $("img-width"), imgPdf = $("img-pdf");
+  var outprev = $("outprev");
+  var outBlob = null, outName = "", prevUrl = null;
+  var IMG_EXTS = ["jpg", "jpeg", "png", "webp", "bmp", "gif"];
 
   drop.onclick = function () { fileIn.click(); };
   drop.ondragover = function (e) { e.preventDefault(); drop.classList.add("over"); };
@@ -31,6 +34,8 @@
 
   function show() {
     ul.innerHTML = ""; outcard.hidden = true; outBlob = null; outName = "";
+    clearPreview();
+    if (imgopts) imgopts.hidden = true;
     var fs = fileIn.files; if (!fs.length) return;
     var tot = 0, exts = {};
     Array.prototype.forEach.call(fs, function (f) {
@@ -47,7 +52,39 @@
       st("Mixed extensions selected (" + parts.join(", ") + ") — MERGE only joins files with the SAME extension.", "warn");
     } else {
       st(fs.length + " file(s) ready · " + fb(tot) + " total · extension ." + kinds[0]);
+      if (imgopts && IMG_EXTS.indexOf(kinds[0]) !== -1) imgopts.hidden = false;
     }
+  }
+
+  /* ---------- live preview of the merged result ---------- */
+  function clearPreview() {
+    if (prevUrl) { try { URL.revokeObjectURL(prevUrl); } catch (er) {} prevUrl = null; }
+    if (outprev) { outprev.innerHTML = ""; outprev.hidden = true; }
+  }
+  function showPreview(blob, e) {
+    if (!outprev) return;
+    clearPreview();
+    if (e !== "pdf" && IMG_EXTS.indexOf(e) === -1) return;
+    prevUrl = URL.createObjectURL(blob);
+    if (e === "pdf") {
+      var fr = document.createElement("iframe");
+      fr.src = prevUrl; fr.title = "Merged PDF preview";
+      outprev.appendChild(fr);
+      var cap = document.createElement("div"); cap.className = "t-prevcap";
+      cap.textContent = "Live preview — every image sits on its own full page. Download for the real file.";
+      outprev.appendChild(cap);
+    } else {
+      var im = document.createElement("img");
+      im.src = prevUrl; im.alt = "Merged image preview";
+      im.title = "Tap to open the full-size image in a new tab";
+      im.style.cursor = "zoom-in";
+      im.onclick = function () { window.open(prevUrl, "_blank"); };
+      outprev.appendChild(im);
+      var cap2 = document.createElement("div"); cap2.className = "t-prevcap";
+      cap2.textContent = "Live preview — scroll to check every part. Tap the image for 1:1 size in a new tab. The downloaded file is full size.";
+      outprev.appendChild(cap2);
+    }
+    outprev.hidden = false;
   }
 
   function ext(n) { var i = n.lastIndexOf("."); return i < 0 ? "" : n.slice(i + 1).toLowerCase(); }
@@ -108,26 +145,170 @@
   /* ---------- Image tools ---------- */
   function loadImg(blob) {
     return new Promise(function (res, rej) {
+      var u = URL.createObjectURL(blob);
       var im = new Image();
-      im.onload = function () { res(im); };
-      im.onerror = function () { rej(new Error("cannot decode this image")); };
-      im.src = URL.createObjectURL(blob);
+      im.onload = function () { URL.revokeObjectURL(u); res(im); };
+      im.onerror = function () { URL.revokeObjectURL(u); rej(new Error("cannot decode this image")); };
+      im.src = u;
     });
   }
-  async function stackImages(fs, e) {
-    var imgs = [], w = 0, h = 0, i;
-    for (i = 0; i < fs.length; i++) { var im = await loadImg(fs[i]); imgs.push(im);
-      w = Math.max(w, im.naturalWidth); h += im.naturalHeight; }
-    var cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+
+  /* Decode a JPEG's EXIF orientation (1 = normal). The browser applies it when an
+     <img> is drawn on a canvas, but raw embedding into a PDF does not — we use this
+     to decide when a phone photo must be re-encoded so it does not come out sideways. */
+  function jpgOrientation(u) {
+    if (!u || u.length < 4 || u[0] !== 0xff || u[1] !== 0xd8) return 1;
+    var o = 2;
+    while (o + 4 <= u.length) {
+      if (u[o] !== 0xff) { o++; continue; }
+      var m = u[o + 1];
+      if (m === 0xff) { o++; continue; }
+      if (m === 0x01 || m === 0xd8 || (m >= 0xd0 && m <= 0xd7)) { o += 2; continue; }
+      if (m === 0xd9 || m === 0xda) break;
+      var len = (u[o + 2] << 8) | u[o + 3];
+      if (len < 2) return 1;
+      if (m === 0xe1 && o + 10 <= u.length && u[o + 4] === 0x45 && u[o + 5] === 0x78 &&
+          u[o + 6] === 0x69 && u[o + 7] === 0x66 && u[o + 8] === 0x00) {
+        var t = o + 10;
+        if (t + 8 > u.length) return 1;
+        var le = (u[t] === 0x49 && u[t + 1] === 0x49); /* "II" = little endian */
+        function g16(p) { return le ? (u[p] | (u[p + 1] << 8)) : ((u[p] << 8) | u[p + 1]); }
+        function g32(p) { return le ? ((u[p] | (u[p + 1] << 8) | (u[p + 2] << 16) | (u[p + 3] << 24)) >>> 0)
+          : (((u[p] << 24) | (u[p + 1] << 16) | (u[p + 2] << 8) | u[p + 3]) >>> 0); }
+        var ifd = t + g32(t + 4);
+        if (ifd + 2 > u.length) return 1;
+        var n = g16(ifd), k, en;
+        for (k = 0; k < n && ifd + 2 + k * 12 + 8 <= u.length; k++) {
+          en = ifd + 2 + k * 12;
+          if (g16(en) === 0x0112) { var v = g16(en + 8); return (v >= 1 && v <= 8) ? v : 1; }
+        }
+        return 1;
+      }
+      o += 2 + len;
+    }
+    return 1;
+  }
+
+  /* Build one merged sheet. Every image is first scaled to a COMMON width (or
+     common height / grid cell) so nothing ends up small in a corner of a huge
+     canvas — the old raw-pixel stacking is what made results look squeezed.
+     Positions are accumulated while placing, so tiles always sit flush. */
+  var MAXPX = 16000000; /* canvas pixel budget that even a phone can draw */
+  async function buildImage(fs, opts) {
+    var imgs = [], i;
+    for (i = 0; i < fs.length; i++) {
+      st("Decoding " + fs[i].name + " (" + (i + 1) + "/" + fs.length + ")…");
+      imgs.push(await loadImg(fs[i]));
+    }
+    var maxW = 0;
+    for (i = 0; i < imgs.length; i++) maxW = Math.max(maxW, imgs[i].naturalWidth || 1);
+    function makeLayout(TW, THx) {
+      var items = [], W = Math.max(1, TW), H = 1, i, s, w, h;
+      if (opts.layout === "horizontal") {
+        var TH = THx || imgs[0].naturalHeight || 1;
+        if (!THx) for (i = 0; i < imgs.length; i++) TH = Math.min(TH, imgs[i].naturalHeight || TH);
+        var x = 0;
+        for (i = 0; i < imgs.length; i++) {
+          s = TH / (imgs[i].naturalHeight || 1);
+          w = Math.max(1, Math.round(imgs[i].naturalWidth * s));
+          items.push({ im: imgs[i], x: x, y: 0, w: w, h: TH });
+          x += w;
+        }
+        W = Math.max(1, x); H = TH;
+      } else if (opts.layout === "grid2" || opts.layout === "grid3") {
+        var cols = opts.layout === "grid2" ? 2 : 3;
+        var cw = Math.max(1, Math.floor(TW / cols));
+        var hs = [];
+        for (i = 0; i < imgs.length; i++) {
+          hs.push(Math.max(1, Math.round(imgs[i].naturalHeight * cw / Math.max(1, imgs[i].naturalWidth))));
+        }
+        var y = 0, r = 0, rh, c;
+        while (r * cols < imgs.length) {
+          rh = 0;
+          for (c = r * cols; c < Math.min((r + 1) * cols, imgs.length); c++) rh = Math.max(rh, hs[c]);
+          for (c = r * cols; c < Math.min((r + 1) * cols, imgs.length); c++) {
+            items.push({ im: imgs[c], x: (c % cols) * cw, y: y, w: cw, h: hs[c] });
+          }
+          y += rh; r++;
+        }
+        W = Math.max(1, TW); H = Math.max(1, y);
+      } else { /* vertical — every image at the same width, stacked edge-to-edge */
+        var y2 = 0;
+        for (i = 0; i < imgs.length; i++) {
+          s = TW / Math.max(1, imgs[i].naturalWidth);
+          h = Math.max(1, Math.round(imgs[i].naturalHeight * s));
+          items.push({ im: imgs[i], x: 0, y: y2, w: Math.max(1, TW), h: h });
+          y2 += h;
+        }
+        H = Math.max(1, y2);
+      }
+      return { items: items, W: W, H: H };
+    }
+    var TW = (opts.width === "orig") ? maxW
+      : Math.max(1, Math.min(parseInt(opts.width, 10) || maxW, maxW)); /* never upscale past the widest original */
+    var lay = makeLayout(TW, 0), note = "";
+    if (lay.W * lay.H > MAXPX) {
+      var sc = Math.sqrt(MAXPX / (lay.W * lay.H));
+      if (opts.layout === "horizontal") {
+        var TH2 = Math.max(1, Math.floor(lay.H * sc));
+        lay = makeLayout(TW, TH2);
+        while (lay.W * lay.H > MAXPX && TH2 > 1) {
+          sc = Math.sqrt(MAXPX / (lay.W * lay.H));
+          TH2 = Math.max(1, Math.floor(TH2 * sc));
+          lay = makeLayout(TW, TH2);
+        }
+      } else {
+        TW = Math.max(1, Math.floor(TW * sc));
+        lay = makeLayout(TW, 0);
+        while (lay.W * lay.H > MAXPX && TW > 1) {
+          sc = Math.sqrt(MAXPX / (lay.W * lay.H));
+          TW = Math.max(1, Math.floor(TW * sc));
+          lay = makeLayout(TW, 0);
+        }
+      }
+      note = "The joined sheet was larger than this device can draw, so it was scaled to " + lay.W + "×" + lay.H + " px.";
+    }
+    var cv = document.createElement("canvas"); cv.width = lay.W; cv.height = lay.H;
     var ctx = cv.getContext("2d");
-    if (e === "jpg" || e === "jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h); }
-    var y = 0;
-    for (i = 0; i < imgs.length; i++) { ctx.drawImage(imgs[i], 0, y); y += imgs[i].naturalHeight; }
-    var mime = (e === "webp") ? "image/webp" : (e === "jpg" || e === "jpeg") ? "image/jpeg" : "image/png";
-    var outExt = (e === "webp") ? "webp" : (e === "jpg" || e === "jpeg") ? "jpg" : "png";
-    var blob = await new Promise(function (res) { cv.toBlob(res, mime, 0.92); });
-    if (!blob) throw new Error("this browser cannot encode ." + outExt + " images");
-    return { blob: blob, outExt: outExt };
+    if (opts.mime === "image/jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, lay.W, lay.H); }
+    for (i = 0; i < lay.items.length; i++) {
+      ctx.drawImage(lay.items[i].im, lay.items[i].x, lay.items[i].y, lay.items[i].w, lay.items[i].h);
+    }
+    var blob = await new Promise(function (res) { cv.toBlob(res, opts.mime, 0.92); });
+    if (!blob) throw new Error("this browser cannot encode ." + opts.outExt + " images");
+    return { blob: blob, outExt: opts.outExt, note: note };
+  }
+
+  /* one image → one embedded PDF page (orientation-safe) */
+  async function pdfImage(doc, f, e) {
+    var bytes = u8(await ab(f));
+    if ((e === "jpg" || e === "jpeg") && jpgOrientation(bytes) === 1) return doc.embedJpg(bytes);
+    if (e === "png") return doc.embedPng(bytes);
+    /* rotated phone photo, gif, bmp, webp… — decode + re-encode through the canvas,
+       which applies the EXIF rotation for us */
+    var im = await loadImg(f);
+    var cv = document.createElement("canvas");
+    cv.width = Math.max(1, im.naturalWidth); cv.height = Math.max(1, im.naturalHeight);
+    var ctx = cv.getContext("2d");
+    if (e === "jpg" || e === "jpeg") { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height); }
+    ctx.drawImage(im, 0, 0);
+    if (e === "jpg" || e === "jpeg") {
+      var jb = await new Promise(function (res) { cv.toBlob(res, "image/jpeg", 0.92); });
+      return doc.embedJpg(u8(await jb.arrayBuffer()));
+    }
+    var pb = await new Promise(function (res) { cv.toBlob(res, "image/png"); });
+    return doc.embedPng(u8(await pb.arrayBuffer()));
+  }
+  async function imagesToPdf(list, e) {
+    if (!window.PDFLib) throw new Error("pdf-lib engine not loaded — reconnect and reload the page.");
+    var doc = await PDFLib.PDFDocument.create();
+    for (var i = 0; i < list.length; i++) {
+      st("Placing " + list[i].name + " on page " + (i + 1) + "/" + list.length + "…");
+      var img = await pdfImage(doc, list[i], e);
+      var page = doc.addPage([img.width, img.height]);
+      page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+    }
+    return new Blob([await doc.save()], { type: "application/pdf" });
   }
 
   /* ---------- CSV header helper ---------- */
@@ -145,7 +326,7 @@
     }
     if (!e) { st("These files have no extension — MERGE needs one to know how to join them.", "err"); return; }
     var txtExt = ["txt","md","markdown","log","html","htm","css","js","mjs","ts","jsx","tsx","py","java","c","h","cpp","hpp","cs","php","rb","go","rs","sh","bash","sql","yml","yaml","toml","ini","cfg","conf","env","srt","vtt","tex","rtf"];
-    outcard.hidden = true; outBlob = null;
+    outcard.hidden = true; outBlob = null; clearPreview();
     runBtn.disabled = true;
     try {
       var blob = null, note = "";
@@ -195,12 +376,22 @@
           for (var j = 0; j < pages.length; j++) doc.addPage(pages[j]);
         }
         blob = new Blob([await doc.save()], { type: "application/pdf" });
-      } else if (e === "jpg" || e === "jpeg" || e === "png" || e === "webp" || e === "bmp" || e === "gif") {
-        st("Stacking " + list.length + " images vertically…");
-        var r = await stackImages(list, e);
-        blob = r.blob;
-        if (r.outExt !== e) note = "This browser cannot encode ." + e + " — the merged image is saved as ." + r.outExt + ".";
-        e = r.outExt;
+      } else if (IMG_EXTS.indexOf(e) !== -1) {
+        if (imgPdf && imgPdf.checked) {
+          st("Building the PDF — one image per full page…");
+          blob = await imagesToPdf(list, e);
+          note = "Images saved as a PDF — each one fills its own page, easy to read without zooming.";
+          e = "pdf";
+        } else {
+          var mime = (e === "webp") ? "image/webp" : (e === "jpg" || e === "jpeg") ? "image/jpeg" : "image/png";
+          var outExt = (e === "webp") ? "webp" : (e === "jpg" || e === "jpeg") ? "jpg" : "png";
+          st("Joining " + list.length + " images (" + imgLayout.options[imgLayout.selectedIndex].text.toLowerCase() + ")…");
+          var r = await buildImage(list, { layout: imgLayout.value, width: imgWidth.value, mime: mime, outExt: outExt });
+          blob = r.blob;
+          if (r.note) note = r.note;
+          if (outExt !== e) note = (note ? note + " " : "") + "This browser cannot encode ." + e + " — the merged image is saved as ." + outExt + ".";
+          e = outExt;
+        }
       } else if (e === "wav") {
         var bufs = [];
         for (i = 0; i < list.length; i++) { st("Decoding " + list[i].name + "…"); bufs.push(u8(await ab(list[i]))); }
@@ -222,6 +413,7 @@
       }
       outBlob = blob; outName = "merged." + e;
       outinfo.textContent = outName + " · " + fb(blob.size) + (note ? " · " + note : "");
+      showPreview(blob, e);
       outcard.hidden = false;
       st("Merged " + list.length + " files into " + outName + ".", "ok");
     } catch (err) { st("Could not merge: " + (err && err.message ? err.message : err), "err"); }
