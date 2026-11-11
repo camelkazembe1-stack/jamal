@@ -14,32 +14,20 @@
   <h1>Stock Management</h1>
   <p class="sub">Everything stock in one place: register what the business keeps in stock, watch what is present right now, and record every movement in and out. Updates live.</p>
 
-  <a class="hub-btn" href="/stock-register/397">
-    <span class="hub-icon">📦</span>
-    <span class="hub-text">
-      <b>Stock Register</b>
-      <small>Register every stock item with its Name, the Units Present it starts with, its Buying Price per Package, Units per Package and Unit Selling Price &mdash; everything every other stock module reads.</small>
-    </span>
-    <span class="hub-arrow">&rarr;</span>
-  </a>
-
-  <a class="hub-btn" href="/stock-progress/398">
-    <span class="hub-icon">📈</span>
-    <span class="hub-text">
-      <b>Stock Progress</b>
-      <small>The current position of every registered stock &mdash; S/N, Stock Name, Units Present, Unit SP and Package BP, refreshed the moment a Stock Change is saved.</small>
-    </span>
-    <span class="hub-arrow">&rarr;</span>
-  </a>
-
-  <a class="hub-btn" href="/stock-change/399">
-    <span class="hub-icon">🔄</span>
-    <span class="hub-text">
-      <b>Stock Change</b>
-      <small>All fourteen stock-change causes in four groups &mdash; pick the cause, pick the stock, enter the quantity as Packages or as Units and save: the stock moves and the transaction is recorded.</small>
-    </span>
-    <span class="hub-arrow">&rarr;</span>
-  </a>
+  <div class="mod-grid">
+    <a class="mod" href="/stock-register/397" title="Register every stock item with its Name, the Units Present it starts with, its Buying Price per Package, Units per Package and Unit Selling Price &mdash; everything every other stock module reads.">
+      <span class="mod-ico">📦</span>
+      <span class="mod-label">Stock Register<span class="mod-sub">items &middot; units &middot; prices</span></span>
+    </a>
+    <a class="mod" href="/stock-progress/398" title="The current position of every registered stock &mdash; S/N, Stock Name, Units Present, Unit SP and Package BP, refreshed the moment a Stock Change is saved.">
+      <span class="mod-ico">📈</span>
+      <span class="mod-label">Stock Progress<span class="mod-sub">live units on hand</span></span>
+    </a>
+    <a class="mod" href="/stock-change/399" title="All fourteen stock-change causes in four groups &mdash; pick the cause, pick the stock, enter the quantity as Packages or as Units and save: the stock moves and the transaction is recorded.">
+      <span class="mod-ico">🔄</span>
+      <span class="mod-label">Stock Change<span class="mod-sub">moves stock in &amp; out</span></span>
+    </a>
+  </div>
 </main>
 <script type="module" src="/stock-management/396.js"></script>
 </body>

@@ -20,7 +20,10 @@
 
   var drop = $("drop"), fileIn = $("file"), runBtn = $("run"), ul = $("files");
   var outcard = $("outcard"), outinfo = $("outinfo"), dlBtn = $("dl"), nohdr = $("nohdr");
-  var imgopts = $("imgopts"), imgLayout = $("img-layout"), imgWidth = $("img-width"), imgPdf = $("img-pdf");
+  var imgopts = $("imgopts"), imgLayout = $("img-layout"), imgWidth = $("img-width");
+  function syncImgRows() { var wr = $("img-width-row");
+    if (wr) wr.hidden = (imgLayout.value === "pdf"); }
+  if (imgLayout) imgLayout.onchange = syncImgRows;
   var outprev = $("outprev");
   var outBlob = null, outName = "", prevUrl = null;
   var IMG_EXTS = ["jpg", "jpeg", "png", "webp", "bmp", "gif"];
@@ -52,7 +55,7 @@
       st("Mixed extensions selected (" + parts.join(", ") + ") — MERGE only joins files with the SAME extension.", "warn");
     } else {
       st(fs.length + " file(s) ready · " + fb(tot) + " total · extension ." + kinds[0]);
-      if (imgopts && IMG_EXTS.indexOf(kinds[0]) !== -1) imgopts.hidden = false;
+      if (imgopts && IMG_EXTS.indexOf(kinds[0]) !== -1) { imgopts.hidden = false; syncImgRows(); }
     }
   }
 
@@ -71,7 +74,7 @@
       fr.src = prevUrl; fr.title = "Merged PDF preview";
       outprev.appendChild(fr);
       var cap = document.createElement("div"); cap.className = "t-prevcap";
-      cap.textContent = "Live preview — every image sits on its own full page. Download for the real file.";
+      cap.textContent = "Live preview — every image sits centred on its own A4 page. Download for the real file.";
       outprev.appendChild(cap);
     } else {
       var im = document.createElement("img");
@@ -313,14 +316,22 @@
     var pb = await new Promise(function (res) { cv.toBlob(res, "image/png"); });
     return doc.embedPng(u8(await pb.arrayBuffer()));
   }
+  /* One image per A4 page — portrait pages for portrait photos, landscape for
+     landscape ones — centred with a small margin, never upscaled. A stack of
+     document photos comes out like a properly scanned file: uniform pages,
+     nothing cropped, nothing squeezed into a giant strip. */
+  var A4P = [595.28, 841.89], A4L = [841.89, 595.28], PDFM = 24;
   async function imagesToPdf(list, e) {
     if (!window.PDFLib) throw new Error("pdf-lib engine not loaded — reconnect and reload the page.");
     var doc = await PDFLib.PDFDocument.create();
     for (var i = 0; i < list.length; i++) {
       st("Placing " + list[i].name + " on page " + (i + 1) + "/" + list.length + "…");
       var img = await pdfImage(doc, list[i], e);
-      var page = doc.addPage([img.width, img.height]);
-      page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+      var ps = (img.width > img.height) ? A4L : A4P;
+      var s = Math.min((ps[0] - PDFM * 2) / img.width, (ps[1] - PDFM * 2) / img.height, 1);
+      var page = doc.addPage(ps);
+      page.drawImage(img, { x: (ps[0] - img.width * s) / 2, y: (ps[1] - img.height * s) / 2,
+        width: img.width * s, height: img.height * s });
     }
     return new Blob([await doc.save()], { type: "application/pdf" });
   }
@@ -391,10 +402,10 @@
         }
         blob = new Blob([await doc.save()], { type: "application/pdf" });
       } else if (IMG_EXTS.indexOf(e) !== -1) {
-        if (imgPdf && imgPdf.checked) {
-          st("Building the PDF — one image per full page…");
+        if (imgLayout.value === "pdf") {
+          st("Building the PDF — one A4 page per image…");
           blob = await imagesToPdf(list, e);
-          note = "Images saved as a PDF — each one fills its own page, easy to read without zooming.";
+          note = "Images saved as one PDF — each photo sits centred on its own A4 page (portrait or landscape to match the photo), easy to read without zooming.";
           e = "pdf";
         } else {
           var mime = (e === "webp") ? "image/webp" : (e === "jpg" || e === "jpeg") ? "image/jpeg" : "image/png";
