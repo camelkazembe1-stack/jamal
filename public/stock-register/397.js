@@ -1,5 +1,5 @@
 
-await initRecords({
+initRecords({
   root: "#app", collection: "stockItems", entity: "stock item",
   addLabel: "Add Stock Item", saveLabel: "Save",
   fields: [
