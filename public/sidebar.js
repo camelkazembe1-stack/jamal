@@ -17,12 +17,29 @@ catch (e) {}
  }
 
  var session = readSession();
+
+ var MODE_KEY = "JAMALI_SYSTEM_MODE";
+ function readMode() {
+   try { return sessionStorage.getItem(MODE_KEY) === "personal" ? "personal" : "organisation"; }
+   catch (e) { return "organisation"; }
+ }
+ function setMode(mode) {
+   try { sessionStorage.setItem(MODE_KEY, mode); } catch (e) {}
+   import("/firebase.js").then(function (fb) {
+     var u = fb.auth && fb.auth.currentUser;
+     var mail = u && u.email ? String(u.email).toLowerCase() : "";
+     if (mail) { try { localStorage.setItem("JAMALI_MODE::" + mail, mode); } catch (e) {} }
+   }).catch(function () {});
+ }
+ function clearMode() {
+   try { sessionStorage.removeItem(MODE_KEY); } catch (e) {}
+ }
  
  var ALWAYS_OPEN = ["home", "file-viewer"];
 var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
  function folderAllowed(folder) {
    if (!session) return false;
-   if (session.role === "admin") return true;
+   if (isAdmin()) return true;
    if (folder === "system-admin") return false;
    if (ALWAYS_OPEN.indexOf(folder) !== -1) return true;
    var par = PARENT[folder]; if (par && session.grants.indexOf(par) !== -1) return true; return !!(session.grants && session.grants.indexOf(folder) !== -1);
@@ -64,6 +81,12 @@ res(u); });
     }
   }
 
+  // A direct visit to the users/administration desk is allowed only while the
+  // system is in the organisation mode (admins). Otherwise go home.
+  if (session && current === "system-admin" && !folderAllowed("system-admin")) {
+    location.replace("/home/1");
+  }
+
     
     
     var PAGE_ID = location.pathname.replace(/^\//, "")
@@ -84,7 +107,9 @@ res(u); });
  var VIS_CHANGE = null;
 
     function isAdmin() {
-      return !!(session && session.role === "admin");
+      // The administrator areas exist only in the organisation mode: in the
+      // personal mode every admin issue is removed, for every account.
+      return !!(session && session.role === "admin" && readMode() !== "personal");
     }
 
     function applyVisData(d) {
@@ -256,6 +281,11 @@ p.label + "</a>";
    "#jamali-acct button{display:block;width:100%;text-align:left;border:0;background:none;",
    "color:#e2e8f0;font-size:13.5px;padding:10px 14px;cursor:pointer}",
    "#jamali-acct button:hover{background:#1e293b}",
+   "#jamali-acct .modecap{padding:8px 14px 0;font-size:11px;font-weight:800;letter-spacing:.5px;color:#64748b}",
+   "#jamali-acct .moderow{display:flex;gap:6px;padding:6px 10px 2px}",
+   "#jamali-acct .jamali-usemode{flex:1;border:1px solid #334155;border-radius:8px;background:#0b1220;color:#cbd5e1;font-size:12px;font-weight:700;padding:7px 4px;cursor:pointer;text-align:center;display:block;width:auto}",
+   "#jamali-acct .jamali-usemode:hover{background:#1e293b;color:#fff}",
+   "#jamali-acct .jamali-usemode.on{background:#0c4a6e;border-color:#38bdf8;color:#fff}",
    "#jamali-admin-btn{position:fixed;top:14px;right:14px;z-index:1001;border:0;border-radius:12px;",
    "padding:9px 18px;font-size:13.5px;font-weight:800;cursor:pointer;color:#06121f;",
 
@@ -389,6 +419,11 @@ p.label + "</a>";
   acct.hidden = true;
  acct.innerHTML =
   "<div class=\"who\"><b></b>" + roleLine + "</div>" +
+  "<div class=\"modecap\">Change Mode</div>" +
+  "<div class=\"moderow\">" +
+  "<button type=\"button\" class=\"jamali-usemode\" data-mode=\"organisation\">Organisation Use</button>" +
+  "<button type=\"button\" class=\"jamali-usemode\" data-mode=\"personal\">Personal Use</button>" +
+  "</div>" +
   "<button type=\"button\" id=\"jamali-switch\">Switch Account</button>" +
   "<button type=\"button\" id=\"jamali-logout\">Logout</button>";
  acct.querySelector(".who b").textContent = who;
@@ -398,16 +433,44 @@ p.label + "</a>";
 function (ev) {
     ev.stopPropagation();
     acct.hidden = !acct.hidden;
+    if (!acct.hidden) paintModeButtons();
   });
   document.addEventListener("click", function (ev) {
     if (!acct.hidden && ev.target !== acct && !acct.contains(ev.target))
 acct.hidden = true;
   });
 
+  // Change Mode: every account, admin or normal, can flip between the
+  // organisation workspace and the personal private container. The database
+  // keeps the two apart; the page reloads so nav and data follow the mode.
+  function paintModeButtons() {
+    var mode = readMode();
+    var btns = acct.querySelectorAll(".jamali-usemode");
+    for (var i = 0; i < btns.length; i++) {
+      var on = btns[i].getAttribute("data-mode") === mode;
+      btns[i].className = "jamali-usemode" + (on ? " on" : "");
+    }
+  }
+  (function () {
+    var btns = acct.querySelectorAll(".jamali-usemode");
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          var m = btn.getAttribute("data-mode");
+          if (m === readMode()) { acct.hidden = true; return; }
+          setMode(m);
+          location.reload();
+        });
+      })(btns[i]);
+    }
+    paintModeButtons();
+  })();
+
   
   document.getElementById("jamali-switch").addEventListener("click",
 function () {
     clearSession();
+    clearMode();
     location.href = "/";
   });
 
@@ -423,6 +486,7 @@ function () {
   document.getElementById("jamali-logout").addEventListener("click",
 function () {
     clearSession();
+    clearMode();
     location.href = "/";
  });
 
@@ -441,6 +505,7 @@ function () {
     btn.disabled = true;
     btn.textContent = "Logging out...";
     clearSession();
+    clearMode();
     import("/firebase.js").then(function (fb) {
       return fb.signOut(fb.auth);
     }).then(function () {
@@ -485,7 +550,7 @@ function () {
     });
     document.body.appendChild(abtn);
   }
-  if (session && session.role === "admin") {
+  if (session && session.role === "admin" && readMode() !== "personal") {
     ensureAdminBtn();
   }
 

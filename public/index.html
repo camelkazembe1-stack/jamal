@@ -57,6 +57,13 @@
   #recovery-line { margin: 8px 0 0; }
   .foot { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
   .hidden { display: none; }
+  .usebtns { display: flex; gap: 10px; margin-top: 20px; }
+  .usebtns button {
+    flex: 1; background: #0b1220; color: #e2e8f0; border: 1px solid #334155; border-radius: 12px;
+    padding: 14px 10px; font-size: 14px; font-weight: 800; cursor: pointer; transition: .2s; text-align: center;
+  }
+  .usebtns button:hover { border-color: #38bdf8; color: #fff; transform: translateY(-1px); }
+  .usebtns button small { display: block; margin-top: 6px; font-size: 11.5px; font-weight: 600; color: #94a3b8; }
   .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
   /* ---- account recovery panel (merged from the old recovery folders) ---- */
   .panel-title { font-size: 19px; text-align: center; margin-bottom: 14px; }
@@ -179,6 +186,20 @@
       <a class="panel-back" id="recovery-back">&larr; Back to Login</a>
     </section>
 
+    <section id="panel-mode" class="hidden">
+      <h2 class="panel-title">How are you using <span>JAMALI</span>?</h2>
+      <p class="sub">Are you using this system for organisation use or personal use?</p>
+      <div class="usebtns">
+        <button type="button" id="mode-organisation">Organisation Use
+          <small>The shared organisation workspace, like now</small>
+        </button>
+        <button type="button" id="mode-personal">Personal Use
+          <small>Your own private container, no admin areas</small>
+        </button>
+      </div>
+      <p class="google-note">One email keeps two separated containers: their data never mix. You can change the mode later from the account icon in the sidebar.</p>
+    </section>
+
     <p class="status" id="status"></p>
     <p class="foot">JAMALI MultiSystem Management © <span id="year"></span></p>
   </div>
@@ -197,6 +218,7 @@
     const ADMIN_PASS_HASH  = "5c784bdcad7f92a39757e3ac0ae25315f422c4d97ef11cb438d059e9a830e9af";
     const ADMIN_TOKEN_HASH = "3f965d6df52296c4c2bf89878067be2c79cf6895189978f379746874728caae1";
     const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
+    const MODE_KEY = "JAMALI_SYSTEM_MODE";
 
     const $ = (id) => document.getElementById(id);
     const status = $("status");
@@ -224,12 +246,30 @@
       $("panel-login").classList.toggle("hidden", which !== "login");
       $("panel-create").classList.toggle("hidden", which !== "create");
       $("panel-recovery").classList.toggle("hidden", which !== "recovery");
+      $("panel-mode").classList.toggle("hidden", which !== "mode");
       $("google-logout").hidden = (which === "gate");
       $("sub-line").textContent = which === "recovery"
         ? "Recover your token, your password or your phone number."
         : "Login to your account, or create one.";
       say("");
     }
+
+    // after a successful login the user picks the use mode: the organisation
+    // workspace (like now) or the personal private container. One email keeps
+    // both, the database stores them apart.
+    function askMode() {
+      showPanel("mode");
+    }
+    function chooseMode(mode) {
+      try {
+        sessionStorage.setItem(MODE_KEY, mode);
+        const u = auth.currentUser;
+        if (u && u.email) localStorage.setItem("JAMALI_MODE::" + normEmail(u.email), mode);
+      } catch (e) { }
+      location.href = "/home/1";
+    }
+    $("mode-organisation").addEventListener("click", () => chooseMode("organisation"));
+    $("mode-personal").addEventListener("click", () => chooseMode("personal"));
 
     async function ensureHouse() {
       if (auth.currentUser) return auth.currentUser;
@@ -254,6 +294,7 @@
       try {
         await signOut(auth);
         sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(MODE_KEY);
         showPanel("gate");
         say("Signed out of Google. See you next time.", true);
       } catch (err) {
@@ -564,7 +605,7 @@
             }
           }
           writeSession({ id: norm(ADMIN_USERNAME), usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
-          location.href = "/home/1";
+          askMode();
           return;
         }
 
@@ -596,7 +637,7 @@
         if (credSnap.data().tokenHash !== tokHash2) { say("Wrong token."); showRecovery(); btn.disabled = false; return; }
 
         writeSession({ id, ...acc }, user);
-        location.href = "/home/1";
+        askMode();
       } catch (err) {
         say("Login failed: " + friendly(err));
         btn.disabled = false;
@@ -685,7 +726,16 @@
         const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
         valid = !!(s && s.uid && s.uid === user.uid);
       } catch (e) { valid = false; }
-      if (valid) { location.replace("/home/1"); return; }
+      if (valid) {
+        try {
+          if (!sessionStorage.getItem(MODE_KEY)) {
+            const saved = localStorage.getItem("JAMALI_MODE::" + normEmail(user.email));
+            sessionStorage.setItem(MODE_KEY, saved === "personal" ? "personal" : "organisation");
+          }
+        } catch (e) { }
+        location.replace("/home/1");
+        return;
+      }
       sessionStorage.removeItem(SESSION_KEY);
       enterFront(user);
     });

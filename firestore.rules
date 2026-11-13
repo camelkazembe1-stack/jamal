@@ -161,5 +161,11 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create, update, delete: if isSystemAdmin();
     }
+
+    match /data/{containerKey}/{rest=**} {
+      allow read, write: if isSignedIn()
+        && request.auth.token.email is string
+        && containerKey == request.auth.token.email.lower() + "__personal";
+    }
   }
 }
