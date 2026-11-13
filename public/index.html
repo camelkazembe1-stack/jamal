@@ -191,10 +191,10 @@
       <p class="sub">Are you using this system for organisation use or personal use?</p>
       <div class="usebtns">
         <button type="button" id="mode-organisation">Organisation Use
-          <small>The shared organisation workspace, like now</small>
+          <small>The shared workspace - continue with your username and token login</small>
         </button>
         <button type="button" id="mode-personal">Personal Use
-          <small>Your own private container, no admin areas</small>
+          <small>Go straight to home with no user account</small>
         </button>
       </div>
       <p class="google-note">One email keeps two separated containers: their data never mix. You can change the mode later from the account icon in the sidebar.</p>
@@ -254,9 +254,10 @@
       say("");
     }
 
-    // after a successful login the user picks the use mode: the organisation
-    // workspace (like now) or the personal private container. One email keeps
-    // both, the database stores them apart.
+    // right after the Google sign-in (on the same user page) the user picks
+    // the use mode. Personal use goes straight to home with no user account;
+    // organisation use continues with the username and token login, exactly
+    // like before. One email keeps both, the database stores them apart.
     function askMode() {
       showPanel("mode");
     }
@@ -266,7 +267,17 @@
         const u = auth.currentUser;
         if (u && u.email) localStorage.setItem("JAMALI_MODE::" + normEmail(u.email), mode);
       } catch (e) { }
-      location.href = "/home/1";
+      if (mode === "personal") {
+        location.href = "/home/1";
+      } else {
+        showPanel("login");
+      }
+    }
+    // after the account login the mode is already chosen, so go home; ask only
+    // if the question was somehow skipped (deep link, restored page, ...).
+    function afterAccountLogin() {
+      if (sessionStorage.getItem(MODE_KEY)) { location.href = "/home/1"; }
+      else { askMode(); }
     }
     $("mode-organisation").addEventListener("click", () => chooseMode("organisation"));
     $("mode-personal").addEventListener("click", () => chooseMode("personal"));
@@ -342,7 +353,20 @@
     }
 
     async function enterFront(user) {
-      showPanel("login");
+      let savedMode = null;
+      try { savedMode = sessionStorage.getItem(MODE_KEY); } catch (e) { }
+      if (savedMode === "personal") {
+        // this browser session already runs in personal use: home, no user account
+        location.replace("/home/1");
+        return;
+      }
+      if (savedMode === "organisation") {
+        // the question was already answered here: continue to the account login
+        showPanel("login");
+      } else {
+        // the same user page asks first: organisation use or personal use
+        askMode();
+      }
       try {
         const rows = await accountsOfEmail(normEmail(user.email), user.uid);
         repairNotifications(rows);
@@ -605,7 +629,7 @@
             }
           }
           writeSession({ id: norm(ADMIN_USERNAME), usernameDisplay: ADMIN_USERNAME, position: "admin", role: "admin", grants: [] }, user);
-          askMode();
+          afterAccountLogin();
           return;
         }
 
@@ -637,7 +661,7 @@
         if (credSnap.data().tokenHash !== tokHash2) { say("Wrong token."); showRecovery(); btn.disabled = false; return; }
 
         writeSession({ id, ...acc }, user);
-        askMode();
+        afterAccountLogin();
       } catch (err) {
         say("Login failed: " + friendly(err));
         btn.disabled = false;
