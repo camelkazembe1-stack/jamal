@@ -782,3 +782,9 @@ THE FILES WITHOUT A PAGE NUMBER
 - .git - git's own filing cabinet, not part of the app and never served: the commit history, the branches, the hooks and the object store. Nothing in here is edited by hand.
 
 That is the whole tree: 1091 project files, 1082 of them under public, and every one of them is named above.
+
+ADMIN FIELD, OPTION AND BUTTON CONTROLS
+
+The administrator decides which input fields, predefined options and buttons ordinary users see. On any page, an administrator sees a small dash button at the top-right corner of every input field and every button, and input fields also carry a green plus beside the dash. The dash hides the control from every ordinary user at once: the field or button disappears completely and the layout closes the gap, so no empty space and no trace is left. The administrator keeps seeing the hidden control, marked with a red outline and a red dash, and clicking the same dash restores it. The plus turns a text field into a choice: the administrator types the list, separated by |, and from then on ordinary users get a dropdown they must pick from; their pick is written into the same field the page already reads, so no page code changes. Typing an empty list with the plus brings free typing back.
+
+Everything hidden on the whole system is listed in the Hidden panel at the bottom-right of the screen, and each entry carries a Show button that restores it. The configuration lives in one Firestore document, systemPageConfig/visibility, in three maps: fields, menu and options, each entry keyed by page. Every signed-in account may read it, and only the administrator may write it, exactly as firestore.rules already provides, so nothing needs to change on the server. The front door (index.html) carries no controls, the Account Administration page is never scanned, and page-level hiding through the menu keeps working as before.
