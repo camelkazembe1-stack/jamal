@@ -78,7 +78,7 @@ res(u); });
  
  
  
- var VIS = { fields: {}, menu: {} }; 
+ var VIS = { fields: {}, menu: {}, options: {} };
  var VIS_DOC = ["systemPageConfig", "visibility"];
  var DASHES = {}; 
 
@@ -87,8 +87,19 @@ res(u); });
     }
 
     function bootVisibility() {
-      return Promise.resolve();  
-}
+      return import("/firebase.js").then(function (fb) {
+        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]));
+      }).then(function (snap) {
+        if (snap && snap.exists()) {
+          var d = snap.data();
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+        }
+      }).catch(function (e) {
+        console.warn("visibility load skipped:", e);
+      });
+    }
 
  
  
@@ -292,7 +303,13 @@ p.label + "</a>";
    "#jamali-side-foot{flex:0 0 auto;padding:12px 14px;border-top:1px solid #1e293b;background:#0f172a}",
    "#jamali-google-logout{display:block;width:100%;box-sizing:border-box;border:0;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:900;letter-spacing:.5px;cursor:pointer;color:#fff;background:#dc2626;box-shadow:0 8px 20px rgba(0,0,0,.35)}",
    "#jamali-google-logout:hover{background:#b91c1c}",
-   "#jamali-google-logout:disabled{opacity:.6;cursor:default}"
+   "#jamali-google-logout:disabled{opacity:.6;cursor:default}",
+   ".jamali-dash.jamali-plus{background:#f0fdf4;color:#166534;border-color:#86efac}",
+   ".jamali-dash.jamali-plus:hover{background:#dcfce7}",
+   ".jamali-corner-dash.jamali-plus{right:23px}",
+   ".jamali-ctl-host .jamali-plus{margin-left:4px}",
+   ".jamali-vis-mark{outline-style:solid;background-color:rgba(248,113,113,.16)}",
+   "select.jamali-opts{font:inherit}"
  ].join("");
  document.head.appendChild(css);
 
@@ -659,6 +676,7 @@ VIS_DOC[1])).then(function (snap) {
      var d = snap.exists() ? snap.data() : {};
      VIS.fields = d.fields || {};
          VIS.menu = d.menu || {};
+         VIS.options = d.options || {};
          if (it.kind === "menu") delete VIS.menu[it.key];
          else delete VIS.fields[it.key];
          return saveVisibility();
@@ -676,7 +694,9 @@ VIS_DOC[1])).then(function (snap) {
  function showAllHidden() {
    import("/firebase.js").then(function (fb) {
      return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
-VIS_DOC[1])).then(function () {
+VIS_DOC[1])).then(function (snap) {
+       var d = snap.exists() ? snap.data() : {};
+       VIS.options = d.options || {};
        VIS.fields = {};
        VIS.menu = {};
        return saveVisibility();
@@ -740,6 +760,7 @@ nx.style.display = "none";
       scope: "visibility",
          fields: VIS.fields,
          menu: VIS.menu,
+         options: VIS.options,
          updatedBy: (session && session.username) || "",
          updatedAt: fb.serverTimestamp()
        });
@@ -876,8 +897,10 @@ el.getClientRects().length);
     var ctrls = root.querySelectorAll("input, select, textarea");
     for (var i = 0; i < ctrls.length; i++) {
       var c = ctrls[i];
-      if (c.type === "hidden" || insideJamaliUi(c) || !isVisibleEl(c))
-continue;
+      if (c.type === "hidden" || c.classList.contains("jamali-opts") ||
+          insideJamaliUi(c) ||
+          (!isVisibleEl(c) && !c._jamaliDash &&
+!c.hasAttribute("data-jamali-opts"))) continue;
       var row = c.closest ? c.closest("label") : null;
       if (row && !insideJamaliUi(row)) {
         
@@ -895,7 +918,7 @@ null);
       var b = btns[j];
       if (b.classList.contains("jamali-dash") || b.classList.contains("tg"))
 continue;
-      if (insideJamaliUi(b) || !isVisibleEl(b)) continue;
+      if (insideJamaliUi(b) || (!isVisibleEl(b) && !b._jamaliDash)) continue;
       put(b.id || ("btn-" + (slug(b.textContent) || ("x" + (++seq)))), b, null);
     }
     return map;
@@ -912,8 +935,100 @@ k.indexOf(prefix) === 0) {
    return out;
  }
 
- function applyUserHides(root) { return;  
-}
+ function optionsForPage() {
+   var out = {}, prefix = PAGE_ID + ":";
+   for (var k in VIS.options) {
+     if (Object.prototype.hasOwnProperty.call(VIS.options, k) &&
+k.indexOf(prefix) === 0) {
+       var v = VIS.options[k];
+       if (Array.isArray(v) && v.length) out[k.slice(prefix.length)] = v;
+     }
+   }
+   return out;
+ }
+
+ function fireInput(el) {
+   var evs = ["input", "change"];
+   for (var i = 0; i < evs.length; i++) {
+     try { el.dispatchEvent(new Event(evs[i], { bubbles: true })); } catch (e) {}
+   }
+ }
+
+ // The predefined-options swap: the original input stays in the DOM (the
+ // page's own script keeps reading and writing it), it is just hidden and a
+ // select is placed in its spot, mirroring every choice back into it.
+ function applyFieldOptions(el, list) {
+   var sel = el._jamaliOpts || null;
+   if (!list || !list.length) {
+     if (sel && sel.parentNode) sel.parentNode.removeChild(sel);
+     el._jamaliOpts = null;
+     if (el.getAttribute("data-jamali-opts")) {
+       el.removeAttribute("data-jamali-opts");
+       if (!el.getAttribute("data-jamali-gone")) el.style.display = "";
+     }
+     return;
+   }
+   if (!sel) {
+     sel = document.createElement("select");
+     sel.className = "jamali-opts";
+     sel.addEventListener("change", function () {
+       if (el.value === sel.value) return;
+       el.value = sel.value;
+       fireInput(el);
+     });
+     el._jamaliOpts = sel;
+     if (el.parentNode) el.parentNode.insertBefore(sel, el.nextSibling);
+     else document.body.appendChild(sel);
+   }
+   if (!el._jamaliOptsWired) {
+     el._jamaliOptsWired = true;
+     el.addEventListener("change", function () {
+       if (el._jamaliOpts && el._jamaliOpts.value !== el.value)
+el._jamaliOpts.value = el.value;
+     });
+   }
+   var cur = el.value == null ? "" : String(el.value);
+   var items = list.slice();
+   if (cur && items.indexOf(cur) === -1) items.unshift(cur);
+   sel.innerHTML = "";
+   for (var i = 0; i < items.length; i++) {
+     var o = document.createElement("option");
+     o.value = items[i];
+     o.textContent = items[i];
+     sel.appendChild(o);
+   }
+   var want = (cur && items.indexOf(cur) !== -1) ? cur : items[0];
+   sel.value = want;
+   if (el.value !== want) { el.value = want; fireInput(el); }
+   el.style.display = "none";
+   el.setAttribute("data-jamali-opts", "1");
+   sel.style.display = "";
+   sel.removeAttribute("data-jamali-gone");
+ }
+
+ function applyUserHides(root) {
+   var map = scanTargets(root);
+   var hidden = fieldsForPage();
+   var opts = optionsForPage();
+   for (var key in map) {
+     if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+     var t = map[key], el = t.el;
+     var isField = el.tagName !== "BUTTON";
+     var off = effHidden(key, el, hidden);
+     if (off) {
+       el.style.display = "none";
+       el.setAttribute("data-jamali-gone", "1");
+     } else if (el.getAttribute("data-jamali-gone")) {
+       el.removeAttribute("data-jamali-gone");
+       if (!el.getAttribute("data-jamali-opts")) el.style.display = "";
+     }
+     if (isField) {
+       applyFieldOptions(el, opts[key]);
+       var sel = el._jamaliOpts;
+       if (sel) sel.style.display = off ? "none" : "";
+     }
+   }
+ }
 
   
   
@@ -925,8 +1040,80 @@ k.indexOf(prefix) === 0) {
   
   
   
-  function scanAdminPage(root) { return;  
-}
+  // The + control: define the option list ordinary users must pick from.
+  function makeOptions(key, el, btn) {
+    return function () {
+      var full = PAGE_ID + ":" + key;
+      var cur = Array.isArray(VIS.options[full]) ?
+VIS.options[full].join(" | ") : "";
+      var ans = window.prompt(
+        "Predefined options for this field. Separate them with | - users " +
+        "will pick from this list only. Leave empty to go back to free typing:",
+        cur);
+      if (ans === null) return;
+      var parts = ans.split(/\||\n/), list = [];
+      for (var i = 0; i < parts.length; i++) {
+        var v = parts[i].trim();
+        if (v && list.indexOf(v) === -1) list.push(v);
+      }
+      import("/firebase.js").then(function (fb) {
+        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
+VIS_DOC[1])).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          if (list.length) VIS.options[full] = list;
+          else delete VIS.options[full];
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("options save failed", e);
+        dashError(btn);
+      });
+    };
+  }
+
+  function scanAdminPage(root) {
+    var map = scanTargets(root);
+    var hidden = fieldsForPage();
+    var opts = optionsForPage();
+    for (var key in map) {
+      if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+      var t = map[key], el = t.el;
+      var isField = el.tagName !== "BUTTON";
+      if (!el._jamaliDash) {
+        var dash = document.createElement("button");
+        dash.type = "button";
+        dash.className = "jamali-dash";
+        dash.textContent = "\u2212";
+        dash.addEventListener("click", makeToggler(key, dash));
+        el._jamaliDash = dash;
+        placeDash(t, dash);
+      }
+      if (isField && !el._jamaliPlus) {
+        var plus = document.createElement("button");
+        plus.type = "button";
+        plus.className = "jamali-dash jamali-plus";
+        plus.textContent = "+";
+        plus.title = "Predefined options - users must pick from this list";
+        plus.addEventListener("click", makeOptions(key, el, plus));
+        el._jamaliPlus = plus;
+        var dh = el._jamaliDash;
+        if (dh && dh.parentNode) dh.parentNode.insertBefore(plus,
+dh.nextSibling);
+        else placeDash(t, plus);
+      }
+      var off = effHidden(key, el, hidden);
+      setDashState(el._jamaliDash, off, isField ? "this field" : "this button");
+      if (isField) applyFieldOptions(el, opts[key]);
+      var mark = (isField && el._jamaliOpts) ? el._jamaliOpts : el;
+      mark.classList.toggle("jamali-vis-mark", !!off);
+      if (isField && el._jamaliOpts) el._jamaliOpts.style.display = "";
+    }
+  }
 
 
 function effHidden(key, el, hidden) {
@@ -968,6 +1155,7 @@ VIS_DOC[1])).then(function (snap) {
           var d = snap.exists() ? snap.data() : {};
           VIS.fields = d.fields || {};
           VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
           var full = PAGE_ID + ":" + key;
           if (VIS.fields[full]) delete VIS.fields[full]; else VIS.fields[full] =
 true;
