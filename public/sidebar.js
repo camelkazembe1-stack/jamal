@@ -210,7 +210,10 @@ break; }
 p.label + "</a>";
    var k = kidsOf(i);
    if (k.length) {
-     html += "<button type=\"button\" class=\"tg\" aria-expanded=\"false\"></button></div>";
+     var tgAttrs = isAdmin()
+       ? " type=\"button\" class=\"tg jamali-menu-hide\" data-mkey=\"" + p.folder + "\""
+       : " type=\"button\" class=\"tg\" aria-expanded=\"false\"";
+     html += "<button" + tgAttrs + "></button></div>";
      
      
      var open = true;  
@@ -327,7 +330,16 @@ p.label + "</a>";
    ".jamali-vis-mark{outline-style:solid;background-color:rgba(248,113,113,.16)}",
    ".jamali-vis-host{padding-right:26px}",
    ".jamali-ctl-host > input,.jamali-ctl-host > textarea,.jamali-ctl-host > select{padding-right:46px}",
-   "select.jamali-opts{font:inherit;max-width:100%}"
+   "select.jamali-opts{font:inherit;max-width:100%}",
+   ".jamali-menu-hide{align-self:center;flex:0 0 24px;width:24px;height:20px;margin:0 6px 0 0;",
+   "border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-weight:900;",
+   "font-size:10.5px;line-height:1;cursor:pointer;display:flex;align-items:center;",
+   "justify-content:center;padding:0}",
+   ".jamali-menu-hide:hover{background:#fee2e2}",
+   ".jamali-menu-hide.jamali-off{background:#dc2626;color:#fff;border-color:#b91c1c}",
+   ".jamali-menu-hide.jamali-off:hover{filter:brightness(1.08)}",
+   ".node.jamali-menu-gone>a{color:#f87171}",
+   ".node.jamali-menu-gone>a.active{border-left-color:#f87171}"
  ].join("");
  document.head.appendChild(css);
 
@@ -497,13 +509,25 @@ JSON.stringify(session.grants || []);
   function sync(btn) {
     var box = btn.parentNode.nextElementSibling;
     var open = !!(box && !box.hasAttribute("hidden"));
-    btn.textContent = open ? "\u25B4" : "\u25BE"; 
+    btn.textContent = open ? "(\u2212)" : "(+)";
     btn.setAttribute("aria-expanded", open ? "true" : "false");
   }
   function wireToggles(scope){
   var tgs=scope.querySelectorAll(".tg");
   for(var t=0;t<tgs.length;t++){
     (function(btn){
+      if (isAdmin() && btn.classList.contains("jamali-menu-hide")) {
+        // The administrator's sidebar minus: one click hides this whole area
+        // (every page under it included) for every user, live. The button
+        // turns red while the area is hidden; clicking it again restores.
+        btn.textContent = "(\u2212)";
+        btn.addEventListener("click", function () {
+          var f = btn.getAttribute("data-mkey");
+          if (!f) return;
+          makeMenuToggler(f, btn)();
+        });
+        return;
+      }
       sync(btn);
       btn.addEventListener("click",function(){
         var box=btn.parentNode.nextElementSibling;
@@ -534,6 +558,7 @@ function paintNav(){
   }
   nv.innerHTML=nav;
   wireToggles(nv);
+  try { applySidebarVis(); } catch (e) {}
 }
 
   
@@ -542,6 +567,7 @@ function paintNav(){
   function filterLinks(root) {
     var links = (root || document).querySelectorAll("a[href]");
     for (var i = 0; i < links.length; i++) {
+      if (insideJamaliUi(links[i])) continue;
       var href = links[i].getAttribute("href") || "";
       var m = href.match(/^\/([a-z0-9-]+)\//i);
       if (!m) continue;
@@ -598,7 +624,7 @@ VIS.fields[f]) {
   }
 
  function hiddenLabel(it) {
-   if (it.kind === "menu") return "Area: " + it.key;
+   if (it.kind === "menu") return "Area: " + labelOf(it.key);
    var i = it.key.indexOf(":");
    var page = it.key.slice(0, i), k = it.key.slice(i + 1);
    return k === "__page__" ? ("Page: " + page) : (k + " — " + page);
@@ -740,6 +766,17 @@ VIS_DOC[1])).then(function (snap) {
       var node = nodes[i];
       var f = node.getAttribute("data-folder");
       var gone = menuHidden(f) || pageHidden(pageIdOfFolder(f));
+      if (isAdmin()) {
+        // The administrator keeps the whole tree on screen and reads the
+        // hidden areas from the red minus buttons, so restoring is one
+        // click away; ordinary users get the rows removed completely.
+        node.style.display = "";
+        var kx = node.nextElementSibling;
+        if (kx && kx.classList && kx.classList.contains("kids")) kx.style.display = "";
+        node.classList.toggle("jamali-menu-gone", gone);
+        continue;
+      }
+      node.classList.remove("jamali-menu-gone");
       node.style.display = gone ? "none" : "";
       if (gone) {
         var nx = node.nextElementSibling;
@@ -747,7 +784,22 @@ VIS_DOC[1])).then(function (snap) {
 nx.style.display = "none";
       }
     }
-    
+    if (isAdmin()) {
+      var mhs = document.querySelectorAll("#jamali-sidebar .tg.jamali-menu-hide");
+      for (var m = 0; m < mhs.length; m++) {
+        var mf = mhs[m].getAttribute("data-mkey");
+        if (!mf) continue;
+        var mg = menuHidden(mf);
+        mhs[m].classList.toggle("jamali-off", mg);
+        var top = mg ? nearestHiddenAncestor(mf) : null;
+        mhs[m].title = !mg
+          ? "Hide this area for every user - its sub-pages hide with it. Click again to restore."
+          : (top
+            ? ("Hidden under " + labelOf(top) + " - click to restore that area and everything under it")
+            : "Hidden for every user - click to restore it");
+      }
+      return;
+    }
     var tgl = document.querySelectorAll("#jamali-sidebar .tg");
     for (var j = 0; j < tgl.length; j++) {
       var box = tgl[j].parentNode.nextElementSibling;
@@ -1235,6 +1287,59 @@ true;
 
  
   
+  // The sidebar area minus: hides (or restores) a whole menu area for every
+  // user. If the area is hidden only by itself the click restores it; if it
+  // is hidden because an ancestor is hidden, the click restores that
+  // nearest hidden ancestor, since a child of a hidden parent can never
+  // show on its own.
+  function makeMenuToggler(folder, btn) {
+    return function () {
+      import("/firebase.js").then(function (fb) {
+        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
+VIS_DOC[1])).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          if (VIS.menu[folder]) delete VIS.menu[folder];
+          else {
+            var top = nearestHiddenAncestor(folder);
+            if (top) delete VIS.menu[top];
+            else VIS.menu[folder] = true;
+          }
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("menu visibility save failed", e);
+        menuToggleError(btn);
+      });
+    };
+  }
+
+  function menuToggleError(btn) {
+    btn.textContent = "!";
+    setTimeout(function () { btn.textContent = "(\u2212)"; }, 1500);
+  }
+
+  // The nearest ancestor of the folder that is hidden in its own right;
+  // chainOf returns the folder last, so the walk starts at its parent.
+  function nearestHiddenAncestor(folder) {
+    var c = chainOf(folder);
+    for (var i = c.length - 2; i >= 0; i--) {
+      if (VIS.menu[c[i]]) return c[i];
+    }
+    return null;
+  }
+
+  function labelOf(folder) {
+    for (var i = 0; i < PAGES.length; i++) {
+      if (PAGES[i].folder === folder) return PAGES[i].label || folder;
+    }
+    return folder;
+  }
+
   function afterVisChange() {
     applySidebarVis();
     scanAdminPage(mainEl());
@@ -1250,6 +1355,12 @@ true;
     try { filterLinks(document); } catch (e) {}
     if (!PAGE_ID || current === "system-admin") return;
     var blocked = menuHidden(current) || pageHidden(PAGE_ID);
+    if (!isAdmin() && blocked && !document.querySelector(".jamali-vis-notice")) {
+      // The page this user is reading has just been hidden from the
+      // administrator's sidebar minus - block it on the spot, no reload.
+      blockPage();
+      return;
+    }
     if (!isAdmin() && document.querySelector(".jamali-vis-notice") && !blocked) {
       // This page was blocked before and the administrator has just
       // allowed it again - a reload brings the real page in.
