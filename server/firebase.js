@@ -13,8 +13,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
-  collection as _collection,
-  doc as _doc,
+  collection,
+  doc,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -53,63 +53,9 @@ provider.setCustomParameters({ prompt: "select_account" });
 
 export const db = getFirestore(app);
 
-// ---------- MODE CONTAINER: one email, two separated data containers ----------
-// After login the user picks the mode: "organisation use" or "personal use".
-// The mode travels in sessionStorage under JAMALI_SYSTEM_MODE.
-//   organisation (default) - every collection stays exactly where it is today,
-//                            shared with the organisation, like now.
-//   personal               - all app data (every collection whose name does
-//                            NOT start with "system") is transparently moved
-//                            into data/<email>__personal/<collection>/ so the
-//                            same email holds a second, fully private container,
-//                            and the two containers never mix. The system
-//                            collections (accounts, credentials, admins...) stay
-//                            shared so login keeps working in both modes.
-
-function jamaliReadMode() {
-  try {
-    return sessionStorage.getItem("JAMALI_SYSTEM_MODE") === "personal" ? "personal" : "organisation";
-  } catch (e) {
-    return "organisation";
-  }
-}
-
-function jamaliContainerKey() {
-  const u = auth.currentUser;
-  const email = String((u && u.email) || "").trim().toLowerCase();
-  if (!email) {
-    console.warn("JAMALI personal container: the Google sign-in is not finished yet - using a locked placeholder container.");
-    return "unknown__personal";
-  }
-  return email + "__personal";
-}
-
-function jamaliScopeWanted(rest) {
-  return rest.length > 0 && typeof rest[0] === "string" &&
-    String(rest[0]).indexOf("system") !== 0;
-}
-
-export const collection = function (parent) {
-  const rest = Array.prototype.slice.call(arguments, 1);
-  if (parent === db && jamaliScopeWanted(rest) && jamaliReadMode() === "personal") {
-    return _collection.apply(null, [parent, "data", jamaliContainerKey()].concat(rest));
-  }
-  return _collection.apply(null, arguments);
-};
-
-export const doc = function (parent) {
-  const rest = Array.prototype.slice.call(arguments, 1);
-  if (parent === db && rest.length >= 2 && jamaliScopeWanted(rest) && jamaliReadMode() === "personal") {
-    return _doc.apply(null, [parent, "data", jamaliContainerKey()].concat(rest));
-  }
-  return _doc.apply(null, arguments);
-};
-
-// -----------------------------------------------------------------------------
-
 export { onAuthStateChanged, signInWithPopup, signOut };
 export {
-  getFirestore, addDoc, writeBatch,
+  getFirestore, collection, doc, addDoc, writeBatch,
   query, where, orderBy, onSnapshot,
   serverTimestamp, Timestamp, updateDoc, deleteDoc, getDocs, setDoc
 };
