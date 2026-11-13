@@ -320,9 +320,14 @@ p.label + "</a>";
    "border-radius:14px;background:#fff5f5;color:#7f1d1d;font-size:15px;line-height:1.6}",
     ".jamali-vis-notice b{display:block;font-size:17px;margin-bottom:8px}",
    "#jamali-side-foot{flex:0 0 auto;padding:12px 14px;border-top:1px solid #1e293b;background:#0f172a}",
-   "#jamali-google-logout{display:block;width:100%;box-sizing:border-box;border:0;border-radius:10px;padding:12px 14px;font-size:14px;font-weight:900;letter-spacing:.5px;cursor:pointer;color:#fff;background:#dc2626;box-shadow:0 8px 20px rgba(0,0,0,.35)}",
+   ".jamali-foot-row{display:flex;align-items:stretch;gap:8px}",
+   "#jamali-google-logout{flex:50 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:12px 0;font-size:14px;font-weight:900;letter-spacing:.5px;cursor:pointer;color:#fff;background:#dc2626;box-shadow:0 8px 20px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
    "#jamali-google-logout:hover{background:#b91c1c}",
    "#jamali-google-logout:disabled{opacity:.6;cursor:default}",
+   "#jamali-side-gear,#jamali-side-ai{flex:25 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 0;font-size:17px;line-height:1;cursor:pointer;color:#cbd5e1;background:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}",
+   "#jamali-side-gear:hover,#jamali-side-ai:hover{background:#334155;color:#fff}",
+   "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
+   "#jamali-toast.jamali-toast-on{opacity:1}",
    ".jamali-dash.jamali-plus{background:#f0fdf4;color:#166534;border-color:#86efac}",
    ".jamali-dash.jamali-plus:hover{background:#dcfce7}",
    ".jamali-corner-dash.jamali-plus{right:23px}",
@@ -364,7 +369,11 @@ p.label + "</a>";
     "<div class=\"brand\"><i>JA</i>JAMAL" +
     "<button type=\"button\" id=\"jamali-person\" title=\"Account\">&#128100;</button></div>" +
     "<nav>" + nav + "</nav>" +
-    "<div id=\"jamali-side-foot\"><button type=\"button\" id=\"jamali-google-logout\" title=\"Total logout: ends the Google sign-in completely\">Logout</button></div>";
+    "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
+    "<button type=\"button\" id=\"jamali-google-logout\" title=\"Total logout: ends the Google sign-in completely\">Logout</button>" +
+    "<button type=\"button\" id=\"jamali-side-gear\" title=\"Settings\">&#9881;&#65039;</button>" +
+    "<button type=\"button\" id=\"jamali-side-ai\" title=\"AI\">&#129302;</button>" +
+    "</div></div>";
 
  document.body.insertBefore(overlay, document.body.firstChild);
  document.body.insertBefore(aside, document.body.firstChild);
@@ -446,6 +455,24 @@ function () {
 
   
   
+  var toast = document.createElement("div");
+  toast.id = "jamali-toast";
+  toast.setAttribute("role", "status");
+  document.body.appendChild(toast);
+  var toastTimer = null;
+  function jamaliToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("jamali-toast-on");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("jamali-toast-on"); }, 2000);
+  }
+  document.getElementById("jamali-side-gear").addEventListener("click", function () {
+    jamaliToast("Settings - on progress");
+  });
+  document.getElementById("jamali-side-ai").addEventListener("click", function () {
+    jamaliToast("AI - on progress");
+  });
+
   function ensureAdminBtn() {
     if (document.getElementById("jamali-admin-btn")) return;
     var abtn = document.createElement("button");
