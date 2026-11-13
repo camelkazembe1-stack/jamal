@@ -107,9 +107,7 @@ res(u); });
  var VIS_CHANGE = null;
 
     function isAdmin() {
-      // The administrator areas exist only in the organisation mode: in the
-      // personal mode every admin issue is removed, for every account.
-      return !!(session && session.role === "admin" && readMode() !== "personal");
+      return !!(session && session.role === "admin");
     }
 
     function applyVisData(d) {
@@ -550,7 +548,7 @@ function () {
     });
     document.body.appendChild(abtn);
   }
-  if (session && session.role === "admin" && readMode() !== "personal") {
+  if (session && session.role === "admin") {
     ensureAdminBtn();
   }
 

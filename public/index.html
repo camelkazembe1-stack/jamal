@@ -191,13 +191,13 @@
       <p class="sub">Are you using this system for organisation use or personal use?</p>
       <div class="usebtns">
         <button type="button" id="mode-organisation">Organisation Use
-          <small>The shared workspace - continue with your username and token login</small>
+          <small>The shared workspace - then create your account, or log in from the back link</small>
         </button>
         <button type="button" id="mode-personal">Personal Use
           <small>Go straight to home with no user account</small>
         </button>
       </div>
-      <p class="google-note">One email keeps two separated containers: their data never mix. You can change the mode later from the account icon in the sidebar.</p>
+      <p class="google-note">The choice only decides where the door opens - inside, the pages and the data are the same in both. You can change the mode later from the account icon in the sidebar.</p>
     </section>
 
     <p class="status" id="status"></p>
@@ -256,8 +256,9 @@
 
     // right after the Google sign-in (on the same user page) the user picks
     // the use mode. Personal use goes straight to home with no user account;
-    // organisation use continues with the username and token login, exactly
-    // like before. One email keeps both, the database stores them apart.
+    // organisation use opens the account desk at Create Account, with Login
+    // one click away on the back link. The choice is only the door: inside,
+    // every page and all data are the same in both modes.
     function askMode() {
       showPanel("mode");
     }
@@ -270,7 +271,7 @@
       if (mode === "personal") {
         location.href = "/home/1";
       } else {
-        showPanel("login");
+        showPanel("create");
       }
     }
     // after the account login the mode is already chosen, so go home; ask only
@@ -361,8 +362,8 @@
         return;
       }
       if (savedMode === "organisation") {
-        // the question was already answered here: continue to the account login
-        showPanel("login");
+        // the question was already answered here: go to the account desk
+        showPanel("create");
       } else {
         // the same user page asks first: organisation use or personal use
         askMode();
