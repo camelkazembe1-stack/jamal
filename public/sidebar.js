@@ -81,21 +81,37 @@ res(u); });
  var VIS = { fields: {}, menu: {}, options: {} };
  var VIS_DOC = ["systemPageConfig", "visibility"];
  var DASHES = {}; 
+ var VIS_CHANGE = null;
 
     function isAdmin() {
       return !!(session && session.role === "admin");
     }
 
+    function applyVisData(d) {
+      VIS.fields = (d && d.fields) || {};
+      VIS.menu = (d && d.menu) || {};
+      VIS.options = (d && d.options) || {};
+    }
+
     function bootVisibility() {
       return import("/firebase.js").then(function (fb) {
-        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]));
-      }).then(function (snap) {
-        if (snap && snap.exists()) {
-          var d = snap.data();
-          VIS.fields = d.fields || {};
-          VIS.menu = d.menu || {};
-          VIS.options = d.options || {};
+        var ref = fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]);
+        var first = fb.getDoc(ref).then(function (snap) {
+          if (snap && snap.exists()) applyVisData(snap.data());
+        });
+        // Live channel: as soon as the administrator hides or restores a
+        // control, every open page of every user updates without a reload.
+        if (fb.onSnapshot) {
+          first.then(function () {
+            fb.onSnapshot(ref, function (snap) {
+              applyVisData(snap && snap.exists() ? snap.data() : null);
+              if (VIS_CHANGE) { try { VIS_CHANGE(); } catch (e) {} }
+            }, function (e) {
+              console.warn("visibility watch skipped:", e);
+            });
+          });
         }
+        return first;
       }).catch(function (e) {
         console.warn("visibility load skipped:", e);
       });
@@ -307,9 +323,11 @@ p.label + "</a>";
    ".jamali-dash.jamali-plus{background:#f0fdf4;color:#166534;border-color:#86efac}",
    ".jamali-dash.jamali-plus:hover{background:#dcfce7}",
    ".jamali-corner-dash.jamali-plus{right:23px}",
-   ".jamali-ctl-host .jamali-plus{margin-left:4px}",
+   ".jamali-ctl-host .jamali-plus:not(.jamali-corner-dash){margin-left:4px}",
    ".jamali-vis-mark{outline-style:solid;background-color:rgba(248,113,113,.16)}",
-   "select.jamali-opts{font:inherit}"
+   ".jamali-vis-host{padding-right:26px}",
+   ".jamali-ctl-host > input,.jamali-ctl-host > textarea,.jamali-ctl-host > select{padding-right:46px}",
+   "select.jamali-opts{font:inherit;max-width:100%}"
  ].join("");
  document.head.appendChild(css);
 
@@ -551,6 +569,7 @@ links[i].style.display = "none";
  
  bootVisibility().then(function () {
    applySidebarVis();
+   try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
    if (isAdmin()) { ensureHiddenChip(); ensureVisPanel();
 refreshHiddenChip(); }
    pageBoot();
@@ -786,6 +805,7 @@ document.querySelector("main") || document.body;
     if (current === "system-admin") return;
     var main = mainEl();
     var run = function () {
+      VIS_CHANGE = liveVisChange;
       if (isAdmin()) {
         scanAdminPage(main);
         watchPage(main, function () { scanAdminPage(main); });
@@ -890,9 +910,14 @@ el.getClientRects().length);
   
   function scanTargets(root) {
     var map = {}, seq = 0;
-    function put(key, el, wrap) {
-      if (!key || map[key]) return;
-      map[key] = { el: el, wrap: wrap || null, dash: null };
+    function put(key, el, wrap, labelEl) {
+      if (!key) return;
+      // Two controls may share a label or carry no id at all; give the
+      // second one a numbered key so every field and every button gets
+      // its own dash and its own hide state, stable across rescans.
+      var k = key, n = 2;
+      while (map[k]) { k = key + "-" + n; n++; }
+      map[k] = { el: el, wrap: wrap || null, labelEl: labelEl || null, dash: null };
     }
     var ctrls = root.querySelectorAll("input, select, textarea");
     for (var i = 0; i < ctrls.length; i++) {
@@ -900,17 +925,22 @@ el.getClientRects().length);
       if (c.type === "hidden" || c.classList.contains("jamali-opts") ||
           insideJamaliUi(c) ||
           (!isVisibleEl(c) && !c._jamaliDash &&
-!c.hasAttribute("data-jamali-opts"))) continue;
+!c.hasAttribute("data-jamali-opts") &&
+!c.hasAttribute("data-jamali-gone"))) continue;
       var row = c.closest ? c.closest("label") : null;
       if (row && !insideJamaliUi(row)) {
         
         var multi =
 row.querySelectorAll("input,select,textarea,button").length > 1;
         put(c.id || ("row-" + (slug(row.textContent) || ("x" + (++seq)))), c,
-multi ? null : row);
+multi ? null : row, null);
       } else {
+        var lab = null;
+        if (c.id && /^[A-Za-z0-9_-]+$/.test(c.id)) {
+          lab = root.querySelector('label[for="' + c.id + '"]');
+        }
         put(c.id || ("row-" + (slug(c.name || c.type) || ("x" + (++seq)))), c,
-null);
+null, lab);
       }
     }
     var btns = root.querySelectorAll("button");
@@ -918,8 +948,10 @@ null);
       var b = btns[j];
       if (b.classList.contains("jamali-dash") || b.classList.contains("tg"))
 continue;
-      if (insideJamaliUi(b) || (!isVisibleEl(b) && !b._jamaliDash)) continue;
-      put(b.id || ("btn-" + (slug(b.textContent) || ("x" + (++seq)))), b, null);
+      if (insideJamaliUi(b) || (!isVisibleEl(b) && !b._jamaliDash &&
+!b.hasAttribute("data-jamali-gone"))) continue;
+      put(b.id || ("btn-" + (slug(b.textContent) || ("x" + (++seq)))), b, null,
+null);
     }
     return map;
   }
@@ -990,18 +1022,24 @@ el._jamaliOpts.value = el.value;
    var cur = el.value == null ? "" : String(el.value);
    var items = list.slice();
    if (cur && items.indexOf(cur) === -1) items.unshift(cur);
-   sel.innerHTML = "";
-   for (var i = 0; i < items.length; i++) {
-     var o = document.createElement("option");
-     o.value = items[i];
-     o.textContent = items[i];
-     sel.appendChild(o);
+   // Rebuild the <option> children only when the list really changed;
+   // rebuilding on every scan would keep re-firing the page watcher.
+   var sig = JSON.stringify(items);
+   if (sel._jamaliSig !== sig) {
+     sel._jamaliSig = sig;
+     sel.innerHTML = "";
+     for (var i = 0; i < items.length; i++) {
+       var o = document.createElement("option");
+       o.value = items[i];
+       o.textContent = items[i];
+       sel.appendChild(o);
+     }
    }
    var want = (cur && items.indexOf(cur) !== -1) ? cur : items[0];
    sel.value = want;
    if (el.value !== want) { el.value = want; fireInput(el); }
    el.style.display = "none";
-   el.setAttribute("data-jamali-opts", "1");
+   if (!el.getAttribute("data-jamali-opts")) el.setAttribute("data-jamali-opts", "1");
    sel.style.display = "";
    sel.removeAttribute("data-jamali-gone");
  }
@@ -1016,11 +1054,31 @@ el._jamaliOpts.value = el.value;
      var isField = el.tagName !== "BUTTON";
      var off = effHidden(key, el, hidden);
      if (off) {
-       el.style.display = "none";
-       el.setAttribute("data-jamali-gone", "1");
-     } else if (el.getAttribute("data-jamali-gone")) {
-       el.removeAttribute("data-jamali-gone");
-       if (!el.getAttribute("data-jamali-opts")) el.style.display = "";
+       // Ordinary users lose the control completely - the field, its
+       // label and its wrapping row all close up, so no empty space and
+       // no trace that the control ever existed is left behind.
+       var host = t.wrap || el;
+       host.style.display = "none";
+       host.setAttribute("data-jamali-gone", "1");
+       if (t.labelEl && t.labelEl !== host) {
+         t.labelEl.style.display = "none";
+         t.labelEl.setAttribute("data-jamali-gone", "1");
+       }
+       if (el !== host) el.style.display = "none";
+       if (!el.getAttribute("data-jamali-gone")) el.setAttribute("data-jamali-gone", "1");
+     } else {
+       if (el.getAttribute("data-jamali-gone")) {
+         el.removeAttribute("data-jamali-gone");
+         if (!el.getAttribute("data-jamali-opts")) el.style.display = "";
+       }
+       if (t.wrap && t.wrap.getAttribute("data-jamali-gone")) {
+         t.wrap.removeAttribute("data-jamali-gone");
+         t.wrap.style.display = "";
+       }
+       if (t.labelEl && t.labelEl.getAttribute("data-jamali-gone")) {
+         t.labelEl.removeAttribute("data-jamali-gone");
+         t.labelEl.style.display = "";
+       }
      }
      if (isField) {
        applyFieldOptions(el, opts[key]);
@@ -1096,7 +1154,8 @@ VIS_DOC[1])).then(function (snap) {
       if (isField && !el._jamaliPlus) {
         var plus = document.createElement("button");
         plus.type = "button";
-        plus.className = "jamali-dash jamali-plus";
+        plus.className = "jamali-dash jamali-plus" +
+          (el._jamaliDash.classList.contains("jamali-corner-dash") ? " jamali-corner-dash" : "");
         plus.textContent = "+";
         plus.title = "Predefined options - users must pick from this list";
         plus.addEventListener("click", makeOptions(key, el, plus));
@@ -1134,12 +1193,16 @@ function placeDash(t, b) {
    var host = t.wrap || t.el;
    var tag = host.tagName;
    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
-     
+     // Tiny controls (checkbox, radio) keep the dash beside them; every
+     // other field gets the dash pinned to its top-right corner.
      var sp = document.createElement("span");
      sp.className = "jamali-ctl-host";
      host.parentNode.insertBefore(sp, host);
      sp.appendChild(host);
      sp.appendChild(b);
+     if (host.type !== "checkbox" && host.type !== "radio") {
+       b.classList.add("jamali-corner-dash");
+     }
      return;
    }
    host.classList.add("jamali-vis-host");
@@ -1180,13 +1243,33 @@ true;
 
   
   
+  // Fired by the live Firestore channel: the administrator changed the
+  // visibility document somewhere, so re-apply everything right here.
+  function liveVisChange() {
+    applySidebarVis();
+    try { filterLinks(document); } catch (e) {}
+    if (!PAGE_ID || current === "system-admin") return;
+    var blocked = menuHidden(current) || pageHidden(PAGE_ID);
+    if (!isAdmin() && document.querySelector(".jamali-vis-notice") && !blocked) {
+      // This page was blocked before and the administrator has just
+      // allowed it again - a reload brings the real page in.
+      location.reload();
+      return;
+    }
+    var main = mainEl();
+    if (isAdmin()) { scanAdminPage(main); refreshHiddenChip(); }
+    else if (!blocked) applyUserHides(main);
+  }
+
+  
+  
   function watchPage(root, fn) {
     if (!window.MutationObserver) return;
     var t = null;
     new MutationObserver(function () {
       if (t) clearTimeout(t);
       t = setTimeout(fn, 350);
-    }).observe(root, { childList: true, subtree: true });
+    }).observe(root, { childList: true, subtree: true,
+      attributes: true, attributeFilter: ["hidden", "style", "class"] });
   }
-  try { import("/502.js").catch(function () {}); } catch (e) {}
 })();
