@@ -115,7 +115,13 @@ res(u); });
  var VIS_CHANGE = null;
 
     function isAdmin() {
-      return !!(session && session.role === "admin");
+      // Personal use with no account runs the full admin tooling too:
+      // the sidebar minus buttons, the Hidden panel and the plus/minus
+      // pins on every field, and nothing the administrator hid is
+      // applied here. The database itself still refuses config writes
+      // unless this Google account is the administrator (systemAdmins).
+      return !!(session && session.role === "admin") ||
+        (!session && readMode() === "personal");
     }
 
     function applyVisData(d) {
