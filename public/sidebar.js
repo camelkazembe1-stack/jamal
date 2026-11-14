@@ -38,7 +38,11 @@ catch (e) {}
  var ALWAYS_OPEN = ["home", "file-viewer"];
 var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
  function folderAllowed(folder) {
-   if (!session) return false;
+   // Personal use with no user account: the whole system is open - the
+   // sidebar shows every item and every page opens, exactly what the
+   // administrator sees. Without an account in organisation mode nothing
+   // is open here: the door page asks for the account first.
+   if (!session) return readMode() === "personal";
    if (isAdmin()) return true;
    if (folder === "system-admin") return false;
    if (ALWAYS_OPEN.indexOf(folder) !== -1) return true;
@@ -63,7 +67,9 @@ var PARENT = {"ward-registration":"ward-management","bed-management":"ward-manag
   
   if (ALWAYS_OPEN.indexOf(current) === -1) {
     if (!session) {
-      location.replace("/?need=account");
+      // Personal use opens the full system with no account; any other
+      // visitor without an account goes back to the door page.
+      if (readMode() !== "personal") location.replace("/?need=account");
     } else {
       import("/firebase.js").then(function (fb) {
         var ready = fb.auth && fb.auth.currentUser
@@ -81,8 +87,10 @@ res(u); });
     }
   }
 
-  // A direct visit to the users/administration desk is allowed only while the
-  // system is in the organisation mode (admins). Otherwise go home.
+  // A signed-in account without the admin role is sent home from the
+  // users/administration desk. Personal use with no account passes:
+  // the desk opens for everyone, and the database itself still refuses
+  // changes unless this Google account is the administrator.
   if (session && current === "system-admin" && !folderAllowed("system-admin")) {
     location.replace("/home/1");
   }
@@ -438,9 +446,9 @@ function (ev) {
 acct.hidden = true;
   });
 
-  // Change Mode: every account, admin or normal, can flip between the
-  // organisation workspace and the personal private container. The database
-  // keeps the two apart; the page reloads so nav and data follow the mode.
+  // Change Mode: anyone - an account or a personal user with no account -
+  // can flip the mode here. It saves the preference and reloads so access
+  // follows it; pages and data are the same in both modes.
   function paintModeButtons() {
     var mode = readMode();
     var btns = acct.querySelectorAll(".jamali-usemode");
@@ -548,7 +556,7 @@ function () {
     });
     document.body.appendChild(abtn);
   }
-  if (session && session.role === "admin") {
+  if ((session && session.role === "admin") || (!session && readMode() === "personal")) {
     ensureAdminBtn();
   }
 
