@@ -290,7 +290,13 @@ resetArrival();
   });
 
   var session = readSession();
-  if (session && session.role === "admin") return; 
+  // Admins see the page as-is. So does Personal use with no account:
+  // nothing the administrator hid is applied there. The saved page
+  // config hides fields only for signed-in accounts without the
+  // admin role.
+  var __pm = null;
+  try { __pm = sessionStorage.getItem("JAMALI_SYSTEM_MODE"); } catch (e) { }
+  if ((session && session.role === "admin") || (!session && __pm === "personal")) return; 
 
   import("/firebase.js").then(function (fb) {
     return fb.getDoc(fb.doc(fb.db, "systemPageConfig", PAGE_ID));
