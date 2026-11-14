@@ -544,7 +544,7 @@ function () {
     toastTimer = setTimeout(function () { toast.classList.remove("jamali-toast-on"); }, 2000);
   }
   document.getElementById("jamali-side-gear").addEventListener("click", function () {
-    jamaliToast("Settings - on progress");
+    jamaliSettingsOpen();
   });
   document.getElementById("jamali-side-ai").addEventListener("click", function () {
     jamaliToast("AI - on progress");
@@ -1051,7 +1051,7 @@ function blockAllowance() {
   }
 
  function insideJamaliUi(el) {
-   return !!(el.closest && el.closest("#jamali-sidebar,#jamali-acct,#jamali-admin-btn,#jamali-burger,#jamali-overlay,.jamali-vis-notice,#jamali-hidden-chip,#jamali-vis-panel"));
+   return !!(el.closest && el.closest("#jamali-sidebar,#jamali-acct,#jamali-admin-btn,#jamali-burger,#jamali-overlay,.jamali-vis-notice,#jamali-hidden-chip,#jamali-vis-panel,#jamali-settings"));
  }
 
  function isVisibleEl(el) {
@@ -1487,4 +1487,597 @@ VIS_DOC[1])).then(function (snap) {
     }).observe(root, { childList: true, subtree: true,
       attributes: true, attributeFilter: ["hidden", "style", "class"] });
   }
+
+  /* ======================================================================
+     Settings (the gear) with the Data Deletion Workflow.
+     - The gear opens a real Settings panel; the AI button is untouched.
+     - "Show Delete Data" opens the deletion section:
+         * personal use (no account) and administrator accounts delete
+           their data directly: warning -> confirmation -> permanent
+           deletion (a retention copy is archived into
+           systemDeletionAudit first) -> success message;
+         * organisation accounts never delete shared data directly:
+           warning -> confirmation -> reason -> final confirmation ->
+           the request lands in systemDeletionRequests, the data stays
+           untouched, and the administrator decides it in Data
+           Deletion Requests;
+       decisions come back here live in "My deletion requests" plus a
+       notification record written by the administrator.
+     - The database rules carry the real authority: anything outside
+       this flow is refused server-side.
+     ====================================================================== */
+  /* JD-DELETE-MODULE-START */
+  var SETTINGS_EL = null;
+  var SETTINGS_MINE_UNSUB = null;
+  var MINE_REQS = [];
+
+  var DEL_SCOPE_LIB = {
+    business: { key: "business", label: "Business & accounting", collections: ["transactions"] },
+    stock: { key: "stock", label: "Stock management", collections: ["stockItems", "stockChanges"] },
+    health: { key: "health", label: "Hospital & health records", collections: [
+      "healthRegistrations", "healthTriage", "healthNurseConsultations",
+      "healthDoctorConsultations", "healthPrescriptions", "healthTreatmentOrders",
+      "healthDestinations", "healthWards", "healthBeds", "healthBedAssignments",
+      "healthBedTransfers", "healthBedMaintenance", "healthAdmissions",
+      "healthDischarges", "healthLabRequests", "healthImagingRequests",
+      "healthQueueConfig"
+    ] }
+  };
+
+  function jdEsc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function delErrText(e) {
+    var m = e && (e.code || e.message) ? (e.code || "") + " " + (e.message || "") : String(e);
+    if (String(m).indexOf("permission-denied") !== -1) {
+      return m + " - the database refused this. The updated firestore.rules must be published in the Firebase console first.";
+    }
+    return m;
+  }
+
+  function jamaliTs(t) {
+    try { return t && t.toDate ? t.toDate().getTime() : 0; } catch (e) { return 0; }
+  }
+
+  function delChipClass(st) {
+    var map = { pending: "jd-chip-wait", approved: "jd-chip-go", completed: "jd-chip-go", rejected: "jd-chip-no", failed: "jd-chip-no" };
+    return map[String(st || "pending")] || "jd-chip-wait";
+  }
+
+  function delHasPending(list) {
+    var L = list || MINE_REQS;
+    for (var i = 0; i < L.length; i++) {
+      if (String(L[i].r && L[i].r.status) === "pending") return true;
+    }
+    return false;
+  }
+
+  function delScopesForMe() {
+    // Personal use (no account) and administrator accounts may delete
+    // every data group. An organisation account only the groups behind
+    // its granted modules - the same grants that open its pages - so a
+    // user can never ask to delete data outside their own authority.
+    var M = window.JAMALI_MENU || [];
+    function subtree(root) {
+      var out = [], open = false, depth = 0;
+      for (var i = 0; i < M.length; i++) {
+        var d = M[i].d || 0;
+        if (!open) {
+          if (M[i].folder === root) { open = true; depth = d; out.push(M[i].folder); }
+          continue;
+        }
+        if (d <= depth) break;
+        out.push(M[i].folder);
+      }
+      return out;
+    }
+    var all = !session || session.role === "admin";
+    var g = (session && Array.isArray(session.grants)) ? session.grants : [];
+    function hit(set) {
+      if (all) return true;
+      for (var i = 0; i < set.length; i++) { if (g.indexOf(set[i]) !== -1) return true; }
+      return false;
+    }
+    var stockT = subtree("stock-management");
+    var bizT = subtree("business"), bizOnly = [];
+    for (var b = 0; b < bizT.length; b++) { if (stockT.indexOf(bizT[b]) === -1) bizOnly.push(bizT[b]); }
+    var healthT = subtree("health");
+    var out = [];
+    if (hit(bizOnly)) out.push(DEL_SCOPE_LIB.business);
+    if (hit(stockT)) out.push(DEL_SCOPE_LIB.stock);
+    if (hit(healthT)) out.push(DEL_SCOPE_LIB.health);
+    return out;
+  }
+
+  function jamaliDeleteActor(fb) {
+    var u = fb.auth && fb.auth.currentUser;
+    return {
+      uid: u ? u.uid : "",
+      email: u && u.email ? String(u.email || "").toLowerCase() : "",
+      label: session ? (session.username || "account") : "personal use"
+    };
+  }
+
+  function jamaliSettingsOpen() {
+    if (!SETTINGS_EL) jamaliSettingsBuild();
+    SETTINGS_EL.hidden = !SETTINGS_EL.hidden;
+    if (!SETTINGS_EL.hidden) { jamaliSettingsPaint(); jamaliMineStart(); }
+  }
+
+  function jamaliSettingsBuild() {
+    var st = document.createElement("style");
+    st.textContent = [
+      "#jamali-settings{position:fixed;top:60px;right:14px;z-index:1002;width:380px;max-width:calc(100vw - 28px);",
+      "max-height:calc(100vh - 90px);overflow:auto;background:#111827;border:1px solid #334155;border-radius:14px;",
+      "padding:14px 16px;color:#e2e8f0;font-size:13.5px;box-shadow:0 18px 40px rgba(0,0,0,.5)}",
+      "#jamali-settings .jd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}",
+      "#jamali-settings .jd-head b{font-size:15px}",
+      "#jamali-settings .jd-close{border:0;background:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:8px}",
+      "#jamali-settings .jd-close:hover{background:#1e293b;color:#fff}",
+      "#jamali-settings .jd-who{border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:10px}",
+      "#jamali-settings .jd-who b{display:block;font-size:13.5px}",
+      "#jamali-settings .jd-who span{color:#94a3b8;font-size:12.5px}",
+      "#jamali-settings .jd-cap{font-size:11px;font-weight:800;letter-spacing:.5px;color:#64748b;margin:10px 0 6px;text-transform:uppercase}",
+      "#jamali-settings #jd-show-del{display:block;width:100%;text-align:left;border:1px solid #334155;background:#0b1220;",
+      "color:#e2e8f0;border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:700;cursor:pointer}",
+      "#jamali-settings #jd-show-del:hover{background:#1e293b}",
+      "#jamali-settings .jd-warn{border:1px solid #fca5a5;background:#450a0a;color:#fecaca;border-radius:10px;padding:10px 12px;margin:6px 0 10px;line-height:1.5}",
+      "#jamali-settings .jd-warn b{display:block;margin-bottom:2px}",
+      "#jamali-settings .jd-scopes{display:flex;flex-direction:column;gap:6px;margin:8px 0}",
+      "#jamali-settings .jd-scope{display:flex;gap:8px;align-items:flex-start;border:1px solid #334155;border-radius:10px;padding:8px 10px;cursor:pointer}",
+      "#jamali-settings .jd-scope:hover{background:#1e293b}",
+      "#jamali-settings .jd-scope input{margin-top:2px}",
+      "#jamali-settings .jd-scope b{display:block;font-size:13px}",
+      "#jamali-settings .jd-scope i{display:block;font-style:normal;color:#94a3b8;font-size:11.5px;margin-top:2px}",
+      "#jamali-settings .jd-msg{border-radius:10px;padding:9px 12px;margin:8px 0;line-height:1.5;font-size:13px}",
+      "#jamali-settings .jd-msg.jd-ok{background:#052e16;border:1px solid #4ade80;color:#bbf7d0}",
+      "#jamali-settings .jd-msg.jd-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}",
+      "#jamali-settings .jd-none{color:#94a3b8;font-size:12.5px;padding:6px 0}",
+      "#jamali-settings .jd-danger{display:block;width:100%;border:0;border-radius:10px;background:#dc2626;color:#fff;",
+      "font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:6px}",
+      "#jamali-settings .jd-danger:hover{background:#b91c1c}",
+      "#jamali-settings .jd-danger:disabled,#jamali-settings .jd-primary:disabled{opacity:.55;cursor:default}",
+      "#jamali-settings .jd-primary{display:block;width:100%;border:0;border-radius:10px;background:#0ea5e9;color:#fff;",
+      "font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:8px}",
+      "#jamali-settings .jd-primary:hover{background:#0284c7}",
+      "#jamali-settings .jd-reason{display:block;margin:8px 0 0;color:#cbd5e1;font-size:12.5px}",
+      "#jamali-settings .jd-reason b{display:block;margin-bottom:5px}",
+      "#jamali-settings .jd-reason textarea{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:9px;",
+      "background:#0b1220;color:#e2e8f0;font:inherit;padding:8px 10px;resize:vertical}",
+      "#jamali-settings .jd-decisions{margin:8px 0}",
+      "#jamali-settings .jd-decision{border:1px solid #334155;background:#0b1220;border-radius:10px;padding:8px 10px;",
+      "margin-bottom:6px;line-height:1.5;font-size:12.5px}",
+      "#jamali-settings .jd-decision i{display:block;color:#64748b;font-style:normal;font-size:11px;margin-top:3px}",
+      "#jamali-settings .jd-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}",
+      "#jamali-settings .jd-item{border:1px solid #334155;border-radius:10px;padding:8px 10px}",
+      "#jamali-settings .jd-item-top{display:flex;align-items:center;gap:8px}",
+      "#jamali-settings .jd-what{flex:1;min-width:0;font-size:12.5px;color:#cbd5e1}",
+      "#jamali-settings .jd-chip{font-size:10.5px;font-weight:900;letter-spacing:.5px;border-radius:999px;padding:3px 8px;flex:0 0 auto}",
+      "#jamali-settings .jd-chip-wait{background:#7c2d12;color:#fdba74}",
+      "#jamali-settings .jd-chip-go{background:#14532d;color:#86efac}",
+      "#jamali-settings .jd-chip-no{background:#7f1d1d;color:#fca5a5}",
+      "#jamali-settings .jd-detail{color:#e2e8f0;font-size:12.5px;margin-top:5px;line-height:1.5}",
+      "#jamali-settings .jd-when{color:#64748b;font-size:11px;margin-top:3px}"
+    ].join("");
+    document.head.appendChild(st);
+    SETTINGS_EL = document.createElement("div");
+    SETTINGS_EL.id = "jamali-settings";
+    SETTINGS_EL.setAttribute("role", "dialog");
+    SETTINGS_EL.hidden = true;
+    document.body.appendChild(SETTINGS_EL);
+  }
+
+  function jamaliSettingsPaint() {
+    if (!SETTINGS_EL) return;
+    var h = "";
+    h += "<div class=\"jd-head\"><b>Settings</b><button type=\"button\" class=\"jd-close\" title=\"Close\">&#215;</button></div>";
+    h += "<div class=\"jd-who\"><b></b><span></span></div>";
+    h += "<div class=\"jd-cap\">Data</div>";
+    h += "<button type=\"button\" id=\"jd-show-del\">Show Delete Data</button>";
+    h += "<div id=\"jd-del-body\" hidden></div>";
+    h += "<div id=\"jd-mine\"></div>";
+    SETTINGS_EL.innerHTML = h;
+    SETTINGS_EL.querySelector(".jd-close").addEventListener("click", function () {
+      SETTINGS_EL.hidden = true;
+    });
+    var w = SETTINGS_EL.querySelector(".jd-who");
+    w.querySelector("b").textContent = session ? (session.username || "account") : "Personal use (no account)";
+    w.querySelector("span").textContent = session
+      ? (session.role === "admin" ? "administrator" : (session.position || "user"))
+      : "full owner of this system";
+    SETTINGS_EL.querySelector("#jd-show-del").addEventListener("click", function () {
+      var body = SETTINGS_EL.querySelector("#jd-del-body");
+      body.hidden = !body.hidden;
+      if (!body.hidden) jamaliDeletePaint(body);
+    });
+    jamaliMinePaint(SETTINGS_EL.querySelector("#jd-mine"));
+  }
+
+  function jamaliDeletePaint(body) {
+    var scopes = delScopesForMe();
+    var direct = !session || session.role === "admin";
+    var h = "";
+    h += "<div class=\"jd-cap\">Delete Data</div>";
+    h += "<div class=\"jd-warn\"><b>Permanent deletion.</b> Data removed here cannot be recovered. " +
+      (direct
+        ? "A retention copy goes into the deletion audit record first, then the data is permanently deleted."
+        : "Organisation data is never deleted directly - your request goes to the administrator with your reason, and the data stays untouched until they decide.") +
+      "</div>";
+    if (!scopes.length) {
+      h += "<div class=\"jd-none\">Your account has no data groups available, so there is nothing you are authorised to delete.</div>";
+    } else {
+      h += "<div class=\"jd-scopes\">";
+      for (var i = 0; i < scopes.length; i++) {
+        h += "<label class=\"jd-scope\"><input type=\"checkbox\" value=\"" + scopes[i].key + "\" checked> " +
+          "<span><b>" + jdEsc(scopes[i].label) + "</b><i>" + jdEsc(scopes[i].collections.join(", ")) + " - counting&hellip;</i></span></label>";
+      }
+      h += "</div>";
+      h += "<div class=\"jd-msg\" hidden></div>";
+      if (direct) {
+        h += "<button type=\"button\" id=\"jd-run\" class=\"jd-danger\">Delete Data Permanently</button>";
+      } else {
+        h += "<div id=\"jd-req\" hidden>";
+        h += "<label class=\"jd-reason\"><b>Reason for the deletion request (required)</b>";
+        h += "<textarea id=\"jd-why\" rows=\"3\" placeholder=\"Explain why this data must be deleted\"></textarea></label>";
+        h += "<button type=\"button\" id=\"jd-submit\" class=\"jd-primary\">Submit deletion request</button>";
+        h += "</div>";
+        h += "<button type=\"button\" id=\"jd-ask\" class=\"jd-primary\">Delete Data</button>";
+      }
+    }
+    body.innerHTML = h;
+    body._jdCounts = {};
+    jamaliCountsPaint(body, scopes);
+    jamaliDecisionsPaint(body);
+    var run = body.querySelector("#jd-run");
+    if (run) run.addEventListener("click", function () { jamaliDirectRun(body, scopes); });
+    var ask = body.querySelector("#jd-ask");
+    if (ask) ask.addEventListener("click", function () { jamaliAskRun(body); });
+    var sub = body.querySelector("#jd-submit");
+    if (sub) sub.addEventListener("click", function () { jamaliRequestSubmit(body, scopes); });
+  }
+
+  function jamaliCountsPaint(body, scopes) {
+    import("/firebase.js").then(function (fb) {
+      var box = body.querySelector(".jd-scopes");
+      if (!box) return;
+      scopes.forEach(function (s) {
+        var total = 0, errs = 0;
+        var jobs = s.collections.map(function (c) {
+          return fb.getDocs(fb.collection(fb.db, c)).then(function (snap) {
+            total += snap.size;
+          }).catch(function () { errs++; });
+        });
+        Promise.all(jobs).then(function () {
+          body._jdCounts[s.key] = errs ? -1 : total;
+          var inp = box.querySelector('input[value="' + s.key + '"]');
+          if (!inp) return;
+          var line = inp.parentNode.querySelector("i");
+          if (line) {
+            line.textContent = s.collections.join(", ") + " - " +
+              (errs ? "count unavailable" : (total ? total + " document" + (total === 1 ? "" : "s") : "already empty"));
+          }
+        });
+      });
+    }).catch(function () {});
+  }
+
+  function jamaliCollectChosen(body, scopes) {
+    var boxes = body.querySelectorAll(".jd-scope input:checked");
+    var out = [];
+    for (var i = 0; i < boxes.length; i++) {
+      for (var j = 0; j < scopes.length; j++) {
+        if (scopes[j].key === boxes[i].value) out.push(scopes[j]);
+      }
+    }
+    return out;
+  }
+
+  function jamaliSay(body, m, bad) {
+    var msg = body.querySelector(".jd-msg");
+    if (!msg) return;
+    msg.hidden = !m;
+    msg.textContent = m || "";
+    msg.className = "jd-msg" + (bad ? " jd-bad" : " jd-ok");
+  }
+
+  // ---- direct path: personal use and administrator accounts ----
+  function jamaliDirectRun(body, scopes) {
+    var chosen = jamaliCollectChosen(body, scopes);
+    if (!chosen.length) { jamaliSay(body, "Select at least one data group first.", true); return; }
+    var cols = [];
+    chosen.forEach(function (s) { s.collections.forEach(function (c) { cols.push(c); }); });
+    if (!window.confirm(
+      "PERMANENT DELETION\n\nThe selected data in " + cols.join(", ") +
+      " will be permanently deleted. A retention copy goes into the deletion audit record first, " +
+      "then every document is removed. This cannot be undone.\n\nDelete now?")) return;
+    var run = body.querySelector("#jd-run");
+    if (run) { run.disabled = true; run.textContent = "Deleting..."; }
+    jamaliSay(body, "Working: reading the data, writing the retention archive, then deleting...", false);
+    import("/firebase.js").then(function (fb) {
+      return jamaliDeleteExecute(fb, chosen, { kind: "direct", requestId: "" });
+    }).then(function (fin) {
+      if (fin.aborted) {
+        jamaliSay(body, "Nothing was deleted - " + fin.error, true);
+      } else if (fin.totalFailed && !fin.totalDeleted) {
+        jamaliSay(body, "Deletion FAILED - nothing was removed. " + (fin.results[0] && fin.results[0].error ? fin.results[0].error : ""), true);
+      } else if (fin.totalFailed) {
+        jamaliSay(body, "Partially deleted: " + fin.totalDeleted + " document" + (fin.totalDeleted === 1 ? "" : "s") +
+          " deleted, " + fin.totalFailed + " failed. The audit record shows exactly what happened.", true);
+      } else if (fin.totalDeleted) {
+        jamaliSay(body, "Deletion successful: " + fin.totalDeleted + " document" + (fin.totalDeleted === 1 ? "" : "s") +
+          " permanently deleted.", false);
+        jamaliToast("Deletion successful: " + fin.totalDeleted + " document" + (fin.totalDeleted === 1 ? "" : "s") + " permanently deleted");
+      } else {
+        jamaliSay(body, "Nothing to delete - the selected groups are already empty.", false);
+      }
+      if (run) { run.disabled = false; run.textContent = "Delete Data Permanently"; }
+      jamaliCountsPaint(body, scopes);
+    }).catch(function (e) {
+      jamaliSay(body, "Deletion failed - nothing was removed. " + delErrText(e), true);
+      if (run) { run.disabled = false; run.textContent = "Delete Data Permanently"; }
+    });
+  }
+
+  // ---- request path: organisation accounts ----
+  function jamaliAskRun(body) {
+    if (!window.confirm(
+      "PERMANENT DELETION WARNING\n\nYou are asking to permanently delete the selected data groups for the whole organisation. " +
+      "Nothing is deleted until the administrator approves your request.")) return;
+    var req = body.querySelector("#jd-req");
+    if (req) req.hidden = false;
+    var ask = body.querySelector("#jd-ask");
+    if (ask) ask.hidden = true;
+    var why = body.querySelector("#jd-why");
+    if (why) why.focus();
+  }
+
+  function jamaliRequestSubmit(body, scopes) {
+    var chosen = jamaliCollectChosen(body, scopes);
+    if (!chosen.length) { jamaliSay(body, "Select at least one data group first.", true); return; }
+    var why = body.querySelector("#jd-why");
+    var reason = why ? String(why.value || "").trim() : "";
+    if (!reason) {
+      jamaliSay(body, "A reason is required - tell the administrator why this data must be deleted.", true);
+      if (why) why.focus();
+      return;
+    }
+    if (delHasPending()) {
+      jamaliSay(body, "You already have a pending deletion request - the administrator has not decided it yet. " +
+        "It is listed under My deletion requests below.", true);
+      return;
+    }
+    var counts = body._jdCounts || {};
+    var lines = chosen.map(function (s) {
+      var c = counts[s.key];
+      return s.label + " (" + s.collections.join(", ") + ")" +
+        (typeof c === "number" && c >= 0 ? " - " + c + " document" + (c === 1 ? "" : "s") : "");
+    }).join("\n");
+    if (!window.confirm(
+      "SUBMIT DELETION REQUEST\n\nYou: " + (session && session.username ? session.username : "account") +
+      "\nData groups:\n" + lines + "\n\nReason: " + reason +
+      "\n\nNothing is deleted now. The data stays untouched while the request waits, " +
+      "the administrator reviews it and decides, and you are notified of the decision. Submit it?")) return;
+    var sub = body.querySelector("#jd-submit");
+    if (sub) { sub.disabled = true; sub.textContent = "Submitting..."; }
+    import("/firebase.js").then(function (fb) {
+      var me = fb.auth && fb.auth.currentUser;
+      if (!me) throw new Error("You are not signed in with Google any more - log in again first.");
+      return fb.addDoc(fb.collection(fb.db, "systemDeletionRequests"), {
+        type: "data-deletion",
+        status: "pending",
+        requesterUid: me.uid,
+        requesterEmail: String(me.email || "").toLowerCase(),
+        requesterUsername: (session && session.username) || "",
+        requesterPosition: (session && session.position) || "",
+        accountId: String((session && session.username) || "").toLowerCase(),
+        organisation: "jamal",
+        scopes: chosen.map(function (s) { return s.key; }),
+        scopeDetails: chosen.map(function (s) {
+          var c = counts[s.key];
+          return {
+            key: s.key,
+            label: s.label,
+            collections: s.collections.slice(),
+            docsAtRequest: (typeof c === "number" && c >= 0) ? c : 0
+          };
+        }),
+        reason: reason,
+        decision: null,
+        execution: null,
+        createdAt: fb.serverTimestamp()
+      });
+    }).then(function () {
+      jamaliSay(body, "Your deletion request was submitted. The data stays untouched until the administrator decides - " +
+        "you will see the decision here and under My deletion requests.", false);
+      var req = body.querySelector("#jd-req");
+      if (req) req.hidden = true;
+      if (why) why.value = "";
+      jamaliToast("Deletion request submitted to the administrator");
+    }).catch(function (e) {
+      jamaliSay(body, "Could not submit the request: " + delErrText(e), true);
+    }).then(function () {
+      if (sub) { sub.disabled = false; sub.textContent = "Submit deletion request"; }
+    });
+  }
+
+  // ---- decisions written by the administrator, shown to the requester ----
+  function jamaliDecisionsPaint(body) {
+    if (!session) return;
+    import("/firebase.js").then(function (fb) {
+      var me = fb.auth && fb.auth.currentUser;
+      if (!me) return;
+      var q = fb.query(fb.collection(fb.db, "systemNotifications"),
+        fb.where("googleUid", "==", me.uid), fb.where("type", "==", "deletion"));
+      return fb.getDocs(q).then(function (snap) {
+        var rows = [];
+        snap.forEach(function (d) { rows.push(d.data()); });
+        if (!rows.length || !body.isConnected) return;
+        rows.sort(function (a, b) { return jamaliTs(b.at) - jamaliTs(a.at); });
+        var h = "<div class=\"jd-decisions\"><div class=\"jd-cap\">Notifications from the administrator</div>";
+        for (var i = 0; i < rows.length && i < 5; i++) {
+          var t = jamaliTs(rows[i].at);
+          h += "<div class=\"jd-decision\">" + jdEsc(rows[i].message || "") +
+            (t ? "<i>" + new Date(t).toLocaleString() + "</i>" : "") + "</div>";
+        }
+        h += "</div>";
+        var anchor = body.querySelector(".jd-msg");
+        if (anchor) anchor.insertAdjacentHTML("beforebegin", h);
+      });
+    }).catch(function () {});
+  }
+
+  // ---- my deletion requests, live ----
+  function jamaliMineStart() {
+    if (!session || SETTINGS_MINE_UNSUB) return;
+    import("/firebase.js").then(function (fb) {
+      var me = fb.auth && fb.auth.currentUser;
+      if (!me) return;
+      var q = fb.query(fb.collection(fb.db, "systemDeletionRequests"),
+        fb.where("requesterUid", "==", me.uid));
+      SETTINGS_MINE_UNSUB = fb.onSnapshot(q, function (snap) {
+        MINE_REQS = [];
+        snap.forEach(function (d) { MINE_REQS.push({ id: d.id, r: d.data() }); });
+        MINE_REQS.sort(function (a, b) { return jamaliTs(b.r.createdAt) - jamaliTs(a.r.createdAt); });
+        var box = document.getElementById("jd-mine");
+        if (box) jamaliMinePaint(box);
+      }, function () {
+        // rules not published yet, or read refused - the list just stays empty
+      });
+    }).catch(function () {});
+  }
+
+  function jamaliMinePaint(box) {
+    if (!box || !session) return;
+    var h = "<div class=\"jd-cap\">My deletion requests</div>";
+    if (!MINE_REQS.length) {
+      h += "<div class=\"jd-none\">None yet. Submit one from Show Delete Data above - its status appears here live.</div>";
+    } else {
+      h += "<div class=\"jd-list\">";
+      for (var i = 0; i < MINE_REQS.length; i++) {
+        var r = MINE_REQS[i].r || {};
+        var st = String(r.status || "pending");
+        var detail = "";
+        if (st === "pending") detail = "Waiting for the administrator - your data is untouched.";
+        if (st === "approved") detail = "Approved - the deletion is being executed.";
+        if (st === "rejected" && r.decision && r.decision.reason) detail = "Rejected by the administrator: " + r.decision.reason;
+        if (st === "completed" && r.execution) {
+          detail = "Deletion executed: " + (r.execution.totalDeleted || 0) + " document" + ((r.execution.totalDeleted || 0) === 1 ? "" : "s") +
+            " permanently deleted" + ((r.execution.totalFailed || 0) ? (", " + r.execution.totalFailed + " failed") : "") + ".";
+        }
+        if (st === "failed") {
+          detail = "The deletion FAILED - your data was not removed" +
+            (r.execution && r.execution.error ? (": " + r.execution.error) : ". The administrator can see the error in Data Deletion Requests.");
+        }
+        var t = jamaliTs(r.createdAt);
+        h += "<div class=\"jd-item\"><div class=\"jd-item-top\">" +
+          "<span class=\"jd-chip " + delChipClass(st) + "\">" + jdEsc(st.toUpperCase()) + "</span>" +
+          "<span class=\"jd-what\">" + jdEsc((Array.isArray(r.scopes) ? r.scopes : []).join(", ")) + "</span></div>" +
+          (detail ? "<div class=\"jd-detail\">" + jdEsc(detail) + "</div>" : "") +
+          (t ? "<div class=\"jd-when\">requested " + new Date(t).toLocaleString() + "</div>" : "") +
+          "</div>";
+      }
+      h += "</div>";
+    }
+    box.innerHTML = h;
+  }
+
+  // ---- the shared permanent-deletion executor ----
+  // Order is fixed and safe: read everything first, write the retention
+  // archive BEFORE removing anything, then delete in batches. If any
+  // read or the archive write fails, nothing is deleted at all.
+  function jamaliDeleteExecute(fb, chosen, meta) {
+    var cols = [];
+    chosen.forEach(function (s) {
+      s.collections.forEach(function (c) { if (cols.indexOf(c) === -1) cols.push(c); });
+    });
+    var reads = cols.map(function (c) {
+      return fb.getDocs(fb.collection(fb.db, c)).then(function (snap) {
+        var docs = [];
+        snap.forEach(function (d) { docs.push({ id: d.id, data: d.data() }); });
+        return { collection: c, docs: docs, error: "" };
+      }).catch(function (e) {
+        return { collection: c, docs: null, error: delErrText(e) };
+      });
+    });
+    return Promise.all(reads).then(function (groups) {
+      var bad = "";
+      for (var i = 0; i < groups.length; i++) {
+        if (groups[i].docs === null) { bad = groups[i].error; break; }
+      }
+      if (bad) return { aborted: true, error: bad, results: [], totalDeleted: 0, totalFailed: 0 };
+      var CAP = 150;
+      var archive = {};
+      groups.forEach(function (g) {
+        archive[g.collection] = {
+          count: g.docs.length,
+          truncated: g.docs.length > CAP,
+          docs: g.docs.slice(0, CAP).map(function (x) { return { id: x.id, data: x.data }; })
+        };
+      });
+      var actor = meta.actor || jamaliDeleteActor(fb);
+      var auditId = "da-" + (meta.requestId ? String(meta.requestId).replace(/[^a-zA-Z0-9-]/g, "").slice(0, 20) : "direct") +
+        "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+      return fb.setDoc(fb.doc(fb.db, "systemDeletionAudit", auditId), {
+        kind: meta.kind || "direct",
+        requestId: meta.requestId || "",
+        actorUid: actor.uid,
+        actorEmail: actor.email,
+        actorLabel: actor.label,
+        scopes: chosen.map(function (s) { return s.key; }),
+        collections: cols,
+        archive: archive,
+        results: [],
+        status: "executing",
+        at: fb.serverTimestamp()
+      }).then(function () {
+        return { auditId: auditId, groups: groups };
+      });
+    }).then(function (ctx) {
+      if (!ctx) return { aborted: true, error: "unknown", results: [], totalDeleted: 0, totalFailed: 0 };
+      var results = [];
+      var chain = Promise.resolve();
+      ctx.groups.forEach(function (g) {
+        chain = chain.then(function () {
+          return new Promise(function (res) {
+            var deleted = 0, failed = 0, error = "";
+            function chunk(start) {
+              var slice = g.docs.slice(start, start + 400);
+              if (!slice.length) { res(); return; }
+              var batch = fb.writeBatch(fb.db);
+              slice.forEach(function (x) { batch.delete(fb.doc(fb.db, g.collection, x.id)); });
+              batch.commit().then(function () {
+                deleted += slice.length;
+                chunk(start + slice.length);
+              }).catch(function (e) {
+                failed += (g.docs.length - start);
+                error = delErrText(e);
+                res();
+              });
+            }
+            chunk(0);
+          }).then(function () {
+            results.push({ collection: g.collection, found: g.docs.length, deleted: deleted, failed: failed, error: error });
+          });
+        });
+      });
+      return chain.then(function () {
+        var td = 0, tf = 0;
+        results.forEach(function (r) { td += r.deleted; tf += r.failed; });
+        return fb.updateDoc(fb.doc(fb.db, "systemDeletionAudit", ctx.auditId), {
+          results: results,
+          status: tf ? (td ? "partial" : "failed") : "completed",
+          totalDeleted: td,
+          totalFailed: tf,
+          finishedAt: fb.serverTimestamp()
+        }).catch(function () {}).then(function () {
+          return { aborted: false, results: results, totalDeleted: td, totalFailed: tf };
+        });
+      });
+    });
+  }
+  /* JD-DELETE-MODULE-END */
+
 })();

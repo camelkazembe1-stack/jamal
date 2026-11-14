@@ -32,7 +32,8 @@ import {
   arrayUnion,
   arrayRemove,
   increment,
-  deleteField
+  deleteField,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -60,7 +61,7 @@ export {
   serverTimestamp, Timestamp, updateDoc, deleteDoc, getDocs, setDoc
 };
 export {
-  getDoc, limit, arrayUnion, arrayRemove, increment, deleteField
+  getDoc, limit, arrayUnion, arrayRemove, increment, deleteField, runTransaction
 };
 
 // Guard for inner pages: resolve with the user, or bounce to index.html

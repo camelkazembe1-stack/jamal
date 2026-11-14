@@ -26,6 +26,16 @@
   button.act.approve:hover:not(:disabled){background:#166534;}
   .err{color:#b91c1c;margin:12px 0 0;}
   .note{color:#475569;margin:8px 0 0;font-size:13px;}
+  .st-completed{color:#15803d;font-weight:600;}
+  .st-failed{color:#b91c1c;font-weight:600;}
+  .st-approved{color:#0369a1;font-weight:600;}
+  #delreq td i{font-style:normal;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;}
+  .tab{border:1px solid #cbd5e1;background:#ffffff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;color:#475569;}
+  .tab:hover{background:#f1f5f9;}
+  .tab.on{background:#0f172a;border-color:#0f172a;color:#ffffff;}
+  .tab .n{display:inline-block;min-width:22px;text-align:center;background:#e2e8f0;color:#334155;border-radius:999px;padding:1px 7px;margin-left:6px;font-size:11.5px;font-weight:700;}
+  .tab.on .n{background:#334155;color:#ffffff;}
 </style>
 </head>
 <body>
@@ -54,6 +64,24 @@
       <span id="modsel-ok" hidden style="color:#15803d;font-weight:600;">Saved.</span>
     </p>
   </section>
+  <section id="delreq" hidden style="margin-top:18px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;">
+    <h2 style="font-size:18px;margin:0 0 6px;">Data Deletion Requests</h2>
+    <p style="color:#64748b;font-size:13px;margin:0 0 10px;">Organisation users cannot delete shared data directly &mdash; from Settings &rarr; Show Delete Data they send a deletion request with a required reason, and it lands here. Nothing is ever deleted before your approval. <b>Approve</b> shows a final confirmation with exactly which data will be deleted, executes the permanent deletion immediately (a retention copy is archived into the deletion audit first), records you as the deciding administrator with the date and time, and notifies the user. <b>Reject</b> requires a reason, keeps every document untouched, and notifies the user. Pending, approved, rejected, completed and failed requests are all kept here.</p>
+    <div class="tabs" id="delreq-tabs"></div>
+    <div class="twrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Requested</th><th>User</th><th>Position</th><th>Google email</th>
+            <th>Data groups</th><th>Reason</th><th>Status</th><th>Decision / execution</th>
+          </tr>
+        </thead>
+        <tbody id="delreq-rows"><tr><td colspan="8">Loading&hellip;</td></tr></tbody>
+      </table>
+    </div>
+    <p class="note" id="delreq-note" hidden></p>
+  </section>
+
   <p class="err" id="err" hidden></p>
   <p class="note" id="note" hidden></p>
 </main>

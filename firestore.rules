@@ -150,13 +150,87 @@ service cloud.firestore {
           || isSystemAdmin()
         );
       allow create: if isSignedIn()
-        && request.resource.data.get("type", "") == "registration"
-        && request.resource.data.get("status", "") == "unread"
-        && request.resource.data.get("googleEmail", "") == request.auth.token.email;
+        && (
+          (
+            request.resource.data.get("type", "") == "registration"
+            && request.resource.data.get("status", "") == "unread"
+            && request.resource.data.get("googleEmail", "") == request.auth.token.email
+          )
+          || (
+            // the administrator's decision on a deletion request goes
+            // to the requesting user as a notification
+            isSystemAdmin()
+            && request.resource.data.get("type", "") == "deletion"
+            && request.resource.data.get("status", "") == "unread"
+          )
+        )
       allow update: if isSystemAdmin();
       allow delete: if isSystemAdmin();
     }
 
+    match /systemDeletionRequests/{docId} {
+      // Data deletion workflow: organisation users request the deletion of
+      // organisational data from Settings -> Show Delete Data. A request
+      // always carries the requester's own identity and a written reason.
+      // Only a system administrator may approve, reject or complete a
+      // request - and never their own (no self-approval) - while the data
+      // itself stays untouched until an approval is actually executed.
+      allow read: if isSignedIn()
+        && (
+          isSystemAdmin()
+          || resource.data.get("requesterUid", "") == request.auth.uid
+          || resource.data.get("requesterEmail", "") == request.auth.token.email
+        );
+      allow create: if isSignedIn()
+        && request.resource.data.get("type", "") == "data-deletion"
+        && request.resource.data.get("status", "") == "pending"
+        && request.resource.data.get("requesterUid", "") == request.auth.uid
+        && request.resource.data.get("requesterEmail", "") == request.auth.token.email
+        && request.resource.data.get("reason") is string
+        && request.resource.data.get("reason").size() > 0
+        && request.resource.data.get("scopes") is list
+        && request.resource.data.get("scopes").size() > 0;
+      allow update: if isSystemAdmin()
+        && request.resource.data.get("requesterUid", "") == resource.data.get("requesterUid", "")
+        && request.resource.data.get("requesterUid", "") != request.auth.uid
+        && (
+          // claim a pending request for approval
+          (resource.data.get("status", "") == "pending"
+            && request.resource.data.get("status", "") == "approved")
+          // reject a pending request - the reason is mandatory
+          || (resource.data.get("status", "") == "pending"
+            && request.resource.data.get("status", "") == "rejected"
+            && request.resource.data.get("decision", {}).get("reason", "") is string
+            && request.resource.data.get("decision", {}).get("reason", "").size() > 0)
+          // record the execution result of an approved request
+          || (resource.data.get("status", "") in ["approved", "failed"]
+            && request.resource.data.get("status", "") in ["completed", "failed"])
+        );
+      allow delete: if isSystemAdmin();
+    }
+
+    match /systemDeletionAudit/{docId} {
+      // Retention archive for every permanent deletion: what was deleted,
+      // by whom, when and why, plus a copy of the removed documents. The
+      // archive is written BEFORE anything is removed; a creator may only
+      // finalise their own record, and only the administrator can read the
+      // audit history or remove records from it.
+      allow read: if isSystemAdmin();
+      allow create: if isSignedIn()
+        && request.resource.data.get("actorUid", "") == request.auth.uid
+        && request.resource.data.get("status", "") == "executing";
+      allow update: if isSystemAdmin()
+        || (isSignedIn() && resource.data.get("actorUid", "") == request.auth.uid);
+      allow delete: if isSystemAdmin();
+    }
+
+    match /stockItems/{docId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
+
+    match /stockChanges/{docId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
     match /systemPageConfig/{docId} {
       allow read: if isSignedIn();
       allow create, update, delete: if isSystemAdmin();
