@@ -391,3 +391,540 @@ document.getElementById("modsel-save").addEventListener("click", saveModsel);
 document.getElementById("modsel-close").addEventListener("click", () => {
   document.getElementById("modsel").hidden = true;
 });
+
+/* ==================== Data Deletion Requests ====================
+   Organisation users submit deletion requests from Settings >
+   Show Delete Data; they land in systemDeletionRequests. This
+   section lists every request live for the administrator:
+     - Approve: a final confirmation shows exactly which data will be
+       deleted (fresh live counts). Approving claims the request in a
+       transaction (only one administrator can take it, and never the
+       requester themself), executes the permanent deletion from here -
+       retention archive first, then the documents - records the
+       approving administrator with the date and time, marks the request
+       COMPLETED (or FAILED if nothing could be deleted), and notifies
+       the requesting user.
+     - Reject: a reason is required, no data is touched, the request is
+       recorded as REJECTED and the user is notified with the reason.
+   Pending / Approved / Rejected / Completed / Failed tabs, plus the
+   per-collection execution results on every decided request. The
+   database rules carry the real authority: reads and decisions are
+   refused server-side for anyone who is not the administrator. */
+/* DEL-ADMIN-MODULE-START */
+let DELFB = null;
+let DEL_REQS = [];
+let DEL_TAB = "pending";
+let DEL_UNSUB = null;
+let DEL_BUSY = false;
+
+const DEL_TABS = [
+  ["pending", "Pending"], ["approved", "Approved"], ["rejected", "Rejected"],
+  ["completed", "Completed"], ["failed", "Failed"]
+];
+
+const DEL_SCOPE_LIB = {
+  business: { key: "business", label: "Business & accounting", collections: ["transactions"] },
+  stock: { key: "stock", label: "Stock management", collections: ["stockItems", "stockChanges"] },
+  health: { key: "health", label: "Hospital & health records", collections: [
+    "healthRegistrations", "healthTriage", "healthNurseConsultations",
+    "healthDoctorConsultations", "healthPrescriptions", "healthTreatmentOrders",
+    "healthDestinations", "healthWards", "healthBeds", "healthBedAssignments",
+    "healthBedTransfers", "healthBedMaintenance", "healthAdmissions",
+    "healthDischarges", "healthLabRequests", "healthImagingRequests",
+    "healthQueueConfig"
+  ] }
+};
+
+delStart();
+
+function delTxt(e) {
+  return e && (e.code || e.message) ? (e.code || "") + " " + (e.message || "") : String(e);
+}
+
+function delTs(t) {
+  try { return t && t.toDate ? t.toDate().getTime() : 0; } catch (e) { return 0; }
+}
+
+function delWhen(t) {
+  const ms = delTs(t);
+  return ms ? new Date(ms).toLocaleString() : "—";
+}
+
+function delHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function delSession() {
+  try { return JSON.parse(sessionStorage.getItem("JAMALI_SYSTEM_SESSION") || "null"); }
+  catch (e) { return null; }
+}
+
+function delColsOf(r) {
+  const out = [];
+  const scopes = Array.isArray(r && r.scopes) ? r.scopes : [];
+  for (const k of scopes) {
+    const s = DEL_SCOPE_LIB[k];
+    if (!s) continue;
+    for (const c of s.collections) if (out.indexOf(c) === -1) out.push(c);
+  }
+  return out;
+}
+
+function delFinalStatus(td, tf) {
+  // everything deleted -> completed; nothing deleted -> failed;
+  // partially deleted -> completed with the failures recorded
+  return tf === 0 || td > 0 ? "completed" : "failed";
+}
+
+function delStart() {
+  const sec = document.getElementById("delreq");
+  if (!sec || DEL_UNSUB) return;
+  import("/firebase.js").then((fb) => {
+    DELFB = fb;
+    sec.hidden = false;
+    delPaintTabs();
+    delPaint();
+    DEL_UNSUB = fb.onSnapshot(fb.collection(fb.db, "systemDeletionRequests"), (snap) => {
+      DEL_REQS = [];
+      snap.forEach((d) => DEL_REQS.push({ id: d.id, r: d.data() }));
+      DEL_REQS.sort((x, y) => delTs(y.r.createdAt) - delTs(x.r.createdAt));
+      delPaintTabs();
+      delPaint();
+      delPendingNote();
+    }, (e) => {
+      const rows = document.getElementById("delreq-rows");
+      if (!rows) return;
+      const m = delTxt(e);
+      rows.innerHTML = "<tr><td colspan=\"8\">The database refused reading the requests: " + delHtml(m) +
+        (m.indexOf("permission-denied") !== -1
+          ? " - reading deletion requests is allowed only for the administrator (systemAdmins)."
+          : "") + "</td></tr>";
+    });
+  }).catch((e) => {
+    const rows = document.getElementById("delreq-rows");
+    if (rows) rows.innerHTML = "<tr><td colspan=\"8\">Could not load the database module: " + delHtml(delTxt(e)) + "</td></tr>";
+  });
+}
+
+function delPendingNote() {
+  const el = document.getElementById("delreq-note");
+  if (!el) return;
+  const n = DEL_REQS.filter((x) => x.r.status === "pending").length;
+  el.hidden = n === 0;
+  el.textContent = n
+    ? (n + " pending deletion request" + (n > 1 ? "s" : "") +
+       " waiting for review - approving one executes the permanent deletion immediately.")
+    : "";
+}
+
+function delPaintTabs() {
+  const host = document.getElementById("delreq-tabs");
+  if (!host) return;
+  host.innerHTML = "";
+  for (const t of DEL_TABS) {
+    const n = DEL_REQS.filter((x) => x.r.status === t[0]).length;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tab" + (DEL_TAB === t[0] ? " on" : "");
+    b.innerHTML = delHtml(t[1]) + " <span class=\"n\">" + n + "</span>";
+    b.addEventListener("click", () => { DEL_TAB = t[0]; delPaintTabs(); delPaint(); });
+    host.appendChild(b);
+  }
+}
+
+function delPaint() {
+  const body = document.getElementById("delreq-rows");
+  if (!body) return;
+  const rows = DEL_REQS.filter((x) => x.r.status === DEL_TAB);
+  body.innerHTML = "";
+  if (!rows.length) {
+    body.innerHTML = "<tr><td colspan=\"8\">No " + delHtml(DEL_TAB) + " requests.</td></tr>";
+    return;
+  }
+  for (const row of rows) body.appendChild(delRow(row));
+}
+
+function delScopeHtml(r) {
+  const det = Array.isArray(r.scopeDetails) ? r.scopeDetails : [];
+  if (!det.length) {
+    return delHtml((Array.isArray(r.scopes) ? r.scopes : []).join(", "));
+  }
+  return det.map((s) =>
+    "<b>" + delHtml(s.label || s.key) + "</b>" +
+    "<i style=\"display:block;color:#64748b;font-size:11.5px\">" +
+    delHtml((s.collections || []).join(", ")) +
+    (typeof s.docsAtRequest === "number" ? " - " + s.docsAtRequest + " docs at request" : "") +
+    "</i>").join("");
+}
+
+function delRow(row) {
+  const r = row.r;
+  const tr = document.createElement("tr");
+
+  const tdAt = document.createElement("td");
+  tdAt.textContent = delWhen(r.createdAt);
+  tr.appendChild(tdAt);
+
+  const tdUser = document.createElement("td");
+  tdUser.textContent = r.requesterUsername || "—";
+  tr.appendChild(tdUser);
+
+  const tdPos = document.createElement("td");
+  tdPos.textContent = r.requesterPosition || "—";
+  tr.appendChild(tdPos);
+
+  const tdMail = document.createElement("td");
+  tdMail.textContent = r.requesterEmail || "—";
+  tr.appendChild(tdMail);
+
+  const tdScope = document.createElement("td");
+  tdScope.innerHTML = delScopeHtml(r);
+  tr.appendChild(tdScope);
+
+  const tdWhy = document.createElement("td");
+  tdWhy.textContent = r.reason || "";
+  tdWhy.style.cssText = "max-width:260px;white-space:normal;";
+  tr.appendChild(tdWhy);
+
+  const tdSt = document.createElement("td");
+  tdSt.textContent = String(r.status || "pending").toUpperCase();
+  tdSt.className = "st-" + (r.status || "pending");
+  tr.appendChild(tdSt);
+
+  const tdAct = document.createElement("td");
+  tdAct.style.cssText = "max-width:280px;white-space:normal;";
+  if (r.status === "pending") {
+    const ap = document.createElement("button");
+    ap.type = "button";
+    ap.className = "act approve";
+    ap.textContent = "Approve";
+    ap.addEventListener("click", () => delApprove(row, ap));
+    tdAct.appendChild(ap);
+    const rj = document.createElement("button");
+    rj.type = "button";
+    rj.className = "act";
+    rj.style.cssText = "margin-left:6px;background:#dc2626;color:#ffffff;border-color:#dc2626;";
+    rj.textContent = "Reject";
+    rj.addEventListener("click", () => delReject(row, rj));
+    tdAct.appendChild(rj);
+  } else if (r.decision) {
+    const d = r.decision;
+    const who = document.createElement("div");
+    who.style.cssText = "color:#475569;font-size:12.5px;";
+    who.innerHTML = "by " + delHtml(d.adminUsername || d.adminEmail || "—") +
+      "<br>" + delHtml(delWhen(d.at)) +
+      (d.outcome === "rejected" && d.reason ? "<br>Reason: " + delHtml(d.reason) : "");
+    tdAct.appendChild(who);
+  }
+  if (r.execution) {
+    const ex = r.execution;
+    const line = document.createElement("div");
+    line.style.cssText = "font-size:12px;color:#475569;margin-top:4px;";
+    const parts = Array.isArray(ex.results)
+      ? ex.results.map((x) => x.collection + " " + x.deleted + "/" + x.found).join(", ")
+      : "";
+    line.textContent = "Deleted " + (ex.totalDeleted || 0) + ", failed " + (ex.totalFailed || 0) +
+      (parts ? " — " + parts : "") +
+      (ex.error ? " — " + ex.error : "");
+    tdAct.appendChild(line);
+  }
+  if (r.status === "approved" || r.status === "failed") {
+    const rs = document.createElement("button");
+    rs.type = "button";
+    rs.className = "act";
+    rs.style.cssText = "margin-top:6px;";
+    rs.textContent = "Resume execution";
+    rs.addEventListener("click", () => delResume(row, rs));
+    tdAct.appendChild(rs);
+  }
+  tr.appendChild(tdAct);
+  return tr;
+}
+
+async function delApprove(row, btn) {
+  if (DEL_BUSY) return;
+  if (!IS_ADMIN) {
+    showErr("Only the administrator (systemAdmins) can decide deletion requests - the database will refuse it.");
+    return;
+  }
+  const me = DELFB && DELFB.auth && DELFB.auth.currentUser;
+  if (me && row.r.requesterUid === me.uid) {
+    showErr("You cannot approve your own deletion request.");
+    return;
+  }
+  DEL_BUSY = true;
+  btn.disabled = true;
+  try {
+    // exactly which data will be deleted: fresh live counts, right now
+    const cols = delColsOf(row.r);
+    if (!cols.length) throw new Error("This request carries no data groups.");
+    const counted = [];
+    let total = 0;
+    for (const c of cols) {
+      const snap = await DELFB.getDocs(DELFB.collection(DELFB.db, c));
+      counted.push(c + ": " + snap.size + " document" + (snap.size === 1 ? "" : "s"));
+      total += snap.size;
+    }
+    const summary = "FINAL CONFIRMATION\n\n" +
+      "Request by " + (row.r.requesterUsername || row.r.requesterEmail || "user") +
+      "\nReason: " + (row.r.reason || "") +
+      "\n\nThis will PERMANENTLY DELETE " + total + " document" + (total === 1 ? "" : "s") + ":" +
+      "\n  " + counted.join("\n  ") +
+      "\n\nA retention copy is archived into the deletion audit first, then every document is removed. " +
+      "The requesting user is notified afterwards, and the decision records you as the administrator " +
+      "with the date and time.\n\nApprove and execute now?";
+    if (!window.confirm(summary)) return;
+
+    // claim the request: one administrator takes it from pending, and
+    // the transaction refuses anything that is not still pending
+    const ref = DELFB.doc(DELFB.db, "systemDeletionRequests", row.id);
+    const ses = delSession();
+    await DELFB.runTransaction(DELFB.db, async (txn) => {
+      const s = await txn.get(ref);
+      if (!s.exists()) throw new Error("The request no longer exists.");
+      const d = s.data();
+      if (d.status !== "pending") {
+        throw new Error("This request was already handled - its status is now '" + d.status + "'.");
+      }
+      txn.update(ref, {
+        status: "approved",
+        decision: {
+          outcome: "approved",
+          reason: "",
+          adminUid: me.uid,
+          adminEmail: String(me.email || "").toLowerCase(),
+          adminUsername: (ses && ses.username) || "",
+          at: DELFB.serverTimestamp()
+        },
+        decidedAt: DELFB.serverTimestamp()
+      });
+    });
+
+    // archive, then delete; the result, the notification and the error
+    // handling are shared with delResume below
+    await delRunExecution(row, btn);
+  } catch (e) {
+    showErr("Could not approve the request: " + delTxt(e));
+  } finally {
+    DEL_BUSY = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
+// Shared tail of every approval: execute the permanent deletion, record
+// the result on the request and notify the requesting user.
+async function delRunExecution(row, btn) {
+  DEL_BUSY = true;
+  if (btn) btn.disabled = true;
+  const ref = DELFB.doc(DELFB.db, "systemDeletionRequests", row.id);
+  try {
+    const cols = delColsOf(row.r);
+    if (!cols.length) throw new Error("This request carries no data groups.");
+    let fin;
+    try {
+      fin = await delExecute(row, cols);
+    } catch (exErr) {
+      await DELFB.updateDoc(ref, {
+        status: "failed",
+        execution: { results: [], totalDeleted: 0, totalFailed: 0, error: delTxt(exErr), at: DELFB.serverTimestamp() },
+        executedAt: DELFB.serverTimestamp()
+      }).catch(() => {});
+      await delNotify(row, "failed",
+        "Your data deletion request was approved but the deletion FAILED - your data was not deleted. " +
+        "The administrator can see the error in Data Deletion Requests, and can resume the execution once it is fixed.");
+      showErr("The deletion failed: " + delTxt(exErr) +
+        " The request is recorded as FAILED; no data was removed and the user was notified.");
+      return;
+    }
+
+    // record the completed execution
+    await DELFB.updateDoc(ref, {
+      status: delFinalStatus(fin.totalDeleted, fin.totalFailed),
+      execution: {
+        results: fin.results,
+        totalDeleted: fin.totalDeleted,
+        totalFailed: fin.totalFailed,
+        at: DELFB.serverTimestamp()
+      },
+      executedAt: DELFB.serverTimestamp()
+    });
+
+    // tell the requesting user
+    await delNotify(row, "approved",
+      "Your data deletion request was approved and executed" +
+      (fin.totalFailed ? " with failures" : "") + ": " + fin.totalDeleted +
+      " document" + (fin.totalDeleted === 1 ? "" : "s") + " permanently deleted" +
+      (fin.totalFailed ? (", " + fin.totalFailed + " failed") : "") + ".");
+
+    note("Deletion executed: " + fin.totalDeleted + " deleted, " + fin.totalFailed +
+      " failed. The decision is recorded and the user has been notified.");
+  } catch (e) {
+    showErr("Could not execute the deletion: " + delTxt(e));
+  } finally {
+    DEL_BUSY = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
+// Resume an execution that was approved but interrupted (the browser
+// closed mid-run) or that failed earlier: nothing is claimed again, the
+// same archive-first execution runs, and the result is recorded.
+async function delResume(row, btn) {
+  if (DEL_BUSY) return;
+  if (!IS_ADMIN) {
+    showErr("Only the administrator (systemAdmins) can execute deletion requests - the database will refuse it.");
+    return;
+  }
+  const me = DELFB && DELFB.auth && DELFB.auth.currentUser;
+  if (me && row.r.requesterUid === me.uid) {
+    showErr("You cannot execute your own deletion request.");
+    return;
+  }
+  if (!window.confirm(
+    "RESUME DELETION\n\nThe request by " + (row.r.requesterUsername || row.r.requesterEmail || "user") +
+    " is " + String(row.r.status || "approved").toUpperCase() + ".\n\n" +
+    "The retention archive is written first, then the remaining documents are permanently " +
+    "deleted, and the requesting user is notified of the result.\n\nContinue?")) return;
+  await delRunExecution(row, btn);
+}
+
+async function delReject(row, btn) {
+  if (!IS_ADMIN) {
+    showErr("Only the administrator (systemAdmins) can decide deletion requests.");
+    return;
+  }
+  const me = DELFB && DELFB.auth && DELFB.auth.currentUser;
+  if (me && row.r.requesterUid === me.uid) {
+    showErr("You cannot decide your own deletion request.");
+    return;
+  }
+  const reason = window.prompt("Rejection reason (required - the requesting user will read it):", "");
+  if (reason === null) return;
+  if (!String(reason).trim()) {
+    showErr("A rejection reason is required - the user must know why the request was refused.");
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const ref = DELFB.doc(DELFB.db, "systemDeletionRequests", row.id);
+    const ses = delSession();
+    await DELFB.runTransaction(DELFB.db, async (txn) => {
+      const s = await txn.get(ref);
+      if (!s.exists()) throw new Error("The request no longer exists.");
+      const d = s.data();
+      if (d.status !== "pending") {
+        throw new Error("This request was already handled - its status is now '" + d.status + "'.");
+      }
+      txn.update(ref, {
+        status: "rejected",
+        decision: {
+          outcome: "rejected",
+          reason: String(reason).trim(),
+          adminUid: me.uid,
+          adminEmail: String(me.email || "").toLowerCase(),
+          adminUsername: (ses && ses.username) || "",
+          at: DELFB.serverTimestamp()
+        },
+        decidedAt: DELFB.serverTimestamp()
+      });
+    });
+    await delNotify(row, "rejected",
+      "Your data deletion request was REJECTED. Nothing was deleted. Reason from the administrator: " +
+      String(reason).trim());
+    note("Request rejected - no data was touched and the user has been notified.");
+  } catch (e) {
+    showErr("Could not reject the request: " + delTxt(e));
+  }
+  btn.disabled = false;
+}
+
+// The permanent-deletion executor for approved requests. Fixed order:
+// read everything, write the retention archive BEFORE removing anything,
+// then delete in batches. If any read or the archive write fails, an
+// error is thrown and nothing has been deleted.
+async function delExecute(row, cols) {
+  const groups = [];
+  for (const c of cols) {
+    const snap = await DELFB.getDocs(DELFB.collection(DELFB.db, c));
+    const docs = [];
+    snap.forEach((d) => docs.push({ id: d.id, data: d.data() }));
+    groups.push({ collection: c, docs: docs });
+  }
+  const CAP = 150;
+  const archive = {};
+  for (const g of groups) {
+    archive[g.collection] = {
+      count: g.docs.length,
+      truncated: g.docs.length > CAP,
+      docs: g.docs.slice(0, CAP).map((x) => ({ id: x.id, data: x.data }))
+    };
+  }
+  const me = DELFB.auth.currentUser;
+  const ses = delSession();
+  const auditId = "da-" + String(row.id).replace(/[^a-zA-Z0-9-]/g, "").slice(0, 20) + "-" + Date.now().toString(36);
+  await DELFB.setDoc(DELFB.doc(DELFB.db, "systemDeletionAudit", auditId), {
+    kind: "approved",
+    requestId: row.id,
+    actorUid: me.uid,
+    actorEmail: String(me.email || "").toLowerCase(),
+    actorLabel: (ses && ses.username) || "administrator",
+    requesterUid: row.r.requesterUid || "",
+    requesterUsername: row.r.requesterUsername || "",
+    scopes: Array.isArray(row.r.scopes) ? row.r.scopes : [],
+    collections: cols,
+    archive: archive,
+    results: [],
+    status: "executing",
+    at: DELFB.serverTimestamp()
+  });
+  const results = [];
+  for (const g of groups) {
+    let deleted = 0, failed = 0, error = "";
+    for (let start = 0; start < g.docs.length; start += 400) {
+      const slice = g.docs.slice(start, start + 400);
+      const batch = DELFB.writeBatch(DELFB.db);
+      slice.forEach((x) => batch.delete(DELFB.doc(DELFB.db, g.collection, x.id)));
+      try {
+        await batch.commit();
+        deleted += slice.length;
+      } catch (e) {
+        failed += slice.length;
+        error = delTxt(e);
+        break;
+      }
+    }
+    results.push({ collection: g.collection, found: g.docs.length, deleted: deleted, failed: failed, error: error });
+  }
+  let td = 0, tf = 0;
+  results.forEach((r) => { td += r.deleted; tf += r.failed; });
+  await DELFB.updateDoc(DELFB.doc(DELFB.db, "systemDeletionAudit", auditId), {
+    results: results,
+    status: tf ? (td ? "partial" : "failed") : "completed",
+    totalDeleted: td,
+    totalFailed: tf,
+    finishedAt: DELFB.serverTimestamp()
+  }).catch(() => {});
+  return { results: results, totalDeleted: td, totalFailed: tf };
+}
+
+async function delNotify(row, outcome, message) {
+  try {
+    await DELFB.addDoc(DELFB.collection(DELFB.db, "systemNotifications"), {
+      type: "deletion",
+      status: "unread",
+      googleUid: (row.r && row.r.requesterUid) || "",
+      googleEmail: (row.r && row.r.requesterEmail) || "",
+      username: (row.r && row.r.requesterUsername) || "",
+      requestId: row.id,
+      outcome: outcome,
+      message: message,
+      at: DELFB.serverTimestamp()
+    });
+  } catch (e) {
+    showErr("Could not store the user notification: " + delTxt(e) +
+      " The decision itself is already recorded on the request.");
+  }
+}
+/* DEL-ADMIN-MODULE-END */
+
