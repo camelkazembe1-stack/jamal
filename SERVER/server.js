@@ -353,10 +353,6 @@ service cloud.firestore {
       allow delete: if isSystemAdmin();
     }
 
-    match /aiHistory/{docId} {
-      allow read, create, update, delete: if isSignedIn();
-    }
-
     match /stockItems/{docId} {
       allow read, create, update, delete: if isSignedIn();
     }
