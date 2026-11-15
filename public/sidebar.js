@@ -548,7 +548,7 @@ function () {
     jamaliSettingsOpen();
   });
   document.getElementById("jamali-side-ai").addEventListener("click", function () {
-    jamaliToast("AI - on progress");
+    location.href = "/ai/329";
   });
 
   function ensureAdminBtn() {
