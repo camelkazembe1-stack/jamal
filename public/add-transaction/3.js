@@ -616,10 +616,21 @@ function showStep(n) {
 
  
 const TYPE_BADGE = { IN: "b-in", OUT: "b-out", NEUTRAL: "b-neutral", CONTRA: "b-contra" };
+const GROUP_META = {
+  IN:      { title: "Money In",  sub: "All the ways money comes into the business." },
+  OUT:     { title: "Money Out", sub: "All the ways money goes out of the business." },
+  NEUTRAL: { title: "Neutral",   sub: "Written down only \u2014 no money in or out yet." },
+  CONTRA:  { title: "Contra \u00B7 Cash and Bank", sub: "Money moved between cash and bank." }
+};
 
  $("#groups").innerHTML = Object.keys(TRANSACTIONS).map((t) =>
   `<section class="group">
-     <h2 class="group-label"><span class="badge ${TYPE_BADGE[t]}">${t}</span></h2>
+     <div class="group-head">
+       <span class="badge ${TYPE_BADGE[t]}">${t}</span>
+       <h2 class="group-title">${GROUP_META[t].title}</h2>
+       <span class="group-count">${TRANSACTIONS[t].length} types</span>
+     </div>
+     <p class="group-sub">${GROUP_META[t].sub}</p>
      <div class="grid">
        ${TRANSACTIONS[t].map((x) =>
          `<button class="tile" type="button" data-type="${t}" data-txn="${x.name}">
