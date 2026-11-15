@@ -5,7 +5,7 @@
 
 
 
-import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/firebase.js";
+import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/502.js";
 
 window.__p52 = { page: "335", build: "52t1", auth: false, listeners: 0, docs: -1, errs: [] };
 

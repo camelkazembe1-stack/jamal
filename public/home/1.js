@@ -4,7 +4,7 @@
 
 
 
-import { db, doc, getDoc } from "/firebase.js";
+import { db, doc, getDoc } from "/502.js";
 
 const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
 let S = null;

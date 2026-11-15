@@ -4,7 +4,7 @@
 
 
 
-import { requireAuth, db, collection, query, addDoc, doc, setDoc, onSnapshot, serverTimestamp } from "/firebase.js";
+import { requireAuth, db, collection, query, addDoc, doc, setDoc, onSnapshot, serverTimestamp } from "/502.js";
  
 let showPatient = function () {}, hidePatient = function () {};
 try {

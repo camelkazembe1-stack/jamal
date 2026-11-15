@@ -763,13 +763,13 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - public/health, the extra files - besides page 321 the folder carries 514.js and 513.css - the shared chip the health stage pages load to show a patient's every record by Registration ID.
 
-- SERVER - the server folder at the repository root, outside the web root: server.js picks the Firebase project and configuration, linker.js is the connection point the modules talk through, and public/502.js - the only module pages import - carries the same wiring into every page.
+- SERVER - the server folder at the repository root, outside the web root: server.js picks the Firebase project and configuration, linker.js is the connection point the modules talk through, and public/502.js - the only module pages import - carries the same wiring into every page. The vercel.json build line copies server.js into public/502.js at deploy time, so one edit at the server reaches every page and the next deploy.
 
 - apply-rules.sh - the one-shot publisher for the Firestore rules: it reads the database project from SERVER/server.js, writes firebase.json and .firebaserc, walks you through the Firebase sign in and publishes firestore.rules, then removes itself - kept out of the app, nothing on the website imports it.
 
 - firestore.rules - the guard dog. Decides who may read or write each collection: reads on the account and credential records are open to every signed-in Google identity so a system account opens with its username and token from any sign-in, account creation stays bound to the Google email that made it and always starts pending, approvals, grants and deletes stay administrator only through the systemAdmins check, and anything not matched is denied. The systemDeleted tombstones are written, changed and removed by the administrator only, and read by every signed-in identity so the login can explain a deleted account. One extra door: on a database where the systemSetup claim marker does not exist yet (a fresh server), the first administrator login may create the approved administrator account, and the door closes again the moment the claim marker exists.
 
-- vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root.
+- vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root. Its build line copies SERVER/server.js into public/502.js, keeping every deploy level with the server.
 
 - firebase.json and .firebaserc - the Firebase CLI's project settings, kept pointing at firestore.rules and the project the code really uses.
 
@@ -781,7 +781,7 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - .git - git's own filing cabinet, not part of the app and never served: the commit history, the branches, the hooks and the object store. Nothing in here is edited by hand.
 
-That is the whole tree: 1091 project files, 1082 of them under public, and every one of them is named above.
+That is the whole tree: 1092 project files, 1082 of them under public, and every one of them is named above.
 
 ADMIN FIELD, OPTION AND BUTTON CONTROLS
 

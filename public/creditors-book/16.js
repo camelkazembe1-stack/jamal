@@ -1,5 +1,5 @@
 /* JAMALI CORE — restored shared engine, inlined so every folder keeps 1 html + 1 css + 1 js */
-import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jamaliCoreGetDocs, doc as jamaliCoreDoc, deleteDoc as jamaliCoreDeleteDoc, requireAuth as jamaliCoreRequireAuth, onSnapshot as jamaliCoreOnSnapshot } from "/firebase.js";
+import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jamaliCoreGetDocs, doc as jamaliCoreDoc, deleteDoc as jamaliCoreDeleteDoc, requireAuth as jamaliCoreRequireAuth, onSnapshot as jamaliCoreOnSnapshot } from "/502.js";
 (function () {
   if (typeof window === "undefined" || window.JAMALI_CORE) return;
   window.JAMALI_CORE = true;
@@ -532,7 +532,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
 
 
 
-import { requireAuth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "/firebase.js";
+import { requireAuth, db, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "/502.js";
 
 
 
