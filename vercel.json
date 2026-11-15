@@ -384,5 +384,5 @@
       "permanent": false
     }
   ],
-  "buildCommand": "cp -f SERVER/server.js public/502.js"
+  "buildCommand": "node SERVER/sync.js"
 }
