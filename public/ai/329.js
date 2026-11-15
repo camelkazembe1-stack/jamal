@@ -12,6 +12,11 @@
  *   - understanding: Swahili, English or a mix, text, photographed receipts
  *     (OCR) and documents (PDF, Word, Excel, CSV, text) read into the exact
  *     fields the target module expects (347, 348, 349);
+ *   - the web search: a word the dictionaries do not know (kashata) is
+ *     looked up on the open web - keyless, CORS-open Wikipedia, English and
+ *     Swahili - and the answer comes back tied to the system;
+ *   - the chat layer: greetings, thanks and open questions get real replies
+ *     or web answers instead of a clarification loop;
  *   - the desks: Business, Stock, Health, Computer — mapping, clarification,
  *     one confirmation summary per action, execution through the exact
  *     collections and validation the manual pages use (354-392, 394, 395,
@@ -32,7 +37,7 @@ import {
  * PURE CORE — no window, no Firestore. The same code a Node test runs.
  * ===================================================================== */
 
-const AI_VERSION = "1.0";
+const AI_VERSION = "1.1";
 
 /* The business names, exactly page 3's own lists. */
 const IN_NAMES = ["Sales", "Commission Receivable", "Purchase Return", "Petty Cash",
@@ -523,7 +528,7 @@ const LEX = [
   [/legal fees/, "Legal Fees", "OUT"],
   [/bad debts/, "Bad Debts", "OUT"],
   [/purchases?\b|bought|nimenunua|nunua/, "Purchases", "OUT"],
-  [/sold\b|nimeuza|mauzo|\bsales?\b/, "Sales", "IN"],
+  [/sold\b|\bsell(?:s|ing)?\b|nimeuza|mauzo|kuuza|\bsales?\b/, "Sales", "IN"],
   [/rent paid|nimelipa kodi|kulipa kodi|\brent\b|\bkodi\b/, "Rent", "OUT"],
   [/wages|majira/, "Wages", "OUT"],
   [/salaries?|mshahara/, "Salary", "OUT"],
@@ -602,7 +607,17 @@ function splitSegments(text) {
 function parseBusinessSegment(seg) {
   const hit = lexMatch(seg);
   const amount = parseAmount(seg);
-  if (!hit) return { ok: false, need: "name", seg: seg };
+  if (!hit) {
+    /* owner consumption - "nimekula kashata 1", "eaten by business owner":
+     * the closest page-3 record is Petty Expense OUT on Cash, and the item
+     * the dictionaries do not know rides to the web search (webTerm) */
+    if (guessOwnerUse(seg)) {
+      if (amount == null) return { ok: false, need: "amount", seg: seg, hit: { name: "Petty Expense", type: "OUT" } };
+      return { ok: true, seg: seg, kind: "plain", charges: null, webTerm: webTermFromSegment(seg),
+        rec: { transactionName: "Petty Expense", transactionType: "OUT", flowMethod: "Cash", name: null, amount: amount } };
+    }
+    return { ok: false, need: "name", seg: seg };
+  }
   if (amount == null) return { ok: false, need: "amount", seg: seg, hit: hit };
   let method = methodOf(seg);
   if (method === "both") return { ok: false, need: "method", seg: seg, hit: hit };
@@ -951,8 +966,108 @@ const HELP_EXAMPLES = [
   ["Check a balance", "check stock for sugar"],
   ["Register a patient", "register patient John Juma, 34, male"],
   ["Admit a patient", "admit patient 4827ABCD emergency chest pain"],
-  ["Convert a file", "attach a PDF and write: convert to word"]
+  ["Convert a file", "attach a PDF and write: convert to word"],
+  ["Ask the web", "maana ya kashata"]
 ];
+
+/* ---------- the chat layer and the web search (pure, testable) ---------- */
+
+/* Owner consumption - "nimekula kashata 1", "eaten by business owner": the
+ * owner or staff ate or used the goods themselves. It is still a record:
+ * page 3's closest name is Petty Expense, and the item word rides to the
+ * web search so the answer comes back with real meaning. */
+const OWNER_USE_RE = /nimekula|nimetumia|nilitumia|tulikula|umekula|amekula|tumika|\bkula\b|kulwa|eaten|consumed|\bate\b|personal use|used by (the )?(owner|boss|me)|owner (took|ate|used|eaten|consumed)|took for (himself|herself|personal)/i;
+const WEB_STOP = ("the and for with from that this these those there here " +
+  "kwa ya na wa za cha vya kya mpaka hadi pia then also very sana tafadhali please " +
+  "owner boss business personal madam sir " +
+  "cash pesa money benki bank account card " +
+  "eaten consume consumed use used using took take taken kulwa kula tumika nimekula nimetumia nilitumia tulikula umekula amekula " +
+  "record records write save saved enter").split(" ");
+
+function guessOwnerUse(text) {
+  return OWNER_USE_RE.test(String(text || ""));
+}
+
+/* the one word of a segment the dictionaries do not know - the web search
+ * term ("kashata" out of "nimekula kashata 1") */
+function webTermFromSegment(seg) {
+  const words = String(seg || "").toLowerCase().replace(/[^a-z0-9\s'-]/g, " ").split(/\s+/)
+    .filter(function (w) { return w.length > 2; })
+    .filter(function (w) { return !/^\d/.test(w); })
+    .filter(function (w) { return WEB_STOP.indexOf(w) === -1; })
+    .filter(function (w) { return !LEX.some(function (e) { return e[0].test(" " + w + " "); }); });
+  if (!words.length) return null;
+  return words.sort(function (a, b) { return b.length - a.length; })[0];
+}
+
+/* "maana ya kashata" -> kashata; "what is cassava" -> cassava */
+function termFromQuestion(text) {
+  let t = String(text || "").toLowerCase().replace(/[?!.]+$/g, "").trim();
+  t = t.replace(/^\s*(?:what|who)\s+(?:is|are|was|were)\s+/i, "")
+    .replace(/^\s*nini\s+maana\s+ya\s+/i, "")
+    .replace(/^\s*maana\s+(?:ya|za)\s+/i, "")
+    .replace(/\s+(?:maana|meaning)\s+(?:ya|of)\s+/i, " ")
+    .replace(/^\s*(?:explain|eleza|define|tafsiri)\s+(?:me\s+|kwa\s+kiswahili\s+)?/i, "")
+    .replace(/^\s*(?:the|a|an)\s+/i, "")
+    .replace(/\s+(?:nini|what)\s*$/i, "")
+    .trim();
+  if (!t) return null;
+  return t.split(/\s+/).slice(0, 6).join(" ");
+}
+
+const GREET_RE = /\b(?:habari|mambo|jambo|shikamoo|salama|hello|hi|hey|niaje|sema|poa|good\s*(?:morning|afternoon|evening)|habari\s+za\s+(?:asubuhi|mchana|jioni))\b/i;
+const THANKS_RE = /\b(?:asante|asanteni|shukrani|thanks?|thank\s+you)\b/i;
+const CAPS_RE = /\b(?:who\s+are\s+you|what\s+can\s+you\s+do|what\s+do\s+you\s+do|unaweza\s+(?:kufanya\s+)?nini|nini\s+unaweza|msaada|what\s+is\s+this)\b/i;
+const ASK_RE = /\b(?:what|who)\s+(?:is|are|was|were)\b|\bmeaning\s+of\b|\bmaana\s+ya\b|\bnini\s+maana\b|\bmaana\s+nini\b|\beleza\b|\bexplain\b|\bdefine\b|\btafsiri\b|\?\s*$/i;
+
+/* greetings, thanks, capabilities and open questions are chat - answered
+ * directly or through the web search, never into a clarification loop.
+ * A transaction always wins first: any dictionary hit or a money amount. */
+function classifyChat(text) {
+  const t = String(text || "").trim();
+  if (!t) return null;
+  if (lexMatch(t) || parseAmount(t)) return null;
+  if (CAPS_RE.test(t)) return { kind: "caps" };
+  if (THANKS_RE.test(t)) return { kind: "thanks" };
+  if (GREET_RE.test(t) && t.length <= 40) return { kind: "greet" };
+  if (ASK_RE.test(t)) return { kind: "ask", term: termFromQuestion(t) || t };
+  return null;
+}
+
+function chatReply(kind) {
+  if (kind === "greet") return "Habari! Ready - write below, Swahili or English.";
+  if (kind === "thanks") return "Karibu! Ready for the next one.";
+  return "I record business, stock and health actions, run the file tools and search the web. Try: nimeuza 500.";
+}
+
+function cleanSnippet(html) {
+  return String(html || "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&#039;|&#x27;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function firstSentences(text, n) {
+  const s = String(text || "").replace(/\s+/g, " ").trim();
+  const parts = s.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [s];
+  return (parts.slice(0, n || 2).map(function (p) { return p.trim(); }).join(" ") || s).slice(0, 320).trim();
+}
+
+/* the web answer, tied back to the system */
+function relateToSystem(text) {
+  const t = String(text || "").toLowerCase();
+  if (/food|snack|dish|crop|fruit|vegetable|candy|sweet|beverage|drink|meal|grain|seed|flour|sugar|salt|cassava|rice|maize/.test(t))
+    return "If you sell it, write: nimeuza <name> <amount>. If it went into stock, write: register stock <name>: units, buy, package, sell.";
+  if (/disease|medicine|drug|hospital|clinic|patient|symptom|treatment|vaccine|health/.test(t))
+    return "For health work, write: register patient <name>, <age>, <male|female> - or admit patient <ID> <details>.";
+  if (/bank|currency|loan|interest|finance|tax|insurance|money/.test(t))
+    return "For money records, write it like: nimeuza 500 - or paid rent 20000 kwa Landlord.";
+  return "To record anything, write it like: nimeuza 500 - the AI reads Swahili, English or both.";
+}
 
 /* Export the pure core for the Node test harness (it imports a copy of this
  * file with the /502.js import line stripped). */
@@ -964,7 +1079,9 @@ const PURE = {
   parseBusinessSegment, parseStockRegisterSegment, parseStockMovementSegment,
   detectQuery, isBlockedUpload, fileKindOf, matchTool,
   validateBusinessItem, validateStockRegisterItem, validateStockMovement,
-  makeRegId, makeCode, patientDoc, admissionDoc, dischargeDoc, labDoc, imagingDoc, esc, money
+  makeRegId, makeCode, patientDoc, admissionDoc, dischargeDoc, labDoc, imagingDoc, esc, money,
+  guessOwnerUse, webTermFromSegment, termFromQuestion, classifyChat, chatReply,
+  cleanSnippet, firstSentences, relateToSystem
 };
 export { PURE };
 
@@ -979,7 +1096,7 @@ const S = {
   pending: null,             /* the pending action awaiting confirmation (416) */
   pendingClarify: null,
   desk: null, n: null, deskLabel: null,
-  els: {}, _libs: {}, _chargesAmt: null
+  els: {}, _libs: {}, _chargesAmt: null, _nameAsk: 0
 };
 
 const CDN = {
@@ -1007,6 +1124,65 @@ function grantAllows(folder) {
   const par = GRANT_PARENT[folder];
   if (par && g.indexOf(par) !== -1) return true;
   return false;
+}
+
+/* ---------- the web search: keyless, CORS-open, no server needed ----------
+ * The app is a static Vercel site, so the lookup runs in the browser against
+ * open endpoints that answer cross-origin: Wikipedia (English and Swahili).
+ * Google itself needs a paid key and blocks the browser - the moment a key
+ * exists, its client goes exactly here, behind the same webLookup hand. */
+function wikiFetch(url, tryAgain) {
+  const c = new AbortController();
+  const t = setTimeout(function () { c.abort(); }, 8000);
+  const headers = { "Api-User-Agent": "JAMALI-AI/1.1 (web; contact through the app)" };
+  return fetch(url, { signal: c.signal, headers: headers }).then(function (r) {
+    clearTimeout(t);
+    /* a busy open endpoint gets one quiet retry - batches of lookups can
+     * trip the rate limit, and one 1.2s pause settles it */
+    if (r.status === 429 && !tryAgain) return new Promise(function (res) { setTimeout(res, 1200); }).then(function () { return wikiFetch(url, true); });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).catch(function (e) { clearTimeout(t); throw e; });
+}
+
+function wikiPageUrl(title, lang) {
+  return "https://" + lang + ".wikipedia.org/wiki/" + encodeURIComponent(String(title || "").replace(/\s/g, "_"));
+}
+
+/* one term -> what the web says: the exact article, else the search whose
+ * snippet carries the term, else the Swahili search. null means not found. */
+async function webLookup(term) {
+  const t0 = String(term || "").trim().slice(0, 80);
+  if (!t0) return null;
+  try {
+    const j = await wikiFetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(t0) + "?redirect=true");
+    if (j && j.extract) return { term: t0, title: j.title, text: firstSentences(j.extract, 3), url: wikiPageUrl(j.title, "en"), source: "Wikipedia" };
+  } catch (e) {}
+  try {
+    const j = await wikiFetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=" + encodeURIComponent(t0) + "&format=json&origin=*&srlimit=3");
+    const hits = (j && j.query && j.query.search) ? j.query.search : [];
+    for (let i = 0; i < hits.length; i++) {
+      const sn = cleanSnippet(hits[i].snippet);
+      if (sn && sn.toLowerCase().indexOf(t0.toLowerCase()) !== -1)
+        return { term: t0, title: hits[i].title, text: firstSentences(sn, 2), url: wikiPageUrl(hits[i].title, "en"), source: "Wikipedia search" };
+    }
+    for (let i = 0; i < hits.length; i++) {
+      try {
+        const s = await wikiFetch("https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(hits[i].title) + "?redirect=true");
+        if (s && s.extract) return { term: t0, title: s.title, text: firstSentences(s.extract, 3), url: wikiPageUrl(s.title, "en"), source: "Wikipedia" };
+      } catch (e) {}
+    }
+  } catch (e) {}
+  try {
+    const j = await wikiFetch("https://sw.wikipedia.org/w/api.php?action=query&list=search&srsearch=" + encodeURIComponent(t0) + "&format=json&origin=*&srlimit=2");
+    const hits = (j && j.query && j.query.search) ? j.query.search : [];
+    for (let i = 0; i < hits.length; i++) {
+      const sn = cleanSnippet(hits[i].snippet);
+      if (sn && sn.toLowerCase().indexOf(t0.toLowerCase()) !== -1)
+        return { term: t0, title: hits[i].title, text: firstSentences(sn, 2), url: wikiPageUrl(hits[i].title, "sw"), source: "Wikipedia (Swahili)" };
+    }
+  } catch (e) {}
+  return null;
 }
 
 /* ---------- the card library (419) ---------- */
@@ -1543,6 +1719,12 @@ async function handleUserText(text) {
     return;
   }
 
+  /* the chat layer: greetings, thanks and open questions get real replies
+   * instead of a clarification loop - anything that parses as a transaction
+   * already went to the desks above through its own guards */
+  const chat = classifyChat(text);
+  if (chat) { await respondChat(chat, text); return; }
+
   /* the desks */
   if (scope === "business" || scope === "all") return handleBusiness(text, await gatherText(text));
   if (scope === "stock") return handleStock(text, await gatherText(text));
@@ -1553,7 +1735,7 @@ async function handleUserText(text) {
 }
 
 /* Business desk (354, 355, 356, 357, 358, 359) */
-async function handleBusiness(text, combined) {
+async function handleBusiness(text, combined, finalAsk) {
   const segs = splitSegments(combined || text);
   const items = [], missing = [];
   segs.forEach(function (seg, idx) {
@@ -1585,24 +1767,34 @@ async function handleBusiness(text, combined) {
   }
   const stillCharges = items.some(function (p) { return p.charges === "clarify"; });
   if (!items.length && missing.length) {
-    S.pendingClarify = { kind: "business", text: text, fixSeg: missing[0].seg, fixIdx: missing[0].idx };
+    if (finalAsk) return finalBusinessGuess(text, missing[0]);
+    S.pendingClarify = { kind: "business", text: text, fixSeg: missing[0].seg, fixIdx: missing[0].idx, asked: "name", question: missing[0].question };
     askClarification(missing[0].question);
     return;
   }
   if (stillCharges) {
-    S.pendingClarify = { kind: "business-charges", text: text };
+    S.pendingClarify = { kind: "business-charges", text: text, question: "How much were the bank charges? They save as their own separate Bank Charges record (358). Write only the amount." };
     askClarification("How much were the bank charges? They save as their own separate Bank Charges record (358). Write only the amount.");
     return;
   }
   if (missing.length) {
-    S.pendingClarify = { kind: "business", text: text, fixSeg: missing[0].seg, fixIdx: missing[0].idx };
+    if (finalAsk) return finalBusinessGuess(text, missing[0]);
+    S.pendingClarify = { kind: "business", text: text, fixSeg: missing[0].seg, fixIdx: missing[0].idx, asked: "name", question: missing[0].question };
     askClarification(missing[0].question + " The rest is ready to confirm.");
     return;
+  }
+  /* the unknown item word of an owner-use request rides to the web search,
+   * so the confirmation card carries the real meaning of what was typed */
+  for (const it of items) {
+    if (it.webTerm && !it.webInfo) {
+      try { it.webInfo = await webLookup(it.webTerm); } catch (e) { it.webInfo = null; }
+    }
   }
   showBusinessConfirmation(items, text);
 }
 
 function showBusinessConfirmation(items, requestText) {
+  S._nameAsk = 0;
   if (!(grantAllows("add-transaction") || grantAllows("business"))) {
     pushHtml(cardShell("error", "Not permitted (404)",
       "<p>Your account is not granted the Business module, so the AI may not save there (404).</p>"));
@@ -1614,8 +1806,12 @@ function showBusinessConfirmation(items, requestText) {
       '</td><td class="amt">' + money(p.rec.amount) + '</td><td>' + esc(p.rec.flowMethod) +
       '</td><td>' + esc(p.rec.name || "-") + '</td></tr>';
   }).join('');
+  const webLines = items.filter(function (p) { return p.webInfo; }).map(function (p) {
+    return 'From the web: ' + esc(p.webTerm) + ' - ' + esc(firstSentences(p.webInfo.text, 1)) + ' (' + esc(p.webInfo.source) + ')';
+  }).join('<br>');
   const card = cardShell("confirm", "Confirmation summary (395)",
-    "<p>Target module: <b>Business - Add Transaction (3)</b>. Nothing saves without this confirmation.</p>" +
+    '<p class="ai-dim">Business - Add Transaction</p>' +
+    (webLines ? '<p class="ai-dim">' + webLines + '</p>' : "") +
     '<table class="ai-fields"><thead><tr><th>Name</th><th>Type</th><th>Amount</th><th>Method</th><th>Name on record</th></tr></thead><tbody>' +
     rowsHtml + '</tbody></table>' +
     '<div class="ai-actions">' +
@@ -1635,7 +1831,7 @@ async function actOnPending(act, btn) {
   if (!p) return;
   if (act === "cancel") { /* 401 */
     S.pending = null; setStatus("ready");
-    pushHtml(cardShell("status", "Cancelled (401)", "<p>The pending action was discarded - nothing was saved. The AI is Ready and the input bar is unlocked.</p>"));
+    pushHtml(cardShell("status", "Cancelled (401)", "<p>Nothing was saved.</p>"));
     await writeHistory({ request: p.requestText, action: "Cancelled before saving", status: "cancelled", detail: {} });
     return;
   }
@@ -1681,7 +1877,7 @@ async function actOnPending(act, btn) {
         return esc(r.transactionName) + " - " + esc(r.transactionType) + " - " + money(r.amount) + " - " + esc(r.flowMethod) + (r.name ? " - " + esc(r.name) : "");
       }).join("<br>");
       pushHtml(cardShell("done", "Saved (400)",
-        "<p>" + saved.length + " record(s) saved through page 3's own process, with your identity and timestamp on every record (414).</p><p>" + lines + "</p>" +
+        "<p>" + lines + "</p>" +
         '<div class="ai-actions"><a class="ai-btn" href="/add-transaction/3">Open Add Transaction</a> <a class="ai-btn ghost" href="/all-transactions/5">All Transactions</a></div>'));
     } catch (e) {
       pushHtml(cardShell("error", "Save failed (403)",
@@ -1693,21 +1889,85 @@ async function actOnPending(act, btn) {
   }
 }
 
+/* the second look (394 kept honest): one informed pass - the unknown word
+ * goes to the web search, the question returns with that meaning on the
+ * table, and after two passes the AI gives up cleanly. It never asks the
+ * same bare question twice. */
+async function finalBusinessGuess(text, miss) {
+  const seg = miss.seg || text;
+  const term = webTermFromSegment(seg);
+  let info = null;
+  setStatus("processing");
+  if (term) { try { info = await webLookup(term); } catch (e) { info = null; } }
+  S._nameAsk = (S._nameAsk || 0) + 1;
+  if (S._nameAsk >= 2) {
+    /* one bare question and one informed question are enough - a third
+     * round would be the loop the AI promises never to run */
+    S.pendingClarify = null;
+    pushHtml(cardShell("error", "Not mapped (401)",
+      "<p>I could not map that to a record - nothing was saved.</p><p>Write it like: <b>nimeuza 500</b> or <b>paid rent 20000 kwa Landlord</b>.</p>"));
+    resetToReady(true);
+    return;
+  }
+  if (info) {
+    pushHtml(cardShell("answer", "From the web (409)",
+      "<p><b>" + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 2)) + "</p>" +
+      '<p class="ai-dim">Source: ' + esc(info.source) + ' <a class="ai-page-link" href="' + esc(info.url) + '" target="_blank" rel="noopener">open</a></p>'));
+  }
+  S.pendingClarify = { kind: "business", text: text, fixSeg: miss.seg, fixIdx: miss.idx, asked: "name", question: miss.question };
+  askClarification(term
+    ? 'Which record is "' + term + '"? Sales, Purchases, Rent, Wages, Petty Expense, Other - or write it another way.'
+    : "Which record is this? Sales, Purchases, Rent, Wages, Petty Expense, Other (349).");
+}
+
+/* the stock second look: same honesty, no guessing - one informed pass and
+ * then a clean stop */
+function unmappedStock() {
+  S.pendingClarify = null;
+  pushHtml(cardShell("error", "Not mapped (401)",
+    "<p>I could not map that to a stock action - nothing was saved.</p><p>Try: <b>register stock sugar: 50 units, buy 2000, package of 10, sell 5</b> or <b>sales 6 units of sugar</b>.</p>"));
+  resetToReady(true);
+}
+
+/* the chat answers: greetings, thanks, capabilities and open questions */
+async function respondChat(chat, text) {
+  if (chat.kind === "ask") {
+    setStatus("processing");
+    let info = null;
+    try { info = await webLookup(chat.term || text); } catch (e) { info = null; }
+    if (!info) {
+      pushHtml(cardShell("answer", "From the web (409)",
+        "<p>I could not reach the web source just now - nothing was written, try again in a moment.</p>"));
+      resetToReady(true);
+      return;
+    }
+    pushHtml(cardShell("answer", "From the web (409)",
+      "<p><b>" + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 2)) + "</p>" +
+      '<p class="ai-dim">Source: ' + esc(info.source) + ' <a class="ai-page-link" href="' + esc(info.url) + '" target="_blank" rel="noopener">open</a></p>' +
+      "<p>" + esc(relateToSystem(info.text)) + "</p>"));
+    await writeHistory({ request: text, action: "Web search: " + info.title, status: "completed", detail: { term: info.term, source: info.source } });
+    resetToReady(true);
+    return;
+  }
+  pushHtml(cardShell("answer", "AI", "<p>" + esc(chatReply(chat.kind)) + "</p>"));
+  resetToReady(true);
+}
+
 function askClarification(question) { /* 394 */
-  pushHtml(cardShell("clarify", "One question before anything else (394)",
-    "<p>" + esc(question) + "</p><p class='ai-dim'>Answer in the input bar - Swahili, English or both.</p>"));
+  pushHtml(cardShell("clarify", "One question (394)", "<p>" + esc(question) + "</p>"));
   setStatus("needs-confirmation");
 }
 
 function resetToReady(keepAttachments) {
   if (!keepAttachments) { S.attachments = []; renderChips(); }
   S.pendingClarify = null;
+  S._nameAsk = 0;
   setStatus("ready");
-  if (S.els.foot) S.els.foot.textContent = "Ready - the send button is back to the deactivated arrow (344).";
+  if (S.els.foot) S.els.foot.textContent = "Ready";
 }
 
 /* Stock desk (364-369) */
-async function handleStock(text, combined) {
+async function handleStock(text, combined, finalAsk) {
   const segs = splitSegments(combined || text);
   const regs = [], movs = [], missing = [];
   segs.forEach(function (seg, idx) {
@@ -1730,12 +1990,15 @@ async function handleStock(text, combined) {
     }
   });
   if (!regs.length && !movs.length) {
-    S.pendingClarify = { kind: "stock", text: text, fixSeg: missing.length ? missing[0].seg : null, fixIdx: missing.length ? missing[0].idx : null };
-    askClarification(missing.length ? missing[0].question : "Tell me the stock action - register an item, record a movement (one of the fourteen causes), or ask for a balance.");
+    const stockQ = missing.length ? missing[0].question : "Tell me the stock action - register an item, record a movement (one of the fourteen causes), or ask for a balance.";
+    if (finalAsk) return unmappedStock();
+    S.pendingClarify = { kind: "stock", text: text, fixSeg: missing.length ? missing[0].seg : null, fixIdx: missing.length ? missing[0].idx : null, asked: "stock", question: stockQ };
+    askClarification(stockQ);
     return;
   }
   if (missing.length) {
-    S.pendingClarify = { kind: "stock", text: text, fixSeg: missing[0].seg, fixIdx: missing[0].idx };
+    if (finalAsk) return unmappedStock();
+    S.pendingClarify = { kind: "stock", text: text, fixSeg: missing[0].seg, fixIdx: missing[0].idx, asked: "stock", question: missing[0].question };
     askClarification(missing[0].question + " The rest is ready.");
     return;
   }
@@ -1834,7 +2097,7 @@ async function handleHealth(text, combined) {
       staff: (S.user && S.user.email) || "AI"
     };
     if (!f.fullName && !f.isUnidentified) {
-      S.pendingClarify = { kind: "health-register", fields: f, text: text };
+      S.pendingClarify = { kind: "health-register", fields: f, text: text, question: "What is the patient's full name? Or write \"unidentified\"." };
       askClarification("What is the patient's full name? Or write \"unidentified\".");
       return;
     }
@@ -1850,7 +2113,7 @@ async function handleHealth(text, combined) {
   if (/\badmit\b|admission/.test(t)) {
     const regId = (String(source).match(/\b\d{4}[A-HJ-NP-Z]{4}\b/) || [])[0];
     if (!regId) {
-      S.pendingClarify = { kind: "health-admission", text: text };
+      S.pendingClarify = { kind: "health-admission", text: text, question: "Which patient? Give the Registration ID - the patient is never re-registered (379)." };
       askClarification("Which patient? Give the Registration ID - the patient is never re-registered (379).");
       return;
     }
@@ -1872,7 +2135,7 @@ async function handleHealth(text, combined) {
   /* discharge (379) */
   if (/\bdischarge\b|ruhusa/.test(t)) {
     const regId = (String(source).match(/\b\d{4}[A-HJ-NP-Z]{4}\b/) || [])[0];
-    if (!regId) { S.pendingClarify = { kind: "health-discharge", text: text }; askClarification("Which patient? Give the Registration ID."); return; }
+    if (!regId) { S.pendingClarify = { kind: "health-discharge", text: text, question: "Which patient? Give the Registration ID." }; askClarification("Which patient? Give the Registration ID."); return; }
     setStatus("processing");
     const adm = await findActiveAdmission(regId);
     if (!adm) { resetToReady(true); askClarification("No active admission (Admitted or Transferred) for " + regId + " - start one on New Admission first."); return; }
@@ -1891,14 +2154,14 @@ async function handleHealth(text, combined) {
     const isImaging = /imaging|radiology|x-?ray|ultrasound|scan/.test(t);
     const collOK = isImaging ? (grantAllows("new-imaging-request") || grantAllows("radiology")) : (grantAllows("new-lab-request") || grantAllows("laboratory"));
     if (!collOK) { pushHtml(cardShell("error", "Not permitted (404)", "<p>This wing is not granted to this account (404).</p>")); resetToReady(true); return; }
-    if (!regId) { S.pendingClarify = { kind: isImaging ? "health-imaging" : "health-lab", text: text }; askClarification("Which patient? Give the Registration ID."); return; }
+    if (!regId) { S.pendingClarify = { kind: isImaging ? "health-imaging" : "health-lab", text: text, question: "Which patient? Give the Registration ID." }; askClarification("Which patient? Give the Registration ID."); return; }
     setStatus("processing");
     const patient = await findPatient(regId);
     if (!patient) { resetToReady(true); askClarification("No registration carries " + regId + "."); return; }
     const tests = (String(source).match(/(?:tests?|procedures?)[:\s]+([^.]+)/i) || [])[1];
     const list = tests ? tests.split(/,|\band\b/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
     if (!list.length) {
-      S.pendingClarify = { kind: isImaging ? "health-imaging" : "health-lab", patient: patient, text: text };
+      S.pendingClarify = { kind: isImaging ? "health-imaging" : "health-lab", patient: patient, text: text, question: isImaging ? "Which imaging procedures? Name them, comma separated." : "Which laboratory tests? Name them, comma separated." };
       askClarification(isImaging ? "Which imaging procedures? Name them, comma separated." : "Which laboratory tests? Name them, comma separated.");
       return;
     }
@@ -2015,12 +2278,21 @@ async function onSend() {
   userBubble(text, files);
   S.els.input.value = "";
   setStatus("processing");
-  if (S.els.foot) S.els.foot.textContent = "Working - the button is a filled circle while the AI works (344).";
+  if (S.els.foot) S.els.foot.textContent = "Working...";
   try {
     if (S.pendingClarify) {
       /* a clarification answer continues the same action (394) */
       const saved = S.pendingClarify;
       S.pendingClarify = null;
+      /* a greeting or a thank-you while a question is pending gets its own
+       * reply and the question stays on the table */
+      const small = classifyChat(text);
+      if (small && (small.kind === "greet" || small.kind === "thanks" || small.kind === "caps")) {
+        S.pendingClarify = saved;
+        pushHtml(cardShell("answer", "AI", "<p>" + esc(chatReply(small.kind)) + "</p>"));
+        askClarification(saved.question || "Still waiting on that one - answer in the input bar.");
+        return;
+      }
       if (saved.kind === "business-charges") {
         S._chargesAmt = parseAmount(text);
         if (S._chargesAmt == null) { S._chargesAmt = null; askClarification("Write the charges as a plain number - for example 500."); return; }
@@ -2033,7 +2305,7 @@ async function onSend() {
           segs[saved.fixIdx] = segs[saved.fixIdx] + " " + text;
           combined = segs.join("\n");
         }
-        return handleBusiness(combined, combined);
+        return handleBusiness(combined, combined, saved.asked === "name");
       }
       if (saved.kind === "stock") {
         let combined = saved.text;
@@ -2042,7 +2314,7 @@ async function onSend() {
           segs[saved.fixIdx] = segs[saved.fixIdx] + " " + text;
           combined = segs.join("\n");
         }
-        return handleStock(combined, combined);
+        return handleStock(combined, combined, !!saved.asked);
       }
       if (saved.kind === "health-register") {
         const f = saved.fields || {};
@@ -2065,36 +2337,30 @@ async function onSend() {
 
 function introCard() {
   const scope = deskScope();
-  const intro = {
-    all: "<p>The doorway to every AI capability. Write in Swahili, English or both, attach images or documents, and every action passes through one confirmation before anything saves.</p>",
-    business: "<p>The AI business desk: sales, purchases, expenses, income, contra entries, debtors and creditors - mapped to their exact transaction names, types, amounts and payment methods (354). Cash is the default method (356). Batch requests extract every item into one summary (357).</p>",
-    stock: "<p>The AI stock desk: registrations write into the Stock Register (365), movements run the fourteen causes (366), packages and units calculate each other (367), and the balance never goes below zero (369).</p>",
-    health: "<p>The AI health desk: registration, admissions, discharges, laboratory and imaging requests run through the AI; triage, consultations, pharmacy, treatments and wards are mapped to their own desks (374-379, 410).</p>",
-    computer: "<p>The AI computer desk: attach a file and say what it should become. The matcher names the exact built-in tool (382), the tool runs, and the file returns as a download link (391). Video and audio attachments are still refused at the input (346).</p>"
+  const line = {
+    all: "Ready. Write below - Swahili, English or both.",
+    business: "Ready. Sales, purchases, expenses, contra entries - write below.",
+    stock: "Ready. Registrations, movements, balances - write below.",
+    health: "Ready. Registration, admissions, lab and imaging - write below.",
+    computer: "Attach a file and say what it should become."
   };
-  const exs = HELP_EXAMPLES.map(function (e) { return "<li><b>" + esc(e[0]) + "</b> - " + esc(e[1]) + "</li>"; }).join("");
-  return cardShell("intro", "JAMALI AI - " + (S.deskLabel || "the AI hub") + " (423)",
-    (intro[scope] || intro.all) + "<ul class='ai-help'>" + exs + "</ul>" +
-    "<p class='ai-dim'>Status model: Ready, Processing, Needs-confirmation (422). Grants decide what the AI may reach (404).</p>");
+  return cardShell("intro", "JAMALI AI - " + (S.deskLabel || "AI hub"), "<p>" + esc(line[scope] || line.all) + "</p>");
 }
 
 function hubLink() {
   if (S.desk === "hub" || !S.desk) return "";
-  return "<p class='ai-dim ai-back'><span class='ai-page-link' data-n='329'>&#8592; All 64 AI pages live in this one folder - back to the hub (329)</span></p>";
+  return "<p class='ai-dim ai-back'><span class='ai-page-link' data-n='329'>&#8592; AI pages</span></p>";
 }
 
-/* The pages guide (329, 421): every AI number of the family, all served by
- * this ONE folder. Clicking a page opens it inside this same window. */
+/* The pages guide (329, 421): the compact picker - number and name, no
+ * prose - every page opens inside this same window. */
 function pagesGuide() {
   const items = AI_PAGES.map(function (p) {
     return '<div class="ai-guide-item ai-page-link" data-n="' + p.n + '">' +
       '<span class="ai-guide-n">' + p.n + '</span>' +
-      '<span class="ai-guide-label">' + esc(p.label) + '</span>' +
-      '<span class="ai-guide-about">' + esc(p.about) + '</span></div>';
+      '<span class="ai-guide-label">' + esc(p.label) + '</span></div>';
   }).join("");
-  return cardShell("route", "The 64 AI pages - every module of the family, all served by this one folder (329)",
-    '<p class="ai-dim">One AI folder, one html, one css, one js: 329.html, 329.css and 329.js. Nothing else exists. Pick a page - it opens right here, and every module is explained on its card.</p>' +
-    '<div class="ai-guide">' + items + '</div>');
+  return cardShell("route", "AI pages", '<div class="ai-guide">' + items + '</div>');
 }
 
 async function bootDesk(root) {
