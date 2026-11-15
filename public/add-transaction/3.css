@@ -14,8 +14,11 @@ h1 { font-size: 24px; margin-bottom: 6px; }
  
 .group { margin-bottom: 24px; }
 .group:last-child { margin-bottom: 8px; }
-.group-label { margin-bottom: 10px; line-height: 1; }
-.group-label .badge { font-size: 12px; padding: 5px 13px; }
+.group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.group-head .badge { font-size: 12px; padding: 5px 13px; }
+.group-title { font-size: 17px; line-height: 1.2; }
+.group-count { margin-left: auto; font-size: 12px; font-weight: 800; color: #475569; background: #e2e8f0; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.group-sub { color: #64748b; font-size: 13.5px; margin-bottom: 12px; }
 
  
 .grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 14px; }
