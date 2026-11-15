@@ -15,8 +15,10 @@
  *   - the web search: a word the dictionaries do not know (kashata) is
  *     looked up on the open web - keyless, CORS-open Wikipedia, English and
  *     Swahili - and the answer comes back tied to the system;
- *   - the chat layer: greetings, thanks and open questions get real replies
- *     or web answers instead of a clarification loop;
+ *   - the chat layer: greetings, thanks, capabilities and open questions get
+ *     real replies or web answers instead of a clarification loop; wellbeing
+ *     words ("naumwa malaria") are heard, looked up on the web and answered
+ *     with the health wing's own steps - never a record question;
  *   - the desks: Business, Stock, Health, Computer — mapping, clarification,
  *     one confirmation summary per action, execution through the exact
  *     collections and validation the manual pages use (354-392, 394, 395,
@@ -967,7 +969,8 @@ const HELP_EXAMPLES = [
   ["Register a patient", "register patient John Juma, 34, male"],
   ["Admit a patient", "admit patient 4827ABCD emergency chest pain"],
   ["Convert a file", "attach a PDF and write: convert to word"],
-  ["Ask the web", "maana ya kashata"]
+  ["Ask the web", "maana ya kashata"],
+  ["Say you are unwell", "naumwa malaria"]
 ];
 
 /* ---------- the chat layer and the web search (pure, testable) ---------- */
@@ -982,7 +985,9 @@ const WEB_STOP = ("the and for with from that this these those there here " +
   "owner boss business personal madam sir " +
   "cash pesa money benki bank account card " +
   "eaten consume consumed use used using took take taken kulwa kula tumika nimekula nimetumia nilitumia tulikula umekula amekula " +
-  "record records write save saved enter").split(" ");
+  "record records write save saved enter " +
+  "naumwa anaumwa tunaumwa umewa mgonjwa sick ill unwell feeling feels maumivu kikohozi kutapika harisha " +
+  "nina una ana tuna mna nili uli ali tuli mli sasa hapa leo jana kesho hii hiyo ndiyo hapana labda").split(" ");
 
 function guessOwnerUse(text) {
   return OWNER_USE_RE.test(String(text || ""));
@@ -1040,6 +1045,35 @@ function chatReply(kind) {
   return "I record business, stock and health actions, run the file tools and search the web. Try: nimeuza 500.";
 }
 
+/* wellbeing and open words (the world outside the desks): a person saying
+ * they are unwell and the bare words nobody maps are never answered with
+ * "which record is this?" - they are heard, looked up on the open web and
+ * answered in relation to the system. The desk commands that must never be
+ * intercepted sit in one place so the desks keep every real request. */
+const SICK_RE = /\b(?:naumwa|anaumwa|tunaumwa|umewa|mgonjwa|magonjwa|homa|maradhi|maumivu|kikohozi|kutapika|harisha|kichwa\s+inauma|tumbo\s+inauma|sick|unwell|illness|fever|malaria|typhoid|cholera|tuberculosis|diarrho?ea|vomiting|headache|migraine|dengue|anaemia|anemia)\b/i;
+const DESK_CMD_RE = /\b(?:register|sajili|admit|admission|discharge|ruhusa|triage|nurse|nursing|doctor|daktari|pharmacy|dawa|prescription|prescribe|treatment|matibabu|wards?|beds?|chumba|patient|mgonjwa\s+mpya|new\s+patient|lab|laboratory|maabara|imaging|radiology|x-?ray|ultrasound|stock|bidhaa|packages?|balance|movement|movements|damage|expiry|theft|samples?|transfers?)\b/i;
+
+function isSickStatement(text) {
+  const t = String(text || "");
+  return SICK_RE.test(t) && !DESK_CMD_RE.test(t);
+}
+
+/* the open-text gate: no transaction word, no amount, no owner use, no desk
+ * command - the words the desks do not parse belong to the conversation and
+ * the web, never to the record question */
+function isOpenText(text) {
+  const t = String(text || "").trim();
+  if (!t) return false;
+  if (lexMatch(t) || parseAmount(t)) return false;
+  if (guessOwnerUse(t)) return false;
+  if (DESK_CMD_RE.test(t) || WANTS_CONVERT.test(t)) return false;
+  return true;
+}
+
+function openReply() {
+  return "I could not reach that on the open web just now, and it is not a record the system keeps. Write a record like nimeuza 500 - or ask the meaning of any word, for example maana ya kashata.";
+}
+
 function cleanSnippet(html) {
   return String(html || "")
     .replace(/<[^>]*>/g, "")
@@ -1081,7 +1115,7 @@ const PURE = {
   validateBusinessItem, validateStockRegisterItem, validateStockMovement,
   makeRegId, makeCode, patientDoc, admissionDoc, dischargeDoc, labDoc, imagingDoc, esc, money,
   guessOwnerUse, webTermFromSegment, termFromQuestion, classifyChat, chatReply,
-  cleanSnippet, firstSentences, relateToSystem
+  cleanSnippet, firstSentences, relateToSystem, isSickStatement, isOpenText, openReply
 };
 export { PURE };
 
@@ -1725,6 +1759,14 @@ async function handleUserText(text) {
   const chat = classifyChat(text);
   if (chat) { await respondChat(chat, text); return; }
 
+  /* wellbeing and open words: the world outside the desks - "naumwa
+   * malaria" gets a web answer tied to the health wing, a bare word gets
+   * the web, and only a real record reaches the clarification question */
+  if (isOpenText(text)) {
+    if (isSickStatement(text)) return respondWellbeing(text);
+    return respondOpen(text);
+  }
+
   /* the desks */
   if (scope === "business" || scope === "all") return handleBusiness(text, await gatherText(text));
   if (scope === "stock") return handleStock(text, await gatherText(text));
@@ -1950,6 +1992,49 @@ async function respondChat(chat, text) {
     return;
   }
   pushHtml(cardShell("answer", "AI", "<p>" + esc(chatReply(chat.kind)) + "</p>"));
+  resetToReady(true);
+}
+
+/* the wellbeing answer (374): "naumwa malaria" is a person talking about
+ * their health - the word rides to the web search, the answer comes back
+ * tied to the health wing, and nothing is written anywhere */
+async function respondWellbeing(text) {
+  setStatus("processing");
+  const term = webTermFromSegment(text);
+  let info = null;
+  if (term) { try { info = await webLookup(term); } catch (e) { info = null; } }
+  if (info) {
+    pushHtml(cardShell("answer", "From the web (409)",
+      "<p><b>" + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 2)) + "</p>" +
+      '<p class="ai-dim">Source: ' + esc(info.source) + ' <a class="ai-page-link" href="' + esc(info.url) + '" target="_blank" rel="noopener">open</a></p>' +
+      "<p>If this is for the clinic: <b>register patient &lt;name&gt;, &lt;age&gt;, &lt;male|female&gt;</b> - or admit an existing patient with the Registration ID.</p>" +
+      '<div class="ai-actions"><a class="ai-btn" href="/victim-registration/322">Patient Registration</a> <a class="ai-btn ghost" href="/health/321">Health hub</a></div>'));
+    await writeHistory({ request: text, action: "Wellbeing: " + info.title, status: "completed", detail: { term: info.term, source: info.source } });
+  } else {
+    pushHtml(cardShell("answer", "AI",
+      "<p>I heard you are not well - see a clinician. Nothing was written anywhere. When the clinic work starts: <b>register patient &lt;name&gt;, &lt;age&gt;, &lt;male|female&gt;</b>.</p>" +
+      '<div class="ai-actions"><a class="ai-btn" href="/victim-registration/322">Patient Registration</a></div>'));
+  }
+  resetToReady(true);
+}
+
+/* the open answer (409): a word or phrase the desks do not parse is looked
+ * up on the open web and answered in relation to the system - never the
+ * record question */
+async function respondOpen(text) {
+  setStatus("processing");
+  const term = (webTermFromSegment(text) || termFromQuestion(text) || String(text || "").trim()).slice(0, 80);
+  let info = null;
+  try { info = await webLookup(term); } catch (e) { info = null; }
+  if (info) {
+    pushHtml(cardShell("answer", "From the web (409)",
+      "<p><b>" + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 2)) + "</p>" +
+      '<p class="ai-dim">Source: ' + esc(info.source) + ' <a class="ai-page-link" href="' + esc(info.url) + '" target="_blank" rel="noopener">open</a></p>' +
+      "<p>" + esc(relateToSystem(info.text)) + "</p>"));
+    await writeHistory({ request: text, action: "Web search: " + info.title, status: "completed", detail: { term: info.term, source: info.source } });
+  } else {
+    pushHtml(cardShell("answer", "AI", "<p>" + esc(openReply(text)) + "</p>"));
+  }
   resetToReady(true);
 }
 
@@ -2349,18 +2434,7 @@ function introCard() {
 
 function hubLink() {
   if (S.desk === "hub" || !S.desk) return "";
-  return "<p class='ai-dim ai-back'><span class='ai-page-link' data-n='329'>&#8592; AI pages</span></p>";
-}
-
-/* The pages guide (329, 421): the compact picker - number and name, no
- * prose - every page opens inside this same window. */
-function pagesGuide() {
-  const items = AI_PAGES.map(function (p) {
-    return '<div class="ai-guide-item ai-page-link" data-n="' + p.n + '">' +
-      '<span class="ai-guide-n">' + p.n + '</span>' +
-      '<span class="ai-guide-label">' + esc(p.label) + '</span></div>';
-  }).join("");
-  return cardShell("route", "AI pages", '<div class="ai-guide">' + items + '</div>');
+  return "<p class='ai-dim ai-back'><span class='ai-page-link' data-n='329'>&#8592; AI hub</span></p>";
 }
 
 async function bootDesk(root) {
@@ -2379,7 +2453,6 @@ async function bootDesk(root) {
   if (S.els.user) S.els.user.textContent = S.user ? (S.user.email || "signed in") : "";
   wireDesk();
   pushHtml(introCard());
-  if (S.desk === "hub" || S.desk === null) pushHtml(pagesGuide());
   setStatus("ready");
 }
 
