@@ -242,7 +242,8 @@ break; }
    var p = PAGES[i];
    var cls = "lv" + (p.d || 0);
    if (p.folder === current) cls += " active";
-   var html = "<div class=\"node\" data-folder=\"" + p.folder + "\"><a href=\"/" + p.folder + "/" + p.n +
+   var href = p.folder === "ai" ? "/ai/329" + (p.n && p.n !== 329 ? "?m=" + p.n : "") : "/" + p.folder + "/" + p.n;
+  var html = "<div class=\"node\" data-folder=\"" + p.folder + "\"><a href=\"" + href +
             "\" class=\"" + cls + "\"><span>" + p.icon + "</span>" +
 p.label + "</a>";
    var k = kidsOf(i);
