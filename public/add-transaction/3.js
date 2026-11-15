@@ -220,8 +220,9 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     kv.innerHTML = '<h2 class="kv-title"></h2><div class="kv-rows"></div>';
     var empty = document.createElement("section");
     empty.className = "card";
+    empty.hidden = true;
     empty.innerHTML = '<div class="empty"><div class="empty-icon">' + icon +
-      '</div><div class="empty-title">Loading\u2026</div><div class="empty-sub"></div></div>';
+      '</div><div class="empty-title"></div><div class="empty-sub"></div></div>';
     var count = document.createElement("p");
     count.className = "count-line";
     root.appendChild(card);
@@ -537,15 +538,46 @@ const TRANSACTIONS = {
     { name: "Purchase Return",       icon: "\u{21AA}\u{FE0F}" },
     { name: "Petty Cash",            icon: "\u{1FA99}" },
     { name: "Capital",               icon: "\u{1F3E6}" },
-    { name: "Debtors Recover",    icon: "\u{1F4B8}" }
+    { name: "Debtors Recover",       icon: "\u{1F4B8}" },
+    { name: "Interest Received",     icon: "\u{1F4B9}" },
+    { name: "Rent Received",         icon: "\u{1F3E1}" },
+    { name: "Discount Received",     icon: "\u{1F3F7}\u{FE0F}" },
+    { name: "Commission Received",   icon: "\u{1F9FE}" },
+    { name: "Other Income",          icon: "\u{1F4B4}" },
+    { name: "Service Income",        icon: "\u{1F6E0}\u{FE0F}" },
+    { name: "Donation",              icon: "\u{1F381}" }
   ],
   OUT: [
-    { name: "Purchases",     icon: "\u{1F6D2}" },
-    { name: "Rent",          icon: "\u{1F3E0}" },
-    { name: "Sales Return",  icon: "\u{21A9}\u{FE0F}" },
-    { name: "Petty Expense", icon: "\u{1F9F9}" },
-    { name: "Transport",     icon: "\u{1F69B}" },
-    { name: "Creditors Recover", icon: "\u{1F4B3}" }
+    { name: "Purchases",         icon: "\u{1F6D2}" },
+    { name: "Rent",              icon: "\u{1F3E0}" },
+    { name: "Sales Return",      icon: "\u{21A9}\u{FE0F}" },
+    { name: "Petty Expense",     icon: "\u{1F9F9}" },
+    { name: "Transport",         icon: "\u{1F69B}" },
+    { name: "Creditors Recover", icon: "\u{1F4B3}" },
+    { name: "Wages",             icon: "\u{1F477}" },
+    { name: "Salary",            icon: "\u{1F4BC}" },
+    { name: "Electricity",       icon: "\u26A1" },
+    { name: "Water",             icon: "\u{1F4A7}" },
+    { name: "Telephone",         icon: "\u260E\u{FE0F}" },
+    { name: "Internet",          icon: "\u{1F310}" },
+    { name: "Repairs",           icon: "\u{1F527}" },
+    { name: "Insurance",         icon: "\u{1F6E1}\u{FE0F}" },
+    { name: "Advertising",       icon: "\u{1F4E2}" },
+    { name: "Stationery",        icon: "\u270F\u{FE0F}" },
+    { name: "Postage",           icon: "\u{1F4EE}" },
+    { name: "Cleaning",          icon: "\u{1F9FC}" },
+    { name: "Security",          icon: "\u{1F512}" },
+    { name: "Fuel",              icon: "\u26FD" },
+    { name: "Maintenance",       icon: "\u{1F528}" },
+    { name: "Accounting Fees",   icon: "\u{1F4D2}" },
+    { name: "Legal Fees",        icon: "\u2696\u{FE0F}" },
+    { name: "Bad Debts",         icon: "\u{1F4C9}" },
+    { name: "Carriage",          icon: "\u{1F69A}" },
+    { name: "Customs",           icon: "\u{1F6C3}" },
+    { name: "Licence",           icon: "\u{1F4DC}" },
+    { name: "Delivery",          icon: "\u{1F6F5}" },
+    { name: "Printing",          icon: "\u{1F5A8}\u{FE0F}" },
+    { name: "Bank Charges",      icon: "\u{1F3E7}" }
   ],
   NEUTRAL: [
     { name: "Loan",  icon: "\u{1F91D}" },

@@ -220,8 +220,9 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     kv.innerHTML = '<h2 class="kv-title"></h2><div class="kv-rows"></div>';
     var empty = document.createElement("section");
     empty.className = "card";
+    empty.hidden = true;
     empty.innerHTML = '<div class="empty"><div class="empty-icon">' + icon +
-      '</div><div class="empty-title">Loading\u2026</div><div class="empty-sub"></div></div>';
+      '</div><div class="empty-title"></div><div class="empty-sub"></div></div>';
     var count = document.createElement("p");
     count.className = "count-line";
     root.appendChild(card);
