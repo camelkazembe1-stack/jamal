@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
 # apply-rules.sh - the one-shot publisher for the Firestore rules.
-# Reads the database project from SERVER/server.js, writes firebase.json and
-# .firebaserc, walks you through the Firebase sign in and publishes
-# firestore.rules, then removes itself. Kept out of the app: nothing on the
-# website imports it.
+# Written out of the settings block in SERVER/server.js by
+#     node SERVER/sync.js
+# so editing it by hand is pointless - the next sync writes it back. It
+# walks you through the Firebase sign in, publishes firestore.rules to the
+# project the code really runs on, then removes itself. Kept out of the
+# app: nothing on the website imports it.
 set -eu
 cd "$(dirname "$0")"
 
-[ -f SERVER/server.js ] || { echo "ABORT: SERVER/server.js not found - run this from the repository root." >&2; exit 1; }
-[ -f firestore.rules ] || { echo "ABORT: firestore.rules not found - run this from the repository root." >&2; exit 1; }
+[ -f firestore.rules ] || { echo "ABORT: firestore.rules not found - run: node SERVER/sync.js" >&2; exit 1; }
+[ -f firebase.json ] || { echo "ABORT: firebase.json not found - run: node SERVER/sync.js" >&2; exit 1; }
+[ -f .firebaserc ] || { echo "ABORT: .firebaserc not found - run: node SERVER/sync.js" >&2; exit 1; }
 
-PROJECT="$(sed -n 's/^const DATABASE_PROJECT = "\(.*\)";$/\1/p' SERVER/server.js | head -1)"
-[ -n "$PROJECT" ] || { echo "ABORT: could not read DATABASE_PROJECT from SERVER/server.js." >&2; exit 1; }
+PROJECT="jamal-542b5"
 say() { printf '%s\n' "$*"; }
-say "database project: $PROJECT (read from SERVER/server.js)"
-
-printf '{\n  "firestore": {\n    "rules": "firestore.rules"\n  }\n}\n' > firebase.json
-printf '{\n  "projects": {\n    "default": "%s"\n  }\n}\n' "$PROJECT" > .firebaserc
-say "wrote firebase.json and .firebaserc for $PROJECT"
+say "database project: $PROJECT (written by SERVER/server.js)"
 
 command -v firebase >/dev/null 2>&1 \
   || { echo "ABORT: the Firebase CLI is not installed - install it with: npm install -g firebase-tools" >&2; exit 1; }
