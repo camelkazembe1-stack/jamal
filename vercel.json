@@ -384,5 +384,5 @@
       "permanent": false
     }
   ],
-  "buildCommand": "cp -f server/firebase.js public/firebase.js"
+  "buildCommand": "cp -f SERVER/server.js public/502.js"
 }

@@ -25,7 +25,7 @@ catch (e) {}
  }
  function setMode(mode) {
    try { sessionStorage.setItem(MODE_KEY, mode); } catch (e) {}
-   import("/firebase.js").then(function (fb) {
+   import("/502.js").then(function (fb) {
      var u = fb.auth && fb.auth.currentUser;
      var mail = u && u.email ? String(u.email).toLowerCase() : "";
      if (mail) { try { localStorage.setItem("JAMALI_MODE::" + mail, mode); } catch (e) {} }
@@ -71,7 +71,7 @@ var PARENT = {"ward-registration":"ward-management","bed-management":"ward-manag
       // visitor without an account goes back to the door page.
       if (readMode() !== "personal") location.replace("/?need=account");
     } else {
-      import("/firebase.js").then(function (fb) {
+      import("/502.js").then(function (fb) {
         var ready = fb.auth && fb.auth.currentUser
           ? Promise.resolve(fb.auth.currentUser)
           : new Promise(function (res) {
@@ -131,7 +131,7 @@ res(u); });
     }
 
     function bootVisibility() {
-      return import("/firebase.js").then(function (fb) {
+      return import("/502.js").then(function (fb) {
         var ref = fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]);
         var first = fb.getDoc(ref).then(function (snap) {
           if (snap && snap.exists()) applyVisData(snap.data());
@@ -518,7 +518,7 @@ function () {
     btn.textContent = "Logging out...";
     clearSession();
     clearMode();
-    import("/firebase.js").then(function (fb) {
+    import("/502.js").then(function (fb) {
       return fb.signOut(fb.auth);
     }).then(function () {
       location.href = "/";
@@ -571,7 +571,7 @@ function () {
   
   
   if (session && session.username) {
-    import("/firebase.js").then(function (fb) {
+    import("/502.js").then(function (fb) {
       var uid = fb.auth && fb.auth.currentUser;
       var ready = uid
         ? Promise.resolve(uid)
@@ -819,7 +819,7 @@ function renderHiddenPanel() {
  }
 
  function restoreItem(it) {
-   import("/firebase.js").then(function (fb) {
+   import("/502.js").then(function (fb) {
     return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
 VIS_DOC[1])).then(function (snap) {
      var d = snap.exists() ? snap.data() : {};
@@ -841,7 +841,7 @@ VIS_DOC[1])).then(function (snap) {
  }
 
  function showAllHidden() {
-   import("/firebase.js").then(function (fb) {
+   import("/502.js").then(function (fb) {
      return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
 VIS_DOC[1])).then(function (snap) {
        var d = snap.exists() ? snap.data() : {};
@@ -930,7 +930,7 @@ nx.style.display = "none";
  }
 
  function saveVisibility() {
-   return import("/firebase.js").then(function (fb) {
+   return import("/502.js").then(function (fb) {
     return fb.setDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]), {
       scope: "visibility",
          fields: VIS.fields,
@@ -1270,7 +1270,7 @@ VIS.options[full].join(" | ") : "";
         var v = parts[i].trim();
         if (v && list.indexOf(v) === -1) list.push(v);
       }
-      import("/firebase.js").then(function (fb) {
+      import("/502.js").then(function (fb) {
         return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
 VIS_DOC[1])).then(function (snap) {
           var d = snap.exists() ? snap.data() : {};
@@ -1368,7 +1368,7 @@ function placeDash(t, b) {
 
   function makeToggler(key, btn) {
     return function () {
-      import("/firebase.js").then(function (fb) {
+      import("/502.js").then(function (fb) {
         return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
 VIS_DOC[1])).then(function (snap) {
           var d = snap.exists() ? snap.data() : {};
@@ -1398,7 +1398,7 @@ true;
   // show on its own.
   function makeMenuToggler(folder, btn) {
     return function () {
-      import("/firebase.js").then(function (fb) {
+      import("/502.js").then(function (fb) {
         return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
 VIS_DOC[1])).then(function (snap) {
           var d = snap.exists() ? snap.data() : {};
@@ -1740,7 +1740,7 @@ VIS_DOC[1])).then(function (snap) {
   }
 
   function jamaliCountsPaint(body, scopes) {
-    import("/firebase.js").then(function (fb) {
+    import("/502.js").then(function (fb) {
       var box = body.querySelector(".jd-scopes");
       if (!box) return;
       scopes.forEach(function (s) {
@@ -1796,7 +1796,7 @@ VIS_DOC[1])).then(function (snap) {
     var run = body.querySelector("#jd-run");
     if (run) { run.disabled = true; run.textContent = "Deleting..."; }
     jamaliSay(body, "Working: reading the data, writing the retention archive, then deleting...", false);
-    import("/firebase.js").then(function (fb) {
+    import("/502.js").then(function (fb) {
       return jamaliDeleteExecute(fb, chosen, { kind: "direct", requestId: "" });
     }).then(function (fin) {
       if (fin.aborted) {
@@ -1862,7 +1862,7 @@ VIS_DOC[1])).then(function (snap) {
       "the administrator reviews it and decides, and you are notified of the decision. Submit it?")) return;
     var sub = body.querySelector("#jd-submit");
     if (sub) { sub.disabled = true; sub.textContent = "Submitting..."; }
-    import("/firebase.js").then(function (fb) {
+    import("/502.js").then(function (fb) {
       var me = fb.auth && fb.auth.currentUser;
       if (!me) throw new Error("You are not signed in with Google any more - log in again first.");
       return fb.addDoc(fb.collection(fb.db, "systemDeletionRequests"), {
@@ -1906,7 +1906,7 @@ VIS_DOC[1])).then(function (snap) {
   // ---- decisions written by the administrator, shown to the requester ----
   function jamaliDecisionsPaint(body) {
     if (!session) return;
-    import("/firebase.js").then(function (fb) {
+    import("/502.js").then(function (fb) {
       var me = fb.auth && fb.auth.currentUser;
       if (!me) return;
       var q = fb.query(fb.collection(fb.db, "systemNotifications"),
@@ -1932,7 +1932,7 @@ VIS_DOC[1])).then(function (snap) {
   // ---- my deletion requests, live ----
   function jamaliMineStart() {
     if (!session || SETTINGS_MINE_UNSUB) return;
-    import("/firebase.js").then(function (fb) {
+    import("/502.js").then(function (fb) {
       var me = fb.auth && fb.auth.currentUser;
       if (!me) return;
       var q = fb.query(fb.collection(fb.db, "systemDeletionRequests"),

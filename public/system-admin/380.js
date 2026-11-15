@@ -13,7 +13,7 @@ let PHONES = {};
 boot();
 
 async function boot() {
-  try { F = await import("/firebase.js"); }
+  try { F = await import("/502.js"); }
   catch (e) { showErr("Could not load the database module: " + txt(e)); return; }
   readAll();
   checkAdmin();
@@ -480,7 +480,7 @@ function delFinalStatus(td, tf) {
 function delStart() {
   const sec = document.getElementById("delreq");
   if (!sec || DEL_UNSUB) return;
-  import("/firebase.js").then((fb) => {
+  import("/502.js").then((fb) => {
     DELFB = fb;
     sec.hidden = false;
     delPaintTabs();

@@ -4,7 +4,7 @@
 
 
 
-import { requireAuth, db, collection, onSnapshot } from "/firebase.js";
+import { requireAuth, db, collection, onSnapshot } from "/502.js";
 
 window.__p52 = { page: "337", build: "52r1", auth: false, listeners: 0, docs: -1, errs: [] };
 

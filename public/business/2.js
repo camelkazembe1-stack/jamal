@@ -1,4 +1,4 @@
 
-import { requireAuth } from "/firebase.js";
+import { requireAuth } from "/502.js";
 
 await requireAuth(); 

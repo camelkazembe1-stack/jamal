@@ -6,7 +6,7 @@
 
 
 
-import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/firebase.js";
+import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/502.js";
 
 await requireAuth(); 
 
@@ -298,7 +298,7 @@ resetArrival();
   try { __pm = sessionStorage.getItem("JAMALI_SYSTEM_MODE"); } catch (e) { }
   if ((session && session.role === "admin") || (!session && __pm === "personal")) return; 
 
-  import("/firebase.js").then(function (fb) {
+  import("/502.js").then(function (fb) {
     return fb.getDoc(fb.doc(fb.db, "systemPageConfig", PAGE_ID));
   }).then(function (snap) {
     if (!snap.exists()) return;
