@@ -8,7 +8,7 @@ One folder per page. The public folder is the web root, and every page lives in 
 
 THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL PENDING)
 
-1. home - the landing page after sign in: three square tiles, Business, Computer and Health. Files: 1.html, 1.css, 1.js.
+1. home - the landing page after sign in: three square tiles, Business, Computer and Health. The tiles paint at once - the Firebase SDK (502.js and the Google CDN bundles it pulls) is fetched in the background, only when a signed-in account exists whose grants may have changed, the same lazy import the sidebar already uses, so the first screen never waits for the network. Files: 1.html, 1.css, 1.js.
 
 2. business - the control room: opens Add Transaction, View File and Stock Management. Files: 2.html, 2.css, 2.js.
 
