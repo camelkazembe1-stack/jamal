@@ -15,6 +15,10 @@
  *   - the web search: a word the dictionaries do not know (kashata) is
  *     looked up on the open web - keyless, CORS-open Wikipedia, English and
  *     Swahili - and the answer comes back tied to the system;
+ *   - the file request: "naomba pdf ya <link>" and its English friends are
+ *     real Convertor runs - the link, the typed text or the attachments are
+ *     read in the page, the Text-to-PDF tool (#65, page 65) builds the
+ *     document, and the finished file comes back as a download link (391);
  *   - the chat layer: greetings, thanks, capabilities and open questions get
  *     real replies or web answers instead of a clarification loop; wellbeing
  *     words ("naumwa malaria") are heard, looked up on the web and answered
@@ -39,7 +43,7 @@ import {
  * PURE CORE — no window, no Firestore. The same code a Node test runs.
  * ===================================================================== */
 
-const AI_VERSION = "1.1";
+const AI_VERSION = "1.2";
 
 /* The business names, exactly page 3's own lists. */
 const IN_NAMES = ["Sales", "Commission Receivable", "Purchase Return", "Petty Cash",
@@ -503,6 +507,90 @@ function money(n) {
   return Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
+/* ---------- the Text-to-PDF tool, executed in the page (391) ----------
+ *
+ * A real PDF 1.4 document built from text with no library: Courier body,
+ * Helvetica-Bold title, A4 pages, an exact xref table. Pure on purpose -
+ * the Node test writes the same bytes to disk and re-opens them with
+ * pdftotext, so what ships is what was proven. */
+function textToPdf(title, content) {
+  const latin = function (s) {
+    let out = "";
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      if (c === 9) out += "    ";
+      else out += (c >= 32 && c <= 126) || (c >= 160 && c <= 255) ? s[i] : "?";
+    }
+    return out;
+  };
+  const escS = function (s) {
+    return s.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  };
+  const PW = 595, PH = 842, MT = 64, MB = 56, LH = 14, WRAP = 86;
+  const wrap = function (s) {
+    const words = String(s || "").replace(/\t/g, "    ").split(/ +/);
+    const out = [];
+    let line = "";
+    for (let i = 0; i < words.length; i++) {
+      let w = words[i];
+      if (w.length > WRAP) {
+        if (line) { out.push(line); line = ""; }
+        while (w.length > WRAP) { out.push(w.slice(0, WRAP)); w = w.slice(WRAP); }
+        line = w;
+        continue;
+      }
+      if (!line) line = w;
+      else if (line.length + 1 + w.length <= WRAP) line += " " + w;
+      else { out.push(line); line = w; }
+    }
+    if (line) out.push(line);
+    if (!out.length) out.push("");
+    return out;
+  };
+  const titleLine = latin(String(title || "Document")).slice(0, 90);
+  /* every source line keeps its own row: split on the newlines first, wrap
+   * each row, and a blank line stays a blank line */
+  const body = [];
+  String(content || "").replace(/\r\n?/g, "\n").split("\n").forEach(function (rl) {
+    const ws = wrap(latin(rl));
+    for (let i = 0; i < ws.length; i++) body.push(ws[i]);
+  });
+  const perPage = Math.floor((PH - MT - MB - 18) / LH);
+  const pages = [];
+  for (let i = 0; i < body.length; i += perPage) pages.push(body.slice(i, i + perPage));
+  if (!pages.length) pages.push([""]);
+  const objects = [];
+  const kids = pages.map(function (_, k) { return String(6 + 2 * k) + " 0 R"; }).join(" ");
+  objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+  objects[2] = "<< /Type /Pages /Kids [" + kids + "] /Count " + pages.length + " >>";
+  objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>";
+  objects[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>";
+  pages.forEach(function (lines, k) {
+    const ops = [];
+    if (k === 0) ops.push("BT /F2 13 Tf 56 " + (PH - 48) + " Td (" + escS(titleLine) + ") Tj ET");
+    ops.push("BT /F1 10 Tf 56 " + (PH - MT - (k === 0 ? 18 : 0)) + " Td " + LH + " TL");
+    for (let j = 0; j < lines.length; j++) ops.push("(" + escS(lines[j]) + ") Tj T*");
+    ops.push("ET");
+    const data = ops.join("\n");
+    const ci = 5 + 2 * k, pi = 6 + 2 * k;
+    objects[ci] = "<< /Length " + data.length + " >>\nstream\n" + data + "\nendstream";
+    objects[pi] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents " + ci + " 0 R >>";
+  });
+  let out = "%PDF-1.4\n";
+  const offsets = [];
+  for (let i = 1; i < objects.length; i++) {
+    offsets[i] = out.length; /* Latin-1 only: one char is one byte */
+    out += i + " 0 obj\n" + objects[i] + "\nendobj\n";
+  }
+  const xref = out.length;
+  out += "xref\n0 " + objects.length + "\n0000000000 65535 f \n";
+  for (let i = 1; i < objects.length; i++) {
+    out += ("0000000000" + String(offsets[i])).slice(-10) + " 00000 n \n";
+  }
+  out += "trailer\n<< /Size " + objects.length + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+  return { pdf: out, pages: pages.length };
+}
+
 /* ---------- language: Swahili, English or a mix (349) ---------- */
 
 /* [regex, transactionName, implied type]. Multi-word and more specific
@@ -565,11 +653,19 @@ function lexMatch(text) {
   return null;
 }
 
-/* "nimeuza 500" — the amount is the last plain number in the segment. */
+/* "nimeuza 500" — the amount is the last plain number in the segment.
+ * Links and mixed tokens never count as money: the 6 inside paste.rs/DDR6F
+ * is part of an address, and a record amount is always a number of its own. */
 function parseAmount(text) {
-  const m = String(text || "").match(/(\d[\d,]*(?:\.\d+)?)/g);
-  if (!m || !m.length) return null;
-  const v = Number(m[m.length - 1].replace(/,/g, ""));
+  const cleaned = String(text || "").replace(/https?:\/\/\S+|www\.\S+/gi, " ");
+  const toks = cleaned.split(/\s+/);
+  let last = null;
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i].replace(/^["'(\[]+/, "").replace(/[.,!?;:)"'\]]+$/, "");
+    if (/^\d[\d,]*(?:\.\d+)?$/.test(t)) last = t;
+  }
+  if (last === null) return null;
+  const v = Number(last.replace(/,/g, ""));
   return isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : null;
 }
 
@@ -1025,6 +1121,28 @@ const THANKS_RE = /\b(?:asante|asanteni|shukrani|thanks?|thank\s+you)\b/i;
 const CAPS_RE = /\b(?:who\s+are\s+you|what\s+can\s+you\s+do|what\s+do\s+you\s+do|unaweza\s+(?:kufanya\s+)?nini|nini\s+unaweza|msaada|what\s+is\s+this)\b/i;
 const ASK_RE = /\b(?:what|who)\s+(?:is|are|was|were)\b|\bmeaning\s+of\b|\bmaana\s+ya\b|\bnini\s+maana\b|\bmaana\s+nini\b|\beleza\b|\bexplain\b|\bdefine\b|\btafsiri\b|\?\s*$/i;
 
+/* the file request (381, 391): "naomba pdf ya <link>" / "make a pdf of
+ * this" - a real Convertor run, not a record. A transaction always wins
+ * first: a dictionary hit together with an amount, an owner-use sentence
+ * or a standing question is never a file request. */
+const FILE_REQ_RE = /(?:\b(?:naomba|tengeneza|nitengee|nipatie|nipe|nitake|umba|make|create|generate|give\s?me|produce|build)\b[\s\S]{0,30}\b(?:pdf|faili|file|hati|document|doc|nakala)\b)|(?:\b(?:pdf|faili|file|hati|document|doc|nakala)\b[\s\S]{0,20}\b(?:ya|la|wa|kwa|of|from)\b)|(?:\b(?:pdf|faili|file|hati)\s+(?:ya|of)\b)/i;
+
+function parseFileRequest(text) {
+  const t = String(text || "").trim();
+  if (!t || !FILE_REQ_RE.test(t)) return null;
+  if ((lexMatch(t) && parseAmount(t)) || guessOwnerUse(t) || detectQuery(t)) return null;
+  const fmt = /\bpdf\b/i.test(t) ? "pdf" : "txt";
+  const URL_RE = /https?:\/\/[^\s|"'<>]+|www\.[^\s|"'<>]+/i;
+  const um = t.match(URL_RE);
+  const url = um ? um[0].replace(/[.,)\]]+$/, "") : null;
+  const inline = t.replace(URL_RE, " ")
+    .replace(/\b(?:naomba|tengeneza|nitengee|nipatie|nipe|nitake|umba|please|kindly|make|create|generate|give|produce|build|me|a|the|one)\b/gi, " ")
+    .replace(/\b(?:pdf|faili|file|hati|document|doc|nakala|txt|text)\b/gi, " ")
+    .replace(/\b(?:ya|la|wa|kwa|of|from|out)\b/gi, " ")
+    .replace(/\s+/g, " ").trim();
+  return { fmt: fmt, url: url, inline: inline };
+}
+
 /* greetings, thanks, capabilities and open questions are chat - answered
  * directly or through the web search, never into a clarification loop.
  * A transaction always wins first: any dictionary hit or a money amount. */
@@ -1115,7 +1233,8 @@ const PURE = {
   validateBusinessItem, validateStockRegisterItem, validateStockMovement,
   makeRegId, makeCode, patientDoc, admissionDoc, dischargeDoc, labDoc, imagingDoc, esc, money,
   guessOwnerUse, webTermFromSegment, termFromQuestion, classifyChat, chatReply,
-  cleanSnippet, firstSentences, relateToSystem, isSickStatement, isOpenText, openReply
+  cleanSnippet, firstSentences, relateToSystem, isSickStatement, isOpenText, openReply,
+  FILE_REQ_RE, parseFileRequest, textToPdf
 };
 export { PURE };
 
@@ -1457,6 +1576,101 @@ async function runTool(tool, file) {
   });
 }
 
+/* ---------- the file request (391): a link, text or attachments -> a file ---------- */
+
+/* The page reads the source itself, through one guarded chain: the direct
+ * fetch first (same-origin and CORS-open sites), then three keyless open
+ * readers for the sites that refuse the cross-origin read. Every reader has
+ * its own timeout and its own error-body guard; all of them failing is an
+ * honest 403 that keeps the input - never a guessed file. */
+async function fetchRemoteText(url) {
+  const full = /^https?:\/\//i.test(url) ? url : "https://" + url.replace(/^\/+/, "");
+  const readers = [
+    full,
+    "https://r.jina.ai/" + full,
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(full),
+    "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(full)
+  ];
+  for (let i = 0; i < readers.length; i++) {
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(function () { ctl.abort(); }, 20000);
+      const r = await fetch(readers[i], { signal: ctl.signal });
+      clearTimeout(timer);
+      if (r.ok) {
+        const t = await r.text();
+        if (t && t.length && !/^\s*\{\s*"data"\s*:\s*null/.test(t) && !/error code: \d+/.test(t) && !/AuthenticationRequiredError/.test(t)) return t;
+      }
+    } catch (e) { /* this reader refused or timed out - the next one goes */ }
+  }
+  return null;
+}
+
+async function deliverFile(freq, text) {
+  setStatus("processing");
+  let content = "", source = "the text you wrote", pages = 0;
+  try {
+    if (S.attachments.length) {
+      const parts = [];
+      for (const f of S.attachments) {
+        try { const t = await readAttachmentText(f); parts.push("=== " + f.name + " ===\n" + (t || "(no text could be read from this file)")); }
+        catch (e) { parts.push("=== " + f.name + " === (could not be read: " + e.message + ")"); }
+      }
+      content = parts.join("\n\n");
+      source = S.attachments.map(function (f) { return f.name; }).join(", ");
+    } else if (freq.url) {
+      const got = await fetchRemoteText(freq.url);
+      if (got === null) {
+        pushHtml(cardShell("error", "The link could not be read (403)",
+          "<p>I could not read <b>" + esc(freq.url) + "</b> from the browser - the site refused the cross-origin read and the open reader did not answer either.</p>" +
+          "<p>Nothing was written anywhere and your input is preserved: paste the text itself and ask again, or attach the file - the PDF comes back at once.</p>"));
+        resetToReady(true);
+        return;
+      }
+      content = got;
+      source = freq.url;
+    } else if (freq.inline && freq.inline.length > 1) {
+      content = freq.inline;
+    } else {
+      pushHtml(cardShell("clarify", "One question (394)",
+        "<p>What should the " + (freq.fmt === "pdf" ? "PDF" : "text file") + " contain? Paste the text, attach a file, or give a link - for example: <b>naomba pdf ya https://paste.rs/xxxx</b> (355).</p>"));
+      resetToReady(true);
+      return;
+    }
+    if (content.length > 400000) content = content.slice(0, 400000) + "\n\n(the text was cut at 400,000 characters to keep the build safe)";
+    const base = (freq.url ? (freq.url.replace(/\/+$/, "").split("/").pop() || "document") : "jamali-document")
+      .replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "document";
+    const fname = base + "." + freq.fmt;
+    let blob, kb, toolNote;
+    if (freq.fmt === "txt") {
+      blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      kb = Math.max(1, Math.round(blob.size / 1024));
+      toolNote = "the plain text save";
+    } else {
+      const firstLine = (String(content).split("\n").filter(function (l) { return l.trim().length; })[0] || "JAMALI AI document").trim();
+      const made = textToPdf(firstLine.slice(0, 70), content);
+      const bytes = new Uint8Array(made.pdf.length);
+      for (let i = 0; i < made.pdf.length; i++) bytes[i] = made.pdf.charCodeAt(i) & 0xff;
+      blob = new Blob([bytes], { type: "application/pdf" });
+      kb = Math.max(1, Math.round(blob.size / 1024));
+      pages = made.pages;
+      toolNote = "the Text-to-PDF tool (tool #1, page 65)";
+    }
+    const url2 = URL.createObjectURL(blob);
+    pushHtml(cardShell("done", "File ready (391)",
+      "<p><b>" + esc(fname) + "</b> - " + kb + " KB" + (pages ? ", " + pages + " page" + (pages > 1 ? "s" : "") : "") + " - built from " + esc(source) + " with " + toolNote + ".</p>" +
+      '<div class="ai-actions"><a class="ai-btn" href="' + url2 + '" download="' + esc(fname) + '">Save the file</a></div>' +
+      '<p class="ai-dim">Every finished tool run returns a download link (391 AI File Delivery). The link stays alive in this conversation - save the file before you leave the page.</p>'));
+    await writeHistory({ request: text, action: "File delivery: " + fname, status: "completed", detail: { source: source, format: freq.fmt, size: blob.size } });
+  } catch (e) {
+    pushHtml(cardShell("error", "The file could not be built (403)",
+      "<p>" + esc(e.message || String(e)) + "</p><p>Nothing was written and your input is preserved - try a shorter text or another link.</p>"));
+  }
+  S.attachments = [];
+  renderChips();
+  resetToReady(true);
+}
+
 /* ---------- Firestore actions (400) and the audit trail (414, 417) ---------- */
 
 function aiAudit() {
@@ -1738,6 +1952,13 @@ async function handleUserText(text) {
     return;
   }
 
+  /* the file request (391): "naomba pdf ya <link>" / "make a pdf of this" -
+   * the Convertor family executed on a link, on the typed text or on the
+   * attachments, the finished file back as a download link; a real
+   * transaction always wins first (parseFileRequest refuses it) */
+  const freq = parseFileRequest(text);
+  if (freq && (scope === "all" || scope === "computer")) return deliverFile(freq, text);
+
   /* the question engine (409) */
   const q = detectQuery(text);
   if (q && scope !== "computer") {
@@ -1788,7 +2009,7 @@ async function handleBusiness(text, combined, finalAsk) {
       if (vErr) missing.push({ seg: seg, idx: idx, question: vErr });
       else items.push(Object.assign(p, { idx: idx }));
     } else if (p.need === "name") {
-      missing.push({ seg: seg, idx: idx, question: "Which record is this? Name the transaction - for example Sales, Purchases, Rent, Wages (349)." });
+      missing.push({ seg: seg, idx: idx, question: "Which record is this? Name the transaction - for example Sales, Purchases, Rent, Wages (355)." });
     } else if (p.need === "amount") {
       missing.push({ seg: seg, idx: idx, question: "How much is the " + p.hit.name + "?" });
     } else if (p.need === "method") {
@@ -1959,7 +2180,7 @@ async function finalBusinessGuess(text, miss) {
   S.pendingClarify = { kind: "business", text: text, fixSeg: miss.seg, fixIdx: miss.idx, asked: "name", question: miss.question };
   askClarification(term
     ? 'Which record is "' + term + '"? Sales, Purchases, Rent, Wages, Petty Expense, Other - or write it another way.'
-    : "Which record is this? Sales, Purchases, Rent, Wages, Petty Expense, Other (349).");
+    : "Which record is this? Sales, Purchases, Rent, Wages, Petty Expense, Other (355).");
 }
 
 /* the stock second look: same honesty, no guessing - one informed pass and
