@@ -4,7 +4,13 @@
 
 
 
-import { db, doc, getDoc } from "/502.js";
+// The tile grid paints at once. /502.js - and the Firebase SDK it pulls
+// from the Google CDN - is fetched in the background, only when a
+// signed-in account exists whose grants may have changed: the same lazy
+// import the sidebar already uses. The first screen never waits for the
+// network, so the landing page is never a blank screen on a slow
+// connection.
+
 
 const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
 let S = null;
@@ -25,7 +31,8 @@ let grants = S && Array.isArray(S.grants) ? S.grants.slice() : [];
 (async () => {
   try {
     if (S && S.id) {
-      const snap = await getDoc(doc(db, "systemAccounts", S.id));
+      const fb = await import("/502.js");
+      const snap = await fb.getDoc(fb.doc(fb.db, "systemAccounts", S.id));
       if (snap.exists()) {
         const g = snap.data().grants;
         if (Array.isArray(g) && JSON.stringify(g) !== JSON.stringify(grants)) {
