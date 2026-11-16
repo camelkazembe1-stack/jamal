@@ -57,7 +57,7 @@ import {
  * PURE CORE — no window, no Firestore. The same code a Node test runs.
  * ===================================================================== */
 
-const AI_VERSION = "1.4";
+const AI_VERSION = "1.5";
 
 /* The business names, exactly page 3's own lists. */
 const IN_NAMES = ["Sales", "Commission Receivable", "Purchase Return", "Petty Cash",
@@ -1262,6 +1262,56 @@ const SYSTEM_KB = {
  * so "register patient Jamal" stays a patient, not a system tour. */
 const SYS_Q_RE = /\b(?:jamali|jamal\b|multisystem|multi\s*system|this\s+(?:system|app|site|page)|hii\s+(?:app|system|site|tovuti)|mfumo|hii\s+ni\s+nini|your\s+(?:name|system|features|abilities|skills|capabilities)|who\s+(?:are|made|built)\s+you|what\s+(?:are\s+you|can\s+you\s+do|do\s+you\s+do|is\s+(?:this|jamali|jamal))|unaweza\s+(?:kufanya\s+)?nini|nini\s+unaweza|msaada|jina\s+lako|wewe\s+ni\s+nani)\b/i;
 
+/* the desk pages question (421): "see what o businee poage have",
+ * "what pages does health have", "show me the stock pages" - the question
+ * points at one family of pages inside the system, and it is answered from
+ * the system's own words, never from the open web (on the web a typo like
+ * "businee" is somebody else's story - a basketball club, not our books).
+ * Three words must agree: a page word, a question word and a desk word -
+ * so "nimeuza 500", "what is biology" and "convert pdf to word" never
+ * trip it. Strict mode is for the gate right before the desks, where the
+ * desk command words (stock, patient) are already in the sentence. */
+const DESK_PAGE_RE = /\b(?:pag\w*|poages?|kurasa|wing\w*|desks?|sections?|famil\w*|modules?|tools?)\b/i;
+const DESK_PAGE_STRICT_RE = /\b(?:pag\w*|poages?|kurasa|wings?|desks?)\b/i;
+const DESK_ASK_RE = /\b(?:what|which|see|show|list|tell|know|have|has|got|are|is|there|exists|orodha|nini|gani)\b/i;
+const DESK_FUZZ = {
+  business: /\b(?:busin\w{2,}|biashara|bookkeep\w*|cashbook\w*|ledger\w*|sales\b|purchases?|expenses?|income|debtors?|creditors?)\b/i,
+  converters: /\b(?:converter\w*|converting|computer\w*|tools?|badilish\w*|kubadilish\w*)\b/i,
+  health: /\b(?:health|medical|clinic\w*|hospital\w*|afya|hospitali|patients?|mgonjwa)\b/i,
+  stock: /\b(?:stock\w*|inventory\w*|warehouse\w*|duka\w*|bidhaa)\b/i,
+  ai: /\b(?:\bai\b|assistant|msaada)\b/i
+};
+
+function deskAnswer(text, strict) {
+  const t = String(text || "").trim();
+  if (!t) return null;
+  /* a money amount is a record for the desks, never a tour of the pages */
+  if (parseAmount(t) != null) return null;
+  if (!(strict ? DESK_PAGE_STRICT_RE : DESK_PAGE_RE).test(t)) return null;
+  if (!DESK_ASK_RE.test(t)) return null;
+  for (const key in DESK_FUZZ) {
+    if (!DESK_FUZZ[key].test(t)) continue;
+    /* "what tools do you have" is the whole system tour, not one family -
+     * only a real converter or computer word pins the Computer desk */
+    if (key === "converters" && !/\b(?:converter|converting|computer|badilish|kubadilish)/i.test(t)) return { desk: "all" };
+    return { desk: key };
+  }
+  return null;
+}
+
+/* the system card (421), built once from the system's own words - the same
+ * card the system questions and the whole-tour desk questions share */
+function systemCard() {
+  return {
+    html: "<p><b>" + esc(SYSTEM_KB.name) + "</b> - " + esc(SYSTEM_KB.summary) + "</p>" +
+      '<ul class="ai-help">' + SYSTEM_KB.families.map(function (f) {
+        return "<li><b>" + esc(f.label) + ":</b> " + esc(f.about) + "</li>";
+      }).join("") + "</ul>" +
+      "<p>" + esc(SYSTEM_KB.me) + "</p>",
+    brief: "<p><b>" + esc(SYSTEM_KB.name) + "</b> - " + esc(SYSTEM_KB.summary) + "</p><p>" + esc(SYSTEM_KB.me) + "</p>"
+  };
+}
+
 function systemAnswer(text) {
   const t = String(text || "").trim();
   if (!t || !SYS_Q_RE.test(t)) return null;
@@ -1274,14 +1324,9 @@ function systemAnswer(text) {
     .replace(/\b(?:see|do|does|did|you|know|what|is|are|was|the|a|an|about|tell|me|who|how|can|could|please|and|or|of|to|in|it|its|na|ya|wa|kwa|hii|hiyo|wee|wewe|ni)\b/g, " ")
     .replace(/\s+/g, " ").trim();
   const pure = rest.split(" ").filter(Boolean).length <= 2;
-  const html = "<p><b>" + esc(SYSTEM_KB.name) + "</b> - " + esc(SYSTEM_KB.summary) + "</p>" +
-    '<ul class="ai-help">' + SYSTEM_KB.families.map(function (f) {
-      return "<li><b>" + esc(f.label) + ":</b> " + esc(f.about) + "</li>";
-    }).join("") + "</ul>" +
-    "<p>" + esc(SYSTEM_KB.me) + "</p>";
+  const card = systemCard();
   const note = rest ? '<p class="ai-dim">You also wrote "' + esc(rest) + '" - send it on its own and I will take it to the desks or the web.</p>' : "";
-  const brief = "<p><b>" + esc(SYSTEM_KB.name) + "</b> - " + esc(SYSTEM_KB.summary) + "</p><p>" + esc(SYSTEM_KB.me) + "</p>";
-  return { html: html, brief: brief, note: note, pure: pure, rest: rest };
+  return { html: card.html, brief: card.brief, note: note, pure: pure, rest: rest };
 }
 
 function cleanSnippet(html) {
@@ -1326,7 +1371,8 @@ const PURE = {
   makeRegId, makeCode, patientDoc, admissionDoc, dischargeDoc, labDoc, imagingDoc, esc, money,
   guessOwnerUse, webTermFromSegment, termFromQuestion, searchTermsOf, bytesOf, kindLabel, classifyChat, chatReply,
   cleanSnippet, firstSentences, relateToSystem, isSickStatement, isOpenText, openReply,
-  SYSTEM_KB, SYS_Q_RE, systemAnswer,
+  SYSTEM_KB, SYS_Q_RE, systemAnswer, systemCard,
+  DESK_PAGE_RE, DESK_PAGE_STRICT_RE, DESK_ASK_RE, DESK_FUZZ, deskAnswer,
   FILE_REQ_RE, parseFileRequest, textToPdf
 };
 export { PURE };
@@ -2189,6 +2235,14 @@ async function respondCombined(text, fileSummaries) {
   if (sa && sa.pure && !(fileSummaries && fileSummaries.length)) {
     return respondSystem(text, sa);
   }
+  /* the desk pages question (421): "see what o businee poage have" is a
+   * tour of the system's own pages, answered from the knowledge - no web
+   * trip where the typo "businee" belongs to somebody else's story */
+  const da = deskAnswer(text);
+  if (da && !(fileSummaries && fileSummaries.length)) {
+    if (da.desk === "all") return respondSystem(text, Object.assign(systemCard(), { note: "", rest: "" }));
+    return respondDesk(text, da.desk);
+  }
   /* the two searches run TOGETHER, never one blocking the other (8): the
    * system search on one side, the web lookup on the other - and the web
    * side is skipped entirely when the request carries no unknown word and
@@ -2464,6 +2518,15 @@ async function handleUserText(text) {
   }
 
   /* the desks */
+  /* the desk pages question (421), strict: "what pages does stock have",
+   * "what patient pages do we have" - the desk command words would block
+   * the open gate, but a page tour is not a record, so it is answered here
+   * from the system's own knowledge (421) */
+  const da2 = deskAnswer(text, true);
+  if (da2) {
+    if (da2.desk === "all") return respondSystem(text, Object.assign(systemCard(), { note: "", rest: "" }));
+    return respondDesk(text, da2.desk);
+  }
   if (scope === "business" || scope === "all") return handleBusiness(text, await gatherText(text));
   if (scope === "stock") return handleStock(text, await gatherText(text));
   if (scope === "health") return handleHealth(text, await gatherText(text));
@@ -2674,6 +2737,13 @@ function unmappedStock() {
  * system's own knowledge, an open question rides to the combined answer
  * (system first, then the web), the small words answer directly */
 async function respondChat(chat, text) {
+  /* the desk pages question (421) first: "do you know the business pages"
+   * is a tour, even though a desk word rides in it */
+  const da = deskAnswer(text);
+  if (da && chat.kind !== "greet" && chat.kind !== "thanks") {
+    if (da.desk === "all") return respondSystem(text, Object.assign(systemCard(), { note: "", rest: "" }));
+    return respondDesk(text, da.desk);
+  }
   const sa = systemAnswer(text);
   if (sa && sa.pure && chat.kind !== "greet" && chat.kind !== "thanks") return respondSystem(text, sa);
   if (chat.kind === "ask") return respondCombined(text, []);
@@ -2688,6 +2758,38 @@ async function respondSystem(text, sa) {
   pushHtml(cardShell("answer", "About JAMALI - the system I live in (421)", sa.html + sa.note +
     '<div class="ai-actions"><a class="ai-btn" href="/">Home</a> <a class="ai-btn ghost" href="/business/2">Business</a> <a class="ai-btn ghost" href="/health/321">Health</a> <a class="ai-btn ghost" href="/computer/62">Converters</a> <a class="ai-btn ghost" href="/stock-management/396">Stock</a></div>'));
   await writeHistory({ request: text, action: "System knowledge (421)" + (sa.rest ? ": " + sa.rest : ""), status: "completed", detail: {} });
+  resetToReady(true);
+}
+
+/* the desk answer (421): "see what o businee poage have" - one family of
+ * the system, its own words and its own page buttons, never the open web
+ * (on the web the typo "businee" is a basketball club, not the books) */
+const DESK_LINKS = {
+  business: [["Business", "/business/2"]],
+  converters: [["Converters hub", "/computer/62"], ["All File Viewer", "/file-viewer/393"]],
+  health: [["Health hub", "/health/321"], ["Patient Registration", "/victim-registration/322"], ["Wards and beds", "/ward-management/330"], ["Admissions and discharges", "/patient-admission/340"], ["Laboratory", "/laboratory/360"], ["Radiology", "/radiology/370"]],
+  stock: [["Stock Management", "/stock-management/396"]],
+  ai: [["Home", "/"]]
+};
+const DESK_TITLES = {
+  business: "The Business desk - your bookkeeping pages (421)",
+  converters: "The Computer desk - your 256 converters (421)",
+  health: "The Health desk - your medical wing (421)",
+  stock: "The Stock desk - your stock pages (421)",
+  ai: "The AI pages - this folder (421)"
+};
+
+async function respondDesk(text, desk) {
+  hideProcessing();
+  const fam = SYSTEM_KB.families[{ business: 0, converters: 1, health: 2, stock: 3, ai: 4 }[desk]];
+  const btns = (DESK_LINKS[desk] || []).map(function (l) {
+    return '<a class="ai-btn ghost" href="' + l[1] + '">' + esc(l[0]) + "</a>";
+  }).join(" ");
+  pushHtml(cardShell("answer", DESK_TITLES[desk] || "The system's pages (421)",
+    "<p><b>" + esc(fam.label) + ":</b> " + esc(fam.about) + "</p>" +
+    (btns ? '<div class="ai-actions">' + btns + "</div>" : "") +
+    '<p class="ai-dim">The full tour of every family: write "what is jamali" (421).</p>'));
+  await writeHistory({ request: text, action: "Desk pages (421): " + fam.label, status: "completed", detail: {} });
   resetToReady(true);
 }
 
