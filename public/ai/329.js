@@ -8,13 +8,27 @@
  *   - the input bar with the up-arrow send button and its three states, driven
  *     by the status model Ready / Processing / Needs-confirmation (344, 422);
  *   - attachments: images and documents ride with any message; video and audio
- *     are refused at once (345, 346, 418);
+ *     are refused at once (345, 346, 418); every picked file shows as a
+ *     preview card above the input - thumbnail for images, type and size for
+ *     the rest - with a live reading progress bar and a remove button per
+ *     file, unlimited in count and size, sent with or without a message;
  *   - understanding: Swahili, English or a mix, text, photographed receipts
  *     (OCR) and documents (PDF, Word, Excel, CSV, text) read into the exact
  *     fields the target module expects (347, 348, 349);
+ *   - the combined answer: an open request runs the two searches and the
+ *     files together - the user's own live records first (grants respected,
+ *     read only), then the open web, then every uploaded file - and lands
+ *     as ONE answer card that names each source, the connections between
+ *     them and the differences, never a guessed record;
  *   - the web search: a word the dictionaries do not know (kashata) is
  *     looked up on the open web - keyless, CORS-open Wikipedia, English and
- *     Swahili - and the answer comes back tied to the system;
+ *     Swahili, cached so the same term never costs a second trip - and the
+ *     answer comes back tied to the system;
+ *   - the processing spinner: an animated spinning circle with an honest
+ *     label while the AI works; the input locks, duplicate sends are refused,
+ *     and the arrow comes back the moment the AI is Ready;
+ *   - the retry: a failed request keeps its exact text and files, and every
+ *     error card carries a Retry button that resends it unchanged;
  *   - the file request: "naomba pdf ya <link>" and its English friends are
  *     real Convertor runs - the link, the typed text or the attachments are
  *     read in the page, the Text-to-PDF tool (#65, page 65) builds the
@@ -43,7 +57,7 @@ import {
  * PURE CORE — no window, no Firestore. The same code a Node test runs.
  * ===================================================================== */
 
-const AI_VERSION = "1.2";
+const AI_VERSION = "1.4";
 
 /* The business names, exactly page 3's own lists. */
 const IN_NAMES = ["Sales", "Commission Receivable", "Purchase Return", "Petty Cash",
@@ -1065,6 +1079,7 @@ const HELP_EXAMPLES = [
   ["Register a patient", "register patient John Juma, 34, male"],
   ["Admit a patient", "admit patient 4827ABCD emergency chest pain"],
   ["Convert a file", "attach a PDF and write: convert to word"],
+  ["Analyse an attachment", "attach it, then ask: what does this say? - the files, the system and the web answer in one card"],
   ["Ask the web", "maana ya kashata"],
   ["Say you are unwell", "naumwa malaria"]
 ];
@@ -1099,6 +1114,36 @@ function webTermFromSegment(seg) {
     .filter(function (w) { return !LEX.some(function (e) { return e[0].test(" " + w + " "); }); });
   if (!words.length) return null;
   return words.sort(function (a, b) { return b.length - a.length; })[0];
+}
+
+/* The meaningful words of a request for the internal system search: the
+ * same stop-word filter the web term uses, numbers kept out (the amount is
+ * matched on its own), lower-cased and de-duplicated, capped at eight. */
+function searchTermsOf(text) {
+  const seen = {};
+  const words = String(text || "").toLowerCase().replace(/[^a-z0-9\s'-]/g, " ").split(/\s+/)
+    .filter(function (w) { return w.length > 2 && !/^\d/.test(w); })
+    .filter(function (w) { return WEB_STOP.indexOf(w) === -1; })
+    .filter(function (w) { return !LEX.some(function (e) { return e[0].test(" " + w + " "); }); });
+  words.forEach(function (w) { seen[w] = true; });
+  return Object.keys(seen).slice(0, 8);
+}
+
+/* Human file size for the previews and the chips. */
+function bytesOf(n) {
+  const v = Number(n || 0);
+  if (v >= 1073741824) return (Math.round(v / 107374182.4) / 10) + " GB";
+  if (v >= 1048576) return (Math.round(v / 104857.6) / 10) + " MB";
+  if (v >= 1024) return Math.max(1, Math.round(v / 1024)) + " KB";
+  return v + " B";
+}
+
+/* Friendly kind name for the previews and the chips. */
+function kindLabel(kind) {
+  const map = { image: "Image", pdf: "PDF document", csv: "CSV table", excel: "Spreadsheet",
+    word: "Word document", text: "Text file", archive: "Archive", ebook: "Ebook",
+    presentation: "Presentation", video: "Video", audio: "Audio", other: "File" };
+  return map[kind] || "File";
 }
 
 /* "maana ya kashata" -> kashata; "what is cassava" -> cassava */
@@ -1192,6 +1237,53 @@ function openReply() {
   return "I could not reach that on the open web just now, and it is not a record the system keeps. Write a record like nimeuza 500 - or ask the meaning of any word, for example maana ya kashata.";
 }
 
+/* ---------- the system's own knowledge (421) ----------
+ * Questions pointed at JAMALI itself are answered from here, never from the
+ * open web - on the web "Jamal Multisystem" is a cancelled video game
+ * console, and the system is never explained by strangers. Everything in
+ * this block is the system's own truth, the same words the README and the
+ * module map (421) carry. */
+const SYSTEM_KB = {
+  name: "JAMALI - Jamal Multisystem Management",
+  summary: "JAMALI is the system I live in: plain, honest bookkeeping for a small trading business, a Health desk that grew into a full medical wing, 256 file and data converter tools, stock management, and me - the AI. A static, zero-build web app, live at https://jamali-lime.vercel.app, signed in with Google, every record kept in the organisation's own Firestore through the same wiring every page uses (406).",
+  families: [
+    { label: "Bookkeeping (pages 1-61)", about: "sales, purchases, expenses, income, the cashbook, the creditors book (16), the debtors book (17), inventory valuation by FIFO and weighted average (46), aging and financial reports - the business books." },
+    { label: "Computer - the 256 converters (hub 62, tools 65-320)", about: "one tool per page: PDF, Word, Excel, CSV, JSON, images, dates, times, text, numbers, archives and friends - and the AI runs the same tools from this conversation (381)." },
+    { label: "Health and the medical wing (pages 321-393)", about: "the health hub (321), patient registration (322), triage (323), nurse and doctor consultations, pharmacy, treatment and procedures (327), wards and beds (330), admissions and discharges (340), laboratory (360), radiology (370), the All File Viewer (393)." },
+    { label: "Stock management (pages 396-399)", about: "the stock register, movements under the fourteen causes, packages and units, and a balance that never goes below zero (369)." },
+    { label: "AI (pages 329-423, this folder)", about: "one folder and one engine - this one: conversation with attachments, image and document reading, the business, stock, health and computer desks, one confirmation before anything saves, read-only queries (409), history, audit and grants (404)." }
+  ],
+  me: "I am JAMALI AI, built into this system. I read Swahili, English or both: write a record like nimeuza 500 and I map it to the exact transaction, show one confirmation, then save through the manual pages' own validation - or ask me anything, attach any file, or hand me a link to convert."
+};
+
+/* the system question (421): "do you know jamal multisystem", "who are you",
+ * "what can you do", "hii app ni nini" - the words that point at the system
+ * itself. The desk command words never reach here: the desks parse first,
+ * so "register patient Jamal" stays a patient, not a system tour. */
+const SYS_Q_RE = /\b(?:jamali|jamal\b|multisystem|multi\s*system|this\s+(?:system|app|site|page)|hii\s+(?:app|system|site|tovuti)|mfumo|hii\s+ni\s+nini|your\s+(?:name|system|features|abilities|skills|capabilities)|who\s+(?:are|made|built)\s+you|what\s+(?:are\s+you|can\s+you\s+do|do\s+you\s+do|is\s+(?:this|jamali|jamal))|unaweza\s+(?:kufanya\s+)?nini|nini\s+unaweza|msaada|jina\s+lako|wewe\s+ni\s+nani)\b/i;
+
+function systemAnswer(text) {
+  const t = String(text || "").trim();
+  if (!t || !SYS_Q_RE.test(t)) return null;
+  /* what remains after the system words and the small question words are
+   * lifted out decides pure (answered from the knowledge alone) against
+   * mixed (the knowledge rides along with the searches) */
+  const rest = t.toLowerCase()
+    .replace(/[?!.]+/g, " ")
+    .replace(SYS_Q_RE, " ")
+    .replace(/\b(?:see|do|does|did|you|know|what|is|are|was|the|a|an|about|tell|me|who|how|can|could|please|and|or|of|to|in|it|its|na|ya|wa|kwa|hii|hiyo|wee|wewe|ni)\b/g, " ")
+    .replace(/\s+/g, " ").trim();
+  const pure = rest.split(" ").filter(Boolean).length <= 2;
+  const html = "<p><b>" + esc(SYSTEM_KB.name) + "</b> - " + esc(SYSTEM_KB.summary) + "</p>" +
+    '<ul class="ai-help">' + SYSTEM_KB.families.map(function (f) {
+      return "<li><b>" + esc(f.label) + ":</b> " + esc(f.about) + "</li>";
+    }).join("") + "</ul>" +
+    "<p>" + esc(SYSTEM_KB.me) + "</p>";
+  const note = rest ? '<p class="ai-dim">You also wrote "' + esc(rest) + '" - send it on its own and I will take it to the desks or the web.</p>' : "";
+  const brief = "<p><b>" + esc(SYSTEM_KB.name) + "</b> - " + esc(SYSTEM_KB.summary) + "</p><p>" + esc(SYSTEM_KB.me) + "</p>";
+  return { html: html, brief: brief, note: note, pure: pure, rest: rest };
+}
+
 function cleanSnippet(html) {
   return String(html || "")
     .replace(/<[^>]*>/g, "")
@@ -1232,8 +1324,9 @@ const PURE = {
   detectQuery, isBlockedUpload, fileKindOf, matchTool,
   validateBusinessItem, validateStockRegisterItem, validateStockMovement,
   makeRegId, makeCode, patientDoc, admissionDoc, dischargeDoc, labDoc, imagingDoc, esc, money,
-  guessOwnerUse, webTermFromSegment, termFromQuestion, classifyChat, chatReply,
+  guessOwnerUse, webTermFromSegment, termFromQuestion, searchTermsOf, bytesOf, kindLabel, classifyChat, chatReply,
   cleanSnippet, firstSentences, relateToSystem, isSickStatement, isOpenText, openReply,
+  SYSTEM_KB, SYS_Q_RE, systemAnswer,
   FILE_REQ_RE, parseFileRequest, textToPdf
 };
 export { PURE };
@@ -1249,7 +1342,12 @@ const S = {
   pending: null,             /* the pending action awaiting confirmation (416) */
   pendingClarify: null,
   desk: null, n: null, deskLabel: null,
-  els: {}, _libs: {}, _chargesAmt: null, _nameAsk: 0
+  els: {}, _libs: {}, _chargesAmt: null, _nameAsk: 0,
+  lastRequest: null,         /* the retry (403): the exact last text + files */
+  lastTerm: null,            /* conversation context: the last web term, for follow-ups */
+  procEl: null,              /* the processing bubble with the spinner */
+  _webCache: {},             /* web lookups already answered this session */
+  _thumbs: {}                /* attachment preview thumbnails, by file identity */
 };
 
 const CDN = {
@@ -1303,8 +1401,20 @@ function wikiPageUrl(title, lang) {
 }
 
 /* one term -> what the web says: the exact article, else the search whose
- * snippet carries the term, else the Swahili search. null means not found. */
+ * snippet carries the term, else the Swahili search. null means not found.
+ * Successful answers are cached for the session, so the same term never
+ * costs a second trip (8: no unnecessary repeated requests). */
 async function webLookup(term) {
+  const t0 = String(term || "").trim().slice(0, 80);
+  if (!t0) return null;
+  const key = t0.toLowerCase();
+  if (S._webCache[key] !== undefined) return S._webCache[key];
+  const got = await webLookupNet(t0);
+  if (got) S._webCache[key] = got; /* a failed lookup is never cached - it retries */
+  return got;
+}
+
+async function webLookupNet(term) {
   const t0 = String(term || "").trim().slice(0, 80);
   if (!t0) return null;
   try {
@@ -1386,7 +1496,21 @@ function setStatus(st) {
   const map = { ready: "Ready", processing: "Processing", "needs-confirmation": "Needs confirmation" };
   if (S.els.status) S.els.status.textContent = map[st] || st;
   if (S.els.dot) S.els.dot.className = "ai-dot st-" + st;
+  if (st !== "processing") hideProcessing(); /* the spinner only lives while working */
   updateSend();
+}
+
+/* the processing indicator (6): an animated spinning circle with an honest
+ * label, shown while the AI works and removed the moment the status leaves
+ * processing - the send button stays locked by updateSend the whole time. */
+function showProcessing(label) {
+  hideProcessing();
+  S.procEl = pushHtml('<div class="ai-processing"><span class="ai-spinner"></span><span>' +
+    esc(label || "Working on your request") + "</span></div>", "ai-ai");
+  scrollDown();
+}
+function hideProcessing() {
+  if (S.procEl) { try { S.procEl.remove(); } catch (e) {} S.procEl = null; }
 }
 
 /* 344: the arrow stays deactivated while nothing is written and no file is
@@ -1410,6 +1534,16 @@ function pushHtml(html, cls) {
   const wrap = document.createElement("div");
   wrap.className = "ai-msg " + (cls || "ai-ai");
   wrap.innerHTML = html;
+  /* the retry (9): every error card carries a Retry button that resends the
+   * exact last request - text and files - unchanged; the upload guard's own
+   * notice opts out, because there is no request to resend for it */
+  const errCard = wrap.querySelector(".ai-card.ai-error");
+  if (errCard && !errCard.hasAttribute("data-noretry") && S.lastRequest && !errCard.querySelector("[data-retry]")) {
+    const row = document.createElement("div");
+    row.className = "ai-actions ai-retry-row";
+    row.innerHTML = '<button type="button" class="ai-btn ghost" data-retry="1">Retry the last request</button>';
+    errCard.appendChild(row);
+  }
   S.els.stream.appendChild(wrap);
   scrollDown();
   return wrap;
@@ -1419,7 +1553,8 @@ function userBubble(text, files) {
   let h = '<div class="ai-bubble">' + esc(text).replace(/\n/g, "<br>") + '</div>';
   if (files && files.length) {
     h += '<div class="ai-attach-list">' + files.map(function (f) {
-      return '<span class="ai-chip">' + esc(f.name) + '</span>';
+      return '<span class="ai-chip">' + esc(f.name) +
+        ' <span class="ai-file-size">' + esc(bytesOf(f.size)) + "</span></span>";
     }).join('') + '</div>';
   }
   pushHtml(h, "ai-user");
@@ -1438,29 +1573,91 @@ function addFiles(fileList) {
   if (rejected.length) {
     pushHtml(cardShell("error", "Upload blocked (346)",
       "<p>Video and audio files are not allowed on the AI input." +
-      " Refused: " + rejected.map(function (f) { return esc(f.name); }).join(", ") + ".</p>"));
+      " Refused: " + rejected.map(function (f) { return esc(f.name); }).join(", ") + ".</p>",
+      ' data-noretry="1"'));
   }
   updateSend();
   return rejected.length;
 }
 
+/* the preview thumbnails: one object URL per picked image, reused across
+ * renders, revoked the moment the file is removed from the store */
+function thumbOf(f) {
+  const key = f.name + "::" + f.size + "::" + f.lastModified;
+  if (!(key in S._thumbs)) {
+    if (fileKindOf(f.name, f.type) === "image") {
+      try { S._thumbs[key] = URL.createObjectURL(f); } catch (e) { S._thumbs[key] = null; }
+    } else S._thumbs[key] = null;
+  }
+  return S._thumbs[key];
+}
+
+function fileMeta(f) {
+  return kindLabel(fileKindOf(f.name, f.type)) + (f.size ? " - " + bytesOf(f.size) : "");
+}
+
+/* the attachment previews (345): the picked files as cards ABOVE the input
+ * field - name, type, size, a thumbnail where the kind supports it, a
+ * reading progress bar once the AI starts on the file, and a remove button
+ * per card. No count limit, no size limit - the store takes everything
+ * except audio and video, which never reach this render (346). */
 function renderChips() {
   if (!S.els.chips) return;
-  S.els.chips.innerHTML = S.attachments.map(function (f, i) {
-    return '<span class="ai-chip">' + esc(f.name) +
-      ' <a href="#" class="ai-chip-x" data-i="' + i + '" title="Remove">&times;</a></span>';
-  }).join('');
+  if (!S.attachments.length) { S.els.chips.innerHTML = ""; return; }
+  S.els.chips.innerHTML =
+    '<div class="ai-preview-title">Attached files - they ride with the next message</div>' +
+    '<div class="ai-preview-grid">' + S.attachments.map(function (f, i) {
+      const th = thumbOf(f);
+      const kind = fileKindOf(f.name, f.type);
+      return '<div class="ai-file-card" data-i="' + i + '">' +
+        (th ? '<img class="ai-file-thumb" src="' + th + '" alt="">'
+            : '<div class="ai-file-thumb ai-file-icon">' + esc((kind[0] || "f").toUpperCase()) + "</div>") +
+        '<div class="ai-file-info"><div class="ai-file-name">' + esc(f.name) + "</div>" +
+        '<div class="ai-file-kind">' + esc(fileMeta(f)) + "</div>" +
+        '<div class="ai-file-progress" data-pi="' + i + '"' + (f._pct ? "" : " hidden") + '><div class="ai-file-progress-bar" style="width:' + (f._pct || 0) + '%"></div></div>' +
+        (f._err ? '<div class="ai-file-err">' + esc(f._err) + "</div>" : "") +
+        '</div><button type="button" class="ai-chip-x ai-file-x" data-i="' + i + '" title="Remove">&times;</button></div>';
+    }).join("") + "</div>";
+}
+
+/* live reading progress for one attachment (upload progress, 4C): the bar
+ * in that file's own preview card moves, and the foot line carries the
+ * label so the user always knows what the AI is holding */
+function updateFileProgress(index, pct, label) {
+  const f = S.attachments[index];
+  if (!f) return;
+  f._pct = Math.max(0, Math.min(100, Math.round(pct)));
+  const bar = S.els.chips && S.els.chips.querySelector('.ai-file-progress[data-pi="' + index + '"]');
+  if (bar) {
+    bar.hidden = false;
+    if (bar.firstElementChild) bar.firstElementChild.style.width = f._pct + "%";
+  }
+  if (S.els.foot && label) S.els.foot.textContent = label + " - " + f._pct + "%";
+}
+
+/* one file out of the store: its preview card goes, its thumbnail URL is
+ * revoked, and the rest keep their order */
+function removeFileAt(index) {
+  const gone = S.attachments.splice(index, 1)[0];
+  if (gone) {
+    const key = gone.name + "::" + gone.size + "::" + gone.lastModified;
+    if (S._thumbs[key]) { try { URL.revokeObjectURL(S._thumbs[key]); } catch (e) {} delete S._thumbs[key]; }
+  }
+  updateSend();
 }
 
 /* ---------- reading: images (347) and documents (348) ---------- */
 
-async function readImageText(file) {
+async function readImageText(file, onProgress) {
   await loadScriptOnce("ocr", CDN.ocr);
-  const res = await window.Tesseract.recognize(file, "eng");
+  const res = await window.Tesseract.recognize(file, "eng", { logger: function (m) {
+    /* the OCR engine's own progress, mapped onto the file's preview bar */
+    if (m && m.status === "recognizing text" && onProgress) onProgress(15 + Math.round((m.progress || 0) * 80));
+  } });
   return res && res.data ? (res.data.text || "") : "";
 }
 
-async function readPdfText(file) {
+async function readPdfText(file, onProgress) {
   await loadScriptOnce("pdf", CDN.pdf);
   const lib = window.pdfjsLib;
   lib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
@@ -1468,6 +1665,7 @@ async function readPdfText(file) {
   const pdf = await lib.getDocument({ data: new Uint8Array(buf) }).promise;
   let out = "";
   for (let i = 1; i <= pdf.numPages; i++) {
+    if (onProgress) onProgress(10 + Math.round((i / Math.max(1, pdf.numPages)) * 85));
     const page = await pdf.getPage(i);
     const tc = await page.getTextContent();
     let last = null, text = "";
@@ -1504,17 +1702,23 @@ async function readDocxText(file) {
   return txt.replace(/\n{3,}/g, "\n\n").trim();
 }
 
-async function readAttachmentText(file) {
+async function readAttachmentText(file, onProgress, cap) {
   const kind = fileKindOf(file.name, file.type);
-  if (kind === "image") return readImageText(file);
-  if (kind === "pdf") return readPdfText(file);
-  if (kind === "word" && /\.docx$/i.test(file.name)) return readDocxText(file);
-  if (kind === "excel" || kind === "csv") {
+  let out = "";
+  if (kind === "image") out = await readImageText(file, onProgress);
+  else if (kind === "pdf") out = await readPdfText(file, onProgress);
+  else if (kind === "word" && /\.docx$/i.test(file.name)) out = await readDocxText(file);
+  else if (kind === "excel" || kind === "csv") {
+    if (onProgress) onProgress(30);
     const rows = await readSheetRows(file);
-    return rows.map(function (r) { return (r || []).join(" "); }).join("\n");
+    out = rows.map(function (r) { return (r || []).join(" "); }).join("\n");
   }
-  if (kind === "text") return await file.text();
-  return ""; /* archives ride along but their contents are not read here */
+  else if (kind === "text") out = await file.text();
+  else out = ""; /* archives ride along but their contents are not read here */
+  /* an honest cap only where the caller asks for one - the file delivery
+   * keeps its own 400,000 guard, and the record desks read freely */
+  if (cap && out.length > cap) out = out.slice(0, cap) + "\n\n(the text was cut at " + cap + " characters to keep the reading fast)";
+  return out;
 }
 
 /* ---------- the computer desk: run a real tool (381, 391, 392) ---------- */
@@ -1612,8 +1816,14 @@ async function deliverFile(freq, text) {
   try {
     if (S.attachments.length) {
       const parts = [];
-      for (const f of S.attachments) {
-        try { const t = await readAttachmentText(f); parts.push("=== " + f.name + " ===\n" + (t || "(no text could be read from this file)")); }
+      for (let fi = 0; fi < S.attachments.length; fi++) {
+        const f = S.attachments[fi];
+        updateFileProgress(fi, 8, "Reading " + f.name);
+        try {
+          const t = await readAttachmentText(f, function (p) { updateFileProgress(fi, p, "Reading " + f.name); });
+          updateFileProgress(fi, 100, "Read " + f.name);
+          parts.push("=== " + f.name + " ===\n" + (t || "(no text could be read from this file)"));
+        }
         catch (e) { parts.push("=== " + f.name + " === (could not be read: " + e.message + ")"); }
       }
       content = parts.join("\n\n");
@@ -1867,15 +2077,240 @@ async function runQuery(q) {
   return "That question is not one the read-only engine answers yet - try: cash today, bank today, paid out today, check stock for X, or a patient's Registration ID.";
 }
 
+/* ---------- the internal system search (5A) and the combined answer (5D) ---------- */
+
+/* one guarded wait: any single source that hangs fails on its own after the
+ * timeout and the rest of the answer carries on without it (9) */
+function withTimeout(p, ms, label) {
+  let t = null;
+  return Promise.race([
+    p,
+    new Promise(function (_, rej) { t = setTimeout(function () { rej(new Error(label || "This step took too long.")); }, ms); })
+  ]).finally(function () { if (t) clearTimeout(t); });
+}
+
+/* The internal system search: the user's own live records, read only,
+ * module by module, and only where the account's grants allow (10, 404).
+ * Each source is guarded twice - its own timeout AND its own catch - so one
+ * failing collection never sinks the others (9: if one information source
+ * fails, the answer continues with the rest). Terms, amounts and
+ * Registration IDs found in the request and in the uploaded files decide
+ * what counts as a match; with no criteria at all the sources report their
+ * recent picture instead of flooding the answer. */
+async function searchSystem(text) {
+  const terms = searchTermsOf(text);
+  const amt = parseAmount(text);
+  const regHit = String(text || "").match(/\b\d{4}[A-HJ-NP-Z]{4}\b/);
+  const regId = regHit ? regHit[0] : null;
+  const jobs = [];
+  if (grantAllows("add-transaction") || grantAllows("business")) jobs.push(searchTx(terms, amt));
+  if (grantAllows("stock-register") || grantAllows("stock-change") || grantAllows("stock-progress")) jobs.push(searchStock(terms));
+  if (grantAllows("victim-registration") || grantAllows("health")) jobs.push(searchPatients(terms, regId));
+  const settled = await Promise.all(jobs.map(function (j) {
+    return j.catch(function (e) { return { rows: [], error: e.message || String(e) }; });
+  }));
+  const out = { rows: [], errors: [] };
+  settled.forEach(function (r) {
+    if (!r) return;
+    out.rows = out.rows.concat(r.rows || []);
+    if (r.error) out.errors.push(r.error);
+  });
+  return out;
+}
+
+async function searchTx(terms, amt) {
+  const targeted = terms.length > 0 || amt != null;
+  const snap = await withTimeout(
+    getDocs(query(collection(db, "transactions"), orderBy("dateTime", "desc"), limit(targeted ? 300 : 5))),
+    8000, "The transaction search took too long.");
+  const rows = [];
+  snap.forEach(function (d) {
+    const t = d.data();
+    const hay = ((t.transactionName || "") + " " + (t.name || "")).toLowerCase();
+    const hit = targeted
+      ? ((amt != null && Number(t.amount) === amt) || terms.some(function (w) { return hay.indexOf(w) !== -1; }))
+      : true; /* no criteria: the recent picture, newest first */
+    if (!hit) return;
+    const when = t.dateTime && t.dateTime.toDate ? t.dateTime.toDate().toLocaleDateString("en-GB") : "";
+    rows.push({ source: "Business - transactions", label: (t.transactionName || "?") + " - K " + money(t.amount) +
+      " - " + (t.transactionType || "") + (t.flowMethod && t.flowMethod !== "N/A" ? " on " + t.flowMethod : "") +
+      (t.name ? " - " + t.name : "") + (when ? " - " + when : "") });
+  });
+  return { rows: rows.slice(0, 6), error: null };
+}
+
+async function searchStock(terms) {
+  const targeted = terms.length > 0;
+  const snap = await withTimeout(
+    getDocs(query(collection(db, "stockItems"), orderBy("name"), limit(targeted ? 200 : 5))),
+    8000, "The stock search took too long.");
+  const rows = [];
+  snap.forEach(function (d) {
+    const t = d.data();
+    const name = String(t.name || "");
+    if (targeted && !terms.some(function (w) { return name.toLowerCase().indexOf(w) !== -1; })) return;
+    rows.push({ source: "Stock - stockItems", label: (name || "?") + " - " + Number(t.units || 0).toLocaleString("en-US") + " units present" });
+  });
+  return { rows: rows.slice(0, 6), error: null };
+}
+
+async function searchPatients(terms, regId) {
+  /* patients answer only to an exact Registration ID or a name term -
+   * a patient list never floods an open answer */
+  if (!regId && !terms.length) return { rows: [], error: null };
+  const snap = await withTimeout(
+    getDocs(query(collection(db, "healthRegistrations"), limit(200))),
+    8000, "The patient search took too long.");
+  const rows = [];
+  snap.forEach(function (d) {
+    const t = d.data();
+    const hit = (regId && t.regId === regId) ||
+      terms.some(function (w) { return String(t.fullName || "").toLowerCase().indexOf(w) !== -1; });
+    if (!hit) return;
+    rows.push({ source: "Health - registrations", label: (t.regId || "") + " - " + (t.fullName || "unidentified") +
+      (t.age !== "" && t.age != null ? ", " + t.age : "") + (t.sex ? ", " + t.sex : "") });
+  });
+  return { rows: rows.slice(0, 4), error: null };
+}
+
+/* The combined answer (5D): ONE card built from the three sources - the
+ * uploaded files first, then the internal system, then the open web - with
+ * every source named, the connections pointed out, the differences shown
+ * and the failures admitted honestly. Web is skipped when the system and
+ * the files already answer the request, and a follow-up question with no
+ * new term reuses the last one from the conversation context. */
+async function respondCombined(text, fileSummaries) {
+  setStatus("processing");
+  /* the system's own knowledge (421): a question pointed at JAMALI itself
+   * is answered from the system's own words alone - no records trip, no
+   * web trip where "Jamal Multisystem" is somebody else's cancelled
+   * console. A file riding along keeps the combined card. */
+  const sa = systemAnswer(text);
+  if (sa && sa.pure && !(fileSummaries && fileSummaries.length)) {
+    return respondSystem(text, sa);
+  }
+  /* the two searches run TOGETHER, never one blocking the other (8): the
+   * system search on one side, the web lookup on the other - and the web
+   * side is skipped entirely when the request carries no unknown word and
+   * no earlier term to follow up, so a direct answer costs no trip at all */
+  const term = (webTermFromSegment(text) || termFromQuestion(text) || "").trim();
+  const lookupTerm = term || S.lastTerm || "";
+  /* the web is also skipped when the looked-up word IS the system's own
+   * name (421): the system speaks for itself, strangers do not */
+  const webTerm = (sa && /jamali|jamal|multisystem|multi\s*system|this\s+(?:system|app)|mfumo/i.test(lookupTerm)) ? "" : lookupTerm;
+  const results = await Promise.all([
+    searchSystem(text + " " + (fileSummaries || []).map(function (x) { return (x.text || "").slice(0, 1500); }).join(" "))
+      .catch(function (e) { return { rows: [], errors: [e.message || String(e)] }; }),
+    webTerm ? webLookup(webTerm).catch(function () { return null; }) : Promise.resolve(null)
+  ]);
+  const sys = results[0] || { rows: [], errors: [] };
+  const info = results[1] || null;
+  if (info) S.lastTerm = info.term;
+
+  /* 3. the one combined card */
+  hideProcessing();
+  let h = "";
+  if (sa) h += '<p class="ai-dim"><b>From JAMALI itself (421)</b></p>' + sa.brief;
+  if (fileSummaries && fileSummaries.length) {
+    h += '<p class="ai-dim"><b>From your files</b></p>';
+    fileSummaries.forEach(function (s) {
+      const t = String(s.text || "").trim();
+      const amounts = [];
+      String(t).split(/\n+/).slice(0, 200).forEach(function (line) {
+        const a = parseAmount(line);
+        if (a != null) amounts.push(a);
+      });
+      h += "<p><b>" + esc(s.name) + "</b> (" + esc(kindLabel(s.kind)) + "): " +
+        (t ? esc(firstSentences(t, 2)) : "no readable text - the file rides along unopened") + "</p>" +
+        (amounts.length ? '<p class="ai-dim">Amounts seen in it: ' + esc(amounts.slice(0, 8).map(money).join(", ")) + "</p>" : "");
+    });
+  }
+  if (sys.rows.length) {
+    h += '<p class="ai-dim"><b>From your system</b> - read live, read only</p><ul class="ai-help">' +
+      sys.rows.map(function (r) { return "<li><b>" + esc(r.source) + ":</b> " + esc(r.label) + "</li>"; }).join("") + "</ul>";
+  } else {
+    h += '<p class="ai-dim"><b>From your system</b>: no matching records' +
+      (grantAllows("add-transaction") || grantAllows("business") || grantAllows("stock-register") || grantAllows("stock-change") || grantAllows("victim-registration") || grantAllows("health") ? "" : " - the modules are not granted to this account (404)") + ".</p>";
+  }
+  if (info) {
+    h += '<p class="ai-dim"><b>From the web</b></p><p><b>' + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 3)) + "</p>" +
+      '<p class="ai-dim">Source: ' + esc(info.source) + ' <a class="ai-page-link" href="' + esc(info.url) + '" target="_blank" rel="noopener">open</a></p>';
+  }
+  const connections = combineConnections(fileSummaries || [], sys.rows, info);
+  if (connections) h += '<p class="ai-dim"><b>Connections and differences</b></p>' + connections;
+  if (sys.errors.length) {
+    h += '<p class="ai-dim">One source did not answer: ' + esc(sys.errors.join("; ")) + " - the rest of the answer stands (9).</p>";
+  }
+  if (!h) h = "<p>" + esc(openReply(text)) + "</p>";
+  pushHtml(cardShell("answer", "Combined answer - files, system and web (409)", h));
+  await writeHistory({ request: text, action: "Combined answer" +
+    (sa ? " + system knowledge (421)" : "") +
+    (fileSummaries && fileSummaries.length ? " (" + fileSummaries.length + " file(s))" : "") +
+    (sys.rows.length ? " + " + sys.rows.length + " system record(s)" : "") +
+    (info ? " + web: " + info.title : ""), status: "completed", detail: {} });
+  resetToReady(true);
+}
+
+/* the connections pass: what the files and the records and the web page say
+ * about each other - amounts that match books, words that match stock,
+ * amounts that differ, and the web page's own tie-back to the system */
+function combineConnections(files, rows, info) {
+  const notes = [];
+  files.forEach(function (s) {
+    const t = String(s.text || "");
+    const fileAmts = [];
+    t.split(/\n+/).slice(0, 200).forEach(function (line) {
+      const a = parseAmount(line);
+      if (a != null) fileAmts.push(a);
+    });
+    rows.forEach(function (r) {
+      const m = String(r.label || "").match(/K ([\d,]+(?:\.\d+)?)/);
+      if (m) {
+        const recAmt = Number(m[1].replace(/,/g, ""));
+        if (fileAmts.some(function (a) { return a === recAmt; }))
+          notes.push("The amount K " + money(recAmt) + " in <b>" + esc(s.name) + "</b> matches a record in your books (" + esc(r.source) + ").");
+      }
+      searchTermsOf(t).forEach(function (w) {
+        if (r.source.indexOf("Stock") === 0 && String(r.label || "").toLowerCase().indexOf(w) !== -1)
+          notes.push("The file mentions <b>" + esc(w) + "</b>, which is a registered stock item (" + esc(r.label) + ").");
+      });
+    });
+    if (fileAmts.length > 1) {
+      const min = Math.min.apply(null, fileAmts), max = Math.max.apply(null, fileAmts);
+      if (max !== min) notes.push("The file carries amounts from K " + money(min) + " to K " + money(max) + " - a spread of K " + money(max - min) + ".");
+    }
+  });
+  if (info) notes.push(esc(relateToSystem(info.text)));
+  const seen = {}, uniq = [];
+  notes.forEach(function (n) { if (!seen[n]) { seen[n] = true; uniq.push(n); } });
+  return uniq.length ? "<ul class=\"ai-help\">" + uniq.slice(0, 6).map(function (n) { return "<li>" + n + "</li>"; }).join("") + "</ul>" : "";
+}
+
+/* the retry (9): the exact last request - text and files - goes back through
+ * the normal send path, unchanged */
+function retryLast() {
+  if (S.status === "processing" || !S.lastRequest) return;
+  S.attachments = (S.lastRequest.files || []).slice();
+  renderChips();
+  S.els.input.value = S.lastRequest.text || "";
+  updateSend();
+  onSend();
+}
+
 /* ---------- the understanding pipeline ---------- */
 
 async function gatherText(text) {
   let all = String(text || "");
-  for (const f of S.attachments) {
+  for (let i = 0; i < S.attachments.length; i++) {
+    const f = S.attachments[i];
     try {
-      const t = await readAttachmentText(f);
+      updateFileProgress(i, 5, "Reading " + f.name);
+      const t = await readAttachmentText(f, function (p) { updateFileProgress(i, p, "Reading " + f.name); });
+      updateFileProgress(i, 100, "Read " + f.name);
       if (t) all += "\n" + t;
     } catch (e) {
+      f._err = e.message || String(e);
+      renderChips();
       pushHtml(cardShell("error", "Attachment could not be read",
         "<p>" + esc(f.name) + ": " + esc(e.message) + "</p><p>The file stays attached - your input is preserved (403).</p>"));
     }
@@ -1930,18 +2365,35 @@ async function handleUserText(text) {
         return;
       }
       setStatus("processing");
-      pushHtml('<div class="ai-statusline">Running the matched tool: ' + esc(tool.label) + " (tool #" + tool.id + ", page " + tool.n + ")...</div>");
-      const res = await runTool(tool, f0);
-      if (res.ok) {
-        pushHtml(cardShell("tool", "Tool output (392)",
-          "<p><b>" + esc(tool.label) + "</b> ran on " + esc(f0.name) + ".</p>" +
-          "<p>" + esc(res.msg) + "</p>" +
-          (res.link ? '<div class="ai-actions"><a class="ai-btn" href="' + res.link + '" download>Save the converted file</a></div><p class="ai-dim">The finished file comes back as a download link (391).</p>' : "")));
-        await writeHistory({ request: text, action: "Computer: " + tool.label + " on " + f0.name, status: "completed", detail: { tool: tool.slug } });
-      } else {
-        pushHtml(cardShell("error", "Tool run failed (403)",
-          "<p>" + esc(res.msg) + "</p><p>Your input is preserved - nothing was lost.</p>"));
+      /* every attached file runs: the matched tool, file by file, each
+       * result its own line - one file failing never stops the rest */
+      const results = [];
+      for (let fi = 0; fi < files.length; fi++) {
+        const f1 = files[fi];
+        const k1 = fileKindOf(f1.name, f1.type);
+        const t1 = matchTool(k1, text || f1.name);
+        if (!t1) { results.push({ ok: false, name: f1.name, msg: "no built-in tool matched this file's kind (" + k1 + ")" }); continue; }
+        if (PARAM_TOOLS.indexOf(t1.slug) !== -1) {
+          results.push({ ok: false, name: f1.name, msg: t1.label + " needs its own settings (sizes, angles, text and friends) - open it with the file named.", tool: t1.label, param: "/" + t1.slug + "/" + t1.n });
+          continue;
+        }
+        pushHtml('<div class="ai-statusline">Running ' + esc(t1.label) + " on " + esc(f1.name) + " (file " + (fi + 1) + " of " + files.length + ")...</div>");
+        const res = await runTool(t1, f1);
+        results.push({ ok: res.ok, name: f1.name, msg: res.msg, link: res.link || null, tool: t1.label });
+        await writeHistory({ request: text, action: "Computer: " + t1.label + " on " + f1.name, status: res.ok ? "completed" : "failed", detail: { tool: t1.slug } });
       }
+      hideProcessing();
+      const rowsHtml = results.map(function (r) {
+        return '<tr><th>' + esc(r.name) + '</th><td>' +
+          (r.ok ? "<b>done</b>" : "<b>failed</b>") + " - " + esc(r.msg) +
+          (r.link ? '<br><a class="ai-btn" href="' + r.link + '" download>Save the converted file</a>' : "") +
+          (r.param ? '<br><a class="ai-btn ghost" href="' + esc(r.param) + '">Open the tool page</a>' : "") +
+          "</td></tr>";
+      }).join("");
+      const anyOK = results.some(function (r) { return r.ok; });
+      pushHtml(cardShell(anyOK ? "tool" : "error", anyOK ? "Tool output (392)" : "Tool run failed (403)",
+        '<table class="ai-fields">' + rowsHtml + "</table>" +
+        (anyOK ? '<p class="ai-dim">The finished files come back as download links (391). The links stay alive in this conversation - save them before you leave the page.</p>' : "<p>Your input is preserved - Retry runs the same files again.</p>")));
       S.attachments = []; renderChips(); resetToReady(true);
       return;
     }
@@ -1965,6 +2417,7 @@ async function handleUserText(text) {
     setStatus("processing");
     try {
       const answer = await runQuery(q);
+      hideProcessing();
       pushHtml(cardShell("answer", "Answer - read only (409)", "<p>" + answer + "</p>"));
       await writeHistory({ request: text, action: "Query: " + q.kind, status: "completed", detail: {} });
     } catch (e) {
@@ -1972,6 +2425,28 @@ async function handleUserText(text) {
     }
     resetToReady(true);
     return;
+  }
+
+  /* uploaded files on an open request: the files are read with live
+   * progress, the system and the web are searched, and ONE combined answer
+   * comes back naming every source (5A, 5B, 5C, 5D) */
+  if (files.length && isOpenText(text)) {
+    const summaries = [];
+    for (let i = 0; i < S.attachments.length; i++) {
+      const f = S.attachments[i];
+      try {
+        updateFileProgress(i, 4, "Reading " + f.name);
+        const t = await readAttachmentText(f, function (p) { updateFileProgress(i, p, "Reading " + f.name); }, 12000);
+        updateFileProgress(i, 100, "Read " + f.name);
+        summaries.push({ name: f.name, kind: fileKindOf(f.name, f.type), text: String(t || "") });
+      } catch (e) {
+        f._err = e.message || String(e);
+        renderChips();
+        pushHtml(cardShell("error", "Attachment could not be read (403)",
+          "<p>" + esc(f.name) + ": " + esc(e.message) + "</p><p>The other files carry on - Retry keeps every file attached.</p>"));
+      }
+    }
+    return respondCombined(text, summaries);
   }
 
   /* the chat layer: greetings, thanks and open questions get real replies
@@ -2133,9 +2608,11 @@ async function actOnPending(act, btn) {
   }
   if (act === "allow") { /* 400 */
     setStatus("processing");
+    showProcessing("Saving through the manual form's own process...");
     try {
       const saved = await execBusiness(p.items, p.requestText);
       p.el.remove(); S.pending = null;
+      hideProcessing();
       const lines = saved.map(function (r) {
         return esc(r.transactionName) + " - " + esc(r.transactionType) + " - " + money(r.amount) + " - " + esc(r.flowMethod) + (r.name ? " - " + esc(r.name) : "");
       }).join("<br>");
@@ -2192,27 +2669,25 @@ function unmappedStock() {
   resetToReady(true);
 }
 
-/* the chat answers: greetings, thanks, capabilities and open questions */
+/* the chat answers: greetings, thanks, capabilities and open questions -
+ * a question pointed at the system itself (421) is answered from the
+ * system's own knowledge, an open question rides to the combined answer
+ * (system first, then the web), the small words answer directly */
 async function respondChat(chat, text) {
-  if (chat.kind === "ask") {
-    setStatus("processing");
-    let info = null;
-    try { info = await webLookup(chat.term || text); } catch (e) { info = null; }
-    if (!info) {
-      pushHtml(cardShell("answer", "From the web (409)",
-        "<p>I could not reach the web source just now - nothing was written, try again in a moment.</p>"));
-      resetToReady(true);
-      return;
-    }
-    pushHtml(cardShell("answer", "From the web (409)",
-      "<p><b>" + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 2)) + "</p>" +
-      '<p class="ai-dim">Source: ' + esc(info.source) + ' <a class="ai-page-link" href="' + esc(info.url) + '" target="_blank" rel="noopener">open</a></p>' +
-      "<p>" + esc(relateToSystem(info.text)) + "</p>"));
-    await writeHistory({ request: text, action: "Web search: " + info.title, status: "completed", detail: { term: info.term, source: info.source } });
-    resetToReady(true);
-    return;
-  }
+  const sa = systemAnswer(text);
+  if (sa && sa.pure && chat.kind !== "greet" && chat.kind !== "thanks") return respondSystem(text, sa);
+  if (chat.kind === "ask") return respondCombined(text, []);
   pushHtml(cardShell("answer", "AI", "<p>" + esc(chatReply(chat.kind)) + "</p>"));
+  resetToReady(true);
+}
+
+/* the system answer (421): one card straight from the system's own words -
+ * no web trip, no records trip, no stranger explaining JAMALI */
+async function respondSystem(text, sa) {
+  hideProcessing();
+  pushHtml(cardShell("answer", "About JAMALI - the system I live in (421)", sa.html + sa.note +
+    '<div class="ai-actions"><a class="ai-btn" href="/">Home</a> <a class="ai-btn ghost" href="/business/2">Business</a> <a class="ai-btn ghost" href="/health/321">Health</a> <a class="ai-btn ghost" href="/computer/62">Converters</a> <a class="ai-btn ghost" href="/stock-management/396">Stock</a></div>'));
+  await writeHistory({ request: text, action: "System knowledge (421)" + (sa.rest ? ": " + sa.rest : ""), status: "completed", detail: {} });
   resetToReady(true);
 }
 
@@ -2224,6 +2699,7 @@ async function respondWellbeing(text) {
   const term = webTermFromSegment(text);
   let info = null;
   if (term) { try { info = await webLookup(term); } catch (e) { info = null; } }
+  hideProcessing();
   if (info) {
     pushHtml(cardShell("answer", "From the web (409)",
       "<p><b>" + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 2)) + "</p>" +
@@ -2239,24 +2715,10 @@ async function respondWellbeing(text) {
   resetToReady(true);
 }
 
-/* the open answer (409): a word or phrase the desks do not parse is looked
- * up on the open web and answered in relation to the system - never the
- * record question */
+/* the open answer (409): a word or phrase the desks do not parse goes to
+ * the combined answer - the system first, then the open web, one card */
 async function respondOpen(text) {
-  setStatus("processing");
-  const term = (webTermFromSegment(text) || termFromQuestion(text) || String(text || "").trim()).slice(0, 80);
-  let info = null;
-  try { info = await webLookup(term); } catch (e) { info = null; }
-  if (info) {
-    pushHtml(cardShell("answer", "From the web (409)",
-      "<p><b>" + esc(info.title) + "</b> - " + esc(firstSentences(info.text, 2)) + "</p>" +
-      '<p class="ai-dim">Source: ' + esc(info.source) + ' <a class="ai-page-link" href="' + esc(info.url) + '" target="_blank" rel="noopener">open</a></p>' +
-      "<p>" + esc(relateToSystem(info.text)) + "</p>"));
-    await writeHistory({ request: text, action: "Web search: " + info.title, status: "completed", detail: { term: info.term, source: info.source } });
-  } else {
-    pushHtml(cardShell("answer", "AI", "<p>" + esc(openReply(text)) + "</p>"));
-  }
-  resetToReady(true);
+  return respondCombined(text, []);
 }
 
 function askClarification(question) { /* 394 */
@@ -2360,6 +2822,7 @@ async function actOnStock(act) {
   }
   if (act !== "allow") return;
   setStatus("processing");
+  showProcessing("Writing through the stock pages' own process...");
   const notes = [];
   try {
     for (const r of p.regs) { await execStockRegister(r.rec, p.requestText); notes.push("Registered " + esc(r.rec.name) + "."); }
@@ -2368,6 +2831,7 @@ async function actOnStock(act) {
       notes.push(esc(m.cause.name) + " " + esc(m.stock.name) + ": " + esc(m.units) + " units, " + esc(res.from) + " -> " + esc(res.to) + ", transaction K " + money(res.amount) + ".");
     }
     p.el.remove(); S.pending = null;
+    hideProcessing();
     pushHtml(cardShell("done", "Saved (400)",
       "<p>" + notes.join("<br>") + "</p><p>Units Present updated the moment the change saved (369) - the same audit trails as the manual forms (414).</p>" +
       '<div class="ai-actions"><a class="ai-btn" href="/stock-register/397">Stock Register</a> <a class="ai-btn ghost" href="/stock-change/399">Stock Change</a></div>'));
@@ -2556,6 +3020,7 @@ async function actOnHealth(act) {
   }
   if (act !== "allow") return;
   setStatus("processing");
+  showProcessing("Writing through the health wing's own process...");
   try {
     let msg = "", link = "";
     const k = p.kind.replace("health-", "");
@@ -2565,6 +3030,7 @@ async function actOnHealth(act) {
     if (k === "lab") { const n = await execLab(p.f, p.requestText); msg = "Laboratory request <b>" + esc(n) + "</b> raised for " + esc(p.f.patientName) + "."; link = "/new-lab-request/361"; }
     if (k === "imaging") { const n = await execImaging(p.f, p.requestText); msg = "Imaging request <b>" + esc(n) + "</b> raised for " + esc(p.f.patientName) + "."; link = "/new-imaging-request/371"; }
     p.el.remove(); S.pending = null;
+    hideProcessing();
     pushHtml(cardShell("done", "Saved (400)", "<p>" + msg + "</p><div class='ai-actions'><a class='ai-btn' href='" + link + "'>Open the desk</a> <a class='ai-btn ghost' href='/patient-module/328'>Patient List</a></div>"));
   } catch (e) {
     pushHtml(cardShell("error", "Save failed (403)", "<p>" + esc(e.message) + "</p><p>Your input is preserved.</p>"));
@@ -2578,12 +3044,15 @@ async function actOnHealth(act) {
 
 async function onSend() {
   const text = S.els.input.value.trim();
-  if (S.status === "processing") return;
+  if (S.status === "processing") return; /* no duplicate submissions (6, 8) */
   if (!text && !S.attachments.length) return;
   const files = S.attachments.slice();
+  S.lastRequest = { text: text, files: files }; /* the retry keeps exactly this */
   userBubble(text, files);
   S.els.input.value = "";
+  updateSend();
   setStatus("processing");
+  showProcessing("Thinking about your request...");
   if (S.els.foot) S.els.foot.textContent = "Working...";
   try {
     if (S.pendingClarify) {
@@ -2680,21 +3149,24 @@ async function bootDesk(root) {
 function wireDesk() {
   S.els.input.addEventListener("input", updateSend);
   S.els.input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); }
+    if (e.isComposing) return; /* the IME's own Enter never sends */
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } /* Shift+Enter keeps the newline (3) */
   });
   S.els.send.addEventListener("click", onSend);
   S.els.file.addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
   document.getElementById("ai-attach").addEventListener("click", function () { S.els.file.click(); });
   S.els.chips.addEventListener("click", function (e) {
-    const x = e.target.closest(".ai-chip-x");
+    const x = e.target.closest(".ai-file-x");
     if (!x) return;
     e.preventDefault();
-    S.attachments.splice(Number(x.getAttribute("data-i")), 1);
+    removeFileAt(Number(x.getAttribute("data-i")));
     renderChips(); updateSend();
   });
   /* the pages guide and the hub link (329): one delegated listener opens
    * any page of the family inside this same window - nothing navigates away */
   S.els.stream.addEventListener("click", function (e) {
+    const r = e.target.closest("[data-retry]");
+    if (r) { e.preventDefault(); retryLast(); return; }
     const l = e.target.closest(".ai-page-link");
     if (!l) return;
     const p = AI_PAGES.find(function (x) { return x.n === Number(l.getAttribute("data-n")); });
@@ -2703,11 +3175,13 @@ function wireDesk() {
     else if (p.ref) boot({ ref: p.ref, n: p.n, label: p.label });
     else boot({ desk: "hub", n: 329, label: "the AI hub" });
   });
-  /* drag and drop rides with the bar (345) */
-  const bar = document.querySelector(".ai-bar");
-  ["dragover", "drop"].forEach(function (ev) {
+  /* drag and drop rides with the whole shell (345) */
+  const bar = document.querySelector(".ai-shell") || document.querySelector(".ai-bar");
+  ["dragover", "dragleave", "drop"].forEach(function (ev) {
     bar.addEventListener(ev, function (e) {
       e.preventDefault();
+      if (ev === "dragover") bar.classList.add("dragover");
+      else bar.classList.remove("dragover");
       if (ev === "drop" && e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
     });
   });
@@ -2775,7 +3249,7 @@ function renderRef(kind) {
   if (kind === "input-bar") return H + '<p>The input bar and the up-arrow send button (344):</p>' +
     "<ul class='ai-help'><li>Deactivated arrow while nothing is written and no file is attached.</li><li>Blue the moment text is typed or a valid file or image is attached.</li><li>On send: the bar clears, the input locks while the AI works, the button becomes a filled circle.</li><li>Back to the deactivated arrow once the AI is Ready.</li></ul>" +
     '<p>Try it live on the hub: <a href="/ai/329">/ai/329</a>.</p>';
-  if (kind === "attachments") return H + '<p>The attachment rules (345): images (receipts, invoices, photos, handwritten notes) and documents (PDF, Word, Excel, CSV, text, archives and friends) may ride with any message; no limit on storage or file size and no limit on how many times a user uploads. The files are held in the session attachment store (418) for the AI to read.</p>';
+  if (kind === "attachments") return H + '<p>The attachment rules (345): images (receipts, invoices, photos, handwritten notes) and documents (PDF, Word, Excel, CSV, text, archives and friends) may ride with any message; no limit on storage or file size and no limit on how many times a user uploads. Every picked file shows as a preview card above the input - thumbnail for images, type and size for the rest - with a reading progress bar and a remove button per file, and the files are held in the session attachment store (418) for the AI to read.</p>';
   if (kind === "blocked-uploads") return H + '<p>The upload guard (346): video and audio files are strictly not allowed - any attempt to attach either is blocked immediately with a clear rejection notice, before the send button ever activates. The audio and video TOOLS stay reachable for work the system itself performs (386) - the guard is on the input side only.</p>';
   if (kind === "image-reading") return H + '<p>Image understanding (347): a photographed receipt, invoice, photo or handwritten note is read (OCR, the same engine the OCR Image tool loads) together with the typed text and turned into the exact fields, amounts and names the target module expects.</p>';
   if (kind === "document-reading") return H + '<p>Document understanding (348): PDF, Word, Excel, CSV and text files are read together with the typed text and turned into the exact fields, tables and entries the target module expects. PDF text is read with the same pdf.js the PDF tools load; spreadsheets with the same SheetJS; DOCX by reading the document XML directly.</p>';
