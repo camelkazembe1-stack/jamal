@@ -44,4 +44,37 @@ tbody tr:hover { background: #f8fafc; }
 .empty-sub a:hover { text-decoration: underline; }
 
 .count-line { color: #94a3b8; font-size: 12.5px; margin-top: 12px; }
+
+/* Toolbar: the filter tabs and the green Summary button sit on one row */
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.toolbar .tabs { margin-bottom: 0; }
+.tabs[hidden] { display: none; }
+.summary-btn { padding: 9px 18px; border: 1px solid #16a34a; border-radius: 11px; background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; font-size: 13px; font-weight: 800; letter-spacing: .02em; cursor: pointer; font-family: inherit; box-shadow: 0 4px 12px rgba(22, 163, 74, .28); transition: filter .15s ease, transform .15s ease; white-space: nowrap; }
+.summary-btn:hover { filter: brightness(1.06); }
+.summary-btn:active { transform: translateY(1px); }
+.summary-btn.is-active { background: linear-gradient(135deg, #15803d, #16a34a); }
+
+/* The financial summary view - same page, the table swaps for six cards */
+.summary-view { margin-top: 6px; }
+.summary-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.summary-title { font-size: 18px; margin-bottom: 2px; }
+.summary-sub { color: #64748b; font-size: 13px; }
+.summary-back { padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer; font-family: inherit; transition: border-color .15s ease, color .15s ease; }
+.summary-back:hover { border-color: #38bdf8; color: #0ea5e9; }
+.summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.summary-card { background: #fff; border: 1px solid #e2e8f0; border-top-width: 3px; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); padding: 16px 18px; }
+.sc-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #64748b; font-weight: 800; display: flex; align-items: center; gap: 7px; }
+.sc-icon { font-size: 14px; }
+.sc-value { font-size: 25px; font-weight: 800; margin-top: 8px; color: #0f172a; font-variant-numeric: tabular-nums; word-break: break-word; line-height: 1.15; }
+.sc-note { color: #94a3b8; font-size: 12px; margin-top: 6px; }
+.sc-income { border-top-color: #22c55e; }
+.sc-outstanding { border-top-color: #f59e0b; }
+.sc-cash { border-top-color: #0ea5e9; }
+.sc-bank { border-top-color: #6366f1; }
+.sc-debit { border-top-color: #334155; }
+.sc-credit { border-top-color: #94a3b8; }
+.summary-line { color: #94a3b8; font-size: 12.5px; margin-top: 14px; }
+@media (max-width: 860px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .summary-grid { grid-template-columns: 1fr; } .sc-value { font-size: 21px; } }
 @media (max-width: 640px) { .wrap { padding: 20px 14px; } }
+
