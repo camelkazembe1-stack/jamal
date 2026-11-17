@@ -1,8 +1,8 @@
-/* JAMALI AI v4 — a standalone, powerful AI, exactly like ChatGPT.
+/* JAMALI AI v4.1 — a standalone, powerful AI, exactly like ChatGPT.
  *
  * This build answers NOTHING from the system: no record searches, no rule
- * engine, no combined answers, no books, no stock, no health wing. One
- * brain, streamed word by word, with the whole conversation as context —
+ * engine, no combined answers, no books, no stock, no health wing. One job
+ * — chat — streamed word by word, with the whole conversation as context —
  * ask anything, in Swahili, English or a mix, and the answer comes back
  * the way ChatGPT answers: complete, structured, honest.
  *
@@ -12,12 +12,15 @@
  *     Yesterday / Earlier, with New chat and a delete button each),
  *     the streamed markdown answers with the blinking caret, the Stop
  *     button, and the pill composer with the up-arrow send;
- *   - the brain: OpenAI GPT by default — the key and the model are built
+ *   - the brains: OpenAI GPT by default — the key and the model are built
  *     into this file, so the AI answers the moment the page opens, with
- *     no setup at all. A Gemini key of one's own still works: Settings
- *     switches the brain, and the key stays on the device only
- *     (localStorage, the same JAMALI_AI_GEMINI store the previous version
- *     used, so an existing key keeps working with no re-setup);
+ *     no setup at all. Z.ai GLM rides as the free backup brain: its key
+ *     ships in api/zai.js on the site itself and the page calls its own
+ *     /api/zai, so nothing is asked of anyone. A Gemini key of one's own
+ *     still works too: Settings switches the brain, and the key stays on
+ *     the device only (localStorage, the same JAMALI_AI_GEMINI store the
+ *     previous version used, so an existing key keeps working with no
+ *     re-setup);
  *   - conversations persist in Firestore aiChats per signed-in user —
  *     and if the rules are not published yet, the chat itself still
  *     works, the rail only shows an honest note;
@@ -30,7 +33,7 @@ import {
   query, where, limit, serverTimestamp, updateDoc, deleteDoc
 } from "/502.js";
 
-const AI_VERSION = "4.0";
+const AI_VERSION = "4.1";
 
 /* ---------- small shared helpers ---------- */
 
@@ -171,10 +174,11 @@ function ensureDom(root) {
     '<div class="ai-modal" id="ai-modal">' +
       '<div class="ai-modal-card">' +
         '<h2>The AI brain</h2>' +
-        '<p class="ai-sub">This AI answers with <b>OpenAI GPT</b> - the brain is built in, so it answers the moment you ask, like ChatGPT. Prefer your own free Gemini key? Switch the brain below; the key stays on this device only.</p>' +
+        '<p class="ai-sub">This AI answers with <b>OpenAI GPT</b> - the brain is built in, so it answers the moment you ask, like ChatGPT. If OpenAI ever refuses, switch to <b>Z.ai GLM</b> - the free backup, also already set up. Or bring your own free Gemini key; the key stays on this device only.</p>' +
         '<label for="ai-provider">The brain</label>' +
         '<select id="ai-provider">' +
           '<option value="openai">OpenAI GPT - already set up, works now</option>' +
+          '<option value="zai">Z.ai GLM - free backup brain, already set up</option>' +
           '<option value="gemini">Gemini - bring your own free key (aistudio.google.com)</option>' +
         '</select>' +
         '<div id="ai-openai-row">' +
@@ -184,6 +188,12 @@ function ensureDom(root) {
             '<option value="gpt-4.1-mini">gpt-4.1-mini - newer, stronger on hard questions</option>' +
             '<option value="gpt-4o">gpt-4o - the strongest everyday model</option>' +
             '<option value="gpt-4.1">gpt-4.1 - the flagship for the hardest work</option>' +
+          '</select>' +
+        '</div>' +
+        '<div id="ai-zai-row" hidden>' +
+          '<label for="ai-zai-model">Z.ai model</label>' +
+          '<select id="ai-zai-model">' +
+            '<option value="glm-4.5-flash">glm-4.5-flash - free, works now</option>' +
           '</select>' +
         '</div>' +
         '<div id="ai-gemini-row" hidden>' +
@@ -197,7 +207,7 @@ function ensureDom(root) {
             '<option value="gemini-2.0-flash">gemini-2.0-flash</option>' +
           '</select>' +
         '</div>' +
-        '<div class="ai-modal-note">The OpenAI brain is managed by the system owner - nothing to fill in. A Gemini key added here is kept on this device only (the browser\'s own storage) and is sent nowhere except Google\'s Gemini API; clear it any time with Remove.</div>' +
+        '<div class="ai-modal-note">The OpenAI brain and the Z.ai backup are managed by the system owner - nothing to fill in. A Gemini key added here is kept on this device only (the browser\'s own storage) and is sent nowhere except Google\'s Gemini API; clear it any time with Remove.</div>' +
         '<div class="ai-modal-actions">' +
           '<button type="button" class="ai-btn ghost" id="ai-gemini-remove">Remove Gemini key</button>' +
           '<button type="button" class="ai-btn" id="ai-gemini-save">Save</button>' +
@@ -301,24 +311,31 @@ const BRAIN_STORE = "JAMALI_AI_GEMINI"; /* the same store the previous version u
 /* the built-in OpenAI brain: the owner's key ships with this file, so the
  * AI answers with no setup at all. The call goes straight from this page
  * to api.openai.com, streamed, exactly the way ChatGPT's own site talks. */
-const OPENAI_BUILTIN_KEY = "REDACTED_OPENAI_KEY";
+const OPENAI_BUILTIN_KEY = "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";
 const OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
+
+/* the built-in Z.ai backup brain: its key ships in api/zai.js on the site
+ * itself and the page calls its own /api/zai - same origin, so the browser
+ * needs no key at all and Z.ai's missing CORS headers never matter. The
+ * call is the same OpenAI-shaped stream; glm-4.5-flash is the free model. */
+const ZAI_DEFAULT_MODEL = "glm-4.5-flash";
 
 /* the one brain config: the provider plus each brain's own settings. The
  * old store shape ({ key, model }) is migrated on read, so a Gemini key
  * saved before keeps working - it just stops being the default brain. */
 function brainCfg() {
   const c = { provider: "openai", openaiModel: OPENAI_DEFAULT_MODEL,
-    geminiKey: "", geminiModel: "gemini-2.5-flash" };
+    zaiModel: ZAI_DEFAULT_MODEL, geminiKey: "", geminiModel: "gemini-2.5-flash" };
   try {
     const raw = JSON.parse(localStorage.getItem(BRAIN_STORE) || "null");
     if (raw && typeof raw === "object") {
-      if (raw.provider === "gemini" || raw.provider === "openai") c.provider = raw.provider;
+      if (raw.provider === "gemini" || raw.provider === "openai" || raw.provider === "zai") c.provider = raw.provider;
       if (typeof raw.geminiKey === "string") c.geminiKey = raw.geminiKey;
       else if (typeof raw.key === "string") c.geminiKey = raw.key;
       if (typeof raw.geminiModel === "string") c.geminiModel = raw.geminiModel;
       else if (typeof raw.model === "string") c.geminiModel = raw.model;
       if (typeof raw.openaiModel === "string" && raw.openaiModel) c.openaiModel = raw.openaiModel;
+      if (typeof raw.zaiModel === "string" && raw.zaiModel) c.zaiModel = raw.zaiModel;
     }
   } catch (e) {}
   return c;
@@ -327,14 +344,19 @@ function brainSaveCfg(cfg) {
   try { localStorage.setItem(BRAIN_STORE, JSON.stringify(cfg)); } catch (e) {}
   updateRailModel();
 }
-function brainName() { return brainCfg().provider === "gemini" ? "Gemini" : "OpenAI"; }
+function brainName() {
+  const c = brainCfg();
+  return c.provider === "gemini" ? "Gemini" : c.provider === "zai" ? "Z.ai GLM" : "OpenAI";
+}
 function brainLabel() {
   const c = brainCfg();
-  return c.provider === "gemini" ? "gemini:" + (c.geminiModel || "") : "openai:" + (c.openaiModel || "");
+  return c.provider === "gemini" ? "gemini:" + (c.geminiModel || "")
+    : c.provider === "zai" ? "zai:" + (c.zaiModel || ZAI_DEFAULT_MODEL)
+    : "openai:" + (c.openaiModel || "");
 }
 function brainReady() {
   const c = brainCfg();
-  return c.provider === "openai" || !!(c.geminiKey || "").trim();
+  return c.provider !== "gemini" || !!(c.geminiKey || "").trim();
 }
 
 const BRAIN_SYSTEM =
@@ -428,6 +450,49 @@ async function openaiChat(messages, onDelta, signal) {
   return acc;
 }
 
+/* the one streaming call, Z.ai: the same OpenAI-shaped SSE, carried by the
+ * site's own /api/zai (same origin), because Z.ai sends no CORS headers
+ * and the browser cannot call it directly. glm-4.5-flash is a thinking
+ * model - its reasoning chunks carry reasoning_content and are skipped
+ * here; the visible answer rides delta.content, exactly like OpenAI's. */
+async function zaiChat(messages, onDelta, signal) {
+  const cfg = brainCfg();
+  const model = cfg.zaiModel || ZAI_DEFAULT_MODEL;
+  const res = await fetch("/api/zai", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: model, stream: true, messages: messages }),
+    signal: signal
+  });
+  if (!res.ok || !res.body) {
+    let msg = "HTTP " + res.status;
+    try { const j = await res.json(); if (j && j.error && j.error.message) msg = j.error.message; } catch (e) {}
+    throw new Error(msg);
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", acc = "";
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buf += dec.decode(chunk.value, { stream: true });
+    const ls = buf.split("\n");
+    buf = ls.pop();
+    for (const line of ls) {
+      const t = line.trim();
+      if (t.indexOf("data:") !== 0) continue;
+      const payload = t.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      let j = null;
+      try { j = JSON.parse(payload); } catch (e) { continue; }
+      const d = j && j.choices && j.choices[0] && j.choices[0].delta;
+      const piece = d && typeof d.content === "string" ? d.content : "";
+      if (piece) { acc += piece; if (onDelta) onDelta(piece, acc); }
+    }
+  }
+  return acc;
+}
+
 /* the one streaming call, Gemini: contents -> SSE deltas -> onDelta pieces */
 async function geminiChat(contents, onDelta, signal) {
   const cfg = brainCfg();
@@ -478,7 +543,7 @@ async function brainStreamReply(text) {
   hideProcessing();
   const history = transcriptTurns();
   history.pop(); /* the current question was already captured; it goes in fresh */
-  const useGemini = brainCfg().provider === "gemini";
+  const provider = brainCfg().provider;
 
   const wrap = document.createElement("div");
   wrap.className = "ai-msg ai-ai";
@@ -496,9 +561,11 @@ async function brainStreamReply(text) {
     scrollDown();
   };
   try {
-    const acc = await (useGemini
+    const acc = await (provider === "gemini"
       ? geminiChat(geminiContents(history, text), onDelta, ctl.signal)
-      : openaiChat(openaiMessages(history, text), onDelta, ctl.signal));
+      : provider === "zai"
+        ? zaiChat(openaiMessages(history, text), onDelta, ctl.signal)
+        : openaiChat(openaiMessages(history, text), onDelta, ctl.signal));
     answerEl.innerHTML = mdToHtml(acc || "...");
   } catch (e) {
     const aborted = e && (e.name === "AbortError" || String(e.message || "").indexOf("abort") !== -1);
@@ -596,6 +663,9 @@ function updateRailModel() {
     S.els.railModel.innerHTML = (c.geminiKey || "").trim()
       ? "Brain: <b>Gemini</b> - " + esc(c.geminiModel || "") + "<br>Answers stream like ChatGPT."
       : "Brain: <b>not set yet</b><br>Add a Gemini key in Settings to start asking.";
+  } else if (c.provider === "zai") {
+    S.els.railModel.innerHTML = "Brain: <b>Z.ai GLM</b> - " + esc(c.zaiModel || ZAI_DEFAULT_MODEL) +
+      "<br>Free backup brain - streams like ChatGPT.";
   } else {
     S.els.railModel.innerHTML = "Brain: <b>OpenAI</b> - " + esc(c.openaiModel || "") +
       "<br>Answers stream like ChatGPT - the key is built in.";
@@ -694,15 +764,17 @@ function openSettings() {
   const cfg = brainCfg();
   document.getElementById("ai-provider").value = cfg.provider;
   document.getElementById("ai-openai-model").value = cfg.openaiModel || OPENAI_DEFAULT_MODEL;
+  document.getElementById("ai-zai-model").value = cfg.zaiModel || ZAI_DEFAULT_MODEL;
   document.getElementById("ai-gemini-key").value = cfg.geminiKey || "";
   document.getElementById("ai-gemini-model").value = cfg.geminiModel || "gemini-2.5-flash";
   syncProviderRows();
   if (m) m.classList.add("open");
 }
 function syncProviderRows() {
-  const gemini = document.getElementById("ai-provider").value === "gemini";
-  document.getElementById("ai-openai-row").hidden = gemini;
-  document.getElementById("ai-gemini-row").hidden = !gemini;
+  const p = document.getElementById("ai-provider").value;
+  document.getElementById("ai-openai-row").hidden = p !== "openai";
+  document.getElementById("ai-zai-row").hidden = p !== "zai";
+  document.getElementById("ai-gemini-row").hidden = p !== "gemini";
 }
 function closeSettings() {
   const m = document.getElementById("ai-modal");
@@ -718,9 +790,10 @@ function wireSettings() {
   document.getElementById("ai-gemini-save").addEventListener("click", function () {
     const provider = document.getElementById("ai-provider").value;
     const openaiModel = document.getElementById("ai-openai-model").value;
+    const zaiModel = document.getElementById("ai-zai-model").value;
     const key = document.getElementById("ai-gemini-key").value.trim();
     const geminiModel = document.getElementById("ai-gemini-model").value;
-    brainSaveCfg({ provider: provider, openaiModel: openaiModel, geminiKey: key, geminiModel: geminiModel });
+    brainSaveCfg({ provider: provider, openaiModel: openaiModel, zaiModel: zaiModel, geminiKey: key, geminiModel: geminiModel });
     closeSettings();
     updateRailModel();
     if (provider === "gemini" && !key) {
@@ -730,8 +803,8 @@ function wireSettings() {
       openSettings();
     } else {
       pushHtml(cardShell("answer", "The brain is set",
-        "<p><b>" + esc(provider === "gemini" ? "Gemini" : "OpenAI") + "</b> " +
-        esc(provider === "gemini" ? geminiModel : openaiModel) +
+        "<p><b>" + esc(provider === "gemini" ? "Gemini" : provider === "zai" ? "Z.ai GLM" : "OpenAI") + "</b> " +
+        esc(provider === "gemini" ? geminiModel : provider === "zai" ? zaiModel : openaiModel) +
         " answers now - ask anything, the reply streams like ChatGPT.</p>", ' data-noretry="1"'));
     }
     setStatus("ready");
@@ -741,6 +814,7 @@ function wireSettings() {
     brainSaveCfg({
       provider: document.getElementById("ai-provider").value,
       openaiModel: document.getElementById("ai-openai-model").value,
+      zaiModel: document.getElementById("ai-zai-model").value,
       geminiKey: "",
       geminiModel: document.getElementById("ai-gemini-model").value
     });
@@ -871,4 +945,5 @@ if (typeof window !== "undefined" && typeof location !== "undefined") {
 /* the test hook: the markdown renderer, the brain shapes and the settings
  * store stay testable */
 export { mdToHtml, brainCfg, brainSaveCfg, brainReady, brainName, brainLabel,
-  openaiMessages, geminiContents, AI_VERSION, BRAIN_SYSTEM, OPENAI_DEFAULT_MODEL };
+  openaiMessages, geminiContents, zaiChat, AI_VERSION, BRAIN_SYSTEM,
+  OPENAI_DEFAULT_MODEL, ZAI_DEFAULT_MODEL };
