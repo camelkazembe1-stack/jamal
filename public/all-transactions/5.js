@@ -603,6 +603,79 @@ document.querySelectorAll(".tab").forEach((btn) =>
   }));
 
  
+/* ===== The green Summary button - the financial summary on this same page =====
+   The table hides, six figures show in its place, nothing navigates away.
+   Every figure comes from the same engine the other books use, recomputed
+   live whenever a transaction changes. */
+const summaryBtn = $("#summary-btn");
+const summaryView = $("#summary-view");
+const summaryBack = $("#summary-back");
+const tabsRow = $("#tabs");
+const core = window; // the inlined core: money, fmtBal, classify, postingsFor, buildAccounts, accountBalance
+
+function computeSummary() {
+  let income = 0, outstanding = 0, debit = 0, credit = 0;
+  ALL.forEach((t) => {
+    const amt = Number(t.amount || 0);
+    if (typeOf(t) === "IN") income += amt;
+    const p = core.postingsFor(t);
+    debit += Number(p.dr.amt || 0);
+    credit += Number(p.cr.amt || 0);
+    const k = core.classify(t); // the Debtors Book's own kinds
+    if (k === "sales" || k === "debtorsOpening") outstanding += amt;
+    else if (k === "salesReturns" || k === "cashReceipts") outstanding -= amt;
+  });
+  const M = core.buildAccounts(ALL); // the Balance Sheet's own engine
+  return {
+    income, outstanding, debit, credit,
+    cash: core.accountBalance(M.accts, "Cash"),
+    bank: core.accountBalance(M.accts, "Bank"),
+    n: ALL.length
+  };
+}
+
+function renderSummary() {
+  const s = computeSummary();
+  $("#sum-income").textContent = core.money(s.income);
+  $("#sum-outstanding").textContent = core.money(s.outstanding);
+  $("#sum-cash").textContent = core.fmtBal(s.cash);
+  $("#sum-bank").textContent = core.fmtBal(s.bank);
+  $("#sum-debit").textContent = core.money(s.debit);
+  $("#sum-credit").textContent = core.money(s.credit);
+  $("#summary-meta").textContent = s.n
+    ? "Built live from " + s.n + " transaction" + (s.n === 1 ? "" : "s") +
+      " \u00B7 figures update the moment a record changes."
+    : "No transactions recorded yet.";
+  const diff = Math.round((s.debit - s.credit) * 100) / 100;
+  $("#summary-line").textContent = s.n
+    ? (diff === 0
+        ? "The journal balances \u2014 total debits equal total credits, every entry carries its two sides."
+        : "OUT OF BALANCE \u2014 debits and credits differ by " + core.money(Math.abs(diff)) + ".")
+    : "";
+}
+
+let showingSummary = false;
+
+function setView(summaryOn) {
+  showingSummary = summaryOn;
+  summaryView.hidden = !summaryOn;
+  tabsRow.hidden = summaryOn;
+  summaryBtn.setAttribute("aria-pressed", String(summaryOn));
+  summaryBtn.classList.toggle("is-active", summaryOn);
+  if (summaryOn) {
+    tableCard.style.display = "none";
+    emptyBox.hidden = true;
+    countLine.textContent = "";
+    renderSummary();
+  } else {
+    render();
+  }
+}
+
+summaryBtn.addEventListener("click", () => setView(!showingSummary));
+summaryBack.addEventListener("click", () => setView(false));
+
+ 
 const q = query(collection(db, "transactions"), orderBy("dateTime", "desc"));
 onSnapshot(q, (snap) => {
   ALL = snap.docs.map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })));
@@ -612,8 +685,13 @@ onSnapshot(q, (snap) => {
     if (tb !== ta) return tb - ta;
     return (isCharge(a) ? 1 : 0) - (isCharge(b) ? 1 : 0);
   });
-  render();
+  if (showingSummary) renderSummary(); else render();
 }, (e) => {
+  showingSummary = false;
+  summaryView.hidden = true;
+  tabsRow.hidden = false;
+  summaryBtn.setAttribute("aria-pressed", "false");
+  summaryBtn.classList.remove("is-active");
   tableCard.style.display = "none";
   emptyBox.hidden = false;
   emptyBox.querySelector(".empty-title").textContent = "Could not load transactions";
@@ -622,3 +700,4 @@ onSnapshot(q, (snap) => {
       ? "Sign in again, then check your Firestore rules."
       : (e && e.message) || String(e);
 });
+
