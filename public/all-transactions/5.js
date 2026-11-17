@@ -613,29 +613,58 @@ const summaryBack = $("#summary-back");
 const tabsRow = $("#tabs");
 const core = window; // the inlined core: money, fmtBal, classify, postingsFor, buildAccounts, accountBalance
 
-function computeSummary() {
-  let income = 0, outstanding = 0, debit = 0, credit = 0;
-  ALL.forEach((t) => {
+function computeSummary(list) {
+  /* Every figure is the number the matching book already shows, recomputed live:
+     Total Income  -> the ledger's revenue accounts, credits less debits (the
+                      Income Statement's own "Total income")
+     Outstanding   -> the Debtors Book's outstanding foot: claims less returns
+                      and everything already received from the debtors
+     Cash / Bank   -> the Cash Book's own columns: only cash and bank flows move
+                      money; credit flows are written down but never move cash
+     Total Debit   -> tunachodai, the total amount claimed from customers: every
+                      sale and every brought-forward debt (Debtors Book total)
+     Total Credit  -> tunachodaiwa, the total amount claimed on the business:
+                      every purchase and brought-forward debt (Creditors Book total) */
+  let outstanding = 0, debit = 0, credit = 0, debtorsDec = 0, creditorsDec = 0;
+  let cash = 0, bank = 0;
+  (list || []).forEach((t) => {
     const amt = Number(t.amount || 0);
-    if (typeOf(t) === "IN") income += amt;
-    const p = core.postingsFor(t);
-    debit += Number(p.dr.amt || 0);
-    credit += Number(p.cr.amt || 0);
-    const k = core.classify(t); // the Debtors Book's own kinds
-    if (k === "sales" || k === "debtorsOpening") outstanding += amt;
-    else if (k === "salesReturns" || k === "cashReceipts") outstanding -= amt;
+    const k = core.classify(t); // the books' own kinds
+    if (k === "sales" || k === "debtorsOpening") { debit += amt; outstanding += amt; }
+    else if (k === "salesReturns" || k === "cashReceipts") { debtorsDec += amt; outstanding -= amt; }
+    if (k === "purchases" || k === "creditorsOpening") credit += amt;
+    else if (k === "purchasesReturns" || k === "cashPayments") creditorsDec += amt;
+    // the Cash Book's own inclusion rule: only cash and bank moves move money
+    const fm = String(t.flowMethod || "").trim().toLowerCase();
+    const ty = typeOf(t);
+    const tn = String(t.transactionName || "").trim().toLowerCase();
+    if ((fm === "cash" || fm === "bank") && (ty === "IN" || ty === "OUT")) {
+      if (ty === "IN") { if (fm === "bank") bank += amt; else cash += amt; }
+      else { if (fm === "bank") bank -= amt; else cash -= amt; }
+    } else if (ty === "CONTRA") {
+      if (tn === "cash deposit") { bank += amt; cash -= amt; }
+      else if (tn === "cash withdrawal") { cash += amt; bank -= amt; }
+      else if (tn === "bank charges") { bank -= amt; }
+    }
   });
-  const M = core.buildAccounts(ALL); // the Balance Sheet's own engine
+  // Total Income: revenue accounts, credits less debits
+  const M = core.buildAccounts(list || []);
+  let income = 0;
+  M.order.forEach((name) => {
+    if (core.classifyAcct(name) !== "revenue") return;
+    const a = M.accts.get(name);
+    const dr = a.dr.reduce((s, r) => s + (Number(r.amt) || 0), 0);
+    const cr = a.cr.reduce((s, r) => s + (Number(r.amt) || 0), 0);
+    income += cr - dr;
+  });
   return {
-    income, outstanding, debit, credit,
-    cash: core.accountBalance(M.accts, "Cash"),
-    bank: core.accountBalance(M.accts, "Bank"),
-    n: ALL.length
+    income, outstanding, debit, credit, debtorsDec, creditorsDec,
+    cash, bank, n: (list || []).length
   };
 }
 
 function renderSummary() {
-  const s = computeSummary();
+  const s = computeSummary(ALL);
   $("#sum-income").textContent = core.money(s.income);
   $("#sum-outstanding").textContent = core.money(s.outstanding);
   $("#sum-cash").textContent = core.fmtBal(s.cash);
@@ -646,11 +675,11 @@ function renderSummary() {
     ? "Built live from " + s.n + " transaction" + (s.n === 1 ? "" : "s") +
       " \u00B7 figures update the moment a record changes."
     : "No transactions recorded yet.";
-  const diff = Math.round((s.debit - s.credit) * 100) / 100;
   $("#summary-line").textContent = s.n
-    ? (diff === 0
-        ? "The journal balances \u2014 total debits equal total credits, every entry carries its two sides."
-        : "OUT OF BALANCE \u2014 debits and credits differ by " + core.money(Math.abs(diff)) + ".")
+    ? "Total Debit is the total amount you claim from customers (tunachodai) \u2014 of it, " +
+      core.money(s.outstanding) + " is still outstanding with debtors. Total Credit is the total " +
+      "amount claimed on the business (tunachodaiwa) \u2014 of it, " +
+      core.money(s.credit - s.creditorsDec) + " is still owed to suppliers."
     : "";
 }
 
@@ -700,4 +729,3 @@ onSnapshot(q, (snap) => {
       ? "Sign in again, then check your Firestore rules."
       : (e && e.message) || String(e);
 });
-
