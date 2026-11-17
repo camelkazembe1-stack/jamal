@@ -1,10 +1,10 @@
-/* JAMALI AI v3 — a standalone, powerful AI, exactly like ChatGPT.
+/* JAMALI AI v4 — a standalone, powerful AI, exactly like ChatGPT.
  *
  * This build answers NOTHING from the system: no record searches, no rule
  * engine, no combined answers, no books, no stock, no health wing. One
- * brain only: Gemini, streamed word by word, with the whole conversation
- * as context — ask anything, in Swahili, English or a mix, and the answer
- * comes back the way ChatGPT answers: complete, structured, honest.
+ * brain, streamed word by word, with the whole conversation as context —
+ * ask anything, in Swahili, English or a mix, and the answer comes back
+ * the way ChatGPT answers: complete, structured, honest.
  *
  * What this file is:
  *   - the ChatGPT screen: the conversation rail on the left (every past
@@ -12,10 +12,12 @@
  *     Yesterday / Earlier, with New chat and a delete button each),
  *     the streamed markdown answers with the blinking caret, the Stop
  *     button, and the pill composer with the up-arrow send;
- *   - the brain: Gemini streamGenerateContent (SSE), multi-turn, the key
- *     and the model kept on this device only (localStorage, the same
- *     JAMALI_AI_GEMINI store the previous version used, so an existing
- *     key keeps working with no re-setup);
+ *   - the brain: OpenAI GPT by default — the key and the model are built
+ *     into this file, so the AI answers the moment the page opens, with
+ *     no setup at all. A Gemini key of one's own still works: Settings
+ *     switches the brain, and the key stays on the device only
+ *     (localStorage, the same JAMALI_AI_GEMINI store the previous version
+ *     used, so an existing key keeps working with no re-setup);
  *   - conversations persist in Firestore aiChats per signed-in user —
  *     and if the rules are not published yet, the chat itself still
  *     works, the rail only shows an honest note;
@@ -28,7 +30,7 @@ import {
   query, where, limit, serverTimestamp, updateDoc, deleteDoc
 } from "/502.js";
 
-const AI_VERSION = "3.0";
+const AI_VERSION = "4.0";
 
 /* ---------- small shared helpers ---------- */
 
@@ -169,19 +171,35 @@ function ensureDom(root) {
     '<div class="ai-modal" id="ai-modal">' +
       '<div class="ai-modal-card">' +
         '<h2>The AI brain</h2>' +
-        '<p class="ai-sub">This AI answers with <b>Gemini</b> - powerful, streamed, like ChatGPT. Add your free API key once (from aistudio.google.com) and it works on every question. The key stays on this device only.</p>' +
-        '<label for="ai-gemini-key">Gemini API key</label>' +
-        '<input type="password" id="ai-gemini-key" placeholder="paste your key from aistudio.google.com" autocomplete="off">' +
-        '<label for="ai-gemini-model">Model</label>' +
-        '<select id="ai-gemini-model">' +
-          '<option value="gemini-2.5-flash">gemini-2.5-flash - fast, generous free tier</option>' +
-          '<option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite - the cheapest</option>' +
-          '<option value="gemini-2.5-pro">gemini-2.5-pro - the strongest</option>' +
-          '<option value="gemini-2.0-flash">gemini-2.0-flash</option>' +
+        '<p class="ai-sub">This AI answers with <b>OpenAI GPT</b> - the brain is built in, so it answers the moment you ask, like ChatGPT. Prefer your own free Gemini key? Switch the brain below; the key stays on this device only.</p>' +
+        '<label for="ai-provider">The brain</label>' +
+        '<select id="ai-provider">' +
+          '<option value="openai">OpenAI GPT - already set up, works now</option>' +
+          '<option value="gemini">Gemini - bring your own free key (aistudio.google.com)</option>' +
         '</select>' +
-        '<div class="ai-modal-note">The key is kept on this device only (the browser\'s own storage) and is sent nowhere except Google\'s Gemini API. Clear it any time with Remove.</div>' +
+        '<div id="ai-openai-row">' +
+          '<label for="ai-openai-model">OpenAI model</label>' +
+          '<select id="ai-openai-model">' +
+            '<option value="gpt-4o-mini">gpt-4o-mini - fast and inexpensive (default)</option>' +
+            '<option value="gpt-4.1-mini">gpt-4.1-mini - newer, stronger on hard questions</option>' +
+            '<option value="gpt-4o">gpt-4o - the strongest everyday model</option>' +
+            '<option value="gpt-4.1">gpt-4.1 - the flagship for the hardest work</option>' +
+          '</select>' +
+        '</div>' +
+        '<div id="ai-gemini-row" hidden>' +
+          '<label for="ai-gemini-key">Gemini API key</label>' +
+          '<input type="password" id="ai-gemini-key" placeholder="paste your key from aistudio.google.com" autocomplete="off">' +
+          '<label for="ai-gemini-model">Gemini model</label>' +
+          '<select id="ai-gemini-model">' +
+            '<option value="gemini-2.5-flash">gemini-2.5-flash - fast, generous free tier</option>' +
+            '<option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite - the cheapest</option>' +
+            '<option value="gemini-2.5-pro">gemini-2.5-pro - the strongest</option>' +
+            '<option value="gemini-2.0-flash">gemini-2.0-flash</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="ai-modal-note">The OpenAI brain is managed by the system owner - nothing to fill in. A Gemini key added here is kept on this device only (the browser\'s own storage) and is sent nowhere except Google\'s Gemini API; clear it any time with Remove.</div>' +
         '<div class="ai-modal-actions">' +
-          '<button type="button" class="ai-btn ghost" id="ai-gemini-remove">Remove</button>' +
+          '<button type="button" class="ai-btn ghost" id="ai-gemini-remove">Remove Gemini key</button>' +
           '<button type="button" class="ai-btn" id="ai-gemini-save">Save</button>' +
         '</div>' +
       '</div>' +
@@ -276,21 +294,50 @@ function cardShell(kind, title, bodyHtml, extra) {
     '><div class="ai-card-title">' + esc(title) + "</div>" + bodyHtml + "</div>";
 }
 
-/* ---------- the Gemini brain ---------- */
+/* ---------- the brains: OpenAI built in, Gemini by key ---------- */
 
-const GEMINI_STORE = "JAMALI_AI_GEMINI"; /* the same store the previous version used - an existing key keeps working */
+const BRAIN_STORE = "JAMALI_AI_GEMINI"; /* the same store the previous version used - an existing key keeps working */
 
-function geminiCfg() {
-  try { return JSON.parse(localStorage.getItem(GEMINI_STORE) || "null") || { key: "", model: "gemini-2.5-flash" }; }
-  catch (e) { return { key: "", model: "gemini-2.5-flash" }; }
+/* the built-in OpenAI brain: the owner's key ships with this file, so the
+ * AI answers with no setup at all. The call goes straight from this page
+ * to api.openai.com, streamed, exactly the way ChatGPT's own site talks. */
+const OPENAI_BUILTIN_KEY = "REDACTED_OPENAI_KEY";
+const OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
+
+/* the one brain config: the provider plus each brain's own settings. The
+ * old store shape ({ key, model }) is migrated on read, so a Gemini key
+ * saved before keeps working - it just stops being the default brain. */
+function brainCfg() {
+  const c = { provider: "openai", openaiModel: OPENAI_DEFAULT_MODEL,
+    geminiKey: "", geminiModel: "gemini-2.5-flash" };
+  try {
+    const raw = JSON.parse(localStorage.getItem(BRAIN_STORE) || "null");
+    if (raw && typeof raw === "object") {
+      if (raw.provider === "gemini" || raw.provider === "openai") c.provider = raw.provider;
+      if (typeof raw.geminiKey === "string") c.geminiKey = raw.geminiKey;
+      else if (typeof raw.key === "string") c.geminiKey = raw.key;
+      if (typeof raw.geminiModel === "string") c.geminiModel = raw.geminiModel;
+      else if (typeof raw.model === "string") c.geminiModel = raw.model;
+      if (typeof raw.openaiModel === "string" && raw.openaiModel) c.openaiModel = raw.openaiModel;
+    }
+  } catch (e) {}
+  return c;
 }
-function geminiSaveCfg(cfg) {
-  try { localStorage.setItem(GEMINI_STORE, JSON.stringify(cfg)); } catch (e) {}
+function brainSaveCfg(cfg) {
+  try { localStorage.setItem(BRAIN_STORE, JSON.stringify(cfg)); } catch (e) {}
   updateRailModel();
 }
-function geminiReady() { return !!(geminiCfg().key || "").trim(); }
+function brainName() { return brainCfg().provider === "gemini" ? "Gemini" : "OpenAI"; }
+function brainLabel() {
+  const c = brainCfg();
+  return c.provider === "gemini" ? "gemini:" + (c.geminiModel || "") : "openai:" + (c.openaiModel || "");
+}
+function brainReady() {
+  const c = brainCfg();
+  return c.provider === "openai" || !!(c.geminiKey || "").trim();
+}
 
-const GEMINI_SYSTEM =
+const BRAIN_SYSTEM =
   "You are JAMALI AI, a helpful, knowledgeable AI assistant. Answer any question - general knowledge, " +
   "school and study, business, health, technology, everyday life - directly, completely and honestly, " +
   "the way ChatGPT answers. Use Markdown when it helps: headings, lists, tables, code blocks. " +
@@ -299,8 +346,9 @@ const GEMINI_SYSTEM =
   "Never invent facts; if you are not sure, say so plainly. " +
   "You are a standalone assistant: you cannot read, save or change any records, so never claim to.";
 
-/* the conversation so far, as Gemini contents - the last 20 turns ride along */
-function transcriptForGemini() {
+/* the conversation so far, as plain turns - the last 20 ride along. Each
+ * brain shapes them its own way (below); the DOM stays the one source. */
+function transcriptTurns() {
   const turns = [];
   const msgs = S.els.stream ? S.els.stream.querySelectorAll(".ai-msg") : [];
   msgs.forEach(function (el) {
@@ -313,21 +361,82 @@ function transcriptForGemini() {
       const a = el.querySelector(".ai-answer");
       if (!a) return;
       const t = cleanText(a);
-      if (t) turns.push({ role: "model", text: t });
+      if (t) turns.push({ role: "assistant", text: t });
     }
   });
   return turns.slice(-20);
 }
 
-/* the one streaming call: contents -> SSE deltas -> onDelta pieces */
+/* the OpenAI message shape (pure, so the tests can hold it): the system
+ * prompt first, then the turns, then the fresh question */
+function openaiMessages(turns, text) {
+  const msgs = [{ role: "system", content: BRAIN_SYSTEM }];
+  (turns || []).forEach(function (t) { msgs.push({ role: t.role, content: t.text }); });
+  msgs.push({ role: "user", content: text });
+  return msgs;
+}
+
+/* the Gemini contents shape (pure, testable): roles swap user/model and
+ * every turn carries parts */
+function geminiContents(turns, text) {
+  const contents = [];
+  (turns || []).forEach(function (t) {
+    contents.push({ role: t.role === "assistant" ? "model" : "user", parts: [{ text: t.text }] });
+  });
+  contents.push({ role: "user", parts: [{ text: text }] });
+  return contents;
+}
+
+/* the one streaming call, OpenAI: messages -> SSE deltas -> onDelta pieces.
+ * The reply rides the same server-sent-event line ChatGPT's own site uses:
+ * every "data:" line carries one delta, "[DONE]" closes the stream. */
+async function openaiChat(messages, onDelta, signal) {
+  const cfg = brainCfg();
+  const model = cfg.openaiModel || OPENAI_DEFAULT_MODEL;
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + OPENAI_BUILTIN_KEY },
+    body: JSON.stringify({ model: model, stream: true, messages: messages }),
+    signal: signal
+  });
+  if (!res.ok || !res.body) {
+    let msg = "HTTP " + res.status;
+    try { const j = await res.json(); if (j && j.error && j.error.message) msg = j.error.message; } catch (e) {}
+    throw new Error(msg);
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", acc = "";
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) break;
+    buf += dec.decode(chunk.value, { stream: true });
+    const ls = buf.split("\n");
+    buf = ls.pop();
+    for (const line of ls) {
+      const t = line.trim();
+      if (t.indexOf("data:") !== 0) continue;
+      const payload = t.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      let j = null;
+      try { j = JSON.parse(payload); } catch (e) { continue; }
+      const d = j && j.choices && j.choices[0] && j.choices[0].delta;
+      const piece = d && typeof d.content === "string" ? d.content : "";
+      if (piece) { acc += piece; if (onDelta) onDelta(piece, acc); }
+    }
+  }
+  return acc;
+}
+
+/* the one streaming call, Gemini: contents -> SSE deltas -> onDelta pieces */
 async function geminiChat(contents, onDelta, signal) {
-  const cfg = geminiCfg();
-  const model = cfg.model || "gemini-2.5-flash";
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":streamGenerateContent?alt=sse&key=" + encodeURIComponent(cfg.key.trim());
+  const cfg = brainCfg();
+  const model = cfg.geminiModel || "gemini-2.5-flash";
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":streamGenerateContent?alt=sse&key=" + encodeURIComponent(cfg.geminiKey.trim());
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: contents, systemInstruction: { parts: [{ text: GEMINI_SYSTEM }] } }),
+    body: JSON.stringify({ contents: contents, systemInstruction: { parts: [{ text: BRAIN_SYSTEM }] } }),
     signal: signal
   });
   if (!res.ok || !res.body) {
@@ -363,14 +472,13 @@ async function geminiChat(contents, onDelta, signal) {
 }
 
 /* the streamed reply: one AI message grows word by word with the caret,
- * the send button is the stop square, and Stop keeps what arrived */
-async function geminiStreamReply(text) {
+ * the send button is the stop square, and Stop keeps what arrived. The
+ * provider is read fresh each time, so a Settings switch lands mid-chat. */
+async function brainStreamReply(text) {
   hideProcessing();
-  const history = transcriptForGemini();
+  const history = transcriptTurns();
   history.pop(); /* the current question was already captured; it goes in fresh */
-  const contents = [];
-  history.forEach(function (t) { contents.push({ role: t.role, parts: [{ text: t.text }] }); });
-  contents.push({ role: "user", parts: [{ text: text }] });
+  const useGemini = brainCfg().provider === "gemini";
 
   const wrap = document.createElement("div");
   wrap.className = "ai-msg ai-ai";
@@ -383,11 +491,14 @@ async function geminiStreamReply(text) {
   const ctl = new AbortController();
   S.streamCtl = ctl;
   let failed = null;
+  const onDelta = function (delta, all) {
+    answerEl.innerHTML = mdToHtml(all) + '<span class="ai-caret"></span>';
+    scrollDown();
+  };
   try {
-    const acc = await geminiChat(contents, function (delta, all) {
-      answerEl.innerHTML = mdToHtml(all) + '<span class="ai-caret"></span>';
-      scrollDown();
-    }, ctl.signal);
+    const acc = await (useGemini
+      ? geminiChat(geminiContents(history, text), onDelta, ctl.signal)
+      : openaiChat(openaiMessages(history, text), onDelta, ctl.signal));
     answerEl.innerHTML = mdToHtml(acc || "...");
   } catch (e) {
     const aborted = e && (e.name === "AbortError" || String(e.message || "").indexOf("abort") !== -1);
@@ -480,9 +591,15 @@ function renderRail() {
 
 function updateRailModel() {
   if (!S.els.railModel) return;
-  S.els.railModel.innerHTML = geminiReady()
-    ? "Brain: <b>Gemini</b> - " + esc(geminiCfg().model || "") + "<br>Answers stream like ChatGPT."
-    : "Brain: <b>not set yet</b><br>Add a Gemini key in Settings to start asking.";
+  const c = brainCfg();
+  if (c.provider === "gemini") {
+    S.els.railModel.innerHTML = (c.geminiKey || "").trim()
+      ? "Brain: <b>Gemini</b> - " + esc(c.geminiModel || "") + "<br>Answers stream like ChatGPT."
+      : "Brain: <b>not set yet</b><br>Add a Gemini key in Settings to start asking.";
+  } else {
+    S.els.railModel.innerHTML = "Brain: <b>OpenAI</b> - " + esc(c.openaiModel || "") +
+      "<br>Answers stream like ChatGPT - the key is built in.";
+  }
 }
 
 async function openChat(id) {
@@ -553,7 +670,7 @@ async function saveChat() {
   const title = (firstUser ? firstUser.t : "New chat").slice(0, 60);
   const data = {
     uid: S.user.uid, email: S.user.email || "", title: title,
-    messages: cap, model: geminiReady() ? (geminiCfg().model || "") : "",
+    messages: cap, model: brainLabel(),
     updatedAt: serverTimestamp()
   };
   try {
@@ -574,10 +691,18 @@ function resetToReady() {
 
 function openSettings() {
   const m = document.getElementById("ai-modal");
-  const cfg = geminiCfg();
-  document.getElementById("ai-gemini-key").value = cfg.key || "";
-  document.getElementById("ai-gemini-model").value = cfg.model || "gemini-2.5-flash";
+  const cfg = brainCfg();
+  document.getElementById("ai-provider").value = cfg.provider;
+  document.getElementById("ai-openai-model").value = cfg.openaiModel || OPENAI_DEFAULT_MODEL;
+  document.getElementById("ai-gemini-key").value = cfg.geminiKey || "";
+  document.getElementById("ai-gemini-model").value = cfg.geminiModel || "gemini-2.5-flash";
+  syncProviderRows();
   if (m) m.classList.add("open");
+}
+function syncProviderRows() {
+  const gemini = document.getElementById("ai-provider").value === "gemini";
+  document.getElementById("ai-openai-row").hidden = gemini;
+  document.getElementById("ai-gemini-row").hidden = !gemini;
 }
 function closeSettings() {
   const m = document.getElementById("ai-modal");
@@ -589,20 +714,36 @@ function wireSettings() {
   document.getElementById("ai-settings-btn").addEventListener("click", openSettings);
   m.addEventListener("click", function (e) { if (e.target === m) closeSettings(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSettings(); });
+  document.getElementById("ai-provider").addEventListener("change", syncProviderRows);
   document.getElementById("ai-gemini-save").addEventListener("click", function () {
+    const provider = document.getElementById("ai-provider").value;
+    const openaiModel = document.getElementById("ai-openai-model").value;
     const key = document.getElementById("ai-gemini-key").value.trim();
-    const model = document.getElementById("ai-gemini-model").value;
-    geminiSaveCfg({ key: key, model: model });
+    const geminiModel = document.getElementById("ai-gemini-model").value;
+    brainSaveCfg({ provider: provider, openaiModel: openaiModel, geminiKey: key, geminiModel: geminiModel });
     closeSettings();
     updateRailModel();
-    if (key) pushHtml(cardShell("answer", "The brain is set",
-      "<p>Gemini <b>" + esc(model) + "</b> answers now - ask anything, the reply streams like ChatGPT.</p>", ' data-noretry="1"'));
+    if (provider === "gemini" && !key) {
+      pushHtml(cardShell("status", "One step to start",
+        "<p>Gemini is chosen but the key box is empty. Paste a free key from <b>aistudio.google.com</b> " +
+        "- or switch the brain back to <b>OpenAI GPT</b>, which answers with no setup.</p>", ' data-noretry="1"'));
+      openSettings();
+    } else {
+      pushHtml(cardShell("answer", "The brain is set",
+        "<p><b>" + esc(provider === "gemini" ? "Gemini" : "OpenAI") + "</b> " +
+        esc(provider === "gemini" ? geminiModel : openaiModel) +
+        " answers now - ask anything, the reply streams like ChatGPT.</p>", ' data-noretry="1"'));
+    }
     setStatus("ready");
   });
   document.getElementById("ai-gemini-remove").addEventListener("click", function () {
     document.getElementById("ai-gemini-key").value = "";
-    geminiSaveCfg({ key: "", model: document.getElementById("ai-gemini-model").value });
-    closeSettings();
+    brainSaveCfg({
+      provider: document.getElementById("ai-provider").value,
+      openaiModel: document.getElementById("ai-openai-model").value,
+      geminiKey: "",
+      geminiModel: document.getElementById("ai-gemini-model").value
+    });
     updateRailModel();
   });
 }
@@ -667,11 +808,11 @@ async function onSend() {
   S.els.input.value = "";
   autogrow();
   updateSend();
-  if (!geminiReady()) {
+  if (!brainReady()) {
     pushHtml(cardShell("status", "One step to start",
-      "<p>This AI answers with <b>Gemini</b>, exactly like ChatGPT. Add your free Gemini API key once " +
+      "<p>The brain is set to <b>Gemini</b> but no key is saved yet. Paste a free key " +
       "(from <b>aistudio.google.com</b>) in <b>Settings</b> - it stays on this device only - " +
-      "and every question streams its answer from here on.</p>", ' data-noretry="1"'));
+      "or switch back to <b>OpenAI GPT</b>, which answers with no setup.</p>", ' data-noretry="1"'));
     openSettings();
     S.els.input.value = text; /* the question stays, ready to send */
     autogrow(); updateSend();
@@ -681,11 +822,11 @@ async function onSend() {
   setStatus("processing");
   showProcessing("Thinking...");
   try {
-    await geminiStreamReply(text);
+    await brainStreamReply(text);
   } catch (e) {
-    pushHtml(cardShell("error", "Gemini could not answer",
+    pushHtml(cardShell("error", brainName() + " could not answer",
       "<p>" + esc(e && e.message ? e.message : String(e)) + "</p>" +
-      "<p>Check the key and the model in Settings, or press Retry.</p>", ""));
+      "<p>Check the brain and the model in Settings, or press Retry.</p>", ""));
     S.els.input.value = text; /* the question comes back - nothing is lost */
     autogrow(); updateSend();
     setStatus("ready");
@@ -727,5 +868,7 @@ if (typeof window !== "undefined" && typeof location !== "undefined") {
   }
 }
 
-/* the test hook: the markdown renderer and the settings store stay testable */
-export { mdToHtml, geminiCfg, AI_VERSION };
+/* the test hook: the markdown renderer, the brain shapes and the settings
+ * store stay testable */
+export { mdToHtml, brainCfg, brainSaveCfg, brainReady, brainName, brainLabel,
+  openaiMessages, geminiContents, AI_VERSION, BRAIN_SYSTEM, OPENAI_DEFAULT_MODEL };
