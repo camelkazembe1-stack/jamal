@@ -6,3 +6,7 @@ task*.sh
 local-data/
 .firebase/
 firebase-debug.log
+.failed-scripts/
+.env
+.env.*
+!.env.example
