@@ -357,6 +357,10 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn();
     }
 
+    match /aiChats/{docId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
+
     match /stockItems/{docId} {
       allow read, create, update, delete: if isSignedIn();
     }
