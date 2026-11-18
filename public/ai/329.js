@@ -13,10 +13,10 @@
  *     the streamed markdown answers with the blinking caret, the Stop
  *     button, and the pill composer with the up-arrow send;
  *   - the brains: OpenAI GPT by default - it runs behind the system's own
- *     server door (/api/ai), and its key lives in the server's environment,
- *     never in the browser or the repository, so the AI answers the moment
- *     the page opens, with no setup at all, for every user, in every
- *     country. Z.ai GLM rides as the free backup brain: its key ships in
+ *     server door (/api/ai), and its key ships hardcoded in api/ai.js on
+ *     the site itself, so the AI answers the moment the page opens, with
+ *     no setup at all, for every user, in every country, with nothing to
+ *     set anywhere. Z.ai GLM rides as the free backup brain: its key ships in
  *     api/zai.js on the site itself and the page calls its own /api/zai,
  *     so nothing is asked of anyone. A Gemini key of one's own still works
  *     too: Settings switches the brain, and the key stays on the device
@@ -310,8 +310,7 @@ const BRAIN_STORE = "JAMALI_AI_GEMINI"; /* the same store the previous version u
 
 /* the OpenAI brain behind the system's server door: this page posts to
  * /api/ai, same origin, and the door talks to api.openai.com with the key
- * from the server environment (OPENAI_API_KEY) - the key is never in this
- * file, the browser or the repository. */
+ * shipped hardcoded in api/ai.js - nothing to configure anywhere. */
 const OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
 
 /* the built-in Z.ai backup brain: its key ships in api/zai.js on the site
@@ -426,8 +425,8 @@ async function openaiChat(messages, onDelta, signal) {
   } catch (e) {
     if (e && (e.name === "AbortError" || String(e.message || "").indexOf("abort") !== -1)) throw e;
     throw new Error("The browser could not reach the AI brain on the server (/api/ai). " +
-      "If the system was just deployed, set the OPENAI_API_KEY environment variable in the Vercel project " +
-      "(Settings - Environment Variables) and redeploy - or switch the brain to Z.ai GLM in Settings meanwhile.");
+      "If the system was just deployed, wait a minute for the Vercel build to finish and press Retry " +
+      "- or switch the brain to Z.ai GLM in Settings meanwhile.");
   }
   if (!res.ok || !res.body) {
     let msg = "HTTP " + res.status;

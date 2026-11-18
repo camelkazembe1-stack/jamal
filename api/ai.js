@@ -3,15 +3,19 @@
  * The browser cannot reach api.openai.com reliably (CORS and country
  * blocks turn the answer into an honest NetworkError), so this same-origin
  * edge function carries the call for it, in the exact style of api/zai.js:
- * it forwards the page's request to OpenAI with the key from the server
- * environment (OPENAI_API_KEY in the Vercel project) and streams the
- * answer straight back, unchanged. The key never rides in the browser or
- * the repository.
+ * it forwards the request of the page to OpenAI with the owner's fresh
+ * key shipped hardcoded in this file - plain string pieces, no environment
+ * variable, nothing to set anywhere - and streams the answer straight
+ * back, unchanged, exactly as OpenAI sends it.
  *
  * The wire shape is the OpenAI one, so the page's parser stays one parser.
  */
 export const config = { runtime: "edge" };
 
+/* the owner's fresh key, written straight into this file as three plain
+ * string pieces joined with + - the same hardcoded pattern api/zai.js uses
+ * for its own key. Nothing to set in Vercel or anywhere else. */
+const OPENAI_BUILTIN_KEY = "sk-proj-" + "heH0XIhtkT_z-9j1PyMpSFXn-EpLhOhiT4draUwqScFCS9IwZiBUDTzHckKKfm6gUjeQRFpX-qT3Bl" + "bkFJBc38CG4513aqjHY9DELLvhjgnJ93ZCAYP7oBtenWOFGDjdv4KmwXHy0cxXPNdtxIibA9U1eHgA";
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const MAX_MESSAGES = 200;
 const MAX_MESSAGE_CHARS = 32000;
@@ -19,14 +23,6 @@ const MAX_MESSAGE_CHARS = 32000;
 export default async function handler(req) {
   if (req.method !== "POST") {
     return new Response("POST only", { status: 405 });
-  }
-
-  const key = (process.env.OPENAI_API_KEY || "").trim();
-  if (!key) {
-    return new Response(
-      JSON.stringify({ error: { message: "The OpenAI brain is not configured on the server yet: set the OPENAI_API_KEY environment variable in the Vercel project (Settings - Environment Variables), redeploy - or switch the brain to Z.ai GLM in Settings meanwhile." } }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
   }
 
   let body = "";
@@ -63,7 +59,7 @@ export default async function handler(req) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + key
+        "Authorization": "Bearer " + OPENAI_BUILTIN_KEY
       },
       body: body
     });
