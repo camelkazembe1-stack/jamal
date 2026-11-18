@@ -12,15 +12,16 @@
  *     Yesterday / Earlier, with New chat and a delete button each),
  *     the streamed markdown answers with the blinking caret, the Stop
  *     button, and the pill composer with the up-arrow send;
- *   - the brains: OpenAI GPT by default — the key and the model are built
- *     into this file, so the AI answers the moment the page opens, with
- *     no setup at all. Z.ai GLM rides as the free backup brain: its key
- *     ships in api/zai.js on the site itself and the page calls its own
- *     /api/zai, so nothing is asked of anyone. A Gemini key of one's own
- *     still works too: Settings switches the brain, and the key stays on
- *     the device only (localStorage, the same JAMALI_AI_GEMINI store the
- *     previous version used, so an existing key keeps working with no
- *     re-setup);
+ *   - the brains: OpenAI GPT by default - it runs behind the system's own
+ *     server door (/api/ai), and its key lives in the server's environment,
+ *     never in the browser or the repository, so the AI answers the moment
+ *     the page opens, with no setup at all, for every user, in every
+ *     country. Z.ai GLM rides as the free backup brain: its key ships in
+ *     api/zai.js on the site itself and the page calls its own /api/zai,
+ *     so nothing is asked of anyone. A Gemini key of one's own still works
+ *     too: Settings switches the brain, and the key stays on the device
+ *     only (localStorage, the same JAMALI_AI_GEMINI store the previous
+ *     version used, so an existing key keeps working with no re-setup);
  *   - conversations persist in Firestore aiChats per signed-in user —
  *     and if the rules are not published yet, the chat itself still
  *     works, the rail only shows an honest note;
@@ -33,7 +34,7 @@ import {
   query, where, limit, serverTimestamp, updateDoc, deleteDoc
 } from "/502.js";
 
-const AI_VERSION = "4.1";
+const AI_VERSION = "4.2";
 
 /* ---------- small shared helpers ---------- */
 
@@ -137,7 +138,6 @@ function ensureDom(root) {
         '<div class="ai-rail-head"><button class="ai-rail-new" id="ai-new" title="Start a new conversation"><span class="plus">+</span> New chat</button></div>' +
         '<div class="ai-rail-list" id="ai-rail-list"></div>' +
         '<div class="ai-rail-foot">' +
-          '<div class="ai-rail-model" id="ai-rail-model"></div>' +
           '<button class="ai-rail-settings" id="ai-settings-btn">Settings - the AI brain</button>' +
         '</div>' +
       '</aside>' +
@@ -308,10 +308,10 @@ function cardShell(kind, title, bodyHtml, extra) {
 
 const BRAIN_STORE = "JAMALI_AI_GEMINI"; /* the same store the previous version used - an existing key keeps working */
 
-/* the built-in OpenAI brain: the owner's key ships with this file, so the
- * AI answers with no setup at all. The call goes straight from this page
- * to api.openai.com, streamed, exactly the way ChatGPT's own site talks. */
-const OPENAI_BUILTIN_KEY = "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";
+/* the OpenAI brain behind the system's server door: this page posts to
+ * /api/ai, same origin, and the door talks to api.openai.com with the key
+ * from the server environment (OPENAI_API_KEY) - the key is never in this
+ * file, the browser or the repository. */
 const OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
 
 /* the built-in Z.ai backup brain: its key ships in api/zai.js on the site
@@ -415,15 +415,24 @@ function geminiContents(turns, text) {
 async function openaiChat(messages, onDelta, signal) {
   const cfg = brainCfg();
   const model = cfg.openaiModel || OPENAI_DEFAULT_MODEL;
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + OPENAI_BUILTIN_KEY },
-    body: JSON.stringify({ model: model, stream: true, messages: messages }),
-    signal: signal
-  });
+  let res;
+  try {
+    res = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: model, stream: true, messages: messages }),
+      signal: signal
+    });
+  } catch (e) {
+    if (e && (e.name === "AbortError" || String(e.message || "").indexOf("abort") !== -1)) throw e;
+    throw new Error("The browser could not reach the AI brain on the server (/api/ai). " +
+      "If the system was just deployed, set the OPENAI_API_KEY environment variable in the Vercel project " +
+      "(Settings - Environment Variables) and redeploy - or switch the brain to Z.ai GLM in Settings meanwhile.");
+  }
   if (!res.ok || !res.body) {
     let msg = "HTTP " + res.status;
-    try { const j = await res.json(); if (j && j.error && j.error.message) msg = j.error.message; } catch (e) {}
+    try { const j = await res.json(); if (j && j.error && j.error.message) msg = j.error.message; }
+    catch (e) { if (res.status === 404) msg = "The AI brain door (/api/ai) is not live yet - let the Vercel build finish, then press Retry."; }
     throw new Error(msg);
   }
   const reader = res.body.getReader();
@@ -656,21 +665,9 @@ function renderRail() {
   updateRailModel();
 }
 
-function updateRailModel() {
-  if (!S.els.railModel) return;
-  const c = brainCfg();
-  if (c.provider === "gemini") {
-    S.els.railModel.innerHTML = (c.geminiKey || "").trim()
-      ? "Brain: <b>Gemini</b> - " + esc(c.geminiModel || "") + "<br>Answers stream like ChatGPT."
-      : "Brain: <b>not set yet</b><br>Add a Gemini key in Settings to start asking.";
-  } else if (c.provider === "zai") {
-    S.els.railModel.innerHTML = "Brain: <b>Z.ai GLM</b> - " + esc(c.zaiModel || ZAI_DEFAULT_MODEL) +
-      "<br>Free backup brain - streams like ChatGPT.";
-  } else {
-    S.els.railModel.innerHTML = "Brain: <b>OpenAI</b> - " + esc(c.openaiModel || "") +
-      "<br>Answers stream like ChatGPT - the key is built in.";
-  }
-}
+/* the old brain label under the rail was removed at the owner's request -
+ * the Settings modal is the one place that describes the brain now. */
+function updateRailModel() { return; }
 
 async function openChat(id) {
   try {
