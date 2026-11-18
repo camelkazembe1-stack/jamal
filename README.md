@@ -4,7 +4,7 @@ Plain, honest bookkeeping for a small trading business, a Health desk for the ho
 
 HOW TO READ THIS GUIDE
 
-One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js, addressed without the extension, for example /petty-cash/7. This guide names every file in the repository. One entry per page, and the entry numbers are the page numbers themselves: 1. home, 2. business, and so on, up to 423. The convertor tools are entries 65 to 320, one entry per tool, in the order the hub shows them. The AI family fills every number the old list skipped between 329 and 423. Every entry is followed by a blank line before the next number, and each entry ends with the files the folder carries.
+One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js, addressed without the extension, for example /petty-cash/7. This guide names every file in the repository. One entry per page, and the entry numbers are the page numbers themselves: 1. home, 2. business, and so on, up to 399. The convertor tools are entries 65 to 320, one entry per tool, in the order the hub shows them. Every entry is followed by a blank line before the next number, and each entry ends with the files the folder carries.
 
 THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL PENDING)
 
@@ -737,136 +737,6 @@ THE STOCK PAGES, 396 TO 399
 398. stock-progress - Stock Progress, opened from the Stock Management hub - the live position of every registered stock: S/N, Stock Name, Units Present, Unit SP and Package BP, with Units Present updated the moment a Stock Change is saved. Files: 398.html, 398.css, 398.js.
 
 399. stock-change - Stock Change, opened from the Stock Management hub - all fourteen stock-change buttons in four groups: Stock IN with money (Purchases, Sales Returns), Stock IN without money (Free Stock Received, Stock Transfers IN, Stock Adjustments IN), Stock OUT with money (Sales, Purchases Returns) and Stock OUT without money (Stock Damage, Stock Expiry, Theft, Internal Use, Free Samples, Stock Transfers OUT, Stock Adjustments OUT). Pick a cause, pick the stock from the search grid, type the quantity as Packages or as Units - the two calculate each other from Units per Package - and save: the stock quantity moves in one batch (IN adds, OUT deducts, never below zero), the movement lands in stockChanges, and a transaction record joins the business transactions - the cause as its Transaction Name, Cash / Credit / Bank following the Add Transaction process for the money causes, type IN and the amount at Unit SP when money comes in, type OUT at BP when money goes out, and type NEUTRAL at BP with no flow method when no money moves. Files: 399.html, 399.css, 399.js.
-
-THE AI FAMILY, 329, 339, 344 TO 349, 354 TO 359, 364 TO 369, 374 TO 379, 381 TO 392, 394 TO 395 AND 400 TO 423 (EVERY NUMBER THE OLD LIST SKIPPED, ALL 64 SERVED BY ONE AI FOLDER)
-
-329. ai (the one AI folder) - the AI hub: the AI button on the Home Screen and its entry in the left sidebar menu both open this page, and it is the doorway to every AI capability below. The screen opens clean and empty with the input bar at the bottom and no page list on it - the deeper AI pages open through /ai/329?m=<number> from the Home Screen tiles, and the page respects the logged-in user's module grants from Account Administration (system-admin) and the sidebar grant filter - the AI only reaches the modules the current user is permitted to open. The understanding goes past the desks: greetings, thanks and open questions get real replies or web answers, wellbeing words ("naumwa malaria") are heard, looked up on the open web and answered with the health wing's own steps, and a bare word the dictionaries do not know is looked up on the web instead of being pushed into a record question. A file request ("naomba pdf ya <link>", "make a pdf of this") is a real Convertor run: the link, the typed text or the attachments are read in the page, the Text-to-PDF tool builds the document, and the finished PDF or text file comes back as a download link the way 391 delivers - and a link the browser is not allowed to read comes back as an honest refusal that keeps the input. Files: 329.html, 329.css and 329.js - the only AI folder of the family: exactly one html, one css and one js; every AI number below opens inside this one page at /ai/329?m=<number>, and no other AI folder is created.
-
-339. ai-chat (served by the one AI folder) - the AI conversation screen: the user's sent messages and attached files on one side, the AI's structured confirmation cards, tool outputs and status responses on the other, and the view scrolls itself down to the newest message or response every time. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=339.
-
-344. ai-input-bar (served by the one AI folder) - the input bar and the up-arrow send button: the arrow stays deactivated while nothing is written and no file is attached, turns blue the moment text is typed or a valid file or image is attached, and when the message is sent the bar clears, the input locks while the AI works and the button becomes a filled circle, returning to the deactivated arrow once the AI is Ready. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=344.
-
-345. ai-attachments (served by the one AI folder) - the attachment rules: images (receipts, invoices, photos, handwritten notes) and documents (PDF, Word, Excel, CSV, text, archives and friends) may ride with any message; there is no limit on storage or file size and no limit on how many times a user uploads files or images. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=345.
-
-346. ai-blocked-uploads (served by the one AI folder) - the upload guard: video and audio files are strictly not allowed - any attempt to attach either is blocked immediately with a clear rejection notice, before the send button ever activates. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=346.
-
-347. ai-image-reading (served by the one AI folder) - image understanding: a photographed receipt, invoice, photo or handwritten note is read together with the typed text and turned into the exact fields, amounts and names the target module expects. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=347.
-
-348. ai-document-reading (served by the one AI folder) - document understanding: PDF, Word, Excel, CSV, text and archive files are read together with the typed text and turned into the exact fields, tables and entries the target module expects. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=348.
-
-349. ai-languages (served by the one AI folder) - language understanding: Swahili, English or a mix of both are read the same way - "nimeuza 500" lands exactly like "sales 500" - so the user never has to switch languages to be understood. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=349.
-
-354. ai-business (served by the one AI folder) - the AI business desk: sales, purchases, expenses, income, contra entries, debtors and creditors arriving by text, image or document are mapped to their exact transaction names, their types (IN / OUT / CONTRA), their amounts and their payment methods, ready for the confirmation summary. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=354.
-
-355. ai-add-transaction (served by the one AI folder) - the AI write door of Add Transaction: a confirmed business mapping saves through page 3's own process - the same Firestore collections, the same validation rules and the same user audit trails as the manual form, with the logged-in user's identity and timestamp on the record. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=355.
-
-356. ai-cash-default (served by the one AI folder) - the payment method rule: Cash is the default whenever a request mentions neither Credit nor Bank - "nimeuza 500" saves as Sales, type IN, amount 500, method Cash - and Credit or Bank must be named to be used. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=356.
-
-357. ai-batch-business (served by the one AI folder) - batch business extraction: when one prompt, one receipt image or one spreadsheet carries several entries - five sales, ten expenses - the AI extracts every item and shows them all in a single confirmation summary before anything saves. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=357.
-
-358. ai-contra (served by the one AI folder) - contra entries through the AI: Cash Withdrawal adds to cash and reduces the bank, Cash Deposit the reverse, and a bank charge lands as its own separate Bank Charges record, exactly the way the cash books do it. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=358.
-
-359. ai-debtors-creditors (served by the one AI folder) - debtors and creditors through the AI: recoveries, registrations and balance questions mapped to the debtors and creditors books and their opening doors, without touching the sales-side journals. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=359.
-
-364. ai-stock (served by the one AI folder) - the AI stock desk: stock registrations, stock progress checks and stock movements (Stock IN / Stock OUT, with or without money) are mapped to their corresponding stock rules and unit/package calculations, ready for the confirmation summary. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=364.
-
-365. ai-stock-register-write (served by the one AI folder) - stock registration through the AI: Name, Units Present, Buying Price per Package, Units per Package and Unit Selling Price are written into the Stock Register through its own process, and the registered prices feed Stock Progress and Stock Change. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=365.
-
-366. ai-stock-movement-write (served by the one AI folder) - stock movements through the AI: the fourteen causes - Stock IN with money (Purchases, Sales Returns), Stock IN without money (Free Stock Received, Stock Transfers IN, Stock Adjustments IN), Stock OUT with money (Sales, Purchases Returns) and Stock OUT without money (Stock Damage, Stock Expiry, Theft, Internal Use, Free Samples, Stock Transfers OUT, Stock Adjustments OUT) - the movement lands in stockChanges and a transaction record joins the business books. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=366.
-
-367. ai-packages-units (served by the one AI folder) - the package bridge inside the AI: a quantity typed as Packages and a quantity typed as Units calculate each other from Units per Package, the same bridge the manual stock pages use, so the AI accepts whichever side the user thinks in. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=367.
-
-368. ai-batch-stock (served by the one AI folder) - batch stock extraction: a spreadsheet or a typed list carrying several stock items - ten registrations, a whole day of movements - is extracted into a single confirmation summary before anything saves. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=368.
-
-369. ai-stock-balance (served by the one AI folder) - the stock balance engine: IN adds and OUT deducts, never below zero, and Units Present is updated the moment a change is saved, so the AI always reports the live position of every registered stock. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=369.
-
-374. ai-health (served by the one AI folder) - the AI health desk: patient registration, triage, consultations, pharmacy, treatments, wards and beds, admissions, discharges, laboratory and radiology requests arriving by text, image or document are mapped to their respective medical wing workflows. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=374.
-
-375. ai-patient-registration (served by the one AI folder) - patient registration through the AI: the sixteen registration fields filled from a typed message, a photo of a referral note or a document, and saved through the exact registration process with its Registration ID. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=375.
-
-376. ai-triage-consultation (served by the one AI folder) - triage and consultations through the AI: the triage assessment, the completed nursing record and the doctor's consultation each mapped into their exact stage and form, in the order the medical wing runs them. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=376.
-
-377. ai-pharmacy-treatment (served by the one AI folder) - pharmacy and treatments through the AI: prescriptions arriving from the doctor consultation one medicine at a time, and treatment or procedure records, mapped into their desks through their own processes. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=377.
-
-378. ai-wards-beds (served by the one AI folder) - wards and beds through the AI: ward registration, bed management, occupancy, bed assignment, transfers, cleaning and maintenance, the ward register and the transfer history, each mapped to its page's own process. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=378.
-
-379. ai-admission-discharge (served by the one AI folder) - admissions and discharges through the AI: the patient is found from the Patient List and never re-registered, the admission is recorded, the discharge is started and closed, and the lists and details are updated the moment a status changes. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=379.
-
-381. ai-computer (served by the one AI folder) - the AI computer desk: an uploaded file plus a stated need - "I need Word from this PDF", "Convert to Excel" - is matched to the built-in system tool that does the job, the file is processed by that tool, and the result and feedback come straight back to the user. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=381.
-
-382. ai-tool-matcher (served by the one AI folder) - the tool matcher: the exact built-in tool is identified from the file's true type and the user's stated need, and the chosen tool is named in the confirmation summary before anything runs. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=382.
-
-383. ai-convert-documents (served by the one AI folder) - document conversions through the AI: Word, PDF, Excel, PowerPoint, RTF, text, Markdown and HTML, each direction its own tool - PDF to Word, PDF to Excel, Word to PDF, Excel to CSV and friends. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=383.
-
-384. ai-convert-data (served by the one AI folder) - data conversions through the AI: CSV, JSON, XML, YAML, SQL and the format validators, tables in and tables out, exactly as the data tools do it. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=384.
-
-385. ai-convert-images (served by the one AI folder) - picture conversions through the AI: images to PDF and back, picture format changes and compressions, run by the image tools. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=385.
-
-386. ai-convert-audio-video (served by the one AI folder) - audio and video work through the AI: the audio and video tools are reachable here only for work the system itself performs - an uploaded video or audio attachment is still blocked by the upload guard on the input side. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=386.
-
-387. ai-convert-archives (served by the one AI folder) - archive work through the AI: ZIP, TAR and GZIP, packing, unpacking and the archive content viewer, run by the archive tools. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=387.
-
-388. ai-convert-ebooks (served by the one AI folder) - ebook conversions through the AI: EPUB, PDF, TXT, HTML and MOBI, each direction its own tool. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=388.
-
-389. ai-convert-web (served by the one AI folder) - web and code work through the AI: HTML, XHTML, Markdown, CSS and JavaScript conversions, minifiers and beautifiers. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=389.
-
-390. ai-file-viewer (served by the one AI folder) - All File Viewer through the AI: pick any file from the device and the AI names its type and hands it to page 393, the viewer every page trusts. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=390.
-
-391. ai-convert-delivery (served by the one AI folder) - the converted file delivery: the finished file comes back as a download link with clear status feedback, ready to save - and a file request typed straight into the conversation ("naomba pdf ya <link>") is delivered the same way, the PDF built in the page with no library and handed back as one link. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=391.
-
-392. ai-tool-status (served by the one AI folder) - tool run status: which tool ran, what it produced and what failed are reported back as structured tool output cards in the conversation. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=392.
-
-394. ai-clarification (served by the one AI folder) - the clarification step: when critical details are missing or ambiguous - a missing amount, an unregistered stock item - the AI asks one short, direct question before anything else happens. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=394.
-
-395. ai-confirmation (served by the one AI folder) - the confirmation summary: before any record is saved or any action completes, the AI shows the target module, the extracted fields and values or the selected system tool, with Confirm / Allow and Cancel / Edit controls; nothing ever saves without it. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=395.
-
-400. ai-execute (served by the one AI folder) - the executor: a confirmed action completes with the logged-in user's identity and timestamp - the Firestore write through the exact collections and validation the manual page uses, or the convertor tool run. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=400.
-
-401. ai-cancel (served by the one AI folder) - cancel and discard: a rejected action saves nothing - the pending action is discarded and the AI resets to Ready, the input bar unlocked. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=401.
-
-402. ai-feedback (served by the one AI folder) - post-completion feedback: the saved record summary, the updated balance or stock count, or the converted file download link, then the status Ready and the send button back to the deactivated arrow. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=402.
-
-403. ai-errors (served by the one AI folder) - error handling: a failed database write or a failed file conversion shows a clear error notice explaining what failed, without losing the user's input, and the AI resets to Ready. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=403.
-
-404. ai-grants (served by the one AI folder) - the AI grant filter: the AI only accesses and executes actions in the modules the current user is permitted to open - the module grants from Account Administration (system-admin) and the sidebar grant filter decide what it may reach. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=404.
-
-405. ai-admin-controls (served by the one AI folder) - the administrator's controls: every element on the AI pages stays compatible with the live - (hide) and + (dropdown options) controls of public/504.js, so the administrator can shape what ordinary users see. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=405.
-
-406. ai-wiring (served by the one AI folder) - the wiring: the AI connects exclusively through SERVER/server.js to SERVER/linker.js and public/502.js - the requireAuth guard, Google authentication, Firestore database access and the centralized hosting configuration, exactly like every other page. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=406.
-
-407. ai-home-button (served by the one AI folder) - the AI button on the Home Screen: the trigger that opens the AI hub, beside the three square tiles, and the same door the left sidebar entry uses. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=407.
-
-408. ai-sidebar (served by the one AI folder) - the sidebar entry: the AI area in the left sidebar menu, drawn from menu.js, filtered by the same grant rules as every other area and hideable by the administrator with the area minus. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=408.
-
-409. ai-queries (served by the one AI folder) - the read-only question engine: "How much cash did we make today?", "Check stock for sugar", "Show patient 4827ABCD status" - every question answered from live system data without modifying any record. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=409.
-
-410. ai-lab-radiology (served by the one AI folder) - laboratory and radiology through the AI: requests raised for a patient, queues read, results and imaging reports recorded - always through the laboratory and imaging workbenches' own processes. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=410.
-
-411. ai-batch-engine (served by the one AI folder) - the shared batch engine: the one extraction pass behind every multi-item confirmation - five sales from a receipt, ten stock items from a spreadsheet - all items shown in one summary before anything saves. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=411.
-
-412. ai-collections (served by the one AI folder) - the collection map: every Firestore collection the AI may write, module by module - Business, Stock, Health and the Medical Wing - the exact collections the manual forms write to and nothing else. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=412.
-
-413. ai-validation (served by the one AI folder) - the validation wall: every extracted field passes the same validation rules as the manual forms before the confirmation summary is even shown, so a confirmed action never fails on a rule the form would have caught. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=413.
-
-414. ai-audit (served by the one AI folder) - the audit trail: every AI-executed write carries the logged-in user's identity and timestamp, the same user audit trails the manual forms leave behind. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=414.
-
-415. ai-defaults (served by the one AI folder) - the defaults table: Cash when neither Credit nor Bank is mentioned, type IN at Unit SP when money comes in, type OUT at BP when money goes out, type NEUTRAL at BP with no flow method when no money moves - every documented default in one place. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=415.
-
-416. ai-session (served by the one AI folder) - the session: the working memory of the current conversation - the pending action, the attached files and the last status held while the AI works, cleared when the action completes, cancels or fails. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=416.
-
-417. ai-history (served by the one AI folder) - the history: past conversations and completed actions kept retrievable, so an earlier request can be read, confirmed again or undone by hand through its own page. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=417.
-
-418. ai-attachment-store (served by the one AI folder) - the attachment store: every uploaded image and document held for the AI to read, with no storage or size limit and no limit on how many times a user uploads. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=418.
-
-419. ai-cards (served by the one AI folder) - the card library: the structured confirmation cards, tool outputs and status responses the conversation screen renders, one card shape per kind of answer. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=419.
-
-420. ai-mappings (served by the one AI folder) - the example mappings: the reference table of how a request lands - text "nimeuza 500" to Business Add Transaction (Sales, IN, 500, Cash) and a PDF plus "Convert to Word" to the PDF to Word tool. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=420.
-
-421. ai-module-map (served by the one AI folder) - the module map: the modules the AI may reach and their hub pages - Business (2), Stock Management (396), Health (321), the Medical Wing (330, 340, 350, 360, 370) and Computer (62) - the routing table behind every confirmation summary. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=421.
-
-422. ai-status (served by the one AI folder) - the status model: Ready, Processing and Needs-confirmation - the three states shown on the AI screen that drive the input bar lock, the filled circle and the deactivated arrow everywhere. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=422.
-
-423. ai-help (served by the one AI folder) - the help card: what the AI can do, in examples - record a sale, convert a file, check a balance, admit a patient - so a new user knows where to start. Files: none of its own - served by the one AI folder public/ai (329.html, 329.css, 329.js), opened at /ai/329?m=423.
 
 THE FILES WITHOUT A PAGE NUMBER
 

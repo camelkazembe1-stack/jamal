@@ -120,8 +120,7 @@ function render() {
     const l = document.createElement("span");
     l.className = "tile-label"; l.textContent = k.label;
     a.appendChild(i); a.appendChild(l);
-    if (k.folder === "ai") { a.href = "/ai/329" + (k.n && k.n !== 329 ? "?m=" + k.n : ""); }
-    else a.href = gk.length ? "#/" + p.concat([k.folder]).join("/")
+    a.href = gk.length ? "#/" + p.concat([k.folder]).join("/")
                             : "/" + k.folder + "/" + k.n;
     grid.appendChild(a);
   }

@@ -242,7 +242,7 @@ break; }
    var p = PAGES[i];
    var cls = "lv" + (p.d || 0);
    if (p.folder === current) cls += " active";
-   var href = p.folder === "ai" ? "/ai/329" + (p.n && p.n !== 329 ? "?m=" + p.n : "") : "/" + p.folder + "/" + p.n;
+   var href = "/" + p.folder + "/" + p.n;
   var html = "<div class=\"node\" data-folder=\"" + p.folder + "\"><a href=\"" + href +
             "\" class=\"" + cls + "\"><span>" + p.icon + "</span>" +
 p.label + "</a>";
@@ -367,8 +367,8 @@ p.label + "</a>";
    "#jamali-google-logout{flex:50 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:12px 0;font-size:14px;font-weight:900;letter-spacing:.5px;cursor:pointer;color:#fff;background:#dc2626;box-shadow:0 8px 20px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
    "#jamali-google-logout:hover{background:#b91c1c}",
    "#jamali-google-logout:disabled{opacity:.6;cursor:default}",
-   "#jamali-side-gear,#jamali-side-ai{flex:25 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 0;font-size:17px;line-height:1;cursor:pointer;color:#cbd5e1;background:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}",
-   "#jamali-side-gear:hover,#jamali-side-ai:hover{background:#334155;color:#fff}",
+   "#jamali-side-gear{flex:25 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 0;font-size:17px;line-height:1;cursor:pointer;color:#cbd5e1;background:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}",
+   "#jamali-side-gear:hover{background:#334155;color:#fff}",
    "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
    "#jamali-toast.jamali-toast-on{opacity:1}",
    ".jamali-dash.jamali-plus{background:#f0fdf4;color:#166534;border-color:#86efac}",
@@ -415,7 +415,6 @@ p.label + "</a>";
     "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
     "<button type=\"button\" id=\"jamali-google-logout\" title=\"Total logout: ends the Google sign-in completely\">Logout</button>" +
     "<button type=\"button\" id=\"jamali-side-gear\" title=\"Settings\">&#9881;&#65039;</button>" +
-    "<button type=\"button\" id=\"jamali-side-ai\" title=\"AI\">&#129302;</button>" +
     "</div></div>";
 
  document.body.insertBefore(overlay, document.body.firstChild);
@@ -546,9 +545,6 @@ function () {
   }
   document.getElementById("jamali-side-gear").addEventListener("click", function () {
     jamaliSettingsOpen();
-  });
-  document.getElementById("jamali-side-ai").addEventListener("click", function () {
-    location.href = "/ai/329";
   });
 
   function ensureAdminBtn() {
