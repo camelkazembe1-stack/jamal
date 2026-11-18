@@ -1,4 +1,4 @@
-/* JAMALI AI - the Z.ai backup brain, served by the site itself.
+/* JAMALI AI - the Z.ai brain, the system's default, served by the site itself.
  *
  * The browser cannot call api.z.ai directly (that API sends no CORS
  * headers), so this same-origin edge function carries the call for it:

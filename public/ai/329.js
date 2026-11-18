@@ -12,13 +12,14 @@
  *     Yesterday / Earlier, with New chat and a delete button each),
  *     the streamed markdown answers with the blinking caret, the Stop
  *     button, and the pill composer with the up-arrow send;
- *   - the brains: OpenAI GPT by default - it runs behind the system's own
- *     server door (/api/ai), and its key ships hardcoded in api/ai.js on
- *     the site itself, so the AI answers the moment the page opens, with
- *     no setup at all, for every user, in every country, with nothing to
- *     set anywhere. Z.ai GLM rides as the free backup brain: its key ships in
- *     api/zai.js on the site itself and the page calls its own /api/zai,
- *     so nothing is asked of anyone. A Gemini key of one's own still works
+ *   - the brains: Z.ai GLM by default - the free brain built into the
+ *     system: its key ships in api/zai.js on the site itself and the page
+ *     calls its own /api/zai, so the AI answers the moment the page opens,
+ *     with no setup at all, for every user, in every country, with nothing
+ *     to set anywhere. OpenAI GPT rides as the backup brain: its key ships
+ *     hardcoded in api/ai.js behind the system's own server door (/api/ai),
+ *     and if OpenAI ever runs out of credits, the page switches itself to
+ *     Z.ai GLM and says so. A Gemini key of one's own still works
  *     too: Settings switches the brain, and the key stays on the device
  *     only (localStorage, the same JAMALI_AI_GEMINI store the previous
  *     version used, so an existing key keeps working with no re-setup);
@@ -174,11 +175,11 @@ function ensureDom(root) {
     '<div class="ai-modal" id="ai-modal">' +
       '<div class="ai-modal-card">' +
         '<h2>The AI brain</h2>' +
-        '<p class="ai-sub">This AI answers with <b>OpenAI GPT</b> - the brain is built in, so it answers the moment you ask, like ChatGPT. If OpenAI ever refuses, switch to <b>Z.ai GLM</b> - the free backup, also already set up. Or bring your own free Gemini key; the key stays on this device only.</p>' +
+        '<p class="ai-sub">This AI answers with <b>Z.ai GLM</b> - the free brain is built in, so it answers the moment you ask, like ChatGPT. If Z.ai ever refuses, switch to <b>OpenAI GPT</b> - the backup, also already set up. Or bring your own free Gemini key; the key stays on this device only.</p>' +
         '<label for="ai-provider">The brain</label>' +
         '<select id="ai-provider">' +
-          '<option value="openai">OpenAI GPT - already set up, works now</option>' +
-          '<option value="zai">Z.ai GLM - free backup brain, already set up</option>' +
+          '<option value="zai">Z.ai GLM - already set up, works now</option>' +
+          '<option value="openai">OpenAI GPT - backup brain, already set up</option>' +
           '<option value="gemini">Gemini - bring your own free key (aistudio.google.com)</option>' +
         '</select>' +
         '<div id="ai-openai-row">' +
@@ -207,7 +208,7 @@ function ensureDom(root) {
             '<option value="gemini-2.0-flash">gemini-2.0-flash</option>' +
           '</select>' +
         '</div>' +
-        '<div class="ai-modal-note">The OpenAI brain and the Z.ai backup are managed by the system owner - nothing to fill in. A Gemini key added here is kept on this device only (the browser\'s own storage) and is sent nowhere except Google\'s Gemini API; clear it any time with Remove.</div>' +
+        '<div class="ai-modal-note">The Z.ai brain and the OpenAI backup are managed by the system owner - nothing to fill in. A Gemini key added here is kept on this device only (the browser\'s own storage) and is sent nowhere except Google\'s Gemini API; clear it any time with Remove.</div>' +
         '<div class="ai-modal-actions">' +
           '<button type="button" class="ai-btn ghost" id="ai-gemini-remove">Remove Gemini key</button>' +
           '<button type="button" class="ai-btn" id="ai-gemini-save">Save</button>' +
@@ -304,26 +305,27 @@ function cardShell(kind, title, bodyHtml, extra) {
     '><div class="ai-card-title">' + esc(title) + "</div>" + bodyHtml + "</div>";
 }
 
-/* ---------- the brains: OpenAI built in, Gemini by key ---------- */
+/* ---------- the brains: Z.ai GLM built in, OpenAI backup, Gemini by key ---------- */
 
 const BRAIN_STORE = "JAMALI_AI_GEMINI"; /* the same store the previous version used - an existing key keeps working */
 
-/* the OpenAI brain behind the system's server door: this page posts to
- * /api/ai, same origin, and the door talks to api.openai.com with the key
- * shipped hardcoded in api/ai.js - nothing to configure anywhere. */
+/* the OpenAI backup brain behind the system's server door: this page posts
+ * to /api/ai, same origin, and the door talks to api.openai.com with the
+ * key shipped hardcoded in api/ai.js - nothing to configure anywhere. */
 const OPENAI_DEFAULT_MODEL = "gpt-4o-mini";
 
-/* the built-in Z.ai backup brain: its key ships in api/zai.js on the site
- * itself and the page calls its own /api/zai - same origin, so the browser
- * needs no key at all and Z.ai's missing CORS headers never matter. The
- * call is the same OpenAI-shaped stream; glm-4.5-flash is the free model. */
+/* the built-in Z.ai brain, the system's default: its key ships in
+ * api/zai.js on the site itself and the page calls its own /api/zai - same
+ * origin, so the browser needs no key at all and Z.ai's missing CORS
+ * headers never matter. The call is the same OpenAI-shaped stream;
+ * glm-4.5-flash is the free model. */
 const ZAI_DEFAULT_MODEL = "glm-4.5-flash";
 
 /* the one brain config: the provider plus each brain's own settings. The
  * old store shape ({ key, model }) is migrated on read, so a Gemini key
  * saved before keeps working - it just stops being the default brain. */
 function brainCfg() {
-  const c = { provider: "openai", openaiModel: OPENAI_DEFAULT_MODEL,
+  const c = { provider: "zai", openaiModel: OPENAI_DEFAULT_MODEL,
     zaiModel: ZAI_DEFAULT_MODEL, geminiKey: "", geminiModel: "gemini-2.5-flash" };
   try {
     const raw = JSON.parse(localStorage.getItem(BRAIN_STORE) || "null");
@@ -430,8 +432,19 @@ async function openaiChat(messages, onDelta, signal) {
   }
   if (!res.ok || !res.body) {
     let msg = "HTTP " + res.status;
-    try { const j = await res.json(); if (j && j.error && j.error.message) msg = j.error.message; }
+    let quotaDead = false;
+    try {
+      const j = await res.json();
+      if (j && j.error && j.error.message) msg = j.error.message;
+      if (j && j.error && (j.error.code === "insufficient_quota" || j.error.type === "insufficient_quota" ||
+          String(j.error.message || "").indexOf("no credits remaining") !== -1)) quotaDead = true;
+    }
     catch (e) { if (res.status === 404) msg = "The AI brain door (/api/ai) is not live yet - let the Vercel build finish, then press Retry."; }
+    if (quotaDead) {
+      const err = new Error("OpenAI has no credits left on its key - " + msg);
+      err.quotaDead = true;
+      throw err;
+    }
     throw new Error(msg);
   }
   const reader = res.body.getReader();
@@ -582,7 +595,15 @@ async function brainStreamReply(text) {
       if (!partial) wrap.remove();
       else answerEl.innerHTML = mdToHtml(partial) + '<p class="ai-dim">Stopped - this much of the answer stands.</p>';
     } else {
-      failed = e;
+      if (e && e.quotaDead && provider === "openai") {
+        const c = brainCfg(); c.provider = "zai"; brainSaveCfg(c);
+        wrap.remove();
+        pushHtml(cardShell("status", "The brain moved to Z.ai GLM",
+          "<p>OpenAI has no credits left on its key, so the brain switched itself to <b>Z.ai GLM</b> - the free brain, already set up - and answers from now on.</p>" +
+          "<p><button type=\"button\" class=\"ai-btn\" data-retry=\"1\">Ask again</button></p>", ""));
+      } else {
+        failed = e;
+      }
     }
   }
   S.streaming = false; S.streamCtl = null;
@@ -795,7 +816,7 @@ function wireSettings() {
     if (provider === "gemini" && !key) {
       pushHtml(cardShell("status", "One step to start",
         "<p>Gemini is chosen but the key box is empty. Paste a free key from <b>aistudio.google.com</b> " +
-        "- or switch the brain back to <b>OpenAI GPT</b>, which answers with no setup.</p>", ' data-noretry="1"'));
+        "- or switch the brain back to <b>Z.ai GLM</b>, which answers with no setup.</p>", ' data-noretry="1"'));
       openSettings();
     } else {
       pushHtml(cardShell("answer", "The brain is set",
@@ -882,7 +903,7 @@ async function onSend() {
     pushHtml(cardShell("status", "One step to start",
       "<p>The brain is set to <b>Gemini</b> but no key is saved yet. Paste a free key " +
       "(from <b>aistudio.google.com</b>) in <b>Settings</b> - it stays on this device only - " +
-      "or switch back to <b>OpenAI GPT</b>, which answers with no setup.</p>", ' data-noretry="1"'));
+      "or switch back to <b>Z.ai GLM</b>, which answers with no setup.</p>", ' data-noretry="1"'));
     openSettings();
     S.els.input.value = text; /* the question stays, ready to send */
     autogrow(); updateSend();
