@@ -577,7 +577,8 @@ const TRANSACTIONS = {
     { name: "Licence",           icon: "\u{1F4DC}" },
     { name: "Delivery",          icon: "\u{1F6F5}" },
     { name: "Printing",          icon: "\u{1F5A8}\u{FE0F}" },
-    { name: "Bank Charges",      icon: "\u{1F3E7}" }
+    { name: "Bank Charges",      icon: "\u{1F3E7}" },
+    { name: "Drawings",          icon: "\u{1F4B8}" }
   ],
   NEUTRAL: [
     { name: "Loan",  icon: "\u{1F91D}" },
