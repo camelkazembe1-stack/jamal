@@ -1038,3 +1038,4 @@ function updatePreview() {
   state.owed = 0;
   showStep(1);
 });
+
