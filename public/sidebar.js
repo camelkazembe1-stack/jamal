@@ -114,6 +114,54 @@ res(u); });
  var DASHES = {}; 
  var VIS_CHANGE = null;
 
+  // The quiet net for a patchy connection. A one-shot read whose client
+  // is offline, or a watch that cannot reach the server yet, ends as an
+  // unhandled FirebaseError in the console. The offline class is not a
+  // defect - JAMALI keeps the page working from what it already has and
+  // reads resume when the network returns - so this net reports it once,
+  // in one calm line, with the same code. Every other rejection still
+  // reports exactly as before; nothing is hidden.
+  function jamaliOffline(err) {
+    var code = err && err.code ? String(err.code) : "";
+    var msg = err && err.message ? String(err.message) : "";
+    return code === "unavailable" ||
+      msg.indexOf("client is offline") !== -1 ||
+      msg.indexOf("network error") !== -1;
+  }
+  window.addEventListener("unhandledrejection", function (ev) {
+    var r = ev && ev.reason;
+    if (!jamaliOffline(r)) return;
+    ev.preventDefault();
+    if (!window.__jamaliOfflineLineShown) {
+      window.__jamaliOfflineLineShown = true;
+      console.warn("The device is offline (" +
+        String((r && (r.code || r.message)) || "unavailable") +
+        ") - JAMALI keeps working from what it has and resumes when the network returns.");
+    }
+  });
+  window.addEventListener("online", function () {
+    window.__jamaliOfflineLineShown = false;
+  });
+
+  // Firefox warns that layout was forced before the page was fully
+  // loaded when a script reads element sizes while the stylesheets are
+  // still downloading, and unstyled content can flash. Anything that
+  // measures the page goes through this gate: the work runs the moment
+  // the page is styled (right away when it already is), with a short
+  // fallback so a stuck download can never hold the page hostage.
+  function whenStylesReady(fn) {
+    var done = false;
+    var go = function () {
+      if (done) return;
+      done = true;
+      if (window.requestAnimationFrame) window.requestAnimationFrame(fn);
+      else fn();
+    };
+    if (document.readyState === "complete") { go(); return; }
+    window.addEventListener("load", go, { once: true });
+    setTimeout(go, 3000);
+  }
+
     function isAdmin() {
       // Personal use with no account runs the full admin tooling too:
       // the sidebar minus buttons, the Hidden panel and the plus/minus
@@ -133,22 +181,49 @@ res(u); });
     function bootVisibility() {
       return import("/502.js").then(function (fb) {
         var ref = fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]);
-        var first = fb.getDoc(ref).then(function (snap) {
-          if (snap && snap.exists()) applyVisData(snap.data());
-        });
-        // Live channel: as soon as the administrator hides or restores a
-        // control, every open page of every user updates without a reload.
-        if (fb.onSnapshot) {
-          first.then(function () {
-            fb.onSnapshot(ref, function (snap) {
-              applyVisData(snap && snap.exists() ? snap.data() : null);
-              if (VIS_CHANGE) { try { VIS_CHANGE(); } catch (e) {} }
-            }, function (e) {
-              console.warn("visibility watch skipped:", e);
-            });
+        // The first read is patient with a patchy connection: an offline
+        // failure is retried a few times with a growing pause and once
+        // more the moment the device comes back online, and only a real
+        // refusal is reported. Until the configuration arrives the page
+        // simply keeps the default full view - nothing waits on the
+        // network, and the live channel starts as soon as the first read
+        // succeeds.
+        var live = false, timer = null;
+        function listenLive() {
+          if (live || !fb.onSnapshot) return;
+          live = true;
+          fb.onSnapshot(ref, function (snap) {
+            applyVisData(snap && snap.exists() ? snap.data() : null);
+            if (VIS_CHANGE) { try { VIS_CHANGE(); } catch (e) {} }
+          }, function (e) {
+            console.warn("visibility watch skipped:", e);
           });
         }
-        return first;
+        function attempt(tries) {
+          if (live) return;
+          return fb.getDoc(ref).then(function (snap) {
+            if (snap && snap.exists()) applyVisData(snap.data());
+            listenLive();
+          }).catch(function (e) {
+            if (live) return;
+            if (!jamaliOffline(e) || tries >= 5) {
+              console.warn("visibility load skipped:", e);
+              return;
+            }
+            timer = setTimeout(function () { attempt(tries + 1); },
+              Math.min(15000, 1500 * tries));
+          });
+        }
+        if (window.addEventListener) {
+          window.addEventListener("online", function () {
+            if (timer) { clearTimeout(timer); timer = null; }
+            attempt(1);
+          });
+          window.addEventListener("offline", function () {
+            if (timer) { clearTimeout(timer); timer = null; }
+          });
+        }
+        return attempt(1);
       }).catch(function (e) {
         console.warn("visibility load skipped:", e);
       });
@@ -902,21 +977,27 @@ nx.style.display = "none";
       return;
     }
     var tgl = document.querySelectorAll("#jamali-sidebar .tg");
-    for (var j = 0; j < tgl.length; j++) {
-      var box = tgl[j].parentNode.nextElementSibling;
-      if (!box || !box.classList || !box.classList.contains("kids")) continue;
-      var rows = box.querySelectorAll(".node");
-      var alive = 0;
-      for (var r = 0; r < rows.length; r++) { if (isVisibleEl(rows[r])) alive++;
-}
-      if (!alive) {
-        tgl[j].style.display = "none";
-        box.style.display = "none";
-      } else {
-        tgl[j].style.display = "";
-        box.style.display = "";
+    // Folding an empty area reads element sizes, so it waits for a
+    // styled page - measuring while the stylesheets are still
+    // downloading forces a layout on unstyled content.
+    whenStylesReady(function () {
+      for (var j = 0; j < tgl.length; j++) {
+        var box = tgl[j].parentNode.nextElementSibling;
+        if (!box || !box.classList || !box.classList.contains("kids")) continue;
+        var rows = box.querySelectorAll(".node");
+        var alive = 0;
+        for (var r = 0; r < rows.length; r++) {
+          if (isVisibleEl(rows[r])) alive++;
+        }
+        if (!alive) {
+          tgl[j].style.display = "none";
+          box.style.display = "none";
+        } else {
+          tgl[j].style.display = "";
+          box.style.display = "";
+        }
       }
-    }
+    });
   }
 
  function setDashState(b, off, what) {
@@ -960,8 +1041,12 @@ document.querySelector("main") || document.body;
     var run = function () {
       VIS_CHANGE = liveVisChange;
       if (isAdmin()) {
-        scanAdminPage(main);
-        watchPage(main, function () { scanAdminPage(main); });
+        // The administrator's page scan reads element sizes too - it
+        // waits for a styled page the same way the sidebar folding does.
+        whenStylesReady(function () {
+          scanAdminPage(main);
+          watchPage(main, function () { scanAdminPage(main); });
+        });
       } else {
         guardUserPage(main);
       }
