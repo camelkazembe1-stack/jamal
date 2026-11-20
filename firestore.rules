@@ -14,83 +14,84 @@ service cloud.firestore {
 
 
     match /transactions/{docId} {
-      // RESERVE (login removed): anonymous access so the books keep
-      // working without an account. The old signed-in-only rule lives in
-      // public/RESERVE/firestore.rules-with-auth.txt.
-      allow read, create, update, delete: if true;
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser - the old shared rows stay archived in the project
     }
 
     match /healthRegistrations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthTriage/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthNurseConsultations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthDoctorConsultations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthPrescriptions/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthTreatmentOrders/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthDestinations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthWards/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBeds/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBedAssignments/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBedTransfers/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBedMaintenance/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthAdmissions/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthDischarges/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthLabRequests/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthImagingRequests/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthQueueConfig/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
+    match /stockItems/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
 
-
-
+    match /stockChanges/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
 
     match /systemAccounts/{docId} {
       allow read: if isSignedIn();
@@ -235,13 +236,6 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn();
     }
 
-    match /stockItems/{docId} {
-      allow read, create, update, delete: if true;  // RESERVE (login removed): anonymous access
-    }
-
-    match /stockChanges/{docId} {
-      allow read, create, update, delete: if true;  // RESERVE (login removed): anonymous access
-    }
     match /systemPageConfig/{docId} {
       allow read: if isSignedIn();
       allow create, update, delete: if isSystemAdmin();

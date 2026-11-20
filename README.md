@@ -7,9 +7,9 @@ JAMALI
 > straight to the home page: index.html IS the home page, every page and every
 > menu item is open for every visitor, and no sign-in of any kind is asked.
 > The complete deactivated code is kept in `public/RESERVE/` - its README.txt
-> explains exactly how to bring every piece back later. The business-data
-> Firestore rules were opened for anonymous use so saving and loading keep
-> working without an account; the system* collections stay locked as before.
+> explains exactly how to bring every piece back later. All business data is
+> saved in the Local Storage of the browser that creates it - Google login stays
+> optional and the shared anonymous Firestore collections are closed so data can never mix between users; the system* collections stay locked as before.
 
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app

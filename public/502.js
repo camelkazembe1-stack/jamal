@@ -1,47 +1,35 @@
-// JAMALI - SERVER/server.js, the configuration source.
-// One file holds the Firebase project selection, the Authentication and
-// Firestore wiring and the whole content of every settings file the deploys
-// need, so pages never carry keys or connection setups of their own.
-// Self-contained: everything comes from the Google CDN, so this file needs
-// no other repository file to work. Running
+// JAMALI - SERVER/server.js, the configuration source and the runtime module.
+// One file holds the Firebase project selection, the optional Google identity
+// wiring and the whole content of every settings file the deploys need, so
+// pages never carry keys or connection setups of their own. Self-contained:
+// the Google identity SDK comes from the Google CDN, so this file needs no
+// other repository file to work. Running
 //     node SERVER/sync.js
 // reads the marked settings block below and writes vercel.json, firebase.json,
 // .firebaserc, firestore.rules, apply-rules.sh and public/502.js - this file
 // verbatim, the one module every page imports - and SERVER/linker.js is the
 // connection point the modules talk through.
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  getDocs,
-  getDoc,
-  setDoc,
-  writeBatch,
-  query,
-  where,
-  orderBy,
-  limit,
-  onSnapshot,
-  serverTimestamp,
-  Timestamp,
-  arrayUnion,
-  arrayRemove,
-  increment,
-  deleteField,
-  runTransaction
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+//
+// LOCAL DATA ENGINE (20 Nov 2026) - the data layer of the whole system:
+// Google sign-in is OPTIONAL. Every visitor uses every page without an
+// account, and all business data - the books, the registers, the reports,
+// stock and health records - is saved automatically in the visitor's own
+// browser Local Storage:
+//   - it survives refreshing, closing and reopening the browser;
+//   - an anonymous visitor's data lives under the "anon" zone;
+//   - a visitor who signs in with Google gets their own zone keyed by their
+//     email, so two different identities on one browser never see or mix
+//     each other's data (and different browsers are separate by nature);
+//   - nothing is written to the cloud database any more - the shared
+//     anonymous Firestore collections are closed in the rules, so no user
+//     can ever read or write another user's data. The old cloud rows stay
+//     archived in the Firebase project, reachable from the console only.
+// The whole engine sits in the LOCAL DATA ENGINE section below; every
+// Firestore-style call the pages make (collection, doc, addDoc, setDoc,
+// updateDoc, deleteDoc, getDocs, getDoc, writeBatch, query, orderBy, where,
+// limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, increment,
+// deleteField, runTransaction) is a thin local implementation with the same
+// signature and the same snapshot shapes, so no page needed any change.
 
 // ==== JAMALI SETTINGS SOURCE - the single source of truth for every settings file ====
 // Everything the deploys need is declared between this line and the END
@@ -57,6 +45,8 @@ import {
 const DATABASE_PROJECT = "jamal-542b5";
 
 // The web keys of that project - Firebase web keys are public by design.
+// Only the Google identity (sign-in) still uses them; the data layer is
+// fully local to each browser.
 const firebaseConfig = {
   apiKey: "AIzaSyCtE7p5LM8L2yaJB0JJCyyTz763CBQhKGE",
   authDomain: "jamal-542b5.firebaseapp.com",
@@ -123,6 +113,12 @@ const VERCEL_SPEC = {
 const FIREBASE_JSON_SPEC = { firestore: { rules: "firestore.rules" } };
 
 // firestore.rules - the guard dog, written out verbatim by the sync.
+// LOCAL STORAGE MOVE (20 Nov 2026): every browser keeps its own books,
+// stock and health data in Local Storage now, so the shared anonymous
+// collections are CLOSED - data can never mix between users, and no
+// visitor can dump junk into the project any more. The old cloud rows
+// stay archived in the project, readable from the Firebase console.
+// The system* matches keep their signed-in-only authority untouched.
 const FIRESTORE_RULES = String.raw`rules_version = '2';
 
 service cloud.firestore {
@@ -139,83 +135,84 @@ service cloud.firestore {
 
 
     match /transactions/{docId} {
-      // RESERVE (login removed): anonymous access so the books keep
-      // working without an account. The old signed-in-only rule lives in
-      // public/RESERVE/firestore.rules-with-auth.txt.
-      allow read, create, update, delete: if true;
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser - the old shared rows stay archived in the project
     }
 
     match /healthRegistrations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthTriage/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthNurseConsultations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthDoctorConsultations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthPrescriptions/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthTreatmentOrders/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthDestinations/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthWards/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBeds/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBedAssignments/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBedTransfers/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthBedMaintenance/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthAdmissions/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthDischarges/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthLabRequests/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthImagingRequests/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
     match /healthQueueConfig/{docId} {
-      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
+    match /stockItems/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
 
-
-
+    match /stockChanges/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
 
     match /systemAccounts/{docId} {
       allow read: if isSignedIn();
@@ -360,13 +357,6 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn();
     }
 
-    match /stockItems/{docId} {
-      allow read, create, update, delete: if true;  // RESERVE (login removed): anonymous access
-    }
-
-    match /stockChanges/{docId} {
-      allow read, create, update, delete: if true;  // RESERVE (login removed): anonymous access
-    }
     match /systemPageConfig/{docId} {
       allow read: if isSignedIn();
       allow create, update, delete: if isSystemAdmin();
@@ -413,37 +403,682 @@ rm -f "$0"
 say "done: firestore.rules published to $PROJECT - apply-rules.sh removed itself."`;
 // ==== END JAMALI SETTINGS SOURCE ====
 
-const app = initializeApp(firebaseConfig);
+// ======================================================================
+// OPTIONAL GOOGLE IDENTITY - loaded dynamically, with graceful fallback.
+// Signing in is never required: it only names the Local Storage zone the
+// visitor's data lives in (and paints the sidebar Login/Logout button).
+// If the Google CDN is unreachable - offline, blocked, slow - the whole
+// system still runs, anonymously, purely from Local Storage.
+// ======================================================================
+export let auth = null;       // the Firebase auth handle, or null when unavailable
+export let provider = null;   // the Google provider, or null when unavailable
 
-export const auth = getAuth(app);
-export const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: "select_account" });
+var activeUser = null;        // the signed-in Google user, or null (anonymous)
+var authFirstSeen = false;
+var authCallbacks = [];
+var authReadyResolve = null;
+var authReady = new Promise(function (resolve) { authReadyResolve = resolve; });
 
-export const db = getFirestore(app);
-
-export { onAuthStateChanged, signInWithPopup, signOut };
-export {
-  getFirestore, collection, doc, addDoc, writeBatch,
-  query, where, orderBy, onSnapshot,
-  serverTimestamp, Timestamp, updateDoc, deleteDoc, getDocs, setDoc
-};
-export {
-  getDoc, limit, arrayUnion, arrayRemove, increment, deleteField, runTransaction
-};
-
-// RESERVE (login removed): the sign-in guard for inner pages was
-// deactivated with the login system - it used to wait for a Google
-// sign-in and bounce every visitor without an account back to the front
-// page, so ninety-five data pages could never open. It now resolves at
-// once and every page opens for every visitor. The original guard is
-// kept in public/RESERVE/requireAuth-guard.txt.
-export function requireAuth() {
-  return Promise.resolve(null);
+function fireAuthCallbacks(user) {
+  activeUser = user || null;
+  for (var i = 0; i < authCallbacks.length; i++) {
+    try { authCallbacks[i](activeUser); } catch (e) {}
+  }
+  localZoneChanged();
 }
 
-// ---- project selection and hosting settings: the single source of truth ----
-// The marked settings block above is the input; the files it names are its
-// outputs, rewritten by node SERVER/sync.js on every change.
+function authFirstDone(user) {
+  if (authFirstSeen) return;
+  authFirstSeen = true;
+  authReadyResolve(user || null);
+  fireAuthCallbacks(user);
+}
+
+var authModRef = null; // the loaded firebase-auth module, or null
+(async function bootGoogleIdentity() {
+  try {
+    var appMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    var authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+    authModRef = authMod;
+    var app = appMod.initializeApp(firebaseConfig);
+    auth = authMod.getAuth(app);
+    provider = new authMod.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    authMod.onAuthStateChanged(auth, function (user) {
+      authFirstDone(user);
+      fireAuthCallbacks(user);
+    });
+    // If the identity never reports in (hung network), go on anonymously.
+    setTimeout(function () { authFirstDone(null); }, 4000);
+  } catch (e) {
+    // Offline or the CDN is blocked: run without a Google identity.
+    auth = null;
+    provider = null;
+    authFirstDone(null);
+  }
+})();
+
+// Wrapped auth API - the same signatures the Firebase SDK uses, so the
+// sidebar button and every RESERVE module keep working unchanged.
+export function onAuthStateChanged(authArg, callback) {
+  authCallbacks.push(callback);
+  if (authFirstSeen) { try { callback(activeUser); } catch (e) {} }
+  return function () {
+    var i = authCallbacks.indexOf(callback);
+    if (i >= 0) authCallbacks.splice(i, 1);
+  };
+}
+
+export function signInWithPopup(authArg, providerArg) {
+  if (!auth || !authModRef) {
+    return Promise.reject(new Error(
+      "Google sign-in is not available right now (no connection to Google). The system keeps working without an account - your data is saved in this browser."));
+  }
+  return authModRef.signInWithPopup(auth, providerArg || provider);
+}
+
+export function signOut(authArg) {
+  if (!auth || !authModRef) return Promise.resolve();
+  return authModRef.signOut(auth);
+}
+
+// requireAuth - every page awaits this before it touches data. It now
+// resolves as soon as the identity (and with it the data zone) is known,
+// so the first read always happens in the right zone.
+export function requireAuth() {
+  return authReady.then(function () { return null; });
+}
+
+// ======================================================================
+// LOCAL DATA ENGINE - the whole data layer, per browser.
+// ======================================================================
+
+// The storage handle: real Local Storage when available, a memory map
+// otherwise (private windows that block storage still work; data then
+// lasts for the page session only).
+var LS = null;
+try {
+  LS = window.localStorage;
+  LS.setItem("__jamali_probe", "1");
+  LS.removeItem("__jamali_probe");
+} catch (e) { LS = null; }
+var MEMORY_STORE = {};
+function lsGet(key) {
+  if (LS) { try { return LS.getItem(key); } catch (e) { return MEMORY_STORE[key] || null; } }
+  return MEMORY_STORE[key] || null;
+}
+function lsSet(key, value) {
+  if (LS) { LS.setItem(key, value); return; }
+  MEMORY_STORE[key] = value;
+}
+function lsDel(key) {
+  if (LS) { try { LS.removeItem(key); } catch (e) {} }
+  delete MEMORY_STORE[key];
+}
+
+var ZONE_PREFIX = "jamaliLocal::";
+
+function currentNamespace() {
+  var mail = activeUser && activeUser.email ? String(activeUser.email).toLowerCase() : "";
+  return mail ? "u::" + mail : "anon";
+}
+function localKey(ns, collectionName) {
+  return ZONE_PREFIX + ns + "::" + collectionName;
+}
+function zoneLabel() {
+  var ns = currentNamespace();
+  if (ns === "anon") return "this browser - anonymous (no account)";
+  return "this browser - " + ns.slice(3);
+}
+export function localZone() {
+  return {
+    namespace: currentNamespace(),
+    label: zoneLabel(),
+    signedIn: !!(activeUser && activeUser.email),
+    persistent: !!LS
+  };
+}
+
+// ---- in-memory collection cache, write-through to storage ----
+var collCache = Object.create(null);
+function loadColl(ns, name) {
+  var key = localKey(ns, name);
+  if (collCache[key]) return collCache[key];
+  var map = {};
+  var raw = lsGet(key);
+  if (raw) {
+    try { map = JSON.parse(raw) || {}; } catch (e) { map = {}; }
+  }
+  collCache[key] = map;
+  return map;
+}
+function saveColl(ns, name) {
+  var key = localKey(ns, name);
+  var text = "";
+  try { text = JSON.stringify(collCache[key] || {}); } catch (e) { text = "{}"; }
+  try {
+    lsSet(key, text);
+  } catch (e) {
+    throw localError("resource-exhausted",
+      "This browser's Local Storage is full - the record was NOT saved. Free some space (or remove old records via Settings > Show Delete Data) and try again.");
+  }
+}
+function dropCollCache(key) { delete collCache[key]; }
+
+function localError(code, message) {
+  var e = new Error(message);
+  e.code = code;
+  return e;
+}
+
+function newLocalId() {
+  return "L" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+
+// ---- timestamps: stored as {__jts: millis}, revived as Timestamp-like ----
+function makeTs(millis) {
+  return {
+    seconds: Math.floor(millis / 1000),
+    nanoseconds: (millis % 1000) * 1000000,
+    toDate: function () { return new Date(millis); },
+    toMillis: function () { return millis; },
+    isEqual: function (o) { return !!(o && typeof o.toMillis === "function" && o.toMillis() === millis); },
+    __jamaliTs: true
+  };
+}
+export function serverTimestamp() {
+  return { __jamaliSentinel: "serverTS" };
+}
+
+// ---- the other write sentinels, same shapes as the Firestore SDK ----
+export function arrayUnion() {
+  return { __jamaliSentinel: "arrayUnion", values: Array.prototype.slice.call(arguments) };
+}
+export function arrayRemove() {
+  return { __jamaliSentinel: "arrayRemove", values: Array.prototype.slice.call(arguments) };
+}
+export function increment(n) {
+  return { __jamaliSentinel: "increment", by: Number(n) || 0 };
+}
+export function deleteField() {
+  return { __jamaliSentinel: "deleteField" };
+}
+
+function jsonKey(v) { try { return JSON.stringify(v); } catch (e) { return String(v); } }
+
+// Pack a value for storage: Dates and Timestamp-likes become __jts markers,
+// everything JSON-unfriendly is dropped, plain data passes through.
+function packValue(v) {
+  if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+  if (v instanceof Date) return { __jts: v.getTime() };
+  if (typeof v === "object") {
+    if (typeof v.toMillis === "function") return { __jts: v.toMillis() };
+    if (v.__jts !== undefined) return { __jts: v.__jts };
+    if (Array.isArray(v)) {
+      var out = [];
+      for (var i = 0; i < v.length; i++) out.push(packValue(v[i]));
+      return out;
+    }
+    var o = {};
+    for (var k in v) {
+      if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+      if (typeof v[k] === "function") continue;
+      o[k] = packValue(v[k]);
+    }
+    return o;
+  }
+  return null; // functions, symbols, undefined - not storable
+}
+
+// Revive stored values: __jts markers become Timestamp-like objects with
+// .toDate() / .toMillis(), exactly what the page engines expect.
+function unpackValue(v) {
+  if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+  if (Array.isArray(v)) {
+    var out = [];
+    for (var i = 0; i < v.length; i++) out.push(unpackValue(v[i]));
+    return out;
+  }
+  if (typeof v === "object") {
+    if (v.__jts !== undefined && typeof v.__jts === "number") return makeTs(v.__jts);
+    var o = {};
+    for (var k in v) {
+      if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+      o[k] = unpackValue(v[k]);
+    }
+    return o;
+  }
+  return v;
+}
+
+// Apply a write payload (with its sentinels) onto a stored document.
+function applyData(stored, patch) {
+  if (!patch || typeof patch !== "object") return stored;
+  for (var k in patch) {
+    if (!Object.prototype.hasOwnProperty.call(patch, k)) continue;
+    var v = patch[k];
+    if (v && typeof v === "object" && v.__jamaliSentinel) {
+      switch (v.__jamaliSentinel) {
+        case "serverTS":
+          stored[k] = { __jts: Date.now() };
+          break;
+        case "arrayUnion": {
+          var arr = Array.isArray(stored[k]) ? stored[k] : [];
+          arr = arr.slice();
+          var seen = {};
+          for (var i = 0; i < arr.length; i++) seen[jsonKey(arr[i])] = true;
+          for (var j = 0; j < v.values.length; j++) {
+            var packed = packValue(v.values[j]);
+            var key2 = jsonKey(packed);
+            if (!seen[key2]) { arr.push(packed); seen[key2] = true; }
+          }
+          stored[k] = arr;
+          break;
+        }
+        case "arrayRemove": {
+          var cur = Array.isArray(stored[k]) ? stored[k] : [];
+          var remove = {};
+          for (var m = 0; m < v.values.length; m++) remove[jsonKey(packValue(v.values[m]))] = true;
+          var kept = [];
+          for (var n2 = 0; n2 < cur.length; n2++) {
+            if (!remove[jsonKey(cur[n2])]) kept.push(cur[n2]);
+          }
+          stored[k] = kept;
+          break;
+        }
+        case "increment":
+          stored[k] = (typeof stored[k] === "number" ? stored[k] : 0) + v.by;
+          break;
+        case "deleteField":
+          delete stored[k];
+          break;
+        default:
+          break;
+      }
+    } else {
+      stored[k] = packValue(v);
+    }
+  }
+  return stored;
+}
+
+// ---- refs, queries, snapshots - same shapes as the Firestore SDK ----
+export function collection(dbArg, name) {
+  return { __jamaliRef: "collection", name: String(name) };
+}
+export function getFirestore() {
+  return { __jamaliLocalDb: true };
+}
+export const db = { __jamaliLocalDb: true };
+
+export function doc(dbOrColl, a, b) {
+  // doc(collectionRef) - a brand-new auto id (batch.set pattern);
+  // doc(db, "name", "id") - a named document.
+  if (a === undefined) {
+    var name0 = dbOrColl && dbOrColl.__jamaliRef === "collection" ? dbOrColl.name : "";
+    return { __jamaliRef: "doc", name: name0, id: newLocalId() };
+  }
+  return { __jamaliRef: "doc", name: String(a), id: String(b) };
+}
+
+export function query(collRef) {
+  var name = collRef && collRef.name ? collRef.name :
+    (collRef && collRef.__jamaliRef === "query" ? collRef.name : "");
+  var cons = collRef && collRef.constraints ? collRef.constraints.slice() : [];
+  for (var i = 1; i < arguments.length; i++) {
+    if (arguments[i] && arguments[i].__jamaliConstraint) cons.push(arguments[i]);
+  }
+  return { __jamaliRef: "query", name: name, constraints: cons };
+}
+export function orderBy(field, dir) {
+  return { __jamaliConstraint: "orderBy", field: String(field), dir: dir === "desc" ? "desc" : "asc" };
+}
+export function where(field, op, value) {
+  return { __jamaliConstraint: "where", field: String(field), op: String(op || "=="), value: value };
+}
+export function limit(n) {
+  return { __jamaliConstraint: "limit", n: Number(n) || 0 };
+}
+
+function docSnap(id, packed, exists) {
+  return {
+    id: id,
+    exists: function () { return !!exists; },
+    data: function (opts) { return exists ? unpackValue(packed) : undefined; }
+  };
+}
+function querySnap(docs) {
+  var snap = {
+    docs: docs,
+    size: docs.length,
+    empty: docs.length === 0,
+    forEach: function (fn, thisArg) {
+      for (var i = 0; i < docs.length; i++) fn.call(thisArg || null, docs[i], i, snap);
+    },
+    docChanges: function () { return []; }
+  };
+  return snap;
+}
+
+function cmpValues(a, b) {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  var sa = String(a), sb = String(b);
+  if (sa < sb) return -1;
+  if (sa > sb) return 1;
+  return 0;
+}
+function sortDocs(docs, constraints) {
+  var order = null;
+  var lim = 0;
+  for (var i = 0; i < constraints.length; i++) {
+    var c = constraints[i];
+    if (c.__jamaliConstraint === "orderBy") order = c;
+    if (c.__jamaliConstraint === "limit") lim = c.n;
+  }
+  if (order) {
+    var dir = order.dir === "desc" ? -1 : 1;
+    docs = docs.slice().sort(function (d1, d2) {
+      var v1 = d1._unpacked[order.field];
+      var v2 = d2._unpacked[order.field];
+      if (v1 === undefined && v2 === undefined) return 0;
+      if (v1 === undefined) return 1;              // missing field sorts last
+      if (v2 === undefined) return -1;
+      if (v1 && typeof v1.toMillis === "function") v1 = v1.toMillis();
+      if (v2 && typeof v2.toMillis === "function") v2 = v2.toMillis();
+      return cmpValues(v1, v2) * dir;
+    });
+  }
+  if (lim > 0 && docs.length > lim) docs = docs.slice(0, lim);
+  return docs;
+}
+function readQuery(ns, name, constraints) {
+  var map = loadColl(ns, name);
+  var ids = Object.keys(map);
+  var docs = [];
+  var wheres = [];
+  var lim = 0;
+  for (var i = 0; i < constraints.length; i++) {
+    var c = constraints[i];
+    if (c.__jamaliConstraint === "where") wheres.push(c);
+    if (c.__jamaliConstraint === "limit") lim = c.n;
+  }
+  for (var j = 0; j < ids.length; j++) {
+    var id = ids[j];
+    var unpacked = unpackValue(map[id]);
+    var ok = true;
+    for (var w = 0; w < wheres.length; w++) {
+      var have = unpacked[wheres[w].field];
+      var want = wheres[w].value;
+      if (wheres[w].op === "==") {
+        if (have && typeof have.toMillis === "function" && want && typeof want.toMillis === "function") {
+          ok = have.toMillis() === want.toMillis();
+        } else if (want && typeof want.toMillis === "function") {
+          ok = false;
+        } else {
+          ok = jsonKey(have) === jsonKey(want);
+        }
+      } else {
+        ok = false; // only equality is supported locally - nothing uses more
+      }
+      if (!ok) break;
+    }
+    if (ok) docs.push({ id: id, _unpacked: unpacked, exists: true });
+  }
+  docs = sortDocs(docs, constraints);
+  var snaps = docs.map(function (d) { return docSnap(d.id, map[d.id], true); });
+  if (lim > 0 && snaps.length > lim) snaps = snaps.slice(0, lim);
+  return querySnap(snaps);
+}
+
+// ---- the live listener registry: repaints pages on every change ----
+var listeners = [];
+function emitEntry(entry) {
+  var ns = currentNamespace();
+  var snap = readQuery(ns, entry.name, entry.constraints || []);
+  try { entry.cb(snap); } catch (e) {}
+}
+function notifyCollection(name) {
+  for (var i = 0; i < listeners.length; i++) {
+    if (listeners[i].name === name) emitEntry(listeners[i]);
+  }
+}
+function localZoneChanged() {
+  // The identity changed (sign-in, sign-out, boot): every live listener
+  // re-reads under the new zone, so pages repaint instantly.
+  for (var i = 0; i < listeners.length; i++) emitEntry(listeners[i]);
+  if (typeof window !== "undefined") {
+    try { window.JAMALI_LOCAL_ZONE = localZone(); } catch (e) {}
+  }
+}
+
+export function onSnapshot(ref, cb, errCb) {
+  var entry = {
+    name: ref && ref.name ? ref.name : "",
+    constraints: ref && ref.constraints ? ref.constraints.slice() : [],
+    cb: cb
+  };
+  listeners.push(entry);
+  // First paint once the identity/zone is settled; then live forever.
+  authReady.then(function () { emitEntry(entry); });
+  return function () {
+    var i = listeners.indexOf(entry);
+    if (i >= 0) listeners.splice(i, 1);
+  };
+}
+
+// Other tabs of the same browser repaint when this zone's storage changes.
+if (typeof window !== "undefined" && window.addEventListener) {
+  window.addEventListener("storage", function (ev) {
+    if (!ev || !ev.key || ev.key.indexOf(ZONE_PREFIX) !== 0) return;
+    var parts = ev.key.slice(ZONE_PREFIX.length).split("::");
+    if (parts.length < 2) return;
+    var ns = parts[0] + "::" + parts[1];
+    var name = parts.slice(2).join("::");
+    if (ns !== currentNamespace()) return; // another zone - never mix
+    dropCollCache(localKey(ns, name));
+    notifyCollection(name);
+  });
+}
+
+// Every data operation waits for the identity to settle first, so the
+// first read and the first write always land in the right zone.
+function afterAuthReady(fn) {
+  return authReady.then(function () {
+    try { return Promise.resolve(fn()); } catch (e) { return Promise.reject(e); }
+  });
+}
+
+// ---- the write and read operations, Firestore signatures ----
+export function addDoc(collRef, data) {
+  return afterAuthReady(function () {
+    var ns = currentNamespace();
+    var map = loadColl(ns, collRef.name);
+    var id = newLocalId();
+    map[id] = applyData({}, data);
+    saveColl(ns, collRef.name);
+    notifyCollection(collRef.name);
+    return { id: id };
+  });
+}
+
+export function setDoc(docRef, data, opts) {
+  return afterAuthReady(function () {
+    var ns = currentNamespace();
+    var map = loadColl(ns, docRef.name);
+    var merge = !!(opts && opts.merge);
+    var id = docRef.id;
+    if (merge && map[id]) {
+      applyData(map[id], data);
+    } else if (merge) {
+      map[id] = applyData({}, data);
+    } else {
+      map[id] = applyData({}, data);
+    }
+    saveColl(ns, docRef.name);
+    notifyCollection(docRef.name);
+    return undefined;
+  });
+}
+
+export function updateDoc(docRef, data) {
+  return afterAuthReady(function () {
+    var ns = currentNamespace();
+    var map = loadColl(ns, docRef.name);
+    if (!map[docRef.id]) {
+      return Promise.reject(localError("not-found",
+        "No document '" + docRef.id + "' in '" + docRef.name + "' to update (it may have been deleted in another view)."));
+    }
+    applyData(map[docRef.id], data);
+    saveColl(ns, docRef.name);
+    notifyCollection(docRef.name);
+    return undefined;
+  });
+}
+
+export function deleteDoc(docRef) {
+  return afterAuthReady(function () {
+    var ns = currentNamespace();
+    var map = loadColl(ns, docRef.name);
+    delete map[docRef.id];
+    saveColl(ns, docRef.name);
+    notifyCollection(docRef.name);
+    return undefined;
+  });
+}
+
+export function getDocs(ref) {
+  return afterAuthReady(function () {
+    var ns = currentNamespace();
+    return readQuery(ns, ref.name, ref.constraints || []);
+  });
+}
+
+export function getDoc(docRef) {
+  return afterAuthReady(function () {
+    var ns = currentNamespace();
+    var map = loadColl(ns, docRef.name);
+    var packed = map[docRef.id];
+    return docSnap(docRef.id, packed, packed !== undefined);
+  });
+}
+
+export function writeBatch(dbArg) {
+  var ops = [];
+  return {
+    set: function (ref, data, opts) { ops.push({ kind: "set", ref: ref, data: data, opts: opts }); return this; },
+    update: function (ref, data) { ops.push({ kind: "update", ref: ref, data: data }); return this; },
+    delete: function (ref) { ops.push({ kind: "delete", ref: ref }); return this; },
+    commit: function () {
+      return afterAuthReady(function () {
+        var ns = currentNamespace();
+        var touched = {};
+        for (var i = 0; i < ops.length; i++) {
+          var op = ops[i];
+          var map = loadColl(ns, op.ref.name);
+          touched[op.ref.name] = true;
+          if (op.kind === "set") {
+            var merge = !!(op.opts && op.opts.merge);
+            if (merge && map[op.ref.id]) applyData(map[op.ref.id], op.data);
+            else map[op.ref.id] = applyData({}, op.data);
+          } else if (op.kind === "update") {
+            if (!map[op.ref.id]) {
+              throw localError("not-found",
+                "No document '" + op.ref.id + "' in '" + op.ref.name + "' to update.");
+            }
+            applyData(map[op.ref.id], op.data);
+          } else {
+            delete map[op.ref.id];
+          }
+        }
+        for (var name in touched) {
+          saveColl(ns, name);
+          notifyCollection(name);
+        }
+        return undefined;
+      });
+    }
+  };
+}
+
+export function runTransaction(dbArg, fn) {
+  return afterAuthReady(function () {
+    var ns = currentNamespace();
+    var ops = [];
+    var tx = {
+      get: function (ref) {
+        var map = loadColl(ns, ref.name);
+        var packed = map[ref.id];
+        return Promise.resolve(docSnap(ref.id, packed, packed !== undefined));
+      },
+      set: function (ref, data, opts) { ops.push({ kind: "set", ref: ref, data: data, opts: opts }); return tx; },
+      update: function (ref, data) { ops.push({ kind: "update", ref: ref, data: data }); return tx; },
+      delete: function (ref) { ops.push({ kind: "delete", ref: ref }); return tx; }
+    };
+    return Promise.resolve(fn(tx)).then(function () {
+      var touched = {};
+      for (var i = 0; i < ops.length; i++) {
+        var op = ops[i];
+        var map = loadColl(ns, op.ref.name);
+        touched[op.ref.name] = true;
+        if (op.kind === "set") {
+          var merge = !!(op.opts && op.opts.merge);
+          if (merge && map[op.ref.id]) applyData(map[op.ref.id], op.data);
+          else map[op.ref.id] = applyData({}, op.data);
+        } else if (op.kind === "update") {
+          if (!map[op.ref.id]) throw localError("not-found", "No document '" + op.ref.id + "' to update.");
+          applyData(map[op.ref.id], op.data);
+        } else {
+          delete map[op.ref.id];
+        }
+      }
+      for (var name in touched) {
+        saveColl(ns, name);
+        notifyCollection(name);
+      }
+      return undefined;
+    });
+  });
+}
+
+// Minimal Timestamp shim - nothing in the pages imports it today, kept so
+// the export surface stays complete for RESERVE modules.
+export const Timestamp = {
+  fromDate: function (d) { return makeTs(d.getTime()); },
+  fromMillis: function (m) { return makeTs(m); },
+  now: function () { return makeTs(Date.now()); }
+};
+
+// ---- support / diagnostics handle (harmless, client-side only) ----
+if (typeof window !== "undefined") {
+  try {
+    window.JAMALI_LOCAL_DEBUG = {
+      zone: function () { return localZone(); },
+      setUser: function (mailOrNull) {
+        // Forces the data zone without Google: same switch a real
+        // sign-in / sign-out triggers. For diagnostics and testing.
+        fireAuthCallbacks(mailOrNull ? { email: String(mailOrNull) } : null);
+      },
+      reset: function () {
+        var gone = [];
+        if (LS) {
+          for (var i = LS.length - 1; i >= 0; i--) {
+            var k = LS.key(i);
+            if (k && k.indexOf(ZONE_PREFIX) === 0) { gone.push(k); LS.removeItem(k); }
+          }
+        }
+        collCache = Object.create(null);
+        localZoneChanged();
+        return gone.length;
+      }
+    };
+    window.JAMALI_LOCAL_ZONE = localZone();
+  } catch (e) {}
+}
+
+// ======================================================================
+// SERVER CONFIG - hosting facts and the server handle SERVER/linker.js
+// talks through. The data methods below are the LOCAL implementations.
+// ======================================================================
 export const SERVER_CONFIG = {
   active: DATABASE_PROJECT,
   hosting: {
@@ -461,12 +1096,18 @@ export const SERVER_CONFIG = {
   rules: {
     file: "firestore.rules",
     publisher: "apply-rules.sh"
+  },
+  data: {
+    engine: "browser Local Storage",
+    zonePrefix: ZONE_PREFIX,
+    anonymousZone: "anon",
+    signedInZonePrefix: "u::"
   }
 };
 
 // The server handle SERVER/linker.js talks through: the same wiring, one
-// object - info for the project, authApi for the Google gate, firestore for
-// the database calls.
+// object - info for the project, authApi for the optional Google identity,
+// firestore for the LOCAL data calls.
 export const server = {
   info: {
     name: "JAMALI",
@@ -474,8 +1115,9 @@ export const server = {
     authDomain: firebaseConfig.authDomain,
     runtime: SERVER_CONFIG.hosting.runtimeModule
   },
-  auth,
-  provider,
+  // live getters: auth loads asynchronously, the object must follow it
+  get auth() { return auth; },
+  get provider() { return provider; },
   authApi: { onAuthStateChanged, signInWithPopup, signOut },
   db,
   firestore: {

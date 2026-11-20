@@ -575,6 +575,8 @@ wireToggles(aside);
       "#jamali-settings .jd-who{border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:10px}",
       "#jamali-settings .jd-who b{display:block;font-size:13.5px}",
       "#jamali-settings .jd-who span{color:#94a3b8;font-size:12.5px}",
+      "#jamali-settings .jd-zone{border:1px solid #1e3a5f;background:#0b1220;color:#7dd3fc;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:12px;line-height:1.5}",
+      "#jamali-settings .jd-zone b{display:block;font-size:12px;color:#bae6fd}",
       "#jamali-settings .jd-cap{font-size:11px;font-weight:800;letter-spacing:.5px;color:#64748b;margin:10px 0 6px;text-transform:uppercase}",
       "#jamali-settings #jd-show-del{display:block;width:100%;text-align:left;border:1px solid #334155;background:#0b1220;",
       "color:#e2e8f0;border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:700;cursor:pointer}",
@@ -630,6 +632,7 @@ wireToggles(aside);
     var h = "";
     h += "<div class=\"jd-head\"><b>Settings</b><button type=\"button\" class=\"jd-close\" title=\"Close\">&#215;</button></div>";
     h += "<div class=\"jd-who\"><b></b><span></span></div>";
+    h += "<div class=\"jd-zone\" id=\"jd-zone\"><b>Data lives in this browser</b><span>checking the data zone&hellip;</span></div>";
     h += "<div class=\"jd-cap\">Data</div>";
     h += "<button type=\"button\" id=\"jd-show-del\">Show Delete Data</button>";
     h += "<div id=\"jd-del-body\" hidden></div>";
@@ -649,6 +652,23 @@ wireToggles(aside);
       if (!body.hidden) jamaliDeletePaint(body);
     });
     jamaliMinePaint(SETTINGS_EL.querySelector("#jd-mine"));
+    jamaliZonePaint();
+  }
+
+  // The data-zone line: where this browser's records are stored. It is
+  // always Local Storage; the zone is "anonymous" or the signed-in email.
+  function jamaliZonePaint() {
+    var box = SETTINGS_EL.querySelector("#jd-zone");
+    if (!box) return;
+    import("/502.js").then(function (fb) {
+      if (!fb || !fb.localZone) return;
+      var z = fb.localZone();
+      var b = box.querySelector("b");
+      var s = box.querySelector("span");
+      if (b) b.textContent = "Data lives in this browser's Local Storage";
+      if (s) s.textContent = "Zone: " + z.label + " - it survives refreshing, closing and reopening the browser. " +
+        "Nobody else's data mixes in, and clearing the browser's site data clears it.";
+    }).catch(function () {});
   }
 
   function jamaliDeletePaint(body) {
@@ -996,8 +1016,13 @@ wireToggles(aside);
       var chain = Promise.resolve();
       ctx.groups.forEach(function (g) {
         chain = chain.then(function () {
+          // The counters live HERE - one level above both the chunk loop and
+          // the callback that reports them - so the outcome of a group is
+          // always in scope for its result line. (They used to sit inside
+          // the Promise executor only, which crashed the whole deletion
+          // with "deleted is not defined" the moment a group finished.)
+          var deleted = 0, failed = 0, error = "";
           return new Promise(function (res) {
-            var deleted = 0, failed = 0, error = "";
             function chunk(start) {
               var slice = g.docs.slice(start, start + 400);
               if (!slice.length) { res(); return; }
