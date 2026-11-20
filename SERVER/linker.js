@@ -55,6 +55,16 @@ export const signInWithPopup = server.authApi.signInWithPopup;
 export const signOut = server.authApi.signOut;
 
 
+// The cloud comment desk - the one feature that travels: every visitor
+// (signed in or not) may send a comment to the owner, and only the owner
+// reads or deletes the mailbox.
+export const commentSend = server.comments.send;
+export const commentList = server.comments.list;
+export const commentDelete = server.comments.del;
+export const commentWatch = server.comments.watch;
+export const commentOwner = server.comments.owner;
+
+
 export const db = server.db;
 export const getFirestore = server.firestore.getFirestore;
 export const collection = server.firestore.collection;

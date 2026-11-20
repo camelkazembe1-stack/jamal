@@ -93,6 +93,21 @@ service cloud.firestore {
       allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
+    match /comments/{docId} {
+      // THE COMMENT DESK (20 Nov 2026): the one collection visitors still
+      // write to. A comment is a letter to the owner, so any visitor -
+      // signed in or anonymous - may post one (text only, 1-2000 chars).
+      // Reading the mailbox and removing comments is the owner's alone.
+      allow create: if request.resource.data.get("text") is string
+        && request.resource.data.get("text").size() > 0
+        && request.resource.data.get("text").size() <= 2000
+        && request.resource.data.get("from") is string
+        && request.resource.data.get("from").size() <= 200;
+      allow read, delete: if isSignedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == "camelkazembe1@gmail.com";
+    }
+
     match /systemAccounts/{docId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()

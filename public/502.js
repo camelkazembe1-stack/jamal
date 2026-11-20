@@ -30,6 +30,15 @@
 // limit, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, increment,
 // deleteField, runTransaction) is a thin local implementation with the same
 // signature and the same snapshot shapes, so no page needed any change.
+//
+// CLOUD COMMENT DESK (20 Nov 2026) - the one deliberate cloud exception:
+// a comment must TRAVEL. Every visitor - signed in or not - may send a
+// comment, and it lands in the shared "comments" collection in Firestore,
+// addressed to the owner (COMMENT_OWNER_EMAIL below). Only the owner may
+// read or delete the mailbox; a visitor can only add. The sidebar footer
+// carries the Comment button next to the Login/Logout button (one row,
+// 50% / 50%, the old settings gear is gone), and the owner sees a
+// "Comments" button at the top right of every page.
 
 // ==== JAMALI SETTINGS SOURCE - the single source of truth for every settings file ====
 // Everything the deploys need is declared between this line and the END
@@ -43,6 +52,11 @@
 // The database project the whole system runs on: the web keys below, the
 // Firebase CLI (.firebaserc) and the rules publisher all take it from here.
 const DATABASE_PROJECT = "jamal-542b5";
+
+// The comment desk mailbox: every visitor's comments are addressed to this
+// account, and only this account may read or remove them (firestore.rules
+// enforces it; the sidebar shows the Comments button for this email only).
+const COMMENT_OWNER_EMAIL = "camelkazembe1@gmail.com";
 
 // The web keys of that project - Firebase web keys are public by design.
 // Only the Google identity (sign-in) still uses them; the data layer is
@@ -212,6 +226,21 @@ service cloud.firestore {
 
     match /stockChanges/{docId} {
       allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /comments/{docId} {
+      // THE COMMENT DESK (20 Nov 2026): the one collection visitors still
+      // write to. A comment is a letter to the owner, so any visitor -
+      // signed in or anonymous - may post one (text only, 1-2000 chars).
+      // Reading the mailbox and removing comments is the owner's alone.
+      allow create: if request.resource.data.get("text") is string
+        && request.resource.data.get("text").size() > 0
+        && request.resource.data.get("text").size() <= 2000
+        && request.resource.data.get("from") is string
+        && request.resource.data.get("from").size() <= 200;
+      allow read, delete: if isSignedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == "camelkazembe1@gmail.com";
     }
 
     match /systemAccounts/{docId} {
@@ -435,12 +464,15 @@ function authFirstDone(user) {
 }
 
 var authModRef = null; // the loaded firebase-auth module, or null
+var appRef = null;     // the Firebase app handle - the cloud comment desk
+                       // reuses it, so the app is initialised only once
 (async function bootGoogleIdentity() {
   try {
     var appMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
     var authMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     authModRef = authMod;
     var app = appMod.initializeApp(firebaseConfig);
+    appRef = app;
     auth = authMod.getAuth(app);
     provider = new authMod.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
@@ -1076,6 +1108,107 @@ if (typeof window !== "undefined") {
 }
 
 // ======================================================================
+// CLOUD COMMENT DESK - the one deliberate cloud feature. Everything else
+// lives in this browser, but a comment must travel: it is written to the
+// shared "comments" collection in Firestore so the owner can read every
+// visitor's comments in one place. The Google identity boot above already
+// initialises the Firebase app; the Firestore module joins lazily, the
+// first time a comment is actually sent or read - the whole system stays
+// fast and offline-capable for everything else. The database rules allow
+// exactly two things: ANY visitor creates a comment, and ONLY the owner
+// (COMMENT_OWNER_EMAIL in the settings block) reads or deletes comments.
+// ======================================================================
+
+var fsModRef = null;    // the loaded firebase-firestore CDN module, or null
+var fsDbRef = null;     // the real cloud Firestore handle, or null
+var fsBootPromise = null;
+
+function bootCloudFirestore() {
+  if (fsBootPromise) return fsBootPromise;
+  fsBootPromise = (async function () {
+    if (!appRef) {
+      throw new Error("The comment desk is offline (no connection to Google). The comment was NOT sent - try again when you are back online.");
+    }
+    if (!fsModRef) {
+      fsModRef = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      fsDbRef = fsModRef.getFirestore(appRef);
+    }
+    return { fs: fsModRef, db: fsDbRef };
+  })();
+  // a failed boot (offline, CDN blocked) may be retried later
+  fsBootPromise.catch(function () { fsBootPromise = null; });
+  return fsBootPromise;
+}
+
+function commentRow(d) {
+  var v = (d && typeof d.data === "function") ? (d.data() || {}) : {};
+  return {
+    id: d.id,
+    text: String(v.text || ""),
+    from: String(v.from || "Guest"),
+    zone: String(v.zone || ""),
+    page: String(v.page || ""),
+    millis: v.createdAt && typeof v.createdAt.toMillis === "function" ? v.createdAt.toMillis() : 0
+  };
+}
+
+function commentQuery(fs, cdb) {
+  var base = fs.collection(cdb, "comments");
+  return fs.query(base, fs.orderBy("createdAt", "desc"), fs.limit(300));
+}
+
+// commentSend - any visitor, signed in or not, posts a comment to the
+// owner. This is the one create the rules allow without an account.
+export function commentSend(text) {
+  var t = String(text == null ? "" : text).trim();
+  if (!t) return Promise.reject(new Error("Write the comment first - the box is empty."));
+  if (t.length > 2000) return Promise.reject(new Error("The comment is over 2000 characters - shorten it and send it again."));
+  return bootCloudFirestore().then(function (h) {
+    return h.fs.addDoc(h.fs.collection(h.db, "comments"), {
+      text: t,
+      from: (activeUser && activeUser.email) ? String(activeUser.email) : "Guest",
+      zone: currentNamespace(),
+      page: (typeof location !== "undefined" && location.pathname) || "",
+      createdAt: h.fs.serverTimestamp()
+    });
+  }).then(function () { return true; });
+}
+
+// commentList - one read of the mailbox, newest first. The database
+// refuses it for anybody except the owner.
+export function commentList() {
+  return bootCloudFirestore().then(function (h) {
+    return h.fs.getDocs(commentQuery(h.fs, h.db)).then(function (snap) {
+      var out = [];
+      snap.forEach(function (d) { out.push(commentRow(d)); });
+      return out;
+    });
+  });
+}
+
+// commentDelete - removes one comment permanently (owner only).
+export function commentDelete(id) {
+  return bootCloudFirestore().then(function (h) {
+    return h.fs.deleteDoc(h.fs.doc(h.db, "comments", String(id)));
+  }).then(function () { return true; });
+}
+
+// commentWatch - the mailbox live: every new comment from every visitor
+// appears while the owner has the panel open. Returns a promise of the
+// unsubscribe function.
+export function commentWatch(cb) {
+  return bootCloudFirestore().then(function (h) {
+    return h.fs.onSnapshot(commentQuery(h.fs, h.db), function (snap) {
+      var out = [];
+      snap.forEach(function (d) { out.push(commentRow(d)); });
+      try { cb(null, out); } catch (e) {}
+    }, function (err) {
+      try { cb(err, null); } catch (e2) {}
+    });
+  });
+}
+
+// ======================================================================
 // SERVER CONFIG - hosting facts and the server handle SERVER/linker.js
 // talks through. The data methods below are the LOCAL implementations.
 // ======================================================================
@@ -1096,6 +1229,11 @@ export const SERVER_CONFIG = {
   rules: {
     file: "firestore.rules",
     publisher: "apply-rules.sh"
+  },
+  comments: {
+    collection: "comments",
+    owner: COMMENT_OWNER_EMAIL,
+    note: "the one cloud feature: every visitor may send a comment, only the owner reads and deletes"
   },
   data: {
     engine: "browser Local Storage",
@@ -1119,6 +1257,13 @@ export const server = {
   get auth() { return auth; },
   get provider() { return provider; },
   authApi: { onAuthStateChanged, signInWithPopup, signOut },
+  comments: {
+    owner: COMMENT_OWNER_EMAIL,
+    send: commentSend,
+    list: commentList,
+    del: commentDelete,
+    watch: commentWatch
+  },
   db,
   firestore: {
     getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,

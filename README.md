@@ -10,6 +10,12 @@ JAMALI
 > explains exactly how to bring every piece back later. All business data is
 > saved in the Local Storage of the browser that creates it - Google login stays
 > optional and the shared anonymous Firestore collections are closed so data can never mix between users; the system* collections stay locked as before.
+> THE COMMENT DESK is the one cloud exception: every visitor - signed in or
+> not - may send a comment from the sidebar footer (the Comment button, next
+> to Login/Logout in one 50% / 50% row), it lands in the shared "comments"
+> collection addressed to the owner (camelkazembe1@gmail.com), and only the
+> owner reads and deletes the mailbox from the Comments button at the top
+> right. Publishing firestore.rules once (bash apply-rules.sh) switches it on.
 
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app
