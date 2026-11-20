@@ -301,3 +301,18 @@ table.people .c-amount { text-align: right; font-weight: 800; font-variant-numer
   .wrap { padding: 20px 14px; }
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ================= jamali-supportive-background ================= */
+/* Family theme: MEDICAL - medical crosses and an ECG pulse line.
+   Supportive background so every page carries the identity of the
+   system it belongs to. Kept subtle; printouts stay plain white. */
+body {
+  background-color: #fdf2f4;
+  background-image:
+    radial-gradient(1100px 420px at 50% -140px, rgba(225,29,72,0.08), rgba(0,0,0,0) 72%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http://www.w3.org/2000/svg%27%20width%3D%2772%27%20height%3D%2772%27%3E%3Crect%20width%3D%2772%27%20height%3D%2772%27%20fill%3D%27%23fdf2f4%27/%3E%3Cg%20fill%3D%27%23e11d48%27%20fill-opacity%3D%270.10%27%3E%3Cpath%20d%3D%27M17%2010h5v7h7v5h-7v7h-5v-7h-7v-5h7z%27/%3E%3Cpath%20d%3D%27M52%2046h4v6h6v4h-6v6h-4v-6h-6v-4h6z%27/%3E%3C/g%3E%3Cpath%20d%3D%27M0%2036h13l6-12%208%2024%206-12h39%27%20fill%3D%27none%27%20stroke%3D%27%23e11d48%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271.6%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27/%3E%3C/svg%3E");
+  background-size: auto, 72px 72px;
+  background-repeat: no-repeat, repeat;
+}
+@media print { body { background: #fff; } }
+/* =============== end jamali-supportive-background ================ */

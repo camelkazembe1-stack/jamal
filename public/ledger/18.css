@@ -61,3 +61,18 @@ tfoot .bd-row .c-amount { font-weight: 800; font-variant-numeric: tabular-nums; 
 
 .count-line { color: #94a3b8; font-size: 12.5px; margin-top: 12px; }
 @media (max-width: 640px) { .wrap { padding: 20px 14px; } }
+
+/* ================= jamali-supportive-background ================= */
+/* Family theme: BOOKKEEPING - ledger paper, ruled lines, margin rule and coins.
+   Supportive background so every page carries the identity of the
+   system it belongs to. Kept subtle; printouts stay plain white. */
+body {
+  background-color: #f7f4ec;
+  background-image:
+    radial-gradient(1100px 420px at 50% -140px, rgba(217,119,6,0.09), rgba(0,0,0,0) 72%),
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http://www.w3.org/2000/svg%27%20width%3D%2764%27%20height%3D%2764%27%3E%3Crect%20width%3D%2764%27%20height%3D%2764%27%20fill%3D%27%23f7f4ec%27/%3E%3Cg%20stroke%3D%27%230f172a%27%20stroke-opacity%3D%270.055%27%20stroke-width%3D%271%27%3E%3Cline%20x1%3D%270%27%20y1%3D%2721.5%27%20x2%3D%2764%27%20y2%3D%2721.5%27/%3E%3Cline%20x1%3D%270%27%20y1%3D%2742.5%27%20x2%3D%2764%27%20y2%3D%2742.5%27/%3E%3C/g%3E%3Cline%20x1%3D%2716.5%27%20y1%3D%270%27%20x2%3D%2716.5%27%20y2%3D%2764%27%20stroke%3D%27%23d97706%27%20stroke-opacity%3D%270.11%27%20stroke-width%3D%271%27/%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23d97706%27%20stroke-opacity%3D%270.14%27%20stroke-width%3D%271.3%27%3E%3Ccircle%20cx%3D%2744%27%20cy%3D%2712%27%20r%3D%276%27/%3E%3Cpath%20d%3D%27M44%208.6v6.8%27/%3E%3Ccircle%20cx%3D%2750.5%27%20cy%3D%2750%27%20r%3D%273.4%27/%3E%3C/g%3E%3C/svg%3E");
+  background-size: auto, 64px 64px;
+  background-repeat: no-repeat, repeat;
+}
+@media print { body { background: #fff; } }
+/* =============== end jamali-supportive-background ================ */
