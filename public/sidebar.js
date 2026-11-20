@@ -568,7 +568,6 @@ p.label + "</a>";
       "<div class=\"jc-head\"><div class=\"jc-title-wrap\"><b>&#128172; Comments</b>" +
       "<button type=\"button\" class=\"jc-refresh\" title=\"Load again\">Refresh</button></div>" +
       "<button type=\"button\" class=\"jc-close\" title=\"Close\">&#215;</button></div>" +
-      "<div class=\"jc-who\">Every visitor's comments, newest first. The delete icon at the end of each comment removes it permanently.</div>" +
       "<div class=\"jc-count-line\" id=\"jamali-mailbox-count\">loading&#8230;</div>" +
       "<div class=\"jc-list\" id=\"jamali-mailbox-items\"></div>";
     mailboxEl.querySelector(".jc-close").addEventListener("click", function () {
