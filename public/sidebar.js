@@ -205,11 +205,10 @@ p.label + "</a>";
    "#jamali-sidebar .brand i{width:30px;height:30px;border-radius:9px;display:flex;",
    "align-items:center;justify-content:center;font-style:normal;font-size:12px;",
    "background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#fff}",
-   "cursor:pointer;line-height:1;padding:2px 3px;border-radius:8px}",
-   "border-radius:12px;min-width:180px;box-shadow:0 14px 34px rgba(0,0,0,.5);overflow:hidden;z-index:1002}",
-   "overflow:hidden;text-overflow:ellipsis}",
-   "color:#e2e8f0;font-size:13.5px;padding:10px 14px;cursor:pointer}",
-   "padding:9px 18px;font-size:13.5px;font-weight:800;cursor:pointer;color:#06121f;",
+   // (the orphaned account-desk CSS fragments that used to sit here were
+   // removed: as top-level garbage they swallowed the nav rule that
+   // follows, which stopped the nav from scrolling and pushed the
+   // footer out of the fixed sidebar.)
 
    "#jamali-sidebar nav{flex:1;overflow-y:auto;padding:8px 0}",
    "#jamali-sidebar a{display:flex;align-items:center;gap:12px;padding:9px 18px;",
@@ -241,6 +240,13 @@ p.label + "</a>";
    ".jamali-foot-row{display:flex;align-items:stretch;gap:8px}",
    "#jamali-side-gear{flex:25 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 0;font-size:17px;line-height:1;cursor:pointer;color:#cbd5e1;background:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}",
    "#jamali-side-gear:hover{background:#334155;color:#fff}",
+   "#jamali-side-auth{flex:1 1 auto;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:800;line-height:1.15;cursor:pointer;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}",
+   "#jamali-side-auth small{font-size:10px;font-weight:600;opacity:.9;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+   "#jamali-side-auth.login{background:#16a34a}",
+   "#jamali-side-auth.login:hover{background:#15803d}",
+   "#jamali-side-auth.logout{background:#dc2626}",
+   "#jamali-side-auth.logout:hover{background:#b91c1c}",
+   "#jamali-side-auth:disabled{opacity:.6;cursor:wait}",
    "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
    "#jamali-toast.jamali-toast-on{opacity:1}"
  ].join("");
@@ -268,6 +274,9 @@ p.label + "</a>";
     "<nav>" + nav + "</nav>" +
     "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
     "<button type=\"button\" id=\"jamali-side-gear\" title=\"Settings\">&#9881;&#65039;</button>" +
+    "</div>" +
+    "<div class=\"jamali-foot-row\">" +
+    "<button type=\"button\" id=\"jamali-side-auth\" class=\"login\" title=\"Not signed in - click to sign in with Google\">Login</button>" +
     "</div></div>";
 
  document.body.insertBefore(overlay, document.body.firstChild);
@@ -297,6 +306,55 @@ p.label + "</a>";
   }
   document.getElementById("jamali-side-gear").addEventListener("click", function () {
     jamaliSettingsOpen();
+  });
+
+  // SIDEBAR LOGIN / LOGOUT - the optional Google identity button, pinned
+  // at the bottom of the fixed sidebar. The system keeps working without
+  // any account (anonymous use is untouched); this button only signs a
+  // Google identity in or out: green Login when signed out, red Logout
+  // (with the account email) when signed in.
+  var sideAuthBtn = document.getElementById("jamali-side-auth");
+  function sideAuthEscape(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function sideAuthRender(user) {
+    if (!sideAuthBtn) return;
+    if (user && user.email) {
+      sideAuthBtn.className = "logout";
+      sideAuthBtn.innerHTML = "Logout<small>" + sideAuthEscape(user.email) + "</small>";
+      sideAuthBtn.title = "Signed in with Google - click to sign out";
+    } else {
+      sideAuthBtn.className = "login";
+      sideAuthBtn.innerHTML = "Login";
+      sideAuthBtn.title = "Not signed in - click to sign in with Google";
+    }
+  }
+  sideAuthRender(null);
+  window.JAMALI_SIDEBAR_AUTH = { render: sideAuthRender };
+  import("/502.js").then(function (fb) {
+    if (!fb || !fb.auth || !fb.onAuthStateChanged) return;
+    fb.onAuthStateChanged(fb.auth, sideAuthRender);
+    sideAuthBtn.addEventListener("click", function () {
+      if (fb.auth.currentUser) {
+        fb.signOut(fb.auth).then(function () { jamaliToast("Signed out"); })
+          .catch(function (e) { jamaliToast("Sign out failed: " + ((e && e.code) || e || "")); });
+      } else {
+        sideAuthBtn.disabled = true;
+        fb.signInWithPopup(fb.auth, fb.provider).then(function () {
+          sideAuthBtn.disabled = false;
+        }).catch(function (e) {
+          sideAuthBtn.disabled = false;
+          var code = e && e.code ? String(e.code).replace(/^auth\//, "") : "";
+          if (code === "popup-closed-by-user" || code === "cancelled-popup-request") return;
+          jamaliToast("Sign in failed: " + (code || "please try again"));
+        });
+      }
+    });
+  }).catch(function () {
+    // No Firebase (offline or blocked): the button stays a quiet green
+    // Login and the system keeps working anonymously, exactly as now.
   });
 
   // RESERVE (admin removed): the floating Admin button that opened
