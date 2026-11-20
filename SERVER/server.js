@@ -96,17 +96,13 @@ const VERCEL_REDIRECTS = [
   ["/radiology/372", "/imaging-requests/372"],
   ["/radiology/373", "/imaging-workbench/373"],
   ["/convertor/64", "/tool/64"],
-  ["/account-recovery", "/?mode=token"],
   ["/account-recovery/390", "/?mode=token"],
-  ["/forgot-token", "/?mode=token"],
   ["/forgot-token/355", "/?mode=token"],
   ["/forgot-token/390", "/?mode=token"],
   ["/account-recovery/391", "/?mode=password"],
-  ["/forgot-password", "/?mode=password"],
   ["/forgot-password/356", "/?mode=password"],
   ["/forgot-password/391", "/?mode=password"],
   ["/account-recovery/392", "/?mode=phone"],
-  ["/forgot-phone-number", "/?mode=phone"],
   ["/forgot-phone-number/357", "/?mode=phone"],
   ["/forgot-phone-number/392", "/?mode=phone"]
 ];
@@ -143,75 +139,78 @@ service cloud.firestore {
 
 
     match /transactions/{docId} {
-      allow read, create, update, delete: if isSignedIn();
+      // RESERVE (login removed): anonymous access so the books keep
+      // working without an account. The old signed-in-only rule lives in
+      // public/RESERVE/firestore.rules-with-auth.txt.
+      allow read, create, update, delete: if true;
     }
 
     match /healthRegistrations/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthTriage/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthNurseConsultations/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthDoctorConsultations/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthPrescriptions/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthTreatmentOrders/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthDestinations/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthWards/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthBeds/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthBedAssignments/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthBedTransfers/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthBedMaintenance/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthAdmissions/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthDischarges/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthLabRequests/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthImagingRequests/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /healthQueueConfig/{docId} {
-      allow create, read, update, delete: if isSignedIn();
+      allow create, read, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
 
@@ -362,11 +361,11 @@ service cloud.firestore {
     }
 
     match /stockItems/{docId} {
-      allow read, create, update, delete: if isSignedIn();
+      allow read, create, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
 
     match /stockChanges/{docId} {
-      allow read, create, update, delete: if isSignedIn();
+      allow read, create, update, delete: if true;  // RESERVE (login removed): anonymous access
     }
     match /systemPageConfig/{docId} {
       allow read: if isSignedIn();

@@ -254,32 +254,12 @@
       "permanent": false
     },
     {
-      "source": "/account-recovery",
-      "destination": "/?mode=token",
-      "permanent": false
-    },
-    {
-      "source": "/account-recovery/",
-      "destination": "/?mode=token",
-      "permanent": false
-    },
-    {
       "source": "/account-recovery/390",
       "destination": "/?mode=token",
       "permanent": false
     },
     {
       "source": "/account-recovery/390/",
-      "destination": "/?mode=token",
-      "permanent": false
-    },
-    {
-      "source": "/forgot-token",
-      "destination": "/?mode=token",
-      "permanent": false
-    },
-    {
-      "source": "/forgot-token/",
       "destination": "/?mode=token",
       "permanent": false
     },
@@ -314,16 +294,6 @@
       "permanent": false
     },
     {
-      "source": "/forgot-password",
-      "destination": "/?mode=password",
-      "permanent": false
-    },
-    {
-      "source": "/forgot-password/",
-      "destination": "/?mode=password",
-      "permanent": false
-    },
-    {
       "source": "/forgot-password/356",
       "destination": "/?mode=password",
       "permanent": false
@@ -350,16 +320,6 @@
     },
     {
       "source": "/account-recovery/392/",
-      "destination": "/?mode=phone",
-      "permanent": false
-    },
-    {
-      "source": "/forgot-phone-number",
-      "destination": "/?mode=phone",
-      "permanent": false
-    },
-    {
-      "source": "/forgot-phone-number/",
       "destination": "/?mode=phone",
       "permanent": false
     },

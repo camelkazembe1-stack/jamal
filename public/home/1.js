@@ -4,47 +4,15 @@
 
 
 
-// The tile grid paints at once. /502.js - and the Firebase SDK it pulls
-// from the Google CDN - is fetched in the background, only when a
-// signed-in account exists whose grants may have changed: the same lazy
-// import the sidebar already uses. The first screen never waits for the
-// network, so the landing page is never a blank screen on a slow
-// connection.
+// The tile grid paints at once, straight from the menu: no account, no
+// grants, no network - so the landing page is never a blank screen on a
+// slow connection.
 
 
-const SESSION_KEY = "JAMALI_SYSTEM_SESSION";
-let S = null;
-try { S = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null"); } catch (e) { S = null; }
-
-const MODE_KEY = "JAMALI_SYSTEM_MODE";
-let MODE = "organisation";
-try { MODE = sessionStorage.getItem(MODE_KEY) === "personal" ? "personal" : "organisation"; } catch (e) { MODE = "organisation"; }
-
-const isAdmin = !!(S && S.role === "admin");
-// Personal use with no account: the home grid shows every system,
-// exactly like the administrator sees it. An account always follows
-// its grants, in both modes.
-const isPersonal = !S && MODE === "personal";
-let grants = S && Array.isArray(S.grants) ? S.grants.slice() : [];
-
-
-(async () => {
-  try {
-    if (S && S.id) {
-      const fb = await import("/502.js");
-      const snap = await fb.getDoc(fb.doc(fb.db, "systemAccounts", S.id));
-      if (snap.exists()) {
-        const g = snap.data().grants;
-        if (Array.isArray(g) && JSON.stringify(g) !== JSON.stringify(grants)) {
-          grants = g.slice();
-          S.grants = grants;
-          sessionStorage.setItem(SESSION_KEY, JSON.stringify(S));
-          render();
-        }
-      }
-    }
-  } catch (e) {   }
-})();
+// RESERVE (login removed): the account session, the use mode and the
+// per-account grants were deactivated together with the login system.
+// Every tile shows for every visitor now. To restore, see
+// public/RESERVE/README.txt.
 
 function tree() {
   const M = window.JAMALI_MENU || [];
@@ -60,7 +28,7 @@ function tree() {
 }
 
 const PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
-const on = (n) => isAdmin || isPersonal || grants.indexOf(n.folder) !== -1 || (PARENT[n.folder] && grants.indexOf(PARENT[n.folder]) !== -1);
+const on = () => true;
 const grantedKids = (n) => (n.kids || []).filter(on);
 
 function path() {

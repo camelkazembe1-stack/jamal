@@ -7,18 +7,10 @@
 <link rel="stylesheet" href="/home/1.css">
 <script src="/menu.js" defer></script>
 <script src="/sidebar.js" defer></script>
-<script>
-  (function () {
-    var s = null;
-    try { s = JSON.parse(sessionStorage.getItem("JAMALI_SYSTEM_SESSION") || "null"); } catch (e) {}
-    var g = s && Array.isArray(s.grants) ? s.grants : [];
-    if (!g.length && (!s || s.role !== "admin")) {
-      var st = document.createElement("style");
-      st.textContent = "main.wrap{display:none!important}";
-      document.head.appendChild(st);
-    }
-  })();
-</script>
+<!-- RESERVE (login removed): the session guard that hid the home
+  grid without a signed-in account was deactivated with the login
+  system. -->
+
 </head>
 <body>
   <main class="wrap">

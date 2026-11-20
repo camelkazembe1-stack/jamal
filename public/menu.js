@@ -1,7 +1,9 @@
  
 window.JAMALI_MENU = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
-    { label: "Account Administration", icon: "🛡️", folder: "system-admin", n: 380, d: 0 },
+    // RESERVE (admin removed): the "Account Administration" entry was
+    // deactivated with the login system; the panel lives in
+    // public/RESERVE/admin/.
     { label: "Business", icon: "🏢", folder: "business", n: 2, d: 1 },
     { label: "Stock Management", icon: "📦", folder: "stock-management", n: 396, d: 2 },
     { label: "Stock Register", icon: "📋", folder: "stock-register", n: 397, d: 3 },

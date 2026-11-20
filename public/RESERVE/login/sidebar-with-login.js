@@ -1,0 +1,2165 @@
+
+ 
+(function () {
+
+ var SESSION_KEY = "JAMALI_SYSTEM_SESSION";
+ function readSession() {
+   try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) ||
+"null"); }
+   catch (e) { return null; }
+ }
+ function writeSession(s) {
+   try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+catch (e) {}
+ }
+ function clearSession() {
+   try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+ }
+
+ var session = readSession();
+
+ var MODE_KEY = "JAMALI_SYSTEM_MODE";
+ function readMode() {
+   try { return sessionStorage.getItem(MODE_KEY) === "personal" ? "personal" : "organisation"; }
+   catch (e) { return "organisation"; }
+ }
+ function setMode(mode) {
+   try { sessionStorage.setItem(MODE_KEY, mode); } catch (e) {}
+   import("/502.js").then(function (fb) {
+     var u = fb.auth && fb.auth.currentUser;
+     var mail = u && u.email ? String(u.email).toLowerCase() : "";
+     if (mail) { try { localStorage.setItem("JAMALI_MODE::" + mail, mode); } catch (e) {} }
+   }).catch(function () {});
+ }
+ function clearMode() {
+   try { sessionStorage.removeItem(MODE_KEY); } catch (e) {}
+ }
+ 
+ var ALWAYS_OPEN = ["home", "file-viewer"];
+var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
+ function folderAllowed(folder) {
+   // Personal use with no user account: the whole system is open - the
+   // sidebar shows every item and every page opens, exactly what the
+   // administrator sees. Without an account in organisation mode nothing
+   // is open here: the door page asks for the account first.
+   if (!session) return readMode() === "personal";
+   if (isAdmin()) return true;
+   if (folder === "system-admin") return false;
+   if (ALWAYS_OPEN.indexOf(folder) !== -1) return true;
+   var par = PARENT[folder]; if (par && session.grants.indexOf(par) !== -1) return true; return !!(session.grants && session.grants.indexOf(folder) !== -1);
+ }
+
+ 
+ 
+ var current = location.pathname.split("/")[1];
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  if (ALWAYS_OPEN.indexOf(current) === -1) {
+    if (!session) {
+      // Personal use opens the full system with no account; any other
+      // visitor without an account goes back to the door page.
+      if (readMode() !== "personal") location.replace("/?need=account");
+    } else {
+      import("/502.js").then(function (fb) {
+        var ready = fb.auth && fb.auth.currentUser
+          ? Promise.resolve(fb.auth.currentUser)
+          : new Promise(function (res) {
+              var off = fb.onAuthStateChanged(fb.auth, function (u) { off();
+res(u); });
+            });
+        return ready.then(function (u) {
+         if (!u) { clearSession(); location.replace("/?need=house"); return;
+}
+          if (session.uid !== u.uid) { session.uid = u.uid; try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
+        });
+      }).catch(function () {   });
+    }
+  }
+
+  // A signed-in account without the admin role is sent home from the
+  // users/administration desk. Personal use with no account passes:
+  // the desk opens for everyone, and the database itself still refuses
+  // changes unless this Google account is the administrator.
+  if (session && current === "system-admin" && !folderAllowed("system-admin")) {
+    location.replace("/home/1");
+  }
+
+    
+    
+    var PAGE_ID = location.pathname.replace(/^\//, "")
+      .replace(/\.html$/, "").replace(/\/+$/, "");
+
+    
+    /* URL kept: the address bar stays on the real page */
+
+ 
+ var PAGES = window.JAMALI_MENU || [];
+
+ 
+ 
+ 
+ var VIS = { fields: {}, menu: {}, options: {} };
+ var VIS_DOC = ["systemPageConfig", "visibility"];
+ var DASHES = {}; 
+ var VIS_CHANGE = null;
+
+  // The quiet net for a patchy connection. A one-shot read whose client
+  // is offline, or a watch that cannot reach the server yet, ends as an
+  // unhandled FirebaseError in the console. The offline class is not a
+  // defect - JAMALI keeps the page working from what it already has and
+  // reads resume when the network returns - so this net reports it once,
+  // in one calm line, with the same code. Every other rejection still
+  // reports exactly as before; nothing is hidden.
+  function jamaliOffline(err) {
+    var code = err && err.code ? String(err.code) : "";
+    var msg = err && err.message ? String(err.message) : "";
+    return code === "unavailable" ||
+      msg.indexOf("client is offline") !== -1 ||
+      msg.indexOf("network error") !== -1;
+  }
+  window.addEventListener("unhandledrejection", function (ev) {
+    var r = ev && ev.reason;
+    if (!jamaliOffline(r)) return;
+    ev.preventDefault();
+    if (!window.__jamaliOfflineLineShown) {
+      window.__jamaliOfflineLineShown = true;
+      console.warn("The device is offline (" +
+        String((r && (r.code || r.message)) || "unavailable") +
+        ") - JAMALI keeps working from what it has and resumes when the network returns.");
+    }
+  });
+  window.addEventListener("online", function () {
+    window.__jamaliOfflineLineShown = false;
+  });
+
+  // Firefox warns that layout was forced before the page was fully
+  // loaded when a script reads element sizes while the stylesheets are
+  // still downloading, and unstyled content can flash. Anything that
+  // measures the page goes through this gate: the work runs the moment
+  // the page is styled (right away when it already is), with a short
+  // fallback so a stuck download can never hold the page hostage.
+  function whenStylesReady(fn) {
+    var done = false;
+    var go = function () {
+      if (done) return;
+      done = true;
+      if (window.requestAnimationFrame) window.requestAnimationFrame(fn);
+      else fn();
+    };
+    if (document.readyState === "complete") { go(); return; }
+    window.addEventListener("load", go, { once: true });
+    setTimeout(go, 3000);
+  }
+
+    function isAdmin() {
+      // Personal use with no account runs the full admin tooling too:
+      // the sidebar minus buttons, the Hidden panel and the plus/minus
+      // pins on every field, and nothing the administrator hid is
+      // applied here. The database itself still refuses config writes
+      // unless this Google account is the administrator (systemAdmins).
+      return !!(session && session.role === "admin") ||
+        (!session && readMode() === "personal");
+    }
+
+    function applyVisData(d) {
+      VIS.fields = (d && d.fields) || {};
+      VIS.menu = (d && d.menu) || {};
+      VIS.options = (d && d.options) || {};
+    }
+
+    function bootVisibility() {
+      return import("/502.js").then(function (fb) {
+        var ref = fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]);
+        // The first read is patient with a patchy connection: an offline
+        // failure is retried a few times with a growing pause and once
+        // more the moment the device comes back online, and only a real
+        // refusal is reported. Until the configuration arrives the page
+        // simply keeps the default full view - nothing waits on the
+        // network, and the live channel starts as soon as the first read
+        // succeeds.
+        var live = false, timer = null;
+        function listenLive() {
+          if (live || !fb.onSnapshot) return;
+          live = true;
+          fb.onSnapshot(ref, function (snap) {
+            applyVisData(snap && snap.exists() ? snap.data() : null);
+            if (VIS_CHANGE) { try { VIS_CHANGE(); } catch (e) {} }
+          }, function (e) {
+            console.warn("visibility watch skipped:", e);
+          });
+        }
+        function attempt(tries) {
+          if (live) return;
+          return fb.getDoc(ref).then(function (snap) {
+            if (snap && snap.exists()) applyVisData(snap.data());
+            listenLive();
+          }).catch(function (e) {
+            if (live) return;
+            if (!jamaliOffline(e) || tries >= 5) {
+              console.warn("visibility load skipped:", e);
+              return;
+            }
+            timer = setTimeout(function () { attempt(tries + 1); },
+              Math.min(15000, 1500 * tries));
+          });
+        }
+        if (window.addEventListener) {
+          window.addEventListener("online", function () {
+            if (timer) { clearTimeout(timer); timer = null; }
+            attempt(1);
+          });
+          window.addEventListener("offline", function () {
+            if (timer) { clearTimeout(timer); timer = null; }
+          });
+        }
+        return attempt(1);
+      }).catch(function (e) {
+        console.warn("visibility load skipped:", e);
+      });
+    }
+
+ 
+ 
+ 
+ function chainOf(folder) {
+   var out = [folder], idx = -1, myD = 0;
+   for (var i = 0; i < PAGES.length; i++) {
+     if (PAGES[i].folder === folder) { idx = i; myD = PAGES[i].d || 0;
+break; }
+   }
+   if (idx < 0 || myD <= 1) return out;
+   for (var j = idx - 1; j >= 0; j--) {
+     var d = PAGES[j].d || 0;
+     if (d === 0) break;
+     if (d < myD) { out.unshift(PAGES[j].folder); myD = d; if (d === 1)
+break; }
+   }
+   return out;
+ }
+
+ 
+ function menuHidden(folder) {
+   var c = chainOf(folder);
+   for (var i = 0; i < c.length; i++) {
+     if (VIS.menu[c[i]]) return true;
+   }
+   return false;
+ }
+
+ 
+ function userFolderOpen(folder) {
+   return folderAllowed(folder) && !menuHidden(folder);
+ }
+ 
+ function pageIdOfFolder(folder) {
+   for (var i = 0; i < PAGES.length; i++) {
+     if (PAGES[i].folder === folder) return folder + "/" + PAGES[i].n;
+   }
+   return null;
+ }
+
+ 
+ function pageHidden(pid) {
+   return !!(pid && VIS.fields[pid + ":__page__"]);
+ }
+
+  
+  
+  var visible = PAGES.map(function (p) { return folderAllowed(p.folder);
+});
+  for (var v = 0; v < PAGES.length; v++) {
+    if (visible[v]) continue;
+    var my = PAGES[v].d || 0;
+    if (my === 0) continue;  
+    for (var w = v + 1; w < PAGES.length; w++) {
+      if ((PAGES[w].d || 0) <= my) break;
+      visible[w] = false; 
+    }
+  }
+
+ 
+
+ 
+ 
+ function kidsOf(i) {
+   var out = [], my = PAGES[i].d || 0;
+   if (my === 0) return out;  
+   for (var j = i + 1; j < PAGES.length; j++) {
+     var dj = PAGES[j].d || 0;
+     if (dj <= my) break;
+     if (dj === my + 1 && visible[j]) out.push(j);
+   }
+   return out;
+ }
+ 
+ function subtreeHasCurrent(i) {
+   if (PAGES[i].folder === current) return true;
+   var k = kidsOf(i);
+   for (var x = 0; x < k.length; x++) {
+     if (subtreeHasCurrent(k[x])) return true;
+   }
+   return false;
+ }
+
+ 
+ function render(i) {
+   var p = PAGES[i];
+   var cls = "lv" + (p.d || 0);
+   if (p.folder === current) cls += " active";
+   var href = "/" + p.folder + "/" + p.n;
+  var html = "<div class=\"node\" data-folder=\"" + p.folder + "\"><a href=\"" + href +
+            "\" class=\"" + cls + "\"><span>" + p.icon + "</span>" +
+p.label + "</a>";
+   var k = kidsOf(i);
+   if (k.length) {
+     var tgAttrs = isAdmin()
+       ? " type=\"button\" class=\"tg jamali-menu-hide\" data-mkey=\"" + p.folder + "\""
+       : " type=\"button\" class=\"tg\" aria-expanded=\"false\"";
+     html += "<button" + tgAttrs + "></button></div>";
+     
+     
+     var open = true;  
+     html += "<div class=\"kids\"" + (open ? "" : " hidden") + ">";
+     for (var x = 0; x < k.length; x++) html += render(k[x]);
+     html += "</div>";
+   } else {
+     html += "</div>";
+   }
+   return html;
+ }
+
+ 
+ var nav = "";
+ for (var r = 0; r < PAGES.length; r++) {
+   if ((PAGES[r].d || 0) <= 1 && visible[r]) nav += render(r);
+ }
+ if (nav === "") { 
+   for (var f = 0; f < PAGES.length; f++) { if (visible[f]) nav += render(f);
+}
+    }
+
+  var css = document.createElement("style");
+  css.textContent = [
+   "#jamali-sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:#0f172a;",
+   "color:#e2e8f0;display:flex;flex-direction:column;z-index:1000;transition:transform .25s ease}",
+   "#jamali-sidebar .brand{height:60px;flex:0 0 60px;display:flex;align-items:center;gap:10px;",
+   "padding:0 18px;font-weight:900;letter-spacing:2px;color:#fff;border-bottom:1px solid #1e293b}",
+   "#jamali-sidebar .brand i{width:30px;height:30px;border-radius:9px;display:flex;",
+   "align-items:center;justify-content:center;font-style:normal;font-size:12px;",
+   "background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#fff}",
+   "#jamali-person{margin-left:2px;border:0;background:none;color:#94a3b8;font-size:19px;",
+   "cursor:pointer;line-height:1;padding:2px 3px;border-radius:8px}",
+   "#jamali-person:hover{background:#1e293b;color:#fff}",
+   "#jamali-acct{position:absolute;top:56px;left:14px;background:#111827;border:1px solid #334155;",
+   "border-radius:12px;min-width:180px;box-shadow:0 14px 34px rgba(0,0,0,.5);overflow:hidden;z-index:1002}",
+   "#jamali-acct .who{padding:10px 14px;font-size:12px;color:#94a3b8;border-bottom:1px solid #1e293b}",
+   "#jamali-acct .who b{display:block;color:#e2e8f0;font-size:13px;white-space:nowrap;",
+   "overflow:hidden;text-overflow:ellipsis}",
+   "#jamali-acct button{display:block;width:100%;text-align:left;border:0;background:none;",
+   "color:#e2e8f0;font-size:13.5px;padding:10px 14px;cursor:pointer}",
+   "#jamali-acct button:hover{background:#1e293b}",
+   "#jamali-acct .modecap{padding:8px 14px 0;font-size:11px;font-weight:800;letter-spacing:.5px;color:#64748b}",
+   "#jamali-acct .moderow{display:flex;gap:6px;padding:6px 10px 2px}",
+   "#jamali-acct .jamali-usemode{flex:1;border:1px solid #334155;border-radius:8px;background:#0b1220;color:#cbd5e1;font-size:12px;font-weight:700;padding:7px 4px;cursor:pointer;text-align:center;display:block;width:auto}",
+   "#jamali-acct .jamali-usemode:hover{background:#1e293b;color:#fff}",
+   "#jamali-acct .jamali-usemode.on{background:#0c4a6e;border-color:#38bdf8;color:#fff}",
+   "#jamali-admin-btn{position:fixed;top:14px;right:14px;z-index:1001;border:0;border-radius:12px;",
+   "padding:9px 18px;font-size:13.5px;font-weight:800;cursor:pointer;color:#06121f;",
+
+"background:linear-gradient(135deg,#38bdf8,#0ea5e9);box-shadow:0 10px 24px rgba(0,0,0,.35)}",
+   "#jamali-admin-btn:hover{filter:brightness(1.07)}",
+   "#jamali-sidebar nav{flex:1;overflow-y:auto;padding:8px 0}",
+   "#jamali-sidebar a{display:flex;align-items:center;gap:12px;padding:9px 18px;",
+   "color:#94a3b8;text-decoration:none;font-size:14px;border-left:3px solid transparent}",
+   "#jamali-sidebar a.lv1{padding-left:26px}",
+   "#jamali-sidebar a.lv2{padding-left:34px}",
+   "#jamali-sidebar a.lv3{padding-left:42px}",
+   "#jamali-sidebar a:hover{background:#1e293b;color:#fff}",
+   "#jamali-sidebar a.active{background:#1e293b;color:#fff;border-left-color:#38bdf8}",
+   "#jamali-sidebar .node{display:flex;align-items:stretch}",
+   "#jamali-sidebar .node a{flex:1;min-width:0}",
+   "#jamali-sidebar .tg{flex:0 0 30px;border:0;background:none;color:#64748b;",
+   "font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;",
+   "justify-content:center;padding:0}",
+   "#jamali-sidebar .tg:hover{color:#fff}",
+   "#jamali-sidebar .kids[hidden]{display:none}",
+   "body.jamali-has-sidebar{margin-left:220px}",
+   "#jamali-burger{display:none;position:fixed;top:12px;left:12px;z-index:1002;width:42px;height:42px;",
+   "border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:19px;",
+   "align-items:center;justify-content:center;cursor:pointer}",
+   "#jamali-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999}",
+   "@media(max-width:800px){",
+   " body.jamali-has-sidebar{margin-left:0}",
+   " #jamali-sidebar{transform:translateX(-100%)}",
+   " body.jamali-sidebar-open #jamali-sidebar{transform:none}",
+   " #jamali-burger{display:flex}",
+   " body.jamali-sidebar-open #jamali-overlay{display:block}}",
+   ".jamali-dash{display:inline-flex;align-items:center;justify-content:center;width:20px;",
+   "min-width:20px;max-width:20px;height:20px;box-sizing:border-box;padding:0;",
+   "margin:0;border-radius:6px;border:1px solid #fca5a5;background:#fff;",
+   "color:#dc2626;font-weight:900;font-size:13px;line-height:1;cursor:pointer}",
+   ".jamali-dash:hover{background:#fee2e2}",
+   ".jamali-dash.jamali-off{background:#dc2626;color:#fff;border-color:#b91c1c}",
+   ".jamali-vis-mark{outline:2px dashed #f87171;outline-offset:2px}",
+   ".jamali-vis-host{position:relative}",
+   ".jamali-ctl-host{display:inline-block;position:relative;max-width:100%}",
+   ".jamali-corner-dash{position:absolute;top:3px;right:3px;margin:0;z-index:7;",
+   "width:16px;min-width:16px;max-width:16px;height:16px;font-size:11px;border-radius:5px}",
+   "#jamali-hidden-chip{position:fixed;bottom:46px;right:14px;z-index:1001;",
+   "border:1px solid #fca5a5;border-radius:999px;background:#dc2626;color:#fff;",
+   "font-weight:800;font-size:12px;padding:7px 12px;cursor:pointer;",
+   "box-shadow:0 10px 24px rgba(0,0,0,.35)}",
+   "#jamali-hidden-chip:hover{filter:brightness(1.08)}",
+   "#jamali-vis-panel{position:fixed;bottom:84px;right:14px;z-index:1002;width:340px;",
+   "max-width:calc(100vw - 28px);max-height:60vh;overflow:auto;background:#111827;",
+   "border:1px solid #334155;border-radius:12px;padding:12px 14px;font-size:13px;",
+   "color:#e2e8f0;box-shadow:0 18px 40px rgba(0,0,0,.5)}",
+   "#jamali-vis-panel b{display:block;margin-bottom:8px;font-size:13px}",
+   "#jamali-vis-panel .jamali-vis-row{display:flex;align-items:center;justify-content:space-between;",
+   "gap:8px;padding:6px 0;border-bottom:1px solid #1e293b}",
+   "#jamali-vis-panel .jamali-vis-row span{flex:1;min-width:0;overflow:hidden;",
+   "text-overflow:ellipsis;white-space:nowrap}",
+   ".jamali-vis-show,.jamali-vis-showall{border:1px solid #4ade80;background:#052e16;",
+   "color:#4ade80;border-radius:8px;font-size:12px;font-weight:800;padding:4px 10px;",
+   "cursor:pointer;flex:0 0 auto}",
+   ".jamali-vis-showall{margin-top:10px;width:100%}",
+   ".jamali-vis-notice{max-width:560px;margin:60px auto;padding:26px 30px;border:1px solid #fca5a5;",
+   "border-radius:14px;background:#fff5f5;color:#7f1d1d;font-size:15px;line-height:1.6}",
+    ".jamali-vis-notice b{display:block;font-size:17px;margin-bottom:8px}",
+   "#jamali-side-foot{flex:0 0 auto;padding:12px 14px;border-top:1px solid #1e293b;background:#0f172a}",
+   ".jamali-foot-row{display:flex;align-items:stretch;gap:8px}",
+   "#jamali-google-logout{flex:50 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:12px 0;font-size:14px;font-weight:900;letter-spacing:.5px;cursor:pointer;color:#fff;background:#dc2626;box-shadow:0 8px 20px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+   "#jamali-google-logout:hover{background:#b91c1c}",
+   "#jamali-google-logout:disabled{opacity:.6;cursor:default}",
+   "#jamali-side-gear{flex:25 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 0;font-size:17px;line-height:1;cursor:pointer;color:#cbd5e1;background:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}",
+   "#jamali-side-gear:hover{background:#334155;color:#fff}",
+   "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
+   "#jamali-toast.jamali-toast-on{opacity:1}",
+   ".jamali-dash.jamali-plus{background:#f0fdf4;color:#166534;border-color:#86efac}",
+   ".jamali-dash.jamali-plus:hover{background:#dcfce7}",
+   ".jamali-corner-dash.jamali-plus{right:23px}",
+   ".jamali-ctl-host .jamali-plus:not(.jamali-corner-dash){margin-left:4px}",
+   ".jamali-vis-mark{outline-style:solid;background-color:rgba(248,113,113,.16)}",
+   ".jamali-vis-host{padding-right:26px}",
+   ".jamali-ctl-host > input,.jamali-ctl-host > textarea,.jamali-ctl-host > select{padding-right:46px}",
+   "select.jamali-opts{font:inherit;max-width:100%}",
+   ".jamali-menu-hide{align-self:center;flex:0 0 24px;width:24px;height:20px;margin:0 6px 0 0;",
+   "border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-weight:900;",
+   "font-size:10.5px;line-height:1;cursor:pointer;display:flex;align-items:center;",
+   "justify-content:center;padding:0}",
+   ".jamali-menu-hide:hover{background:#fee2e2}",
+   ".jamali-menu-hide.jamali-off{background:#dc2626;color:#fff;border-color:#b91c1c}",
+   ".jamali-menu-hide.jamali-off:hover{filter:brightness(1.08)}",
+   ".node.jamali-menu-gone>a{color:#f87171}",
+   ".node.jamali-menu-gone>a.active{border-left-color:#f87171}"
+ ].join("");
+ document.head.appendChild(css);
+
+ var burger = document.createElement("button");
+ burger.id = "jamali-burger";
+ burger.innerHTML = "&#9776;";
+ burger.addEventListener("click", function () {
+   document.body.classList.toggle("jamali-sidebar-open");
+ });
+
+ var overlay = document.createElement("div");
+ overlay.id = "jamali-overlay";
+ overlay.addEventListener("click", function () {
+   document.body.classList.remove("jamali-sidebar-open");
+ });
+
+  
+  
+  var aside = document.createElement("aside");
+  aside.id = "jamali-sidebar";
+  aside.innerHTML =
+    "<div class=\"brand\"><i>JA</i>JAMAL" +
+    "<button type=\"button\" id=\"jamali-person\" title=\"Account\">&#128100;</button></div>" +
+    "<nav>" + nav + "</nav>" +
+    "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
+    "<button type=\"button\" id=\"jamali-google-logout\" title=\"Total logout: ends the Google sign-in completely\">Logout</button>" +
+    "<button type=\"button\" id=\"jamali-side-gear\" title=\"Settings\">&#9881;&#65039;</button>" +
+    "</div></div>";
+
+ document.body.insertBefore(overlay, document.body.firstChild);
+ document.body.insertBefore(aside, document.body.firstChild);
+ document.body.insertBefore(burger, document.body.firstChild);
+ document.body.classList.add("jamali-has-sidebar");
+
+  
+  var who = session ? (session.username || "account") : "account";
+  var roleLine = session ? (session.role === "admin" ? "administrator" :
+(session.position || "user")) : "";
+  var acct = document.createElement("div");
+  acct.id = "jamali-acct";
+  acct.hidden = true;
+ acct.innerHTML =
+  "<div class=\"who\"><b></b>" + roleLine + "</div>" +
+  "<div class=\"modecap\">Change Mode</div>" +
+  "<div class=\"moderow\">" +
+  "<button type=\"button\" class=\"jamali-usemode\" data-mode=\"organisation\">Organisation Use</button>" +
+  "<button type=\"button\" class=\"jamali-usemode\" data-mode=\"personal\">Personal Use</button>" +
+  "</div>" +
+  "<button type=\"button\" id=\"jamali-switch\">Switch Account</button>" +
+  "<button type=\"button\" id=\"jamali-logout\">Logout</button>";
+ acct.querySelector(".who b").textContent = who;
+ document.body.insertBefore(acct, document.body.firstChild);
+
+  document.getElementById("jamali-person").addEventListener("click",
+function (ev) {
+    ev.stopPropagation();
+    acct.hidden = !acct.hidden;
+    if (!acct.hidden) paintModeButtons();
+  });
+  document.addEventListener("click", function (ev) {
+    if (!acct.hidden && ev.target !== acct && !acct.contains(ev.target))
+acct.hidden = true;
+  });
+
+  // Change Mode: anyone - an account or a personal user with no account -
+  // can flip the mode here. It saves the preference and reloads so access
+  // follows it; pages and data are the same in both modes.
+  function paintModeButtons() {
+    var mode = readMode();
+    var btns = acct.querySelectorAll(".jamali-usemode");
+    for (var i = 0; i < btns.length; i++) {
+      var on = btns[i].getAttribute("data-mode") === mode;
+      btns[i].className = "jamali-usemode" + (on ? " on" : "");
+    }
+  }
+  (function () {
+    var btns = acct.querySelectorAll(".jamali-usemode");
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          var m = btn.getAttribute("data-mode");
+          if (m === readMode()) { acct.hidden = true; return; }
+          setMode(m);
+          location.reload();
+        });
+      })(btns[i]);
+    }
+    paintModeButtons();
+  })();
+
+  
+  document.getElementById("jamali-switch").addEventListener("click",
+function () {
+    clearSession();
+    clearMode();
+    location.href = "/";
+  });
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  document.getElementById("jamali-logout").addEventListener("click",
+function () {
+    clearSession();
+    clearMode();
+    location.href = "/";
+ });
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  document.getElementById("jamali-google-logout").addEventListener("click",
+  function () {
+    var btn = document.getElementById("jamali-google-logout");
+    btn.disabled = true;
+    btn.textContent = "Logging out...";
+    clearSession();
+    clearMode();
+    import("/502.js").then(function (fb) {
+      return fb.signOut(fb.auth);
+    }).then(function () {
+      location.href = "/";
+    }).catch(function (e) {
+      console.warn("google logout failed", e);
+      btn.disabled = false;
+      btn.textContent = "Sign-out failed";
+      setTimeout(function () { btn.textContent = "Logout"; }, 2500);
+    });
+  });
+
+  
+  
+  var toast = document.createElement("div");
+  toast.id = "jamali-toast";
+  toast.setAttribute("role", "status");
+  document.body.appendChild(toast);
+  var toastTimer = null;
+  function jamaliToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add("jamali-toast-on");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("jamali-toast-on"); }, 2000);
+  }
+  document.getElementById("jamali-side-gear").addEventListener("click", function () {
+    jamaliSettingsOpen();
+  });
+
+  function ensureAdminBtn() {
+    if (document.getElementById("jamali-admin-btn")) return;
+    var abtn = document.createElement("button");
+    abtn.id = "jamali-admin-btn";
+    abtn.type = "button";
+    abtn.textContent = "Admin";
+    abtn.title = "Account Administration";
+    abtn.addEventListener("click", function () {
+      location.href = "/system-admin/380";
+    });
+    document.body.appendChild(abtn);
+  }
+  if ((session && session.role === "admin") || (!session && readMode() === "personal")) {
+    ensureAdminBtn();
+  }
+
+  
+  
+  
+  
+  if (session && session.username) {
+    import("/502.js").then(function (fb) {
+      var uid = fb.auth && fb.auth.currentUser;
+      var ready = uid
+        ? Promise.resolve(uid)
+        : new Promise(function (res) {
+            var off = fb.onAuthStateChanged(fb.auth, function (u) { off();
+res(u); });
+          });
+      return ready.then(function (u) {
+        if (!u) return null;
+        var id = String(session.username || "").toLowerCase();
+        return fb.getDoc(fb.doc(fb.db, "systemAccounts", id));
+     });
+   }).then(function (snap) {
+     if (!snap || !snap.exists()) return;
+     var a = snap.data();
+     var next = {
+       uid: session.uid,
+       username: a.usernameDisplay || session.username,
+       position: a.position || "",
+       role: a.role || "user",
+       grants: Array.isArray(a.grants) ? a.grants : [],
+       at: session.at
+     };
+     var same = next.username === session.username &&
+              next.role === session.role &&
+              next.position === (session.position || "") &&
+              JSON.stringify(next.grants) ===
+JSON.stringify(session.grants || []);
+     if (!same) {
+       writeSession(next); try { paintNav(); } catch (e) {}  
+      
+     }
+   }).catch(function () {
+      
+   });
+ }
+
+  
+  function sync(btn) {
+    var box = btn.parentNode.nextElementSibling;
+    var open = !!(box && !box.hasAttribute("hidden"));
+    btn.textContent = open ? "(\u2212)" : "(+)";
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function wireToggles(scope){
+  var tgs=scope.querySelectorAll(".tg");
+  for(var t=0;t<tgs.length;t++){
+    (function(btn){
+      if (isAdmin() && btn.classList.contains("jamali-menu-hide")) {
+        // The administrator's sidebar minus: one click hides this whole area
+        // (every page under it included) for every user, live. The button
+        // turns red while the area is hidden; clicking it again restores.
+        btn.textContent = "(\u2212)";
+        btn.addEventListener("click", function () {
+          var f = btn.getAttribute("data-mkey");
+          if (!f) return;
+          makeMenuToggler(f, btn)();
+        });
+        return;
+      }
+      sync(btn);
+      btn.addEventListener("click",function(){
+        var box=btn.parentNode.nextElementSibling;
+        if(!box)return;
+        if(box.hasAttribute("hidden")){box.removeAttribute("hidden");}
+        else{box.setAttribute("hidden","");}
+        sync(btn);
+      });
+    })(tgs[t]);
+  }
+}
+wireToggles(aside);
+ 
+function paintNav(){
+  session=readSession();
+  visible=PAGES.map(function(p){return folderAllowed(p.folder);});
+  for(var v=0;v<PAGES.length;v++){
+    if(visible[v])continue;
+    var my=PAGES[v].d||0;
+    for(var w=v+1;w<PAGES.length;w++){
+      if((PAGES[w].d||0)<=my)break;
+      visible[w]=false;
+    }
+  }
+  var nv=aside.querySelector("nav"),nav="";
+  for(var r=0;r<PAGES.length;r++){
+    if((PAGES[r].d||0)<=1&&visible[r])nav+=render(r);
+  }
+  nv.innerHTML=nav;
+  wireToggles(nv);
+  try { applySidebarVis(); } catch (e) {}
+}
+
+  
+  
+  
+  function filterLinks(root) {
+    var links = (root || document).querySelectorAll("a[href]");
+    for (var i = 0; i < links.length; i++) {
+      if (insideJamaliUi(links[i])) continue;
+      var href = links[i].getAttribute("href") || "";
+      var m = href.match(/^\/([a-z0-9-]+)\//i);
+      if (!m) continue;
+      if (m[1] === current) continue;                 
+      if (!folderAllowed(m[1])) { links[i].style.display = "none"; continue; }
+      
+      
+      var rest = href.slice(m[0].length).replace(/\.html$/,
+"").replace(/\/+$/, "");
+      if (menuHidden(m[1]) || pageHidden(m[1] + "/" + rest))
+links[i].style.display = "none";
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+  try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
+  });
+  } else {
+    try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
+  }
+
+ 
+ 
+ 
+ 
+ bootVisibility().then(function () {
+   applySidebarVis();
+   try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
+   if (isAdmin()) { ensureHiddenChip(); ensureVisPanel();
+refreshHiddenChip(); }
+   pageBoot();
+ });
+
+  
+  
+  
+  
+  
+  function hiddenItems() {
+    var out = [];
+    for (var k in VIS.menu) {
+      if (Object.prototype.hasOwnProperty.call(VIS.menu, k) &&
+VIS.menu[k]) {
+        out.push({ kind: "menu", key: k });
+      }
+    }
+    for (var f in VIS.fields) {
+      if (Object.prototype.hasOwnProperty.call(VIS.fields, f) &&
+VIS.fields[f]) {
+        out.push({ kind: "field", key: f });
+      }
+    }
+    return out;
+  }
+
+ function hiddenLabel(it) {
+   if (it.kind === "menu") return "Area: " + labelOf(it.key);
+   var i = it.key.indexOf(":");
+   var page = it.key.slice(0, i), k = it.key.slice(i + 1);
+   return k === "__page__" ? ("Page: " + page) : (k + " — " + page);
+ }
+
+ function ensureHiddenChip() {
+   if (document.getElementById("jamali-hidden-chip")) return;
+   var c = document.createElement("button");
+   c.type = "button";
+   c.id = "jamali-hidden-chip";
+    c.hidden = true;
+    c.title = "Everything the dashes hid — click to restore any of it";
+    c.addEventListener("click", function () {
+      var p = document.getElementById("jamali-vis-panel");
+      if (!p) return;
+      p.hidden = !p.hidden;
+      if (!p.hidden) renderHiddenPanel();
+    });
+    document.body.appendChild(c);
+}
+
+function ensureVisPanel() {
+  if (document.getElementById("jamali-vis-panel")) return;
+  var p = document.createElement("div");
+  p.id = "jamali-vis-panel";
+  p.hidden = true;
+  document.body.appendChild(p);
+}
+
+function refreshHiddenChip() {
+  if (!isAdmin()) return;
+  ensureHiddenChip();
+  var c = document.getElementById("jamali-hidden-chip");
+  var n = hiddenItems().length;
+  c.hidden = n === 0;
+  c.textContent = "Hidden (" + n + ")";
+  var p = document.getElementById("jamali-vis-panel");
+  if (p && !p.hidden) renderHiddenPanel();
+}
+
+function renderHiddenPanel() {
+  var p = document.getElementById("jamali-vis-panel");
+  if (!p) return;
+  var items = hiddenItems();
+  p.innerHTML = "";
+  var h = document.createElement("b");
+  h.textContent = "Hidden by the administrator";
+  p.appendChild(h);
+  if (!items.length) {
+    var e = document.createElement("div");
+    e.className = "jamali-vis-row";
+    e.textContent = "Nothing is hidden.";
+    p.appendChild(e);
+      return;
+     }
+     for (var i = 0; i < items.length; i++) {
+       (function (it) {
+         var row = document.createElement("div");
+         row.className = "jamali-vis-row";
+         var s = document.createElement("span");
+         s.textContent = hiddenLabel(it);
+         var b = document.createElement("button");
+         b.type = "button";
+         b.className = "jamali-vis-show";
+         b.textContent = "Show";
+         b.addEventListener("click", function () { restoreItem(it); });
+         row.appendChild(s);
+         row.appendChild(b);
+         p.appendChild(row);
+       })(items[i]);
+     }
+     var all = document.createElement("button");
+     all.type = "button";
+     all.className = "jamali-vis-showall";
+     all.textContent = "Show all";
+     all.addEventListener("click", showAllHidden);
+     p.appendChild(all);
+ }
+
+ 
+ 
+ function clearGoneMarks() {
+   var gones = document.querySelectorAll("[data-jamali-gone]");
+   for (var g = 0; g < gones.length; g++) {
+     gones[g].removeAttribute("data-jamali-gone");
+     gones[g].style.display = "";
+   }
+ }
+
+ function restoreItem(it) {
+   import("/502.js").then(function (fb) {
+    return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
+VIS_DOC[1])).then(function (snap) {
+     var d = snap.exists() ? snap.data() : {};
+     VIS.fields = d.fields || {};
+         VIS.menu = d.menu || {};
+         VIS.options = d.options || {};
+         if (it.kind === "menu") delete VIS.menu[it.key];
+         else delete VIS.fields[it.key];
+         return saveVisibility();
+       });
+     }).then(function () {
+       clearGoneMarks();
+       afterVisChange();
+       var p = document.getElementById("jamali-vis-panel");
+       if (p && !p.hidden) renderHiddenPanel();
+     }).catch(function (e) {
+       console.warn("restore failed", e);
+     });
+ }
+
+ function showAllHidden() {
+   import("/502.js").then(function (fb) {
+     return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
+VIS_DOC[1])).then(function (snap) {
+       var d = snap.exists() ? snap.data() : {};
+       VIS.options = d.options || {};
+       VIS.fields = {};
+       VIS.menu = {};
+       return saveVisibility();
+     });
+   }).then(function () {
+     clearGoneMarks();
+     afterVisChange();
+     renderHiddenPanel();
+   }).catch(function (e) {
+     console.warn("restore all failed", e);
+   });
+ }
+
+  
+  
+  
+  
+  
+  function applySidebarVis() {
+    var nodes = document.querySelectorAll("#jamali-sidebar .node[data-folder]");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var f = node.getAttribute("data-folder");
+      var gone = menuHidden(f) || pageHidden(pageIdOfFolder(f));
+      if (isAdmin()) {
+        // The administrator keeps the whole tree on screen and reads the
+        // hidden areas from the red minus buttons, so restoring is one
+        // click away; ordinary users get the rows removed completely.
+        node.style.display = "";
+        var kx = node.nextElementSibling;
+        if (kx && kx.classList && kx.classList.contains("kids")) kx.style.display = "";
+        node.classList.toggle("jamali-menu-gone", gone);
+        continue;
+      }
+      node.classList.remove("jamali-menu-gone");
+      node.style.display = gone ? "none" : "";
+      if (gone) {
+        var nx = node.nextElementSibling;
+        if (nx && nx.classList && nx.classList.contains("kids"))
+nx.style.display = "none";
+      }
+    }
+    if (isAdmin()) {
+      var mhs = document.querySelectorAll("#jamali-sidebar .tg.jamali-menu-hide");
+      for (var m = 0; m < mhs.length; m++) {
+        var mf = mhs[m].getAttribute("data-mkey");
+        if (!mf) continue;
+        var mg = menuHidden(mf);
+        mhs[m].classList.toggle("jamali-off", mg);
+        var top = mg ? nearestHiddenAncestor(mf) : null;
+        mhs[m].title = !mg
+          ? "Hide this area for every user - its sub-pages hide with it. Click again to restore."
+          : (top
+            ? ("Hidden under " + labelOf(top) + " - click to restore that area and everything under it")
+            : "Hidden for every user - click to restore it");
+      }
+      return;
+    }
+    var tgl = document.querySelectorAll("#jamali-sidebar .tg");
+    // Folding an empty area reads element sizes, so it waits for a
+    // styled page - measuring while the stylesheets are still
+    // downloading forces a layout on unstyled content.
+    whenStylesReady(function () {
+      for (var j = 0; j < tgl.length; j++) {
+        var box = tgl[j].parentNode.nextElementSibling;
+        if (!box || !box.classList || !box.classList.contains("kids")) continue;
+        var rows = box.querySelectorAll(".node");
+        var alive = 0;
+        for (var r = 0; r < rows.length; r++) {
+          if (isVisibleEl(rows[r])) alive++;
+        }
+        if (!alive) {
+          tgl[j].style.display = "none";
+          box.style.display = "none";
+        } else {
+          tgl[j].style.display = "";
+          box.style.display = "";
+        }
+      }
+    });
+  }
+
+ function setDashState(b, off, what) {
+   b.classList.toggle("jamali-off", !!off);
+   b.title = off
+    ? "Hidden — restore it from the Hidden panel (bottom-right)"
+    : "Click to hide " + what + " completely (restore from the Hidden panel)";
+ }
+
+ function saveVisibility() {
+   return import("/502.js").then(function (fb) {
+    return fb.setDoc(fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]), {
+      scope: "visibility",
+         fields: VIS.fields,
+         menu: VIS.menu,
+         options: VIS.options,
+         updatedBy: (session && session.username) || "",
+         updatedAt: fb.serverTimestamp()
+       });
+     });
+ }
+
+ function dashError(b) {
+   b.textContent = "!";
+   setTimeout(function () { b.textContent = "-"; }, 1500);
+ }
+
+ 
+ function mainEl() {
+   return document.getElementById("app") ||
+document.querySelector("main") || document.body;
+ }
+
+  function pageBoot() {
+    if (!PAGE_ID) return;
+    
+    
+    
+    if (current === "system-admin") return;
+    var main = mainEl();
+    var run = function () {
+      VIS_CHANGE = liveVisChange;
+      if (isAdmin()) {
+        // The administrator's page scan reads element sizes too - it
+        // waits for a styled page the same way the sidebar folding does.
+        whenStylesReady(function () {
+          scanAdminPage(main);
+          watchPage(main, function () { scanAdminPage(main); });
+        });
+      } else {
+        guardUserPage(main);
+      }
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", run);
+    } else {
+      run();
+    }
+  }
+
+ 
+ 
+ 
+ 
+ function hasAnyGrant() {
+   return !!(session && Array.isArray(session.grants) &&
+session.grants.length);
+ }
+
+ function guardUserPage(main) {
+   if (menuHidden(current) || pageHidden(PAGE_ID)) { blockPage();
+return; }
+   if (ALWAYS_OPEN.indexOf(current) === -1 && !hasAnyGrant()) { if (current === "home") { blankHome(main); return; } blockAllowance(); return; }
+   if (!folderAllowed(current) && ALWAYS_OPEN.indexOf(current)
+=== -1) { blockPage(); return; }
+   applyUserHides(main);
+   watchPage(main, function () { applyUserHides(main); });
+ }
+
+ 
+  
+  function blankHome(main) {
+    try { if (main) main.style.display = "none"; } catch (e) {}
+  }
+
+function blockAllowance() {
+   var app = document.getElementById("app");
+   if (app) {
+     app.style.display = "none";
+   } else {
+     var kids = Array.prototype.slice.call(document.body.children);
+     for (var i = 0; i < kids.length; i++) {
+       var id = kids[i].id || "";
+       if (id.indexOf("jamali-") === 0) continue;
+       kids[i].style.display = "none";
+     }
+   }
+   var n = document.createElement("div");
+   n.className = "jamali-vis-notice";
+   n.innerHTML = "<b>Please wait for admin module allowance.</b>"
++
+     "<span>Your account is approved, but the administrator has not allowed any module for it yet. " +
+     "You will see your modules here as soon as the administrator selects them for you.</span>";
+   document.body.appendChild(n);
+ }
+ function blockPage() {
+   var app = document.getElementById("app");
+   if (app) {
+     app.style.display = "none";
+   } else {
+     var kids = Array.prototype.slice.call(document.body.children);
+     for (var i = 0; i < kids.length; i++) {
+       var id = kids[i].id || "";
+       if (id.indexOf("jamali-") === 0) continue;
+       kids[i].style.display = "none";
+     }
+   }
+   var n = document.createElement("div");
+   n.className = "jamali-vis-notice";
+   n.innerHTML = "<b>This page is not available for your account.</b>" +
+     "<span>It was hidden by the administrator or your account does not include it. " +
+     "Use the menu on the left, or ask the administrator to grant you access.</span>";
+   document.body.appendChild(n);
+ }
+
+  
+  
+  
+  function slug(text) {
+    return String(text || "").trim().toLowerCase().replace(/[^a-z0-9]+/g,
+"-")
+      .replace(/^-+|-+$/g, "").slice(0, 40);
+  }
+
+ function insideJamaliUi(el) {
+   return !!(el.closest && el.closest("#jamali-sidebar,#jamali-acct,#jamali-admin-btn,#jamali-burger,#jamali-overlay,.jamali-vis-notice,#jamali-hidden-chip,#jamali-vis-panel,#jamali-settings"));
+ }
+
+ function isVisibleEl(el) {
+   if (el.closest && el.closest("[hidden]")) return false;
+   return !!(el.offsetWidth || el.offsetHeight ||
+el.getClientRects().length);
+ }
+  
+  
+  
+  
+  
+  function scanTargets(root) {
+    var map = {}, seq = 0;
+    function put(key, el, wrap, labelEl) {
+      if (!key) return;
+      // Two controls may share a label or carry no id at all; give the
+      // second one a numbered key so every field and every button gets
+      // its own dash and its own hide state, stable across rescans.
+      var k = key, n = 2;
+      while (map[k]) { k = key + "-" + n; n++; }
+      map[k] = { el: el, wrap: wrap || null, labelEl: labelEl || null, dash: null };
+    }
+    var ctrls = root.querySelectorAll("input, select, textarea");
+    for (var i = 0; i < ctrls.length; i++) {
+      var c = ctrls[i];
+      if (c.type === "hidden" || c.classList.contains("jamali-opts") ||
+          insideJamaliUi(c) ||
+          (!isVisibleEl(c) && !c._jamaliDash &&
+!c.hasAttribute("data-jamali-opts") &&
+!c.hasAttribute("data-jamali-gone"))) continue;
+      var row = c.closest ? c.closest("label") : null;
+      if (row && !insideJamaliUi(row)) {
+        
+        var multi =
+row.querySelectorAll("input,select,textarea,button").length > 1;
+        put(c.id || ("row-" + (slug(row.textContent) || ("x" + (++seq)))), c,
+multi ? null : row, null);
+      } else {
+        var lab = null;
+        if (c.id && /^[A-Za-z0-9_-]+$/.test(c.id)) {
+          lab = root.querySelector('label[for="' + c.id + '"]');
+        }
+        put(c.id || ("row-" + (slug(c.name || c.type) || ("x" + (++seq)))), c,
+null, lab);
+      }
+    }
+    var btns = root.querySelectorAll("button");
+    for (var j = 0; j < btns.length; j++) {
+      var b = btns[j];
+      if (b.classList.contains("jamali-dash") || b.classList.contains("tg"))
+continue;
+      if (insideJamaliUi(b) || (!isVisibleEl(b) && !b._jamaliDash &&
+!b.hasAttribute("data-jamali-gone"))) continue;
+      put(b.id || ("btn-" + (slug(b.textContent) || ("x" + (++seq)))), b, null,
+null);
+    }
+    return map;
+  }
+
+ function fieldsForPage() {
+   var out = {}, prefix = PAGE_ID + ":";
+   for (var k in VIS.fields) {
+     if (Object.prototype.hasOwnProperty.call(VIS.fields, k) &&
+k.indexOf(prefix) === 0) {
+       out[k.slice(prefix.length)] = true;
+     }
+   }
+   return out;
+ }
+
+ function optionsForPage() {
+   var out = {}, prefix = PAGE_ID + ":";
+   for (var k in VIS.options) {
+     if (Object.prototype.hasOwnProperty.call(VIS.options, k) &&
+k.indexOf(prefix) === 0) {
+       var v = VIS.options[k];
+       if (Array.isArray(v) && v.length) out[k.slice(prefix.length)] = v;
+     }
+   }
+   return out;
+ }
+
+ function fireInput(el) {
+   var evs = ["input", "change"];
+   for (var i = 0; i < evs.length; i++) {
+     try { el.dispatchEvent(new Event(evs[i], { bubbles: true })); } catch (e) {}
+   }
+ }
+
+ // The predefined-options swap: the original input stays in the DOM (the
+ // page's own script keeps reading and writing it), it is just hidden and a
+ // select is placed in its spot, mirroring every choice back into it.
+ function applyFieldOptions(el, list) {
+   var sel = el._jamaliOpts || null;
+   if (!list || !list.length) {
+     if (sel && sel.parentNode) sel.parentNode.removeChild(sel);
+     el._jamaliOpts = null;
+     if (el.getAttribute("data-jamali-opts")) {
+       el.removeAttribute("data-jamali-opts");
+       if (!el.getAttribute("data-jamali-gone")) el.style.display = "";
+     }
+     return;
+   }
+   if (!sel) {
+     sel = document.createElement("select");
+     sel.className = "jamali-opts";
+     sel.addEventListener("change", function () {
+       if (el.value === sel.value) return;
+       el.value = sel.value;
+       fireInput(el);
+     });
+     el._jamaliOpts = sel;
+     if (el.parentNode) el.parentNode.insertBefore(sel, el.nextSibling);
+     else document.body.appendChild(sel);
+   }
+   if (!el._jamaliOptsWired) {
+     el._jamaliOptsWired = true;
+     el.addEventListener("change", function () {
+       if (el._jamaliOpts && el._jamaliOpts.value !== el.value)
+el._jamaliOpts.value = el.value;
+     });
+   }
+   var cur = el.value == null ? "" : String(el.value);
+   var items = list.slice();
+   if (cur && items.indexOf(cur) === -1) items.unshift(cur);
+   // Rebuild the <option> children only when the list really changed;
+   // rebuilding on every scan would keep re-firing the page watcher.
+   var sig = JSON.stringify(items);
+   if (sel._jamaliSig !== sig) {
+     sel._jamaliSig = sig;
+     sel.innerHTML = "";
+     for (var i = 0; i < items.length; i++) {
+       var o = document.createElement("option");
+       o.value = items[i];
+       o.textContent = items[i];
+       sel.appendChild(o);
+     }
+   }
+   var want = (cur && items.indexOf(cur) !== -1) ? cur : items[0];
+   sel.value = want;
+   if (el.value !== want) { el.value = want; fireInput(el); }
+   el.style.display = "none";
+   if (!el.getAttribute("data-jamali-opts")) el.setAttribute("data-jamali-opts", "1");
+   sel.style.display = "";
+   sel.removeAttribute("data-jamali-gone");
+ }
+
+ function applyUserHides(root) {
+   var map = scanTargets(root);
+   var hidden = fieldsForPage();
+   var opts = optionsForPage();
+   for (var key in map) {
+     if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+     var t = map[key], el = t.el;
+     var isField = el.tagName !== "BUTTON";
+     var off = effHidden(key, el, hidden);
+     if (off) {
+       // Ordinary users lose the control completely - the field, its
+       // label and its wrapping row all close up, so no empty space and
+       // no trace that the control ever existed is left behind.
+       var host = t.wrap || el;
+       host.style.display = "none";
+       host.setAttribute("data-jamali-gone", "1");
+       if (t.labelEl && t.labelEl !== host) {
+         t.labelEl.style.display = "none";
+         t.labelEl.setAttribute("data-jamali-gone", "1");
+       }
+       if (el !== host) el.style.display = "none";
+       if (!el.getAttribute("data-jamali-gone")) el.setAttribute("data-jamali-gone", "1");
+     } else {
+       if (el.getAttribute("data-jamali-gone")) {
+         el.removeAttribute("data-jamali-gone");
+         if (!el.getAttribute("data-jamali-opts")) el.style.display = "";
+       }
+       if (t.wrap && t.wrap.getAttribute("data-jamali-gone")) {
+         t.wrap.removeAttribute("data-jamali-gone");
+         t.wrap.style.display = "";
+       }
+       if (t.labelEl && t.labelEl.getAttribute("data-jamali-gone")) {
+         t.labelEl.removeAttribute("data-jamali-gone");
+         t.labelEl.style.display = "";
+       }
+     }
+     if (isField) {
+       applyFieldOptions(el, opts[key]);
+       var sel = el._jamaliOpts;
+       if (sel) sel.style.display = off ? "none" : "";
+     }
+   }
+ }
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  // The + control: define the option list ordinary users must pick from.
+  function makeOptions(key, el, btn) {
+    return function () {
+      var full = PAGE_ID + ":" + key;
+      var cur = Array.isArray(VIS.options[full]) ?
+VIS.options[full].join(" | ") : "";
+      var ans = window.prompt(
+        "Predefined options for this field. Separate them with | - users " +
+        "will pick from this list only. Leave empty to go back to free typing:",
+        cur);
+      if (ans === null) return;
+      var parts = ans.split(/\||\n/), list = [];
+      for (var i = 0; i < parts.length; i++) {
+        var v = parts[i].trim();
+        if (v && list.indexOf(v) === -1) list.push(v);
+      }
+      import("/502.js").then(function (fb) {
+        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
+VIS_DOC[1])).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          if (list.length) VIS.options[full] = list;
+          else delete VIS.options[full];
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("options save failed", e);
+        dashError(btn);
+      });
+    };
+  }
+
+  function scanAdminPage(root) {
+    var map = scanTargets(root);
+    var hidden = fieldsForPage();
+    var opts = optionsForPage();
+    for (var key in map) {
+      if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+      var t = map[key], el = t.el;
+      var isField = el.tagName !== "BUTTON";
+      if (!el._jamaliDash) {
+        var dash = document.createElement("button");
+        dash.type = "button";
+        dash.className = "jamali-dash";
+        dash.textContent = "\u2212";
+        dash.addEventListener("click", makeToggler(key, dash));
+        el._jamaliDash = dash;
+        placeDash(t, dash);
+      }
+      if (isField && !el._jamaliPlus) {
+        var plus = document.createElement("button");
+        plus.type = "button";
+        plus.className = "jamali-dash jamali-plus" +
+          (el._jamaliDash.classList.contains("jamali-corner-dash") ? " jamali-corner-dash" : "");
+        plus.textContent = "+";
+        plus.title = "Predefined options - users must pick from this list";
+        plus.addEventListener("click", makeOptions(key, el, plus));
+        el._jamaliPlus = plus;
+        var dh = el._jamaliDash;
+        if (dh && dh.parentNode) dh.parentNode.insertBefore(plus,
+dh.nextSibling);
+        else placeDash(t, plus);
+      }
+      var off = effHidden(key, el, hidden);
+      setDashState(el._jamaliDash, off, isField ? "this field" : "this button");
+      if (isField) applyFieldOptions(el, opts[key]);
+      var mark = (isField && el._jamaliOpts) ? el._jamaliOpts : el;
+      mark.classList.toggle("jamali-vis-mark", !!off);
+      if (isField && el._jamaliOpts) el._jamaliOpts.style.display = "";
+    }
+  }
+
+
+function effHidden(key, el, hidden) {
+  if (hidden[key]) return true;
+  var p = el ? el.parentElement : null;
+  while (p && p !== document.body) {
+    var k = p.getAttribute && p.getAttribute("data-jamali-key");
+    if (k && hidden[k]) return true;
+    p = p.parentElement;
+  }
+  return false;
+}
+
+function placeDash(t, b) {
+   if (b.parentNode) return; 
+   
+   
+   var host = t.wrap || t.el;
+   var tag = host.tagName;
+   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
+     // Tiny controls (checkbox, radio) keep the dash beside them; every
+     // other field gets the dash pinned to its top-right corner.
+     var sp = document.createElement("span");
+     sp.className = "jamali-ctl-host";
+     host.parentNode.insertBefore(sp, host);
+     sp.appendChild(host);
+     sp.appendChild(b);
+     if (host.type !== "checkbox" && host.type !== "radio") {
+       b.classList.add("jamali-corner-dash");
+     }
+     return;
+   }
+   host.classList.add("jamali-vis-host");
+   b.classList.add("jamali-corner-dash");
+   host.insertBefore(b, host.firstChild);
+ }
+
+  function makeToggler(key, btn) {
+    return function () {
+      import("/502.js").then(function (fb) {
+        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
+VIS_DOC[1])).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          var full = PAGE_ID + ":" + key;
+          if (VIS.fields[full]) delete VIS.fields[full]; else VIS.fields[full] =
+true;
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("visibility save failed", e);
+        dashError(btn);
+      });
+    };
+  }
+
+ 
+  
+  // The sidebar area minus: hides (or restores) a whole menu area for every
+  // user. If the area is hidden only by itself the click restores it; if it
+  // is hidden because an ancestor is hidden, the click restores that
+  // nearest hidden ancestor, since a child of a hidden parent can never
+  // show on its own.
+  function makeMenuToggler(folder, btn) {
+    return function () {
+      import("/502.js").then(function (fb) {
+        return fb.getDoc(fb.doc(fb.db, VIS_DOC[0],
+VIS_DOC[1])).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          if (VIS.menu[folder]) delete VIS.menu[folder];
+          else {
+            var top = nearestHiddenAncestor(folder);
+            if (top) delete VIS.menu[top];
+            else VIS.menu[folder] = true;
+          }
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("menu visibility save failed", e);
+        menuToggleError(btn);
+      });
+    };
+  }
+
+  function menuToggleError(btn) {
+    btn.textContent = "!";
+    setTimeout(function () { btn.textContent = "(\u2212)"; }, 1500);
+  }
+
+  // The nearest ancestor of the folder that is hidden in its own right;
+  // chainOf returns the folder last, so the walk starts at its parent.
+  function nearestHiddenAncestor(folder) {
+    var c = chainOf(folder);
+    for (var i = c.length - 2; i >= 0; i--) {
+      if (VIS.menu[c[i]]) return c[i];
+    }
+    return null;
+  }
+
+  function labelOf(folder) {
+    for (var i = 0; i < PAGES.length; i++) {
+      if (PAGES[i].folder === folder) return PAGES[i].label || folder;
+    }
+    return folder;
+  }
+
+  function afterVisChange() {
+    applySidebarVis();
+    scanAdminPage(mainEl());
+    refreshHiddenChip();
+  }
+
+  
+  
+  // Fired by the live Firestore channel: the administrator changed the
+  // visibility document somewhere, so re-apply everything right here.
+  function liveVisChange() {
+    applySidebarVis();
+    try { filterLinks(document); } catch (e) {}
+    if (!PAGE_ID || current === "system-admin") return;
+    var blocked = menuHidden(current) || pageHidden(PAGE_ID);
+    if (!isAdmin() && blocked && !document.querySelector(".jamali-vis-notice")) {
+      // The page this user is reading has just been hidden from the
+      // administrator's sidebar minus - block it on the spot, no reload.
+      blockPage();
+      return;
+    }
+    if (!isAdmin() && document.querySelector(".jamali-vis-notice") && !blocked) {
+      // This page was blocked before and the administrator has just
+      // allowed it again - a reload brings the real page in.
+      location.reload();
+      return;
+    }
+    var main = mainEl();
+    if (isAdmin()) { scanAdminPage(main); refreshHiddenChip(); }
+    else if (!blocked) applyUserHides(main);
+  }
+
+  
+  
+  function watchPage(root, fn) {
+    if (!window.MutationObserver) return;
+    var t = null;
+    new MutationObserver(function () {
+      if (t) clearTimeout(t);
+      t = setTimeout(fn, 350);
+    }).observe(root, { childList: true, subtree: true,
+      attributes: true, attributeFilter: ["hidden", "style", "class"] });
+  }
+
+  /* ======================================================================
+     Settings (the gear) with the Data Deletion Workflow.
+     - The gear opens a real Settings panel; the AI button is untouched.
+     - "Show Delete Data" opens the deletion section:
+         * personal use (no account) and administrator accounts delete
+           their data directly: warning -> confirmation -> permanent
+           deletion (a retention copy is archived into
+           systemDeletionAudit first) -> success message;
+         * organisation accounts never delete shared data directly:
+           warning -> confirmation -> reason -> final confirmation ->
+           the request lands in systemDeletionRequests, the data stays
+           untouched, and the administrator decides it in Data
+           Deletion Requests;
+       decisions come back here live in "My deletion requests" plus a
+       notification record written by the administrator.
+     - The database rules carry the real authority: anything outside
+       this flow is refused server-side.
+     ====================================================================== */
+  /* JD-DELETE-MODULE-START */
+  var SETTINGS_EL = null;
+  var SETTINGS_MINE_UNSUB = null;
+  var MINE_REQS = [];
+
+  var DEL_SCOPE_LIB = {
+    business: { key: "business", label: "Business & accounting", collections: ["transactions"] },
+    stock: { key: "stock", label: "Stock management", collections: ["stockItems", "stockChanges"] },
+    health: { key: "health", label: "Hospital & health records", collections: [
+      "healthRegistrations", "healthTriage", "healthNurseConsultations",
+      "healthDoctorConsultations", "healthPrescriptions", "healthTreatmentOrders",
+      "healthDestinations", "healthWards", "healthBeds", "healthBedAssignments",
+      "healthBedTransfers", "healthBedMaintenance", "healthAdmissions",
+      "healthDischarges", "healthLabRequests", "healthImagingRequests",
+      "healthQueueConfig"
+    ] }
+  };
+
+  function jdEsc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function delErrText(e) {
+    var m = e && (e.code || e.message) ? (e.code || "") + " " + (e.message || "") : String(e);
+    if (String(m).indexOf("permission-denied") !== -1) {
+      return m + " - the database refused this. The updated firestore.rules must be published in the Firebase console first.";
+    }
+    return m;
+  }
+
+  function jamaliTs(t) {
+    try { return t && t.toDate ? t.toDate().getTime() : 0; } catch (e) { return 0; }
+  }
+
+  function delChipClass(st) {
+    var map = { pending: "jd-chip-wait", approved: "jd-chip-go", completed: "jd-chip-go", rejected: "jd-chip-no", failed: "jd-chip-no" };
+    return map[String(st || "pending")] || "jd-chip-wait";
+  }
+
+  function delHasPending(list) {
+    var L = list || MINE_REQS;
+    for (var i = 0; i < L.length; i++) {
+      if (String(L[i].r && L[i].r.status) === "pending") return true;
+    }
+    return false;
+  }
+
+  function delScopesForMe() {
+    // Personal use (no account) and administrator accounts may delete
+    // every data group. An organisation account only the groups behind
+    // its granted modules - the same grants that open its pages - so a
+    // user can never ask to delete data outside their own authority.
+    var M = window.JAMALI_MENU || [];
+    function subtree(root) {
+      var out = [], open = false, depth = 0;
+      for (var i = 0; i < M.length; i++) {
+        var d = M[i].d || 0;
+        if (!open) {
+          if (M[i].folder === root) { open = true; depth = d; out.push(M[i].folder); }
+          continue;
+        }
+        if (d <= depth) break;
+        out.push(M[i].folder);
+      }
+      return out;
+    }
+    var all = !session || session.role === "admin";
+    var g = (session && Array.isArray(session.grants)) ? session.grants : [];
+    function hit(set) {
+      if (all) return true;
+      for (var i = 0; i < set.length; i++) { if (g.indexOf(set[i]) !== -1) return true; }
+      return false;
+    }
+    var stockT = subtree("stock-management");
+    var bizT = subtree("business"), bizOnly = [];
+    for (var b = 0; b < bizT.length; b++) { if (stockT.indexOf(bizT[b]) === -1) bizOnly.push(bizT[b]); }
+    var healthT = subtree("health");
+    var out = [];
+    if (hit(bizOnly)) out.push(DEL_SCOPE_LIB.business);
+    if (hit(stockT)) out.push(DEL_SCOPE_LIB.stock);
+    if (hit(healthT)) out.push(DEL_SCOPE_LIB.health);
+    return out;
+  }
+
+  function jamaliDeleteActor(fb) {
+    var u = fb.auth && fb.auth.currentUser;
+    return {
+      uid: u ? u.uid : "",
+      email: u && u.email ? String(u.email || "").toLowerCase() : "",
+      label: session ? (session.username || "account") : "personal use"
+    };
+  }
+
+  function jamaliSettingsOpen() {
+    if (!SETTINGS_EL) jamaliSettingsBuild();
+    SETTINGS_EL.hidden = !SETTINGS_EL.hidden;
+    if (!SETTINGS_EL.hidden) { jamaliSettingsPaint(); jamaliMineStart(); }
+  }
+
+  function jamaliSettingsBuild() {
+    var st = document.createElement("style");
+    st.textContent = [
+      "#jamali-settings{position:fixed;top:60px;right:14px;z-index:1002;width:380px;max-width:calc(100vw - 28px);",
+      "max-height:calc(100vh - 90px);overflow:auto;background:#111827;border:1px solid #334155;border-radius:14px;",
+      "padding:14px 16px;color:#e2e8f0;font-size:13.5px;box-shadow:0 18px 40px rgba(0,0,0,.5)}",
+      "#jamali-settings .jd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}",
+      "#jamali-settings .jd-head b{font-size:15px}",
+      "#jamali-settings .jd-close{border:0;background:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:8px}",
+      "#jamali-settings .jd-close:hover{background:#1e293b;color:#fff}",
+      "#jamali-settings .jd-who{border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:10px}",
+      "#jamali-settings .jd-who b{display:block;font-size:13.5px}",
+      "#jamali-settings .jd-who span{color:#94a3b8;font-size:12.5px}",
+      "#jamali-settings .jd-cap{font-size:11px;font-weight:800;letter-spacing:.5px;color:#64748b;margin:10px 0 6px;text-transform:uppercase}",
+      "#jamali-settings #jd-show-del{display:block;width:100%;text-align:left;border:1px solid #334155;background:#0b1220;",
+      "color:#e2e8f0;border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:700;cursor:pointer}",
+      "#jamali-settings #jd-show-del:hover{background:#1e293b}",
+      "#jamali-settings .jd-warn{border:1px solid #fca5a5;background:#450a0a;color:#fecaca;border-radius:10px;padding:10px 12px;margin:6px 0 10px;line-height:1.5}",
+      "#jamali-settings .jd-warn b{display:block;margin-bottom:2px}",
+      "#jamali-settings .jd-scopes{display:flex;flex-direction:column;gap:6px;margin:8px 0}",
+      "#jamali-settings .jd-scope{display:flex;gap:8px;align-items:flex-start;border:1px solid #334155;border-radius:10px;padding:8px 10px;cursor:pointer}",
+      "#jamali-settings .jd-scope:hover{background:#1e293b}",
+      "#jamali-settings .jd-scope input{margin-top:2px}",
+      "#jamali-settings .jd-scope b{display:block;font-size:13px}",
+      "#jamali-settings .jd-scope i{display:block;font-style:normal;color:#94a3b8;font-size:11.5px;margin-top:2px}",
+      "#jamali-settings .jd-msg{border-radius:10px;padding:9px 12px;margin:8px 0;line-height:1.5;font-size:13px}",
+      "#jamali-settings .jd-msg.jd-ok{background:#052e16;border:1px solid #4ade80;color:#bbf7d0}",
+      "#jamali-settings .jd-msg.jd-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}",
+      "#jamali-settings .jd-none{color:#94a3b8;font-size:12.5px;padding:6px 0}",
+      "#jamali-settings .jd-danger{display:block;width:100%;border:0;border-radius:10px;background:#dc2626;color:#fff;",
+      "font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:6px}",
+      "#jamali-settings .jd-danger:hover{background:#b91c1c}",
+      "#jamali-settings .jd-danger:disabled,#jamali-settings .jd-primary:disabled{opacity:.55;cursor:default}",
+      "#jamali-settings .jd-primary{display:block;width:100%;border:0;border-radius:10px;background:#0ea5e9;color:#fff;",
+      "font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:8px}",
+      "#jamali-settings .jd-primary:hover{background:#0284c7}",
+      "#jamali-settings .jd-reason{display:block;margin:8px 0 0;color:#cbd5e1;font-size:12.5px}",
+      "#jamali-settings .jd-reason b{display:block;margin-bottom:5px}",
+      "#jamali-settings .jd-reason textarea{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:9px;",
+      "background:#0b1220;color:#e2e8f0;font:inherit;padding:8px 10px;resize:vertical}",
+      "#jamali-settings .jd-decisions{margin:8px 0}",
+      "#jamali-settings .jd-decision{border:1px solid #334155;background:#0b1220;border-radius:10px;padding:8px 10px;",
+      "margin-bottom:6px;line-height:1.5;font-size:12.5px}",
+      "#jamali-settings .jd-decision i{display:block;color:#64748b;font-style:normal;font-size:11px;margin-top:3px}",
+      "#jamali-settings .jd-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}",
+      "#jamali-settings .jd-item{border:1px solid #334155;border-radius:10px;padding:8px 10px}",
+      "#jamali-settings .jd-item-top{display:flex;align-items:center;gap:8px}",
+      "#jamali-settings .jd-what{flex:1;min-width:0;font-size:12.5px;color:#cbd5e1}",
+      "#jamali-settings .jd-chip{font-size:10.5px;font-weight:900;letter-spacing:.5px;border-radius:999px;padding:3px 8px;flex:0 0 auto}",
+      "#jamali-settings .jd-chip-wait{background:#7c2d12;color:#fdba74}",
+      "#jamali-settings .jd-chip-go{background:#14532d;color:#86efac}",
+      "#jamali-settings .jd-chip-no{background:#7f1d1d;color:#fca5a5}",
+      "#jamali-settings .jd-detail{color:#e2e8f0;font-size:12.5px;margin-top:5px;line-height:1.5}",
+      "#jamali-settings .jd-when{color:#64748b;font-size:11px;margin-top:3px}"
+    ].join("");
+    document.head.appendChild(st);
+    SETTINGS_EL = document.createElement("div");
+    SETTINGS_EL.id = "jamali-settings";
+    SETTINGS_EL.setAttribute("role", "dialog");
+    SETTINGS_EL.hidden = true;
+    document.body.appendChild(SETTINGS_EL);
+  }
+
+  function jamaliSettingsPaint() {
+    if (!SETTINGS_EL) return;
+    var h = "";
+    h += "<div class=\"jd-head\"><b>Settings</b><button type=\"button\" class=\"jd-close\" title=\"Close\">&#215;</button></div>";
+    h += "<div class=\"jd-who\"><b></b><span></span></div>";
+    h += "<div class=\"jd-cap\">Data</div>";
+    h += "<button type=\"button\" id=\"jd-show-del\">Show Delete Data</button>";
+    h += "<div id=\"jd-del-body\" hidden></div>";
+    h += "<div id=\"jd-mine\"></div>";
+    SETTINGS_EL.innerHTML = h;
+    SETTINGS_EL.querySelector(".jd-close").addEventListener("click", function () {
+      SETTINGS_EL.hidden = true;
+    });
+    var w = SETTINGS_EL.querySelector(".jd-who");
+    w.querySelector("b").textContent = session ? (session.username || "account") : "Personal use (no account)";
+    w.querySelector("span").textContent = session
+      ? (session.role === "admin" ? "administrator" : (session.position || "user"))
+      : "full owner of this system";
+    SETTINGS_EL.querySelector("#jd-show-del").addEventListener("click", function () {
+      var body = SETTINGS_EL.querySelector("#jd-del-body");
+      body.hidden = !body.hidden;
+      if (!body.hidden) jamaliDeletePaint(body);
+    });
+    jamaliMinePaint(SETTINGS_EL.querySelector("#jd-mine"));
+  }
+
+  function jamaliDeletePaint(body) {
+    var scopes = delScopesForMe();
+    var direct = !session || session.role === "admin";
+    var h = "";
+    h += "<div class=\"jd-cap\">Delete Data</div>";
+    h += "<div class=\"jd-warn\"><b>Permanent deletion.</b> Data removed here cannot be recovered. " +
+      (direct
+        ? "A retention copy goes into the deletion audit record first, then the data is permanently deleted."
+        : "Organisation data is never deleted directly - your request goes to the administrator with your reason, and the data stays untouched until they decide.") +
+      "</div>";
+    if (!scopes.length) {
+      h += "<div class=\"jd-none\">Your account has no data groups available, so there is nothing you are authorised to delete.</div>";
+    } else {
+      h += "<div class=\"jd-scopes\">";
+      for (var i = 0; i < scopes.length; i++) {
+        h += "<label class=\"jd-scope\"><input type=\"checkbox\" value=\"" + scopes[i].key + "\" checked> " +
+          "<span><b>" + jdEsc(scopes[i].label) + "</b><i>" + jdEsc(scopes[i].collections.join(", ")) + " - counting&hellip;</i></span></label>";
+      }
+      h += "</div>";
+      h += "<div class=\"jd-msg\" hidden></div>";
+      if (direct) {
+        h += "<button type=\"button\" id=\"jd-run\" class=\"jd-danger\">Delete Data Permanently</button>";
+      } else {
+        h += "<div id=\"jd-req\" hidden>";
+        h += "<label class=\"jd-reason\"><b>Reason for the deletion request (required)</b>";
+        h += "<textarea id=\"jd-why\" rows=\"3\" placeholder=\"Explain why this data must be deleted\"></textarea></label>";
+        h += "<button type=\"button\" id=\"jd-submit\" class=\"jd-primary\">Submit deletion request</button>";
+        h += "</div>";
+        h += "<button type=\"button\" id=\"jd-ask\" class=\"jd-primary\">Delete Data</button>";
+      }
+    }
+    body.innerHTML = h;
+    body._jdCounts = {};
+    jamaliCountsPaint(body, scopes);
+    jamaliDecisionsPaint(body);
+    var run = body.querySelector("#jd-run");
+    if (run) run.addEventListener("click", function () { jamaliDirectRun(body, scopes); });
+    var ask = body.querySelector("#jd-ask");
+    if (ask) ask.addEventListener("click", function () { jamaliAskRun(body); });
+    var sub = body.querySelector("#jd-submit");
+    if (sub) sub.addEventListener("click", function () { jamaliRequestSubmit(body, scopes); });
+  }
+
+  function jamaliCountsPaint(body, scopes) {
+    import("/502.js").then(function (fb) {
+      var box = body.querySelector(".jd-scopes");
+      if (!box) return;
+      scopes.forEach(function (s) {
+        var total = 0, errs = 0;
+        var jobs = s.collections.map(function (c) {
+          return fb.getDocs(fb.collection(fb.db, c)).then(function (snap) {
+            total += snap.size;
+          }).catch(function () { errs++; });
+        });
+        Promise.all(jobs).then(function () {
+          body._jdCounts[s.key] = errs ? -1 : total;
+          var inp = box.querySelector('input[value="' + s.key + '"]');
+          if (!inp) return;
+          var line = inp.parentNode.querySelector("i");
+          if (line) {
+            line.textContent = s.collections.join(", ") + " - " +
+              (errs ? "count unavailable" : (total ? total + " document" + (total === 1 ? "" : "s") : "already empty"));
+          }
+        });
+      });
+    }).catch(function () {});
+  }
+
+  function jamaliCollectChosen(body, scopes) {
+    var boxes = body.querySelectorAll(".jd-scope input:checked");
+    var out = [];
+    for (var i = 0; i < boxes.length; i++) {
+      for (var j = 0; j < scopes.length; j++) {
+        if (scopes[j].key === boxes[i].value) out.push(scopes[j]);
+      }
+    }
+    return out;
+  }
+
+  function jamaliSay(body, m, bad) {
+    var msg = body.querySelector(".jd-msg");
+    if (!msg) return;
+    msg.hidden = !m;
+    msg.textContent = m || "";
+    msg.className = "jd-msg" + (bad ? " jd-bad" : " jd-ok");
+  }
+
+  // ---- direct path: personal use and administrator accounts ----
+  function jamaliDirectRun(body, scopes) {
+    var chosen = jamaliCollectChosen(body, scopes);
+    if (!chosen.length) { jamaliSay(body, "Select at least one data group first.", true); return; }
+    var cols = [];
+    chosen.forEach(function (s) { s.collections.forEach(function (c) { cols.push(c); }); });
+    if (!window.confirm(
+      "PERMANENT DELETION\n\nThe selected data in " + cols.join(", ") +
+      " will be permanently deleted. A retention copy goes into the deletion audit record first, " +
+      "then every document is removed. This cannot be undone.\n\nDelete now?")) return;
+    var run = body.querySelector("#jd-run");
+    if (run) { run.disabled = true; run.textContent = "Deleting..."; }
+    jamaliSay(body, "Working: reading the data, writing the retention archive, then deleting...", false);
+    import("/502.js").then(function (fb) {
+      return jamaliDeleteExecute(fb, chosen, { kind: "direct", requestId: "" });
+    }).then(function (fin) {
+      if (fin.aborted) {
+        jamaliSay(body, "Nothing was deleted - " + fin.error, true);
+      } else if (fin.totalFailed && !fin.totalDeleted) {
+        jamaliSay(body, "Deletion FAILED - nothing was removed. " + (fin.results[0] && fin.results[0].error ? fin.results[0].error : ""), true);
+      } else if (fin.totalFailed) {
+        jamaliSay(body, "Partially deleted: " + fin.totalDeleted + " document" + (fin.totalDeleted === 1 ? "" : "s") +
+          " deleted, " + fin.totalFailed + " failed. The audit record shows exactly what happened.", true);
+      } else if (fin.totalDeleted) {
+        jamaliSay(body, "Deletion successful: " + fin.totalDeleted + " document" + (fin.totalDeleted === 1 ? "" : "s") +
+          " permanently deleted.", false);
+        jamaliToast("Deletion successful: " + fin.totalDeleted + " document" + (fin.totalDeleted === 1 ? "" : "s") + " permanently deleted");
+      } else {
+        jamaliSay(body, "Nothing to delete - the selected groups are already empty.", false);
+      }
+      if (run) { run.disabled = false; run.textContent = "Delete Data Permanently"; }
+      jamaliCountsPaint(body, scopes);
+    }).catch(function (e) {
+      jamaliSay(body, "Deletion failed - nothing was removed. " + delErrText(e), true);
+      if (run) { run.disabled = false; run.textContent = "Delete Data Permanently"; }
+    });
+  }
+
+  // ---- request path: organisation accounts ----
+  function jamaliAskRun(body) {
+    if (!window.confirm(
+      "PERMANENT DELETION WARNING\n\nYou are asking to permanently delete the selected data groups for the whole organisation. " +
+      "Nothing is deleted until the administrator approves your request.")) return;
+    var req = body.querySelector("#jd-req");
+    if (req) req.hidden = false;
+    var ask = body.querySelector("#jd-ask");
+    if (ask) ask.hidden = true;
+    var why = body.querySelector("#jd-why");
+    if (why) why.focus();
+  }
+
+  function jamaliRequestSubmit(body, scopes) {
+    var chosen = jamaliCollectChosen(body, scopes);
+    if (!chosen.length) { jamaliSay(body, "Select at least one data group first.", true); return; }
+    var why = body.querySelector("#jd-why");
+    var reason = why ? String(why.value || "").trim() : "";
+    if (!reason) {
+      jamaliSay(body, "A reason is required - tell the administrator why this data must be deleted.", true);
+      if (why) why.focus();
+      return;
+    }
+    if (delHasPending()) {
+      jamaliSay(body, "You already have a pending deletion request - the administrator has not decided it yet. " +
+        "It is listed under My deletion requests below.", true);
+      return;
+    }
+    var counts = body._jdCounts || {};
+    var lines = chosen.map(function (s) {
+      var c = counts[s.key];
+      return s.label + " (" + s.collections.join(", ") + ")" +
+        (typeof c === "number" && c >= 0 ? " - " + c + " document" + (c === 1 ? "" : "s") : "");
+    }).join("\n");
+    if (!window.confirm(
+      "SUBMIT DELETION REQUEST\n\nYou: " + (session && session.username ? session.username : "account") +
+      "\nData groups:\n" + lines + "\n\nReason: " + reason +
+      "\n\nNothing is deleted now. The data stays untouched while the request waits, " +
+      "the administrator reviews it and decides, and you are notified of the decision. Submit it?")) return;
+    var sub = body.querySelector("#jd-submit");
+    if (sub) { sub.disabled = true; sub.textContent = "Submitting..."; }
+    import("/502.js").then(function (fb) {
+      var me = fb.auth && fb.auth.currentUser;
+      if (!me) throw new Error("You are not signed in with Google any more - log in again first.");
+      return fb.addDoc(fb.collection(fb.db, "systemDeletionRequests"), {
+        type: "data-deletion",
+        status: "pending",
+        requesterUid: me.uid,
+        requesterEmail: String(me.email || "").toLowerCase(),
+        requesterUsername: (session && session.username) || "",
+        requesterPosition: (session && session.position) || "",
+        accountId: String((session && session.username) || "").toLowerCase(),
+        organisation: "jamal",
+        scopes: chosen.map(function (s) { return s.key; }),
+        scopeDetails: chosen.map(function (s) {
+          var c = counts[s.key];
+          return {
+            key: s.key,
+            label: s.label,
+            collections: s.collections.slice(),
+            docsAtRequest: (typeof c === "number" && c >= 0) ? c : 0
+          };
+        }),
+        reason: reason,
+        decision: null,
+        execution: null,
+        createdAt: fb.serverTimestamp()
+      });
+    }).then(function () {
+      jamaliSay(body, "Your deletion request was submitted. The data stays untouched until the administrator decides - " +
+        "you will see the decision here and under My deletion requests.", false);
+      var req = body.querySelector("#jd-req");
+      if (req) req.hidden = true;
+      if (why) why.value = "";
+      jamaliToast("Deletion request submitted to the administrator");
+    }).catch(function (e) {
+      jamaliSay(body, "Could not submit the request: " + delErrText(e), true);
+    }).then(function () {
+      if (sub) { sub.disabled = false; sub.textContent = "Submit deletion request"; }
+    });
+  }
+
+  // ---- decisions written by the administrator, shown to the requester ----
+  function jamaliDecisionsPaint(body) {
+    if (!session) return;
+    import("/502.js").then(function (fb) {
+      var me = fb.auth && fb.auth.currentUser;
+      if (!me) return;
+      var q = fb.query(fb.collection(fb.db, "systemNotifications"),
+        fb.where("googleUid", "==", me.uid), fb.where("type", "==", "deletion"));
+      return fb.getDocs(q).then(function (snap) {
+        var rows = [];
+        snap.forEach(function (d) { rows.push(d.data()); });
+        if (!rows.length || !body.isConnected) return;
+        rows.sort(function (a, b) { return jamaliTs(b.at) - jamaliTs(a.at); });
+        var h = "<div class=\"jd-decisions\"><div class=\"jd-cap\">Notifications from the administrator</div>";
+        for (var i = 0; i < rows.length && i < 5; i++) {
+          var t = jamaliTs(rows[i].at);
+          h += "<div class=\"jd-decision\">" + jdEsc(rows[i].message || "") +
+            (t ? "<i>" + new Date(t).toLocaleString() + "</i>" : "") + "</div>";
+        }
+        h += "</div>";
+        var anchor = body.querySelector(".jd-msg");
+        if (anchor) anchor.insertAdjacentHTML("beforebegin", h);
+      });
+    }).catch(function () {});
+  }
+
+  // ---- my deletion requests, live ----
+  function jamaliMineStart() {
+    if (!session || SETTINGS_MINE_UNSUB) return;
+    import("/502.js").then(function (fb) {
+      var me = fb.auth && fb.auth.currentUser;
+      if (!me) return;
+      var q = fb.query(fb.collection(fb.db, "systemDeletionRequests"),
+        fb.where("requesterUid", "==", me.uid));
+      SETTINGS_MINE_UNSUB = fb.onSnapshot(q, function (snap) {
+        MINE_REQS = [];
+        snap.forEach(function (d) { MINE_REQS.push({ id: d.id, r: d.data() }); });
+        MINE_REQS.sort(function (a, b) { return jamaliTs(b.r.createdAt) - jamaliTs(a.r.createdAt); });
+        var box = document.getElementById("jd-mine");
+        if (box) jamaliMinePaint(box);
+      }, function () {
+        // rules not published yet, or read refused - the list just stays empty
+      });
+    }).catch(function () {});
+  }
+
+  function jamaliMinePaint(box) {
+    if (!box || !session) return;
+    var h = "<div class=\"jd-cap\">My deletion requests</div>";
+    if (!MINE_REQS.length) {
+      h += "<div class=\"jd-none\">None yet. Submit one from Show Delete Data above - its status appears here live.</div>";
+    } else {
+      h += "<div class=\"jd-list\">";
+      for (var i = 0; i < MINE_REQS.length; i++) {
+        var r = MINE_REQS[i].r || {};
+        var st = String(r.status || "pending");
+        var detail = "";
+        if (st === "pending") detail = "Waiting for the administrator - your data is untouched.";
+        if (st === "approved") detail = "Approved - the deletion is being executed.";
+        if (st === "rejected" && r.decision && r.decision.reason) detail = "Rejected by the administrator: " + r.decision.reason;
+        if (st === "completed" && r.execution) {
+          detail = "Deletion executed: " + (r.execution.totalDeleted || 0) + " document" + ((r.execution.totalDeleted || 0) === 1 ? "" : "s") +
+            " permanently deleted" + ((r.execution.totalFailed || 0) ? (", " + r.execution.totalFailed + " failed") : "") + ".";
+        }
+        if (st === "failed") {
+          detail = "The deletion FAILED - your data was not removed" +
+            (r.execution && r.execution.error ? (": " + r.execution.error) : ". The administrator can see the error in Data Deletion Requests.");
+        }
+        var t = jamaliTs(r.createdAt);
+        h += "<div class=\"jd-item\"><div class=\"jd-item-top\">" +
+          "<span class=\"jd-chip " + delChipClass(st) + "\">" + jdEsc(st.toUpperCase()) + "</span>" +
+          "<span class=\"jd-what\">" + jdEsc((Array.isArray(r.scopes) ? r.scopes : []).join(", ")) + "</span></div>" +
+          (detail ? "<div class=\"jd-detail\">" + jdEsc(detail) + "</div>" : "") +
+          (t ? "<div class=\"jd-when\">requested " + new Date(t).toLocaleString() + "</div>" : "") +
+          "</div>";
+      }
+      h += "</div>";
+    }
+    box.innerHTML = h;
+  }
+
+  // ---- the shared permanent-deletion executor ----
+  // Order is fixed and safe: read everything first, write the retention
+  // archive BEFORE removing anything, then delete in batches. If any
+  // read or the archive write fails, nothing is deleted at all.
+  function jamaliDeleteExecute(fb, chosen, meta) {
+    var cols = [];
+    chosen.forEach(function (s) {
+      s.collections.forEach(function (c) { if (cols.indexOf(c) === -1) cols.push(c); });
+    });
+    var reads = cols.map(function (c) {
+      return fb.getDocs(fb.collection(fb.db, c)).then(function (snap) {
+        var docs = [];
+        snap.forEach(function (d) { docs.push({ id: d.id, data: d.data() }); });
+        return { collection: c, docs: docs, error: "" };
+      }).catch(function (e) {
+        return { collection: c, docs: null, error: delErrText(e) };
+      });
+    });
+    return Promise.all(reads).then(function (groups) {
+      var bad = "";
+      for (var i = 0; i < groups.length; i++) {
+        if (groups[i].docs === null) { bad = groups[i].error; break; }
+      }
+      if (bad) return { aborted: true, error: bad, results: [], totalDeleted: 0, totalFailed: 0 };
+      var CAP = 150;
+      var archive = {};
+      groups.forEach(function (g) {
+        archive[g.collection] = {
+          count: g.docs.length,
+          truncated: g.docs.length > CAP,
+          docs: g.docs.slice(0, CAP).map(function (x) { return { id: x.id, data: x.data }; })
+        };
+      });
+      var actor = meta.actor || jamaliDeleteActor(fb);
+      var auditId = "da-" + (meta.requestId ? String(meta.requestId).replace(/[^a-zA-Z0-9-]/g, "").slice(0, 20) : "direct") +
+        "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+      return fb.setDoc(fb.doc(fb.db, "systemDeletionAudit", auditId), {
+        kind: meta.kind || "direct",
+        requestId: meta.requestId || "",
+        actorUid: actor.uid,
+        actorEmail: actor.email,
+        actorLabel: actor.label,
+        scopes: chosen.map(function (s) { return s.key; }),
+        collections: cols,
+        archive: archive,
+        results: [],
+        status: "executing",
+        at: fb.serverTimestamp()
+      }).then(function () {
+        return { auditId: auditId, groups: groups };
+      });
+    }).then(function (ctx) {
+      if (!ctx) return { aborted: true, error: "unknown", results: [], totalDeleted: 0, totalFailed: 0 };
+      var results = [];
+      var chain = Promise.resolve();
+      ctx.groups.forEach(function (g) {
+        chain = chain.then(function () {
+          return new Promise(function (res) {
+            var deleted = 0, failed = 0, error = "";
+            function chunk(start) {
+              var slice = g.docs.slice(start, start + 400);
+              if (!slice.length) { res(); return; }
+              var batch = fb.writeBatch(fb.db);
+              slice.forEach(function (x) { batch.delete(fb.doc(fb.db, g.collection, x.id)); });
+              batch.commit().then(function () {
+                deleted += slice.length;
+                chunk(start + slice.length);
+              }).catch(function (e) {
+                failed += (g.docs.length - start);
+                error = delErrText(e);
+                res();
+              });
+            }
+            chunk(0);
+          }).then(function () {
+            results.push({ collection: g.collection, found: g.docs.length, deleted: deleted, failed: failed, error: error });
+          });
+        });
+      });
+      return chain.then(function () {
+        var td = 0, tf = 0;
+        results.forEach(function (r) { td += r.deleted; tf += r.failed; });
+        return fb.updateDoc(fb.doc(fb.db, "systemDeletionAudit", ctx.auditId), {
+          results: results,
+          status: tf ? (td ? "partial" : "failed") : "completed",
+          totalDeleted: td,
+          totalFailed: tf,
+          finishedAt: fb.serverTimestamp()
+        }).catch(function () {}).then(function () {
+          return { aborted: false, results: results, totalDeleted: td, totalFailed: tf };
+        });
+      });
+    });
+  }
+  /* JD-DELETE-MODULE-END */
+
+})();

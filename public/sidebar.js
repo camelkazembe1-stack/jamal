@@ -38,15 +38,9 @@ catch (e) {}
  var ALWAYS_OPEN = ["home", "file-viewer"];
 var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
  function folderAllowed(folder) {
-   // Personal use with no user account: the whole system is open - the
-   // sidebar shows every item and every page opens, exactly what the
-   // administrator sees. Without an account in organisation mode nothing
-   // is open here: the door page asks for the account first.
-   if (!session) return readMode() === "personal";
-   if (isAdmin()) return true;
-   if (folder === "system-admin") return false;
-   if (ALWAYS_OPEN.indexOf(folder) !== -1) return true;
-   var par = PARENT[folder]; if (par && session.grants.indexOf(par) !== -1) return true; return !!(session.grants && session.grants.indexOf(folder) !== -1);
+   // RESERVE (login removed): account grants are deactivated, so
+   // every folder is open for every visitor.
+   return true;
  }
 
  
@@ -65,35 +59,11 @@ var PARENT = {"ward-registration":"ward-management","bed-management":"ward-manag
   
   
   
-  if (ALWAYS_OPEN.indexOf(current) === -1) {
-    if (!session) {
-      // Personal use opens the full system with no account; any other
-      // visitor without an account goes back to the door page.
-      if (readMode() !== "personal") location.replace("/?need=account");
-    } else {
-      import("/502.js").then(function (fb) {
-        var ready = fb.auth && fb.auth.currentUser
-          ? Promise.resolve(fb.auth.currentUser)
-          : new Promise(function (res) {
-              var off = fb.onAuthStateChanged(fb.auth, function (u) { off();
-res(u); });
-            });
-        return ready.then(function (u) {
-         if (!u) { clearSession(); location.replace("/?need=house"); return;
-}
-          if (session.uid !== u.uid) { session.uid = u.uid; try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) {} }
-        });
-      }).catch(function () {   });
-    }
-  }
-
-  // A signed-in account without the admin role is sent home from the
-  // users/administration desk. Personal use with no account passes:
-  // the desk opens for everyone, and the database itself still refuses
-  // changes unless this Google account is the administrator.
-  if (session && current === "system-admin" && !folderAllowed("system-admin")) {
-    location.replace("/home/1");
-  }
+  // RESERVE (login removed): the session guard that bounced visitors
+  // to the login gate (?need=account / ?need=house) and the admin-role
+  // gate for the system-admin desk were deactivated with the login
+  // system. Every page opens for every visitor now. To restore, see
+  // public/RESERVE/README.txt.
 
     
     
@@ -163,13 +133,10 @@ res(u); });
   }
 
     function isAdmin() {
-      // Personal use with no account runs the full admin tooling too:
-      // the sidebar minus buttons, the Hidden panel and the plus/minus
-      // pins on every field, and nothing the administrator hid is
-      // applied here. The database itself still refuses config writes
-      // unless this Google account is the administrator (systemAdmins).
-      return !!(session && session.role === "admin") ||
-        (!session && readMode() === "personal");
+      // RESERVE (admin removed): the administrator tooling (hide
+      // pins, hidden chip, admin page scan) was deactivated together
+      // with the login system. Nothing is admin and nothing is hidden.
+      return false;
     }
 
     function applyVisData(d) {
@@ -179,54 +146,11 @@ res(u); });
     }
 
     function bootVisibility() {
-      return import("/502.js").then(function (fb) {
-        var ref = fb.doc(fb.db, VIS_DOC[0], VIS_DOC[1]);
-        // The first read is patient with a patchy connection: an offline
-        // failure is retried a few times with a growing pause and once
-        // more the moment the device comes back online, and only a real
-        // refusal is reported. Until the configuration arrives the page
-        // simply keeps the default full view - nothing waits on the
-        // network, and the live channel starts as soon as the first read
-        // succeeds.
-        var live = false, timer = null;
-        function listenLive() {
-          if (live || !fb.onSnapshot) return;
-          live = true;
-          fb.onSnapshot(ref, function (snap) {
-            applyVisData(snap && snap.exists() ? snap.data() : null);
-            if (VIS_CHANGE) { try { VIS_CHANGE(); } catch (e) {} }
-          }, function (e) {
-            console.warn("visibility watch skipped:", e);
-          });
-        }
-        function attempt(tries) {
-          if (live) return;
-          return fb.getDoc(ref).then(function (snap) {
-            if (snap && snap.exists()) applyVisData(snap.data());
-            listenLive();
-          }).catch(function (e) {
-            if (live) return;
-            if (!jamaliOffline(e) || tries >= 5) {
-              console.warn("visibility load skipped:", e);
-              return;
-            }
-            timer = setTimeout(function () { attempt(tries + 1); },
-              Math.min(15000, 1500 * tries));
-          });
-        }
-        if (window.addEventListener) {
-          window.addEventListener("online", function () {
-            if (timer) { clearTimeout(timer); timer = null; }
-            attempt(1);
-          });
-          window.addEventListener("offline", function () {
-            if (timer) { clearTimeout(timer); timer = null; }
-          });
-        }
-        return attempt(1);
-      }).catch(function (e) {
-        console.warn("visibility load skipped:", e);
-      });
+      // RESERVE (admin removed): the visibility config that the
+      // administrator used to hide menus and fields was deactivated
+      // with the login system. Nothing is ever hidden now; the page
+      // boots instantly without reading the config.
+      return Promise.resolve();
     }
 
  
@@ -358,27 +282,12 @@ p.label + "</a>";
    "#jamali-sidebar .brand i{width:30px;height:30px;border-radius:9px;display:flex;",
    "align-items:center;justify-content:center;font-style:normal;font-size:12px;",
    "background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#fff}",
-   "#jamali-person{margin-left:2px;border:0;background:none;color:#94a3b8;font-size:19px;",
    "cursor:pointer;line-height:1;padding:2px 3px;border-radius:8px}",
-   "#jamali-person:hover{background:#1e293b;color:#fff}",
-   "#jamali-acct{position:absolute;top:56px;left:14px;background:#111827;border:1px solid #334155;",
    "border-radius:12px;min-width:180px;box-shadow:0 14px 34px rgba(0,0,0,.5);overflow:hidden;z-index:1002}",
-   "#jamali-acct .who{padding:10px 14px;font-size:12px;color:#94a3b8;border-bottom:1px solid #1e293b}",
-   "#jamali-acct .who b{display:block;color:#e2e8f0;font-size:13px;white-space:nowrap;",
    "overflow:hidden;text-overflow:ellipsis}",
-   "#jamali-acct button{display:block;width:100%;text-align:left;border:0;background:none;",
    "color:#e2e8f0;font-size:13.5px;padding:10px 14px;cursor:pointer}",
-   "#jamali-acct button:hover{background:#1e293b}",
-   "#jamali-acct .modecap{padding:8px 14px 0;font-size:11px;font-weight:800;letter-spacing:.5px;color:#64748b}",
-   "#jamali-acct .moderow{display:flex;gap:6px;padding:6px 10px 2px}",
-   "#jamali-acct .jamali-usemode{flex:1;border:1px solid #334155;border-radius:8px;background:#0b1220;color:#cbd5e1;font-size:12px;font-weight:700;padding:7px 4px;cursor:pointer;text-align:center;display:block;width:auto}",
-   "#jamali-acct .jamali-usemode:hover{background:#1e293b;color:#fff}",
-   "#jamali-acct .jamali-usemode.on{background:#0c4a6e;border-color:#38bdf8;color:#fff}",
-   "#jamali-admin-btn{position:fixed;top:14px;right:14px;z-index:1001;border:0;border-radius:12px;",
    "padding:9px 18px;font-size:13.5px;font-weight:800;cursor:pointer;color:#06121f;",
 
-"background:linear-gradient(135deg,#38bdf8,#0ea5e9);box-shadow:0 10px 24px rgba(0,0,0,.35)}",
-   "#jamali-admin-btn:hover{filter:brightness(1.07)}",
    "#jamali-sidebar nav{flex:1;overflow-y:auto;padding:8px 0}",
    "#jamali-sidebar a{display:flex;align-items:center;gap:12px;padding:9px 18px;",
    "color:#94a3b8;text-decoration:none;font-size:14px;border-left:3px solid transparent}",
@@ -439,9 +348,6 @@ p.label + "</a>";
     ".jamali-vis-notice b{display:block;font-size:17px;margin-bottom:8px}",
    "#jamali-side-foot{flex:0 0 auto;padding:12px 14px;border-top:1px solid #1e293b;background:#0f172a}",
    ".jamali-foot-row{display:flex;align-items:stretch;gap:8px}",
-   "#jamali-google-logout{flex:50 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:12px 0;font-size:14px;font-weight:900;letter-spacing:.5px;cursor:pointer;color:#fff;background:#dc2626;box-shadow:0 8px 20px rgba(0,0,0,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
-   "#jamali-google-logout:hover{background:#b91c1c}",
-   "#jamali-google-logout:disabled{opacity:.6;cursor:default}",
    "#jamali-side-gear{flex:25 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 0;font-size:17px;line-height:1;cursor:pointer;color:#cbd5e1;background:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}",
    "#jamali-side-gear:hover{background:#334155;color:#fff}",
    "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
@@ -484,11 +390,9 @@ p.label + "</a>";
   var aside = document.createElement("aside");
   aside.id = "jamali-sidebar";
   aside.innerHTML =
-    "<div class=\"brand\"><i>JA</i>JAMAL" +
-    "<button type=\"button\" id=\"jamali-person\" title=\"Account\">&#128100;</button></div>" +
+    "<div class=\"brand\"><i>JA</i>JAMAL</div>" +
     "<nav>" + nav + "</nav>" +
     "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
-    "<button type=\"button\" id=\"jamali-google-logout\" title=\"Total logout: ends the Google sign-in completely\">Logout</button>" +
     "<button type=\"button\" id=\"jamali-side-gear\" title=\"Settings\">&#9881;&#65039;</button>" +
     "</div></div>";
 
@@ -498,112 +402,11 @@ p.label + "</a>";
  document.body.classList.add("jamali-has-sidebar");
 
   
-  var who = session ? (session.username || "account") : "account";
-  var roleLine = session ? (session.role === "admin" ? "administrator" :
-(session.position || "user")) : "";
-  var acct = document.createElement("div");
-  acct.id = "jamali-acct";
-  acct.hidden = true;
- acct.innerHTML =
-  "<div class=\"who\"><b></b>" + roleLine + "</div>" +
-  "<div class=\"modecap\">Change Mode</div>" +
-  "<div class=\"moderow\">" +
-  "<button type=\"button\" class=\"jamali-usemode\" data-mode=\"organisation\">Organisation Use</button>" +
-  "<button type=\"button\" class=\"jamali-usemode\" data-mode=\"personal\">Personal Use</button>" +
-  "</div>" +
-  "<button type=\"button\" id=\"jamali-switch\">Switch Account</button>" +
-  "<button type=\"button\" id=\"jamali-logout\">Logout</button>";
- acct.querySelector(".who b").textContent = who;
- document.body.insertBefore(acct, document.body.firstChild);
+  // RESERVE (login removed): the account desk (the person button with
+  // the name card, the Organisation/Personal mode switch, Switch
+  // Account, Logout and the total Google logout) was deactivated with
+  // the login system. To restore, see public/RESERVE/README.txt.
 
-  document.getElementById("jamali-person").addEventListener("click",
-function (ev) {
-    ev.stopPropagation();
-    acct.hidden = !acct.hidden;
-    if (!acct.hidden) paintModeButtons();
-  });
-  document.addEventListener("click", function (ev) {
-    if (!acct.hidden && ev.target !== acct && !acct.contains(ev.target))
-acct.hidden = true;
-  });
-
-  // Change Mode: anyone - an account or a personal user with no account -
-  // can flip the mode here. It saves the preference and reloads so access
-  // follows it; pages and data are the same in both modes.
-  function paintModeButtons() {
-    var mode = readMode();
-    var btns = acct.querySelectorAll(".jamali-usemode");
-    for (var i = 0; i < btns.length; i++) {
-      var on = btns[i].getAttribute("data-mode") === mode;
-      btns[i].className = "jamali-usemode" + (on ? " on" : "");
-    }
-  }
-  (function () {
-    var btns = acct.querySelectorAll(".jamali-usemode");
-    for (var i = 0; i < btns.length; i++) {
-      (function (btn) {
-        btn.addEventListener("click", function () {
-          var m = btn.getAttribute("data-mode");
-          if (m === readMode()) { acct.hidden = true; return; }
-          setMode(m);
-          location.reload();
-        });
-      })(btns[i]);
-    }
-    paintModeButtons();
-  })();
-
-  
-  document.getElementById("jamali-switch").addEventListener("click",
-function () {
-    clearSession();
-    clearMode();
-    location.href = "/";
-  });
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  document.getElementById("jamali-logout").addEventListener("click",
-function () {
-    clearSession();
-    clearMode();
-    location.href = "/";
- });
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  document.getElementById("jamali-google-logout").addEventListener("click",
-  function () {
-    var btn = document.getElementById("jamali-google-logout");
-    btn.disabled = true;
-    btn.textContent = "Logging out...";
-    clearSession();
-    clearMode();
-    import("/502.js").then(function (fb) {
-      return fb.signOut(fb.auth);
-    }).then(function () {
-      location.href = "/";
-    }).catch(function (e) {
-      console.warn("google logout failed", e);
-      btn.disabled = false;
-      btn.textContent = "Sign-out failed";
-      setTimeout(function () { btn.textContent = "Logout"; }, 2500);
-    });
-  });
 
   
   
@@ -622,64 +425,19 @@ function () {
     jamaliSettingsOpen();
   });
 
-  function ensureAdminBtn() {
-    if (document.getElementById("jamali-admin-btn")) return;
-    var abtn = document.createElement("button");
-    abtn.id = "jamali-admin-btn";
-    abtn.type = "button";
-    abtn.textContent = "Admin";
-    abtn.title = "Account Administration";
-    abtn.addEventListener("click", function () {
-      location.href = "/system-admin/380";
-    });
-    document.body.appendChild(abtn);
-  }
-  if ((session && session.role === "admin") || (!session && readMode() === "personal")) {
-    ensureAdminBtn();
-  }
+  // RESERVE (admin removed): the floating Admin button that opened
+  // /system-admin/380 was deactivated with the login system. The
+  // panel itself lives in public/RESERVE/admin/.
+
 
   
   
   
   
-  if (session && session.username) {
-    import("/502.js").then(function (fb) {
-      var uid = fb.auth && fb.auth.currentUser;
-      var ready = uid
-        ? Promise.resolve(uid)
-        : new Promise(function (res) {
-            var off = fb.onAuthStateChanged(fb.auth, function (u) { off();
-res(u); });
-          });
-      return ready.then(function (u) {
-        if (!u) return null;
-        var id = String(session.username || "").toLowerCase();
-        return fb.getDoc(fb.doc(fb.db, "systemAccounts", id));
-     });
-   }).then(function (snap) {
-     if (!snap || !snap.exists()) return;
-     var a = snap.data();
-     var next = {
-       uid: session.uid,
-       username: a.usernameDisplay || session.username,
-       position: a.position || "",
-       role: a.role || "user",
-       grants: Array.isArray(a.grants) ? a.grants : [],
-       at: session.at
-     };
-     var same = next.username === session.username &&
-              next.role === session.role &&
-              next.position === (session.position || "") &&
-              JSON.stringify(next.grants) ===
-JSON.stringify(session.grants || []);
-     if (!same) {
-       writeSession(next); try { paintNav(); } catch (e) {}  
-      
-     }
-   }).catch(function () {
-      
-   });
- }
+  // RESERVE (login removed): the background job that re-read the
+  // signed-in account from Firestore and refreshed its grants was
+  // deactivated with the login system.
+
 
   
   function sync(btn) {
@@ -1063,8 +821,9 @@ document.querySelector("main") || document.body;
  
  
  function hasAnyGrant() {
-   return !!(session && Array.isArray(session.grants) &&
-session.grants.length);
+   // RESERVE (login removed): no accounts any more, every visitor
+   // counts as fully allowed.
+   return true;
  }
 
  function guardUserPage(main) {

@@ -289,14 +289,13 @@ resetArrival();
     if (t && t.id === "again-btn") setTimeout(reapplyDefaults, 120);
   });
 
-  var session = readSession();
-  // Admins see the page as-is. So does Personal use with no account:
-  // nothing the administrator hid is applied there. The saved page
-  // config hides fields only for signed-in accounts without the
-  // admin role.
-  var __pm = null;
-  try { __pm = sessionStorage.getItem("JAMALI_SYSTEM_MODE"); } catch (e) { }
-  if ((session && session.role === "admin") || (!session && __pm === "personal")) return; 
+  // RESERVE (login/admin removed): the administrator page-config
+  // system (hidden fields) was deactivated together with the login
+  // system, so nothing on this page is hidden any more. The loader
+  // below stays in place but is never reached. To restore, see
+  // public/RESERVE/README.txt.
+  return;
+
 
   import("/502.js").then(function (fb) {
     return fb.getDoc(fb.doc(fb.db, "systemPageConfig", PAGE_ID));

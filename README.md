@@ -1,5 +1,17 @@
 JAMALI
 
+> **LOGIN AND ADMINISTRATION DEACTIVATED (20 Nov 2026) - RESERVED, NOT DELETED.**
+> The Google user login, the login gate, the logout buttons, the account desk,
+> the Account Administration panel (/system-admin/380) and the administrator
+> hide/visibility tooling were all switched off. Opening the site now goes
+> straight to the home page: index.html IS the home page, every page and every
+> menu item is open for every visitor, and no sign-in of any kind is asked.
+> The complete deactivated code is kept in `public/RESERVE/` - its README.txt
+> explains exactly how to bring every piece back later. The business-data
+> Firestore rules were opened for anonymous use so saving and loading keep
+> working without an account; the system* collections stay locked as before.
+
+
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app
 
 HOW TO READ THIS GUIDE
