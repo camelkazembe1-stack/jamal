@@ -1,0 +1,24 @@
+JAMALI - RESERVE: the inner-page sign-in guard
+==============================================
+
+This was the requireAuth() function inside SERVER/server.js (and its
+generated copy public/502.js). Ninety-five data pages start their script
+with   await requireAuth();   and this guard waited for a Google sign-in
+and bounced every visitor without an account back to the front page
+(location.replace("/")). With the login system deactivated it stopped the
+user from ever seeing those pages, so it now resolves immediately.
+
+    // Guard for inner pages: resolve with the user, or bounce to index.html
+    export function requireAuth() {
+      return new Promise((resolve) => {
+        onAuthStateChanged(auth, (user) => {
+          if (user) resolve(user);
+          else location.replace("/");
+        });
+      });
+    }
+
+TO RESTORE: put this block back in place of the deactivated version in
+SERVER/server.js, run   node SERVER/sync.js  , commit and push, and switch
+the firestore.rules back to the signed-in-only versions
+(firestore.rules-with-auth.txt in this folder has them).

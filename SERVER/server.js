@@ -431,14 +431,14 @@ export {
   getDoc, limit, arrayUnion, arrayRemove, increment, deleteField, runTransaction
 };
 
-// Guard for inner pages: resolve with the user, or bounce to index.html
+// RESERVE (login removed): the sign-in guard for inner pages was
+// deactivated with the login system - it used to wait for a Google
+// sign-in and bounce every visitor without an account back to the front
+// page, so ninety-five data pages could never open. It now resolves at
+// once and every page opens for every visitor. The original guard is
+// kept in public/RESERVE/requireAuth-guard.txt.
 export function requireAuth() {
-  return new Promise((resolve) => {
-    onAuthStateChanged(auth, (user) => {
-      if (user) resolve(user);
-      else location.replace("/");
-    });
-  });
+  return Promise.resolve(null);
 }
 
 // ---- project selection and hosting settings: the single source of truth ----
