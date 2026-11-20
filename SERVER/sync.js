@@ -45,7 +45,9 @@ if (!S.VERCEL_SPEC || !Array.isArray(S.VERCEL_SPEC.redirects) || !S.VERCEL_SPEC.
 if (typeof S.FIRESTORE_RULES !== "string" || S.FIRESTORE_RULES.indexOf("rules_version") !== 0) {
   fail("FIRESTORE_RULES does not look like Firestore rules.");
 }
-if (typeof S.APPLY_RULES_SH !== "string" || S.APPLY_RULES_SH.indexOf("firebase deploy") === -1) {
+if (typeof S.APPLY_RULES_SH !== "string"
+  || S.APPLY_RULES_SH.indexOf("deploy --only firestore:rules") === -1
+  || S.APPLY_RULES_SH.indexOf("login") === -1) {
   fail("APPLY_RULES_SH does not look like the rules publisher.");
 }
 

@@ -98,11 +98,11 @@ service cloud.firestore {
       // write to. A comment is a letter to the owner, so any visitor -
       // signed in or anonymous - may post one (text only, 1-2000 chars).
       // Reading the mailbox and removing comments is the owner's alone.
-      allow create: if request.resource.data.get("text") is string
-        && request.resource.data.get("text").size() > 0
-        && request.resource.data.get("text").size() <= 2000
-        && request.resource.data.get("from") is string
-        && request.resource.data.get("from").size() <= 200;
+      allow create: if request.resource.data.get("text", "") is string
+        && request.resource.data.get("text", "").size() > 0
+        && request.resource.data.get("text", "").size() <= 2000
+        && request.resource.data.get("from", "") is string
+        && request.resource.data.get("from", "").size() <= 200;
       allow read, delete: if isSignedIn()
         && request.auth.token.email != null
         && request.auth.token.email.lower() == "camelkazembe1@gmail.com";
@@ -182,7 +182,7 @@ service cloud.firestore {
             && request.resource.data.get("type", "") == "deletion"
             && request.resource.data.get("status", "") == "unread"
           )
-        )
+        );
       allow update: if isSystemAdmin();
       allow delete: if isSystemAdmin();
     }
@@ -205,10 +205,10 @@ service cloud.firestore {
         && request.resource.data.get("status", "") == "pending"
         && request.resource.data.get("requesterUid", "") == request.auth.uid
         && request.resource.data.get("requesterEmail", "") == request.auth.token.email
-        && request.resource.data.get("reason") is string
-        && request.resource.data.get("reason").size() > 0
-        && request.resource.data.get("scopes") is list
-        && request.resource.data.get("scopes").size() > 0;
+        && request.resource.data.get("reason", "") is string
+        && request.resource.data.get("reason", "").size() > 0
+        && request.resource.data.get("scopes", []) is list
+        && request.resource.data.get("scopes", []).size() > 0;
       allow update: if isSystemAdmin()
         && request.resource.data.get("requesterUid", "") == resource.data.get("requesterUid", "")
         && request.resource.data.get("requesterUid", "") != request.auth.uid
