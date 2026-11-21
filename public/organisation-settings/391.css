@@ -34,3 +34,9 @@ h2 { font-size: 17px; margin-bottom: 4px; }
 @media print { #jamali-sidebar, #jamali-burger, #jamali-overlay, .back { display: none !important; } body.jamali-has-sidebar { margin-left: 0 !important; } body { background: #fff; } }
 
 [hidden] { display: none !important; }
+.modules { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.modules legend { font-size: 12px; font-weight: 700; color: #475569; padding: 0 4px; }
+.modules .chk { flex-direction: row !important; align-items: center; gap: 8px !important; font-size: 14px !important; font-weight: 600 !important; color: #0f172a !important; }
+.modules .chk input { width: auto; }
+.modules .note { flex-basis: 100%; margin: 0; }
+.form-grid .wide { grid-column: 1 / -1; }

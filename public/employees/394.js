@@ -491,3 +491,17 @@ export async function initRecords(cfg) {
     countLine.textContent = "";
   });
 }
+
+/* Hospital staff live in Health -> Staff & Human Resource (healthStaff);
+   one organisation, so they are listed here too and Payroll offers them. */
+onSnapshot(collection(db, "healthStaff"), (snap) => {
+  const card = document.getElementById("staff-card");
+  const rows = snap.docs.map((d) => d.data() || {}).filter((r) => r.fullName)
+    .sort((a, b) => String(a.fullName).localeCompare(String(b.fullName)));
+  const e = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  document.getElementById("staff-body").innerHTML = rows.map((r) =>
+    "<tr><td>" + e(r.ref) + '</td><td class="c-party">' + e(r.fullName) + "</td><td>" + e(r.position) +
+    "</td><td>" + e(r.department) + "</td><td>" + e(r.employmentType) + "</td><td>" + e(r.status) + "</td></tr>").join("");
+  card.hidden = !rows.length;
+}, () => {});

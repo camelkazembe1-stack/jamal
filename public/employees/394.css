@@ -150,3 +150,6 @@ body {
 .row-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }
 .row-btn.r-del:hover { border-color: #dc2626; color: #dc2626; }
 @media print { .row-btn { display: none !important; } }
+#staff-card { margin-top: 18px; }
+.staff-title { font-size: 15px; margin: 14px 16px 10px; }
+.staff-title small { font-weight: 500; color: #64748b; font-size: 12px; }

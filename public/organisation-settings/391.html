@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organisation Settings — JAMALI</title>
+<link rel="stylesheet" href="/organisation-settings/391.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+<script src="/jamali-bridge.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/home/1">&larr; Home</a>
+  <h1>Organisation Settings</h1>
+  <p class="sub">One organisation, one database: the profile printed on every business and health document, the modules this organisation uses, and a full backup of every record.</p>
+
+  <section class="card pad">
+    <h2>Organisation Profile</h2>
+    <p class="note">These details identify the organisation on invoices, hospital bills, receipts, statements and reports. Any country, any currency.</p>
+    <form id="profile-form" class="form-grid" autocomplete="off">
+      <label>Organisation name<input name="name" required placeholder="e.g. City General Hospital"></label>
+      <label>Organisation type
+        <select name="orgType">
+          <option>Business / Trading</option><option>Hospital / Clinic</option><option>Pharmacy</option>
+          <option>Hospital with Business</option><option>School</option><option>NGO / Non-profit</option>
+          <option>Government</option><option>Other</option>
+        </select>
+      </label>
+      <label>Legal / registered name<input name="legalName" placeholder="optional"></label>
+      <label>Country<input name="country" placeholder="e.g. Tanzania"></label>
+      <label>Address<input name="address" placeholder="Street, city"></label>
+      <label>Phone<input name="phone" placeholder="+255 ..."></label>
+      <label>Email<input name="email" type="email" placeholder="info@example.com"></label>
+      <label>Website<input name="website" placeholder="https://"></label>
+      <label>Tax ID (TIN / EIN / PAN)<input name="taxId" placeholder="optional"></label>
+      <label>VAT / GST number<input name="vatNo" placeholder="optional"></label>
+      <label>Currency code<input name="currency" maxlength="3" placeholder="e.g. TZS, USD, KES" value="TZS"></label>
+      <label>Currency symbol<input name="currencySymbol" maxlength="5" placeholder="e.g. TSh, $"></label>
+      <label>Financial year starts
+        <select name="fyStartMonth">
+          <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+          <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+      </label>
+      <label>Default tax rate (%)<input name="taxRate" type="number" min="0" step="0.01" placeholder="e.g. 18"></label>
+      <label>Logo<input name="logoFile" type="file" accept="image/*"></label>
+      <div class="logo-box"><img id="logo-preview" alt="" hidden><button type="button" id="logo-clear" class="btn-ghost sm" hidden>Remove logo</button></div>
+      <label class="wide">Invoice footer note<textarea name="footer" rows="2" placeholder="e.g. Thank you for your business. Bank: ..."></textarea></label>
+      <fieldset class="wide modules">
+        <legend>Modules this organisation uses</legend>
+        <label class="chk"><input type="checkbox" name="mod_business" checked> Business (accounts, sales, purchasing, stock, HR)</label>
+        <label class="chk"><input type="checkbox" name="mod_health" checked> Health (hospital, clinic, pharmacy)</label>
+        <label class="chk"><input type="checkbox" name="mod_computer" checked> Computer (converters and tools)</label>
+        <p class="note small">Switched-off modules leave the menu and Home; their records stay safe. Hospital bills, payments and paid insurance claims always post to the one set of books.</p>
+      </fieldset>
+    </form>
+    <div class="form-actions">
+      <button type="submit" form="profile-form" class="btn-primary" id="profile-save">Save Profile</button>
+      <span id="profile-msg" class="msg"></span>
+    </div>
+  </section>
+
+  <section class="card pad">
+    <h2>Backup &amp; Restore</h2>
+    <p class="note">All records live in this browser's Local Storage. Clearing the browser, changing device or a broken computer loses them. Download a backup file regularly and keep it somewhere safe.</p>
+    <div id="backup-stats" class="stats"></div>
+    <div class="form-actions">
+      <button type="button" class="btn-primary" id="backup-btn">Download Backup</button>
+      <label class="btn-ghost file-btn">Restore from Backup<input type="file" id="restore-file" accept=".json,application/json" hidden></label>
+      <span id="backup-msg" class="msg"></span>
+    </div>
+    <p class="note small">Restore replaces the records of every area included in the file. Records not in the file stay as they are.</p>
+  </section>
+</main>
+<script type="module" src="/organisation-settings/391.js"></script>
+</body>
+</html>

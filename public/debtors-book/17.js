@@ -64,6 +64,12 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
         n.indexOf("payable") !== -1 || n.indexOf("unearned") !== -1 || n === "capital") return "liability";
     return "asset";
   }
+  function creditKind(t) {
+    var k = classify(t);
+    if ((k === "sales" || k === "purchases" || k === "salesReturns" || k === "purchasesReturns") &&
+        /^(cash|bank)$/i.test(String((t && t.flowMethod) || "").trim())) return null;
+    return k;
+  }
   function classify(t) {
     var ty = String((t && t.transactionType) || "").toUpperCase();
     var tn = String((t && t.transactionName) || "").trim().toLowerCase();
@@ -515,7 +521,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
   G.DAY = DAY;
   G.esc = esc; G.money = money; G.num1 = num1; G.asDate = asDate; G.parseDay = parseDay;
   G.fmtDay = fmtDay; G.startOfDay = startOfDay; G.today = today; G.addDays = addDays;
-  G.isoToday = isoToday; G.fmtBal = fmtBal; G.classify = classify;
+  G.isoToday = isoToday; G.fmtBal = fmtBal; G.classify = classify; G.creditKind = creditKind;
   G.classifyAcct = classifyAcct; G.postingsFor = postingsFor; G.buildAccounts = buildAccounts;
   G.accountBalance = accountBalance; G.collRef = collRef; G.readColl = readColl;
   G.readTx = readTx; G.rowCells = rowCells; G.totalCells = totalCells; G.shell = shell;
@@ -579,7 +585,7 @@ function fmtDate(ts) {
 const personOf = (t) => t.name || t.transactionName || "\u2014";
 
 function render() {
-  const rows = TXNS.map((t) => ({ t, kind: classify(t) }))
+  const rows = TXNS.map((t) => ({ t, kind: creditKind(t) }))
     .filter((r) => r.kind === INC || r.kind === RET || r.kind === PAY || r.kind === OPEN);
 
   

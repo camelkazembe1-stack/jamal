@@ -1,6 +1,7 @@
  
 window.JAMALI_MENU = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
+    { label: "Organisation Settings", icon: "⚙️", folder: "organisation-settings", n: 391, d: 1 },
     // RESERVE (admin removed): the "Account Administration" entry was
     // deactivated with the login system; the panel lives in
     // public/RESERVE/admin/.
@@ -9,7 +10,6 @@ window.JAMALI_MENU = [
     { label: "Stock Register", icon: "📋", folder: "stock-register", n: 348, d: 3 },
     { label: "Stock Progress", icon: "📈", folder: "stock-progress", n: 347, d: 3 },
     { label: "Stock Change", icon: "🔄", folder: "stock-change", n: 346, d: 3 },
-    { label: "Business Settings", icon: "⚙️", folder: "business-settings", n: 391, d: 2 },
     { label: "Customers", icon: "👤", folder: "customers", n: 392, d: 2 },
     { label: "Suppliers", icon: "🏭", folder: "suppliers", n: 393, d: 2 },
     { label: "Employees", icon: "🧑‍💼", folder: "employees", n: 394, d: 2 },
@@ -403,3 +403,19 @@ window.JAMALI_MENU = [
     { label: "Laundry", icon: "🧺", folder: "laundry-management", n: 388, d: 2 },
     { label: "Housekeeping & Environmental Services", icon: "🧹", folder: "housekeeping", n: 389, d: 2 },
 ];
+
+// Modules switched off in Organisation Settings leave the menu and Home.
+(function () {
+  var mods = null;
+  try { mods = JSON.parse(localStorage.getItem("jamaliOrgModules") || "null"); } catch (e) {}
+  if (!mods) return;
+  var M = window.JAMALI_MENU, out = [], skip = 0;
+  for (var i = 0; i < M.length; i++) {
+    var d = M[i].d || 0;
+    if (skip && d > skip) continue;
+    skip = 0;
+    if (d === 1 && mods[M[i].folder] === false) { skip = 1; continue; }
+    out.push(M[i]);
+  }
+  window.JAMALI_MENU = out;
+})();

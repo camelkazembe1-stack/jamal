@@ -64,6 +64,12 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
         n.indexOf("payable") !== -1 || n.indexOf("unearned") !== -1 || n === "capital") return "liability";
     return "asset";
   }
+  function creditKind(t) {
+    var k = classify(t);
+    if ((k === "sales" || k === "purchases" || k === "salesReturns" || k === "purchasesReturns") &&
+        /^(cash|bank)$/i.test(String((t && t.flowMethod) || "").trim())) return null;
+    return k;
+  }
   function classify(t) {
     var ty = String((t && t.transactionType) || "").toUpperCase();
     var tn = String((t && t.transactionName) || "").trim().toLowerCase();
@@ -515,7 +521,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
   G.DAY = DAY;
   G.esc = esc; G.money = money; G.num1 = num1; G.asDate = asDate; G.parseDay = parseDay;
   G.fmtDay = fmtDay; G.startOfDay = startOfDay; G.today = today; G.addDays = addDays;
-  G.isoToday = isoToday; G.fmtBal = fmtBal; G.classify = classify;
+  G.isoToday = isoToday; G.fmtBal = fmtBal; G.classify = classify; G.creditKind = creditKind;
   G.classifyAcct = classifyAcct; G.postingsFor = postingsFor; G.buildAccounts = buildAccounts;
   G.accountBalance = accountBalance; G.collRef = collRef; G.readColl = readColl;
   G.readTx = readTx; G.rowCells = rowCells; G.totalCells = totalCells; G.shell = shell;
@@ -526,7 +532,6 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
 
 
 
-initAgedAR({ root: "#app" });
 
 /* jamali-inline:514.js */
 // ---------------------------------------------------------------------------
@@ -555,7 +560,7 @@ function partyModel(txns, invoices, notes, dir) {
   
   
   const debtPeople = new Set(
-    txns.filter((t) => { const k = classify(t); return (k === dir || k === open) && t.name; })
+    txns.filter((t) => { const k = creditKind(t); return (k === dir || k === open) && t.name; })
       .map((t) => t.name));
   invoices.forEach((v) => { if (v.direction === invDir && v.party) debtPeople.add(v.party); });
 
@@ -563,7 +568,7 @@ function partyModel(txns, invoices, notes, dir) {
   const add = (p, e) => { if (!p) return; let a = ev.get(p); if (!a) { a = []; ev.set(p, a); } a.push(e); };
 
   txns.forEach((t) => {
-    const c = classify(t); if (!c) return;
+    const c = creditKind(t); if (!c) return;
     const p = t.name; if (!p) return;
     const ts = asDate(t.dateTime);
     const amt = Number(t.amount || 0);
@@ -737,10 +742,12 @@ async function initPartyReport(cfg, dir) {
     ui.tfoot.innerHTML = totalCells([{ label: 1 }, t[0], t[1], t[2], t[3], t[4]]);
     ui.card.style.display = "";
     ui.empty.hidden = true;
-    ui.sideTitle.textContent = isAR ? "Balance due per customer" : "Balance owed per supplier";
-    ui.sideBody.innerHTML = rows.map((r) =>
-      '<tr><td class="c-party">' + esc(r.party) + '</td><td class="c-amount">' + esc(money(r.bal)) + "</td></tr>").join("");
-    ui.side.style.display = "";
+    if (ui.side) {
+      ui.sideTitle.textContent = isAR ? "Balance due per customer" : "Balance owed per supplier";
+      ui.sideBody.innerHTML = rows.map((r) =>
+        '<tr><td class="c-party">' + esc(r.party) + '</td><td class="c-amount">' + esc(money(r.bal)) + "</td></tr>").join("");
+      ui.side.style.display = "";
+    }
     let iAmt = 0, iSet = 0, iOut = 0, unalloc = 0, ih = "";
     rows.forEach((r) => {
       const oi = openItems(r);
@@ -889,3 +896,5 @@ async function initAging(cfg, dir) {
 export const initAgedAR = (cfg) => initAging(cfg, "sales");
 
 export const initAgedAP = (cfg) => initAging(cfg, "purchases");
+
+initAgedAR({ root: "#app" });

@@ -1,23 +1,30 @@
 /* JAMALI - public/pickers.js, the register pickers.
  *
  * Loaded on every page by sidebar.js. When a page shows a Customer,
- * Supplier, Product or Employee box, the box offers the names kept in
- * the Customers, Suppliers, Stock Register and Employees registers as
- * you type. Free text still works. Picking a known name also:
+ * Supplier, Product, Employee or insurance provider box, the box offers the names kept in
+ * the Customers, Suppliers, Stock Register, Employees and Hospital
+ * Staff registers as you type (insurance providers come from Customers). Free text still works. Picking a known name also:
  *   - corrects its spelling to the register's spelling,
  *   - fills an empty Unit Price from the stock item (selling price on
  *     customer documents, buying price per unit on supplier documents),
  *   - fills an empty Role and Gross from the employee record.
  * The data layer (/502.js) is only loaded once such a box appears.
  */
-const SEL = 'input[data-f="party"],input[data-f="product"],input[data-f="employee"],#in-person';
+const SEL = 'input[data-f="party"],input[data-f="product"],input[data-f="employee"],#in-person,#f-provider';
 let api = null, seq = 0;
 const load = () => (api = api || import("/502.js"));
 
 async function records(coll) {
   const m = await load();
   const snap = await m.getDocs(m.collection(m.db, coll));
-  return snap.docs.map((d) => Object.assign({ __id: d.id }, d.data())).filter((r) => r && r.name);
+  return snap.docs.map((d) => {
+    const r = Object.assign({ __id: d.id }, d.data());
+    if (coll === "healthStaff") {
+      if (String(r.status || "") === "Exited") return null;
+      r.name = r.fullName; r.role = r.position;
+    }
+    return r;
+  }).filter((r) => r && r.name);
 }
 
 function sideOf(input) {
@@ -32,7 +39,8 @@ function sideOf(input) {
 function collsFor(input) {
   const key = input.dataset.f || input.id;
   if (key === "product") return ["stockItems"];
-  if (key === "employee") return ["employees"];
+  if (key === "employee") return ["employees", "healthStaff"];
+  if (key === "f-provider") return ["customers"];
   if (key === "party") { const s = sideOf(input); return s ? [s] : ["customers", "suppliers"]; }
   return ["customers", "suppliers"];
 }
