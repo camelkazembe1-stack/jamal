@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comments — JAMALI</title>
+<link rel="stylesheet" href="/comments/390.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+<script src="/jamali-bridge.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="/home/1">&larr; Home</a>
+    <h1>💬 Comments</h1>
+    <p class="sub">The comment desk on its own page — write to the owner below; every comment lands straight in the owner's mailbox.</p>
+
+    <section class="card" id="send-card">
+      <div class="card-head">
+        <b>Send a comment</b>
+        <span class="from-line" id="from-line"></span>
+      </div>
+      <textarea id="comment-text" maxlength="2000" placeholder="Write your comment - it goes straight to the owner"></textarea>
+      <div class="under-row">
+        <span class="count" id="char-count">0 / 2000</span>
+        <button type="button" class="send" id="send-btn">Send comment</button>
+      </div>
+      <div class="msg" id="send-msg" hidden></div>
+    </section>
+
+    <section class="card owner" id="mailbox-card" hidden>
+      <div class="card-head">
+        <b>📬 The mailbox</b>
+        <button type="button" class="refresh" id="refresh-btn">Refresh</button>
+      </div>
+      <p class="owner-note">You are signed in as the owner - every visitor's comment arrives here live, newest first.</p>
+      <div class="count-line" id="mailbox-count">loading&#8230;</div>
+      <div class="list" id="mailbox-items"></div>
+    </section>
+  </main>
+  <script type="module" src="/comments/390.js"></script>
+</body>
+</html>

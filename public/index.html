@@ -36,11 +36,13 @@
     /* JAMALI root shell. Every page of the app opens inside this frame,
      * so the address bar only ever shows the site root. Pages announce
      * their moves through jamali-bridge.js with postMessage; nothing is
-     * redirected in the open and no route path reaches the interface. */
+     * redirected in the open and no route path reaches the interface.
+     * The pages are plain files (/slug/number.html) - the shell and the
+     * bridge keep those file addresses fully internal. */
     (function () {
       "use strict";
 
-      var HOME = "/home/1";
+      var HOME = "/home/1.html";
       var BOOT_KEY = "JAMALI_BOOT_PAGE";
       var LAST_KEY = "JAMALI_LAST_PAGE";
       var frame = document.getElementById("jamali-app");
@@ -54,8 +56,13 @@
         if (t === "/" || t === "/index.html") return HOME;
         if (t.charAt(0) !== "/") return null;
         if (/^\/RESERVE(\/|$)/i.test(t)) return null;
-        t = t.replace(/\.html(?=$|[?#])/i, "");
-        return t;
+        var m = t.match(/^([^?#]*)([?#].*)?$/);
+        if (!m) return null;
+        var path = m[1].replace(/\/+$/, "");
+        var rest = m[2] || "";
+        if (!path) return HOME;
+        if (!/\.html$/i.test(path)) path += ".html";
+        return path + rest;
       }
 
       /* If this shell was somehow served on a route path, quietly settle

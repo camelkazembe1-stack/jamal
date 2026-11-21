@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>JAMALI</title>
+  <style>
+    html, body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    p { font-size: 14px; font-weight: 700; letter-spacing: 1px; opacity: .85; }
+  </style>
+</head>
+<body>
+  <p>JAMALI is opening&hellip;</p>
+  <script>
+    /* A route that does not match any page lands here. The visit folds
+     * back into the root shell: inside the shell the frame just goes
+     * home; on its own the page hands its address to the shell, which
+     * reopens it (with the .html ending the pages really use) - if that
+     * also misses, the visit simply lands home. Nothing is ever left
+     * sitting on a route path. */
+    (function () {
+      "use strict";
+      var framed = false;
+      try { framed = window.self !== window.top; } catch (e) { framed = true; }
+
+      if (framed) {
+        try {
+          window.parent.postMessage({ type: "JAMALI_NAV", target: "/" }, location.origin);
+        } catch (e) {
+          try { location.replace("/home/1.html"); } catch (e2) {}
+        }
+        return;
+      }
+
+      var BOOT_KEY = "JAMALI_BOOT_PAGE";
+      try {
+        var here = location.pathname + (location.search || "") + (location.hash || "");
+        var boot = sessionStorage.getItem(BOOT_KEY);
+        if (boot === here) {
+          /* second miss for the same address - give up on it quietly */
+          sessionStorage.removeItem(BOOT_KEY);
+        } else {
+          sessionStorage.setItem(BOOT_KEY, here);
+        }
+      } catch (e) {}
+      location.replace("/");
+    })();
+  </script>
+</body>
+</html>

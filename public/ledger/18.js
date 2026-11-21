@@ -324,7 +324,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
       var id = btn.getAttribute("data-id");
       if (!id) return;
       if (btn.getAttribute("data-act") === "edit") {
-        location.href = "/add-transaction/3?edit=" + encodeURIComponent(id) +
+        location.href = "/add-transaction/3.html?edit=" + encodeURIComponent(id) +
           "&back=" + encodeURIComponent(location.pathname + location.search);
       } else {
         if (!confirm("Delete this record? It disappears from every book at once.")) return;

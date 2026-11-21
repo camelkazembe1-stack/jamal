@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // JAMALI - SERVER/sync.js, the settings writer.
-// SERVER/server.js is the single settings source: the marked block inside it
-// holds the whole content of every settings file. This script reads that
-// block and writes the files out, so the deploys always match the server:
-//   vercel.json, firebase.json, .firebaserc, firestore.rules,
-//   apply-rules.sh  and  public/502.js (a verbatim copy of the server).
+// SERVER/server.js is the single settings source: the marked block inside
+// it holds the whole content of the settings - hosting, authentication
+// and database - and this script writes the one runtime copy the site
+// imports:   public/502.js (a verbatim copy of the server).
+// The old generated settings files (vercel.json, firebase.json,
+// .firebaserc, firestore.rules, apply-rules.sh) no longer live in the
+// repository: their content stays here in SERVER/server.js, and the
+// Firestore rules are published from the Firebase console.
 // Run it from anywhere:   node SERVER/sync.js
-// Edit the settings in SERVER/server.js, run the sync, commit what it
-// writes - the written files are outputs and are never edited by hand.
 
 "use strict";
 
@@ -55,11 +56,6 @@ const json = (value) => JSON.stringify(value, null, 2) + "\n";
 const text = (value) => (value.endsWith("\n") ? value : value + "\n");
 
 const files = [
-  ["vercel.json", json(S.VERCEL_SPEC)],
-  ["firebase.json", json(S.FIREBASE_JSON_SPEC)],
-  [".firebaserc", json({ projects: { default: S.DATABASE_PROJECT } })],
-  ["firestore.rules", text(S.FIRESTORE_RULES)],
-  ["apply-rules.sh", text(S.APPLY_RULES_SH)],
   ["public/502.js", serverText]
 ];
 
@@ -73,4 +69,4 @@ console.log("JAMALI settings sync - written out of SERVER/server.js (project " +
 for (const [name, content] of files) {
   console.log("  " + name + "  (" + Buffer.byteLength(content) + " bytes)");
 }
-console.log("done - commit what changed; the next deploy runs the same sync on Vercel.");
+console.log("done - commit what changed. Hosting, auth and database settings live in SERVER/server.js content.");

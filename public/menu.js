@@ -1,6 +1,7 @@
  
 window.JAMALI_MENU = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
+    { label: "Comments", icon: "💬", folder: "comments", n: 390, d: 1 },
     // RESERVE (admin removed): the "Account Administration" entry was
     // deactivated with the login system; the panel lives in
     // public/RESERVE/admin/.

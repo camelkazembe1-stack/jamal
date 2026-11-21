@@ -1187,7 +1187,7 @@ function commentQuery(fs, cdb) {
 
 // commentSend - any visitor, signed in or not, posts a comment to the
 // owner. This is the one create the rules allow without an account.
-export function commentSend(text) {
+export function commentSend(text, pageRef) {
   var t = String(text == null ? "" : text).trim();
   if (!t) return Promise.reject(new Error("Write the comment first - the box is empty."));
   if (t.length > 2000) return Promise.reject(new Error("The comment is over 2000 characters - shorten it and send it again."));
@@ -1196,7 +1196,9 @@ export function commentSend(text) {
       text: t,
       from: (activeUser && activeUser.email) ? String(activeUser.email) : "Guest",
       zone: currentNamespace(),
-      page: (typeof location !== "undefined" && location.pathname) || "",
+      page: (typeof pageRef === "string" && pageRef)
+        ? String(pageRef)
+        : ((typeof location !== "undefined" && location.pathname) || "").replace(/\.html$/, ""),
       createdAt: h.fs.serverTimestamp()
     });
   }).then(function () { return true; });

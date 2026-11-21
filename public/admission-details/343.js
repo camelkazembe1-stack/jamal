@@ -314,7 +314,7 @@ $("#d-discharge").addEventListener("click", () => {
     return ferr("Only an Admitted or Transferred admission can be discharged.");
   const btn = $("#d-discharge");
   btn.textContent = "Opening the Discharge Module\u2026";
-  location.href = "/start-discharge/351?patient=" + encodeURIComponent(current.patientId || "");
+  location.href = "/start-discharge/351.html?patient=" + encodeURIComponent(current.patientId || "");
 });
 
 function bedsAll() { return window.__bedsCache || []; }

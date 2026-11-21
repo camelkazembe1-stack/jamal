@@ -165,7 +165,7 @@ var PARENT = {"ward-registration":"ward-management","bed-management":"ward-manag
  function render(i) {
    var p = PAGES[i];
    var cls = "lv" + (p.d || 0);
-   if (p.folder === current) cls += " active";
+   if (p.folder === current || p.folder === (PARENT[current] || "")) cls += " active";
    var href = "/" + p.folder + "/" + p.n;
   var html = "<div class=\"node\" data-folder=\"" + p.folder + "\"><a href=\"" + href +
             "\" class=\"" + cls + "\"><span>" + p.icon + "</span>" +
@@ -232,6 +232,7 @@ p.label + "</a>";
    "#jamali-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999}",
    "@media(max-width:800px){",
    " body.jamali-has-sidebar{margin-left:0}",
+   " body.jamali-has-sidebar{padding-top:58px}",
    " #jamali-sidebar{transform:translateX(-100%)}",
    " body.jamali-sidebar-open #jamali-sidebar{transform:none}",
    " #jamali-burger{display:flex}",
@@ -252,36 +253,6 @@ p.label + "</a>";
    "#jamali-owner-comments{position:fixed;top:12px;right:12px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
    "#jamali-owner-comments:hover{background:#1e293b}",
    "#jamali-owner-comments[hidden]{display:none}",
-   "#jamali-comment-box,#jamali-comments-list{position:fixed;top:60px;right:14px;z-index:1002;width:400px;max-width:calc(100vw - 28px);max-height:calc(100vh - 90px);overflow:auto;background:#111827;border:1px solid #334155;border-radius:14px;padding:14px 16px;color:#e2e8f0;font-size:13.5px;box-shadow:0 18px 40px rgba(0,0,0,.5)}",
-   "#jamali-comment-box[hidden],#jamali-comments-list[hidden]{display:none}",
-   ".jc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}",
-   ".jc-head b{font-size:15px}",
-   ".jc-head .jc-title-wrap{display:flex;align-items:center;gap:8px}",
-   ".jc-close{border:0;background:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:8px}",
-   ".jc-close:hover{background:#1e293b;color:#fff}",
-   "#jamali-comment-text{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:9px;background:#0b1220;color:#e2e8f0;font:inherit;padding:9px 10px;resize:vertical;min-height:96px}",
-   "#jamali-comment-text:focus{outline:none;border-color:#0ea5e9}",
-   ".jc-send{display:block;width:100%;border:0;border-radius:10px;background:#16a34a;color:#fff;font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:8px;transition:background .25s ease}",
-   ".jc-send:hover{background:#15803d}",
-   ".jc-send:disabled{opacity:.55;cursor:wait}",
-   ".jc-send.jc-sent{background:#2563eb;opacity:1;cursor:default}",
-   ".jc-send.jc-sent:hover{background:#2563eb}",
-   ".jc-msg{border-radius:10px;padding:9px 12px;margin:8px 0 0;line-height:1.5;font-size:12.5px}",
-   ".jc-msg.jc-ok{background:#052e16;border:1px solid #4ade80;color:#bbf7d0}",
-   ".jc-msg.jc-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}",
-   ".jc-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}",
-   ".jc-item{border:1px solid #334155;background:#0b1220;border-radius:10px;padding:9px 11px;line-height:1.5}",
-   ".jc-item-top{display:flex;align-items:center;gap:8px}",
-   ".jc-from{font-weight:800;font-size:12.5px;color:#bae6fd;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-   ".jc-when{color:#64748b;font-size:11px;flex:0 0 auto}",
-   ".jc-del{flex:0 0 auto;border:1px solid #7f1d1d;background:#450a0a;color:#fca5a5;border-radius:8px;font-size:13px;line-height:1;padding:5px 8px;cursor:pointer}",
-   ".jc-del:hover{background:#7f1d1d;color:#fff}",
-   ".jc-text{margin-top:6px;font-size:13px;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}",
-   ".jc-page{color:#64748b;font-size:11px;margin-top:5px}",
-   ".jc-none{color:#94a3b8;font-size:12.5px;padding:6px 0}",
-   ".jc-count-line{color:#64748b;font-size:12px;margin-top:2px}",
-   ".jc-refresh{border:1px solid #334155;background:#0b1220;color:#cbd5e1;border-radius:9px;font-size:12px;font-weight:700;padding:5px 10px;cursor:pointer}",
-   ".jc-refresh:hover{background:#1e293b;color:#fff}",
    "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
    "#jamali-toast.jamali-toast-on{opacity:1}"
  ].join("");
@@ -320,6 +291,18 @@ p.label + "</a>";
  document.body.insertBefore(burger, document.body.firstChild);
  document.body.classList.add("jamali-has-sidebar");
 
+ /* The sidebar answers the page: the active item is scrolled into
+  * view, so opening the menu always shows where you are. */
+ (function jamaliActiveReveal() {
+   var navEl = aside.querySelector("nav");
+   var act = aside.querySelector("a.active");
+   if (!navEl || !act) return;
+   requestAnimationFrame(function () {
+     var nr = navEl.getBoundingClientRect(), ar = act.getBoundingClientRect();
+     navEl.scrollTop += (ar.top - nr.top) - (navEl.clientHeight - ar.height) / 2;
+   });
+ })();
+
   
   // RESERVE (login removed): the account desk (the person button with
   // the name card, the Organisation/Personal mode switch, Switch
@@ -341,7 +324,12 @@ p.label + "</a>";
     toastTimer = setTimeout(function () { toast.classList.remove("jamali-toast-on"); }, 2000);
   }
   document.getElementById("jamali-side-comment").addEventListener("click", function () {
-    jamaliCommentOpen();
+    // THE COMMENT PAGE: the desk lives on its own complete page
+    // (/comments/390) - no popup. The page the visitor is on travels
+    // along in the ?from= hint so the owner sees where it came from.
+    var here = PAGE_ID ? "/comments/390?from=" + encodeURIComponent(PAGE_ID) : "/comments/390";
+    if (window.JAMALI_INTERNAL_GO) window.JAMALI_INTERNAL_GO(here);
+    else location.replace("/comments/390.html");
   });
 
   // SIDEBAR LOGIN / LOGOUT - the optional Google identity button, pinned
@@ -416,33 +404,10 @@ p.label + "</a>";
   // same split: create for anybody, read/delete for the owner only.
   // ====================================================================
   var commentOwnerEmail = "camelkazembe1@gmail.com";
-  var commentFb = null;        // the /502.js module, cached after first import
-  var commentBox = null;       // the send panel (every visitor)
-  var commentSentTimer = null; // the 3-second "Sent" button timer
-  var mailboxEl = null;        // the owner's mailbox panel
-  var mailboxUnsub = null;     // the live mailbox unsubscribe
-
   function jcEsc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
-  }
-
-  function jamaliCommentModule() {
-    if (commentFb) return Promise.resolve(commentFb);
-    return import("/502.js").then(function (fb) {
-      commentFb = fb;
-      if (fb && fb.commentOwner) commentOwnerEmail = String(fb.commentOwner).toLowerCase();
-      return fb;
-    });
-  }
-
-  function jamaliCommentErr(e) {
-    var m = e && (e.code || e.message) ? (e.code || "") + " " + (e.message || "") : String(e);
-    if (String(m).indexOf("permission-denied") !== -1) {
-      return m + " - the comment desk rules are not published yet. Run: bash apply-rules.sh  (or publish firestore.rules from the Firebase console) once, then send again.";
-    }
-    return m;
   }
 
   // The top-right Comments button - created once, shown only when the
@@ -455,7 +420,10 @@ p.label + "</a>";
     b.hidden = true;
     b.title = "The comments mailbox - every visitor's comments, newest first";
     b.innerHTML = "&#128172; Comments";
-    b.addEventListener("click", function () { jamaliMailboxOpen(); });
+    b.addEventListener("click", function () {
+      if (window.JAMALI_INTERNAL_GO) window.JAMALI_INTERNAL_GO("/comments/390");
+      else location.replace("/comments/390.html");
+    });
     document.body.appendChild(b);
   })();
 
@@ -466,192 +434,9 @@ p.label + "</a>";
     btn.hidden = mail !== commentOwnerEmail;
   }
 
-  // ---- the send panel: every visitor, signed in or not ----
-  function jamaliCommentOpen() {
-    if (!commentBox) jamaliCommentBuild();
-    commentBox.hidden = !commentBox.hidden;
-    if (!commentBox.hidden) jamaliCommentPaint();
-  }
-
-  function jamaliCommentBuild() {
-    commentBox = document.createElement("div");
-    commentBox.id = "jamali-comment-box";
-    commentBox.setAttribute("role", "dialog");
-    commentBox.hidden = true;
-    document.body.appendChild(commentBox);
-  }
-
-  function jamaliCommentPaint() {
-    if (commentSentTimer) { clearTimeout(commentSentTimer); commentSentTimer = null; }
-    commentBox.innerHTML =
-      "<div class=\"jc-head\"><b>Send a comment</b><button type=\"button\" class=\"jc-close\" title=\"Close\">&#215;</button></div>" +
-      "<textarea id=\"jamali-comment-text\" maxlength=\"2000\" placeholder=\"Write your comment - it goes straight to the owner\"></textarea>" +
-      "<button type=\"button\" class=\"jc-send\">Send comment</button>" +
-      "<div class=\"jc-msg\" id=\"jamali-comment-msg\" hidden></div>";
-    commentBox.querySelector(".jc-close").addEventListener("click", function () {
-      commentBox.hidden = true;
-    });
-    var ta = commentBox.querySelector("#jamali-comment-text");
-    ta.addEventListener("input", jamaliCommentCount);
-    jamaliCommentCount();
-    commentBox.querySelector(".jc-send").addEventListener("click", jamaliCommentSend);
-  }
-
-  function jamaliCommentCount() {
-    if (!commentBox) return;
-    var ta = commentBox.querySelector("#jamali-comment-text");
-    var n = commentBox.querySelector("#jamali-comment-n");
-    if (ta && n) n.textContent = String(ta.value.length);
-  }
-
-  function jamaliCommentSend() {
-    if (!commentBox) return;
-    var ta = commentBox.querySelector("#jamali-comment-text");
-    var btn = commentBox.querySelector(".jc-send");
-    var msg = commentBox.querySelector("#jamali-comment-msg");
-    var text = ta.value.trim();
-    msg.className = "jc-msg";
-    msg.hidden = true;
-    if (!text) {
-      msg.className = "jc-msg jc-bad";
-      msg.hidden = false;
-      msg.textContent = "Write the comment first - the box is empty.";
-      return;
-    }
-    btn.disabled = true;
-    jamaliCommentModule().then(function (fb) {
-      return fb.commentSend(text);
-    }).then(function () {
-      btn.classList.add("jc-sent");
-      btn.textContent = "Sent";
-      jamaliToast("Comment sent to the owner");
-      commentSentTimer = setTimeout(function () {
-        commentSentTimer = null;
-        btn.classList.remove("jc-sent");
-        btn.textContent = "Send comment";
-        btn.disabled = false;
-        ta.value = "";
-        jamaliCommentCount();
-      }, 3000);
-    }).catch(function (e) {
-      btn.disabled = false;
-      msg.className = "jc-msg jc-bad";
-      msg.hidden = false;
-      msg.textContent = "NOT sent - " + jamaliCommentErr(e) + " Your text is still here - try again.";
-    });
-  }
-
-  // ---- the owner's mailbox: every comment, newest first ----
-  function jamaliMailboxOpen() {
-    if (!mailboxEl) jamaliMailboxBuild();
-    mailboxEl.hidden = !mailboxEl.hidden;
-    if (!mailboxEl.hidden) jamaliMailboxStart();
-    else jamaliMailboxStop();
-  }
-
-  function jamaliMailboxBuild() {
-    mailboxEl = document.createElement("div");
-    mailboxEl.id = "jamali-comments-list";
-    mailboxEl.setAttribute("role", "dialog");
-    mailboxEl.hidden = true;
-    document.body.appendChild(mailboxEl);
-  }
-
-  function jamaliMailboxStart() {
-    jamaliMailboxStop();
-    mailboxEl.innerHTML =
-      "<div class=\"jc-head\"><div class=\"jc-title-wrap\"><b>&#128172; Comments</b>" +
-      "<button type=\"button\" class=\"jc-refresh\" title=\"Load again\">Refresh</button></div>" +
-      "<button type=\"button\" class=\"jc-close\" title=\"Close\">&#215;</button></div>" +
-      "<div class=\"jc-count-line\" id=\"jamali-mailbox-count\">loading&#8230;</div>" +
-      "<div class=\"jc-list\" id=\"jamali-mailbox-items\"></div>";
-    mailboxEl.querySelector(".jc-close").addEventListener("click", function () {
-      mailboxEl.hidden = true;
-      jamaliMailboxStop();
-    });
-    mailboxEl.querySelector(".jc-refresh").addEventListener("click", function () {
-      jamaliMailboxStart();
-    });
-    jamaliMailboxPaint(null, null);
-    jamaliCommentModule().then(function (fb) {
-      if (fb.commentWatch) {
-        return fb.commentWatch(function (err, rows) {
-          if (mailboxEl && !mailboxEl.hidden) jamaliMailboxPaint(err, rows);
-        }).then(function (unsub) {
-          mailboxUnsub = unsub;
-        });
-      }
-      return fb.commentList().then(function (rows) {
-        if (mailboxEl && !mailboxEl.hidden) jamaliMailboxPaint(null, rows);
-      });
-    }).catch(function (e) {
-      if (mailboxEl && !mailboxEl.hidden) jamaliMailboxPaint(e, null);
-    });
-  }
-
-  function jamaliMailboxStop() {
-    if (mailboxUnsub) {
-      try { mailboxUnsub(); } catch (e) {}
-      mailboxUnsub = null;
-    }
-  }
-
-  function jamaliMailboxPaint(err, rows) {
-    if (!mailboxEl) return;
-    var items = mailboxEl.querySelector("#jamali-mailbox-items");
-    var count = mailboxEl.querySelector("#jamali-mailbox-count");
-    if (!items || !count) return;
-    if (err) {
-      count.textContent = "";
-      items.innerHTML = "";
-      var d = document.createElement("div");
-      d.className = "jc-msg jc-bad";
-      d.textContent = "The mailbox could not be read - " + jamaliCommentErr(err);
-      items.appendChild(d);
-      return;
-    }
-    if (!rows) {
-      count.textContent = "loading\u2026";
-      return;
-    }
-    count.textContent = rows.length === 1 ? "1 comment" : rows.length + " comments";
-    items.innerHTML = "";
-    if (!rows.length) {
-      var none = document.createElement("div");
-      none.className = "jc-none";
-      none.textContent = "No comments yet - when a visitor sends one it appears here immediately.";
-      items.appendChild(none);
-      return;
-    }
-    rows.forEach(function (r) {
-      var when = r.millis ? new Date(r.millis).toLocaleString() : "";
-      var item = document.createElement("div");
-      item.className = "jc-item";
-      item.innerHTML =
-        "<div class=\"jc-item-top\">" +
-        "<span class=\"jc-from\" title=\"" + jcEsc(r.from) + "\">" + jcEsc(r.from) + "</span>" +
-        "<span class=\"jc-when\">" + jcEsc(when) + "</span>" +
-        "<button type=\"button\" class=\"jc-del\" data-id=\"" + jcEsc(r.id) + "\" title=\"Delete this comment permanently\">&#128465;</button>" +
-        "</div>" +
-        "<div class=\"jc-text\"></div>" +
-        (r.page ? "<div class=\"jc-page\">from " + jcEsc(r.page) + "</div>" : "");
-      item.querySelector(".jc-text").textContent = r.text;
-      item.querySelector(".jc-del").addEventListener("click", function () {
-        jamaliMailboxDelete(r.id, r.from);
-      });
-      items.appendChild(item);
-    });
-  }
-
-  function jamaliMailboxDelete(id, from) {
-    if (!commentFb || !commentFb.commentDelete) return;
-    if (!window.confirm("Delete this comment from " + from + " permanently?")) return;
-    commentFb.commentDelete(id).then(function () {
-      jamaliToast("Comment deleted");
-    }).catch(function (e) {
-      jamaliToast("Delete failed: " + jamaliCommentErr(e));
-    });
-  }
+  // THE COMMENT PAGE: the send panel and the owner mailbox moved to
+  // their own complete page, /comments/390 (public/comments/). The
+  // two buttons above navigate there internally.
 
   // RESERVE (admin removed): the floating Admin button that opened
   // /system-admin/380 was deactivated with the login system. The

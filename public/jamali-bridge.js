@@ -13,14 +13,14 @@
  *   3. Tooltips and titles that contained a route path are scrubbed.
  *
  * Real page addresses still exist internally (the iframe keeps using
- * /slug/number), so every feature that reads location.pathname, query
- * strings or hashes keeps working exactly as before - the routes just
- * never reach the user's interface.
+ * /slug/number.html), so every feature that reads location.pathname,
+ * query strings or hashes keeps working exactly as before - the routes
+ * just never reach the user's interface.
  */
 (function () {
   "use strict";
 
-  var HOME = "/home/1";
+  var HOME = "/home/1.html";
   var BOOT_KEY = "JAMALI_BOOT_PAGE";
   var LAST_KEY = "JAMALI_LAST_PAGE";
 
@@ -29,7 +29,9 @@
 
   /* Normalise an internal target. Returns null for anything that is not
    * an app route (external URLs, blobs, downloads, in-page hashes), so
-   * those keep their normal browser behaviour. */
+   * those keep their normal browser behaviour. App routes come back in
+   * their full /slug/number.html form, because the pages are plain
+   * static files - the routes stay internal, the files are real. */
   function norm(target) {
     var t = String(target == null ? "" : target).trim();
     if (!t) return null;
@@ -39,8 +41,13 @@
     if (t === "/" || t === "/index.html") return HOME;
     if (t.charAt(0) !== "/") return null;
     if (/^\/RESERVE(\/|$)/i.test(t)) return null; /* admin panel stays standalone */
-    t = t.replace(/\.html(?=$|[?#])/i, "");
-    return t;
+    var m = t.match(/^([^?#]*)([?#].*)?$/);
+    if (!m) return null;
+    var path = m[1].replace(/\/+$/, "");
+    var rest = m[2] || "";
+    if (!path) return HOME;
+    if (!/\.html$/i.test(path)) path += ".html";
+    return path + rest;
   }
 
   /* 1) Standalone pages bounce into the root shell. */
