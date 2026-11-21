@@ -31,6 +31,7 @@ async function loadProfile() {
   const p = snap.data() || {};
   for (const el of form.elements) {
     if (!el.name || el.type === "file") continue;
+    if (el.type === "checkbox") { const m = p.modules || {}; el.checked = m[el.name.slice(4)] !== false; continue; }
     if (p[el.name] !== undefined && p[el.name] !== null) el.value = p[el.name];
   }
   logoData = p.logo || "";
@@ -71,10 +72,18 @@ form.addEventListener("submit", async (e) => {
   const msg = $("profile-msg");
   const data = {};
   for (const el of form.elements) {
-    if (!el.name || el.type === "file") continue;
+    if (!el.name || el.type === "file" || el.type === "checkbox") continue;
     data[el.name] = el.value.trim();
   }
-  if (!data.name) { say(msg, "Business name is required.", false); return; }
+  if (!data.name) { say(msg, "Organisation name is required.", false); return; }
+  data.modules = {
+    business: form.elements.mod_business.checked,
+    health: form.elements.mod_health.checked,
+    computer: form.elements.mod_computer.checked
+  };
+  if (!data.modules.business && !data.modules.health && !data.modules.computer) {
+    say(msg, "Keep at least one module switched on.", false); return;
+  }
   data.currency = (data.currency || "").toUpperCase();
   data.fyStartMonth = Number(data.fyStartMonth) || 1;
   data.taxRate = data.taxRate === "" ? null : Number(data.taxRate);
@@ -83,10 +92,11 @@ form.addEventListener("submit", async (e) => {
   $("profile-save").disabled = true;
   try {
     await setDoc(PROFILE_REF, data, { merge: true });
+    try { localStorage.setItem("jamaliOrgModules", JSON.stringify(data.modules)); } catch (e) {}
     say(msg, "Profile saved.", true);
     setTimeout(() => {
-      if (window.JAMALI_INTERNAL_GO) window.JAMALI_INTERNAL_GO("/business/2");
-      else location.replace("/business/2.html");
+      if (window.JAMALI_INTERNAL_GO) window.JAMALI_INTERNAL_GO("/home/1");
+      else location.replace("/home/1.html");
     }, 600);
   } catch (err) {
     say(msg, "Not saved: " + (err && err.message || err), false);

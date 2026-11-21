@@ -1186,4 +1186,17 @@ wireToggles(aside);
   }
   /* JD-DELETE-MODULE-END */
 
+  // THE REGISTER PICKERS (public/pickers.js) and HOSPITAL MONEY IN THE
+  // BOOKS (public/health-books.js): one organisation, one set of records.
+  (function () {
+    var p = document.createElement("script");
+    p.type = "module";
+    p.src = "/pickers.js";
+    document.head.appendChild(p);
+    var hb = document.createElement("script");
+    hb.type = "module";
+    hb.src = "/health-books.js";
+    document.head.appendChild(hb);
+  })();
+
 })();
