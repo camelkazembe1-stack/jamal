@@ -259,14 +259,13 @@ p.label + "</a>";
    ".jc-head .jc-title-wrap{display:flex;align-items:center;gap:8px}",
    ".jc-close{border:0;background:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:8px}",
    ".jc-close:hover{background:#1e293b;color:#fff}",
-   ".jc-who{color:#94a3b8;font-size:12.5px;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:10px;line-height:1.5}",
-   ".jc-who b{color:#e2e8f0}",
    "#jamali-comment-text{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:9px;background:#0b1220;color:#e2e8f0;font:inherit;padding:9px 10px;resize:vertical;min-height:96px}",
    "#jamali-comment-text:focus{outline:none;border-color:#0ea5e9}",
-   ".jc-count{color:#64748b;font-size:11px;margin-top:4px;text-align:right}",
-   ".jc-send{display:block;width:100%;border:0;border-radius:10px;background:#16a34a;color:#fff;font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:8px}",
+   ".jc-send{display:block;width:100%;border:0;border-radius:10px;background:#16a34a;color:#fff;font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:8px;transition:background .25s ease}",
    ".jc-send:hover{background:#15803d}",
    ".jc-send:disabled{opacity:.55;cursor:wait}",
+   ".jc-send.jc-sent{background:#2563eb;opacity:1;cursor:default}",
+   ".jc-send.jc-sent:hover{background:#2563eb}",
    ".jc-msg{border-radius:10px;padding:9px 12px;margin:8px 0 0;line-height:1.5;font-size:12.5px}",
    ".jc-msg.jc-ok{background:#052e16;border:1px solid #4ade80;color:#bbf7d0}",
    ".jc-msg.jc-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}",
@@ -419,6 +418,7 @@ p.label + "</a>";
   var commentOwnerEmail = "camelkazembe1@gmail.com";
   var commentFb = null;        // the /502.js module, cached after first import
   var commentBox = null;       // the send panel (every visitor)
+  var commentSentTimer = null; // the 3-second "Sent" button timer
   var mailboxEl = null;        // the owner's mailbox panel
   var mailboxUnsub = null;     // the live mailbox unsubscribe
 
@@ -482,13 +482,10 @@ p.label + "</a>";
   }
 
   function jamaliCommentPaint() {
-    var me = jamaliCommentIdentity();
+    if (commentSentTimer) { clearTimeout(commentSentTimer); commentSentTimer = null; }
     commentBox.innerHTML =
       "<div class=\"jc-head\"><b>Send a comment</b><button type=\"button\" class=\"jc-close\" title=\"Close\">&#215;</button></div>" +
-      "<div class=\"jc-who\">From: <b>" + (me.guest ? "Guest (not signed in - the comment still reaches the owner)" : jcEsc(me.email)) + "</b><br>" +
-      "To: <b>" + jcEsc(commentOwnerEmail) + "</b> (the owner)</div>" +
       "<textarea id=\"jamali-comment-text\" maxlength=\"2000\" placeholder=\"Write your comment - it goes straight to the owner\"></textarea>" +
-      "<div class=\"jc-count\"><span id=\"jamali-comment-n\">0</span> / 2000</div>" +
       "<button type=\"button\" class=\"jc-send\">Send comment</button>" +
       "<div class=\"jc-msg\" id=\"jamali-comment-msg\" hidden></div>";
     commentBox.querySelector(".jc-close").addEventListener("click", function () {
@@ -498,12 +495,6 @@ p.label + "</a>";
     ta.addEventListener("input", jamaliCommentCount);
     jamaliCommentCount();
     commentBox.querySelector(".jc-send").addEventListener("click", jamaliCommentSend);
-  }
-
-  function jamaliCommentIdentity() {
-    var u = commentFb && commentFb.auth && commentFb.auth.currentUser;
-    if (u && u.email) return { email: String(u.email), guest: false };
-    return { email: "", guest: true };
   }
 
   function jamaliCommentCount() {
@@ -531,13 +522,17 @@ p.label + "</a>";
     jamaliCommentModule().then(function (fb) {
       return fb.commentSend(text);
     }).then(function () {
-      btn.disabled = false;
-      ta.value = "";
-      jamaliCommentCount();
-      msg.className = "jc-msg jc-ok";
-      msg.hidden = false;
-      msg.textContent = "Sent. The owner (" + commentOwnerEmail + ") will see it in the Comments mailbox at the top right.";
+      btn.classList.add("jc-sent");
+      btn.textContent = "Sent";
       jamaliToast("Comment sent to the owner");
+      commentSentTimer = setTimeout(function () {
+        commentSentTimer = null;
+        btn.classList.remove("jc-sent");
+        btn.textContent = "Send comment";
+        btn.disabled = false;
+        ta.value = "";
+        jamaliCommentCount();
+      }, 3000);
     }).catch(function (e) {
       btn.disabled = false;
       msg.className = "jc-msg jc-bad";
