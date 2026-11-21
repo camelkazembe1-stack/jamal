@@ -33,7 +33,10 @@ cd "$REPO"
 ok "Repository: $REPO"
 
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
-  die "You have uncommitted changes in $REPO. Commit or stash them, then run again."
+  STASH_MSG="jamali-before-upgrade-$(date +%Y%m%d-%H%M%S)"
+  say "Putting your uncommitted edits aside (git stash: $STASH_MSG)"
+  git stash push -m "$STASH_MSG" >/dev/null || die "Could not set your edits aside."
+  ok "Saved. See them with: git stash list   Bring them back with: git stash pop"
 fi
 
 say "Fetching the latest main and $BRANCH"
@@ -47,7 +50,7 @@ BEFORE="$(git rev-parse HEAD)"
 say "Merging $BRANCH into main"
 if ! git merge --no-edit -m "Merge JAMALI upgrades ($BRANCH) into main" "origin/$BRANCH"; then
   git merge --abort || true
-  die "Merge conflict - nothing was changed. Tell Devin and it will fix the branch."
+  die "Merge conflict - nothing was merged. Tell Devin and it will fix the branch."
 fi
 AFTER="$(git rev-parse HEAD)"
 
