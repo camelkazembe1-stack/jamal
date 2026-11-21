@@ -1160,4 +1160,13 @@ wireToggles(aside);
   }
   /* JD-DELETE-MODULE-END */
 
+  // THE REGISTER PICKERS: Customer, Supplier, Product and Employee boxes
+  // offer the names kept in the registers (public/pickers.js).
+  (function () {
+    var p = document.createElement("script");
+    p.type = "module";
+    p.src = "/pickers.js";
+    document.head.appendChild(p);
+  })();
+
 })();
