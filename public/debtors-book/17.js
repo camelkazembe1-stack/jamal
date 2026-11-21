@@ -342,6 +342,11 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     cashReceipts: "Cash receipts journal", cashPayments: "Cash payments journal" };
   function journalKindOf(t) {
     var k = classify(t);
+    if (k === "sales" || k === "purchases" || k === "salesReturns" || k === "purchasesReturns") {
+      var fm = String(t.flowMethod || "").trim().toLowerCase();
+      if (fm === "cash" || fm === "bank")
+        return String(t.transactionType || "").toUpperCase() === "IN" ? "cashReceipts" : "cashPayments";
+    }
     if (k) return k;
     var tn = String(t.transactionName || "").trim().toLowerCase();
     if (tn === "petty expense" || tn === "petty cash") return "petty";
