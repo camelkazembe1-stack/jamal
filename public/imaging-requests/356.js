@@ -123,7 +123,7 @@ function render() {
       "<td>" + stBadge(x.status) + "</td>" +
       "<td class='c-act'>" +
         (openAp ? "<button type='button' class='ghost-btn' data-ap='" + esc(x.__id) + "'>Appointment</button> " : "") +
-        "<a class='ghost-btn' href='/imaging-workbench/373?id=" + encodeURIComponent(x.__id) + "'>Open</a></td>" +
+        "<a class='ghost-btn' href='/imaging-workbench/355?id=" + encodeURIComponent(x.__id) + "'>Open</a></td>" +
     "</tr>";
   }).join("");
 }

@@ -15,32 +15,32 @@
     },
     {
       "source": "/stock-management/397",
-      "destination": "/stock-register/397",
+      "destination": "/stock-register/348",
       "permanent": false
     },
     {
       "source": "/stock-management/397/",
-      "destination": "/stock-register/397",
+      "destination": "/stock-register/348",
       "permanent": false
     },
     {
       "source": "/stock-management/398",
-      "destination": "/stock-progress/398",
+      "destination": "/stock-progress/347",
       "permanent": false
     },
     {
       "source": "/stock-management/398/",
-      "destination": "/stock-progress/398",
+      "destination": "/stock-progress/347",
       "permanent": false
     },
     {
       "source": "/stock-management/399",
-      "destination": "/stock-change/399",
+      "destination": "/stock-change/346",
       "permanent": false
     },
     {
       "source": "/stock-management/399/",
-      "destination": "/stock-change/399",
+      "destination": "/stock-change/346",
       "permanent": false
     },
     {
@@ -205,42 +205,42 @@
     },
     {
       "source": "/laboratory/363",
-      "destination": "/lab-workbench/363",
+      "destination": "/lab-workbench/359",
       "permanent": false
     },
     {
       "source": "/laboratory/363/",
-      "destination": "/lab-workbench/363",
+      "destination": "/lab-workbench/359",
       "permanent": false
     },
     {
       "source": "/radiology/371",
-      "destination": "/new-imaging-request/371",
+      "destination": "/new-imaging-request/357",
       "permanent": false
     },
     {
       "source": "/radiology/371/",
-      "destination": "/new-imaging-request/371",
+      "destination": "/new-imaging-request/357",
       "permanent": false
     },
     {
       "source": "/radiology/372",
-      "destination": "/imaging-requests/372",
+      "destination": "/imaging-requests/356",
       "permanent": false
     },
     {
       "source": "/radiology/372/",
-      "destination": "/imaging-requests/372",
+      "destination": "/imaging-requests/356",
       "permanent": false
     },
     {
       "source": "/radiology/373",
-      "destination": "/imaging-workbench/373",
+      "destination": "/imaging-workbench/355",
       "permanent": false
     },
     {
       "source": "/radiology/373/",
-      "destination": "/imaging-workbench/373",
+      "destination": "/imaging-workbench/355",
       "permanent": false
     },
     {

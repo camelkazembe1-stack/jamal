@@ -108,7 +108,7 @@ function render() {
       "<td class='nowrap'>" + esc(sp.status || "—") + (sp.type ? " · " + esc(sp.type) : "") + "</td>" +
       "<td class='c-date'>" + esc(when(x.createdAt)) + "</td>" +
       "<td>" + stBadge(x.status) + "</td>" +
-      "<td class='c-act'><a class='ghost-btn' href='/lab-workbench/363?id=" + encodeURIComponent(x.__id) + "'>Open</a></td>" +
+      "<td class='c-act'><a class='ghost-btn' href='/lab-workbench/359?id=" + encodeURIComponent(x.__id) + "'>Open</a></td>" +
     "</tr>";
   }).join("");
 }

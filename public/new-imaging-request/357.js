@@ -211,7 +211,7 @@ async function saveReq() {
     $("#r-done-line").textContent = who(selected) + " · " + num +
       " · " + procedures.length + " procedure" + (procedures.length === 1 ? "" : "s") +
       " · " + $("#r-priority").value + " · " + dept + " · " + clinician + ".";
-    $("#r-gowork").href = "/imaging-requests/372?patient=" + encodeURIComponent(selected.regId);
+    $("#r-gowork").href = "/imaging-requests/356?patient=" + encodeURIComponent(selected.regId);
     $("#r-formcard").hidden = true;
     $("#r-done").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
