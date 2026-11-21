@@ -473,7 +473,7 @@
       var a = document.createElement("a");
       a.className = "tool";
       a.href = "/" + t.slug + "/" + t.n;
-      a.title = "#" + t.id + " · " + t.label + " · /" + t.slug + "/" + t.n;
+      a.title = "#" + t.id + " · " + t.label;
       a.setAttribute("data-search", (t.label + " " + fam.label + " " + t.slug).toLowerCase());
       a.setAttribute("data-page", t.n);
       var name = document.createElement("span");

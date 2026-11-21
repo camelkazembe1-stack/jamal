@@ -14,246 +14,6 @@
       "permanent": false
     },
     {
-      "source": "/stock-management/397",
-      "destination": "/stock-register/348",
-      "permanent": false
-    },
-    {
-      "source": "/stock-management/397/",
-      "destination": "/stock-register/348",
-      "permanent": false
-    },
-    {
-      "source": "/stock-management/398",
-      "destination": "/stock-progress/347",
-      "permanent": false
-    },
-    {
-      "source": "/stock-management/398/",
-      "destination": "/stock-progress/347",
-      "permanent": false
-    },
-    {
-      "source": "/stock-management/399",
-      "destination": "/stock-change/346",
-      "permanent": false
-    },
-    {
-      "source": "/stock-management/399/",
-      "destination": "/stock-change/346",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/331",
-      "destination": "/ward-registration/331",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/331/",
-      "destination": "/ward-registration/331",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/332",
-      "destination": "/bed-management/332",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/332/",
-      "destination": "/bed-management/332",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/333",
-      "destination": "/ward-occupancy/333",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/333/",
-      "destination": "/ward-occupancy/333",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/334",
-      "destination": "/bed-assignment/334",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/334/",
-      "destination": "/bed-assignment/334",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/335",
-      "destination": "/ward-bed-transfers/335",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/335/",
-      "destination": "/ward-bed-transfers/335",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/336",
-      "destination": "/cleaning-maintenance/336",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/336/",
-      "destination": "/cleaning-maintenance/336",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/337",
-      "destination": "/ward-register/337",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/337/",
-      "destination": "/ward-register/337",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/338",
-      "destination": "/bed-transfer-history/338",
-      "permanent": false
-    },
-    {
-      "source": "/ward-management/338/",
-      "destination": "/bed-transfer-history/338",
-      "permanent": false
-    },
-    {
-      "source": "/patient-admission/341",
-      "destination": "/new-admission/341",
-      "permanent": false
-    },
-    {
-      "source": "/patient-admission/341/",
-      "destination": "/new-admission/341",
-      "permanent": false
-    },
-    {
-      "source": "/patient-admission/342",
-      "destination": "/admission-list/342",
-      "permanent": false
-    },
-    {
-      "source": "/patient-admission/342/",
-      "destination": "/admission-list/342",
-      "permanent": false
-    },
-    {
-      "source": "/patient-admission/343",
-      "destination": "/admission-details/343",
-      "permanent": false
-    },
-    {
-      "source": "/patient-admission/343/",
-      "destination": "/admission-details/343",
-      "permanent": false
-    },
-    {
-      "source": "/patient-discharge/351",
-      "destination": "/start-discharge/351",
-      "permanent": false
-    },
-    {
-      "source": "/patient-discharge/351/",
-      "destination": "/start-discharge/351",
-      "permanent": false
-    },
-    {
-      "source": "/patient-discharge/352",
-      "destination": "/discharge-list/352",
-      "permanent": false
-    },
-    {
-      "source": "/patient-discharge/352/",
-      "destination": "/discharge-list/352",
-      "permanent": false
-    },
-    {
-      "source": "/patient-discharge/353",
-      "destination": "/discharge-details/353",
-      "permanent": false
-    },
-    {
-      "source": "/patient-discharge/353/",
-      "destination": "/discharge-details/353",
-      "permanent": false
-    },
-    {
-      "source": "/laboratory/361",
-      "destination": "/new-lab-request/361",
-      "permanent": false
-    },
-    {
-      "source": "/laboratory/361/",
-      "destination": "/new-lab-request/361",
-      "permanent": false
-    },
-    {
-      "source": "/laboratory/362",
-      "destination": "/lab-request-list/362",
-      "permanent": false
-    },
-    {
-      "source": "/laboratory/362/",
-      "destination": "/lab-request-list/362",
-      "permanent": false
-    },
-    {
-      "source": "/laboratory/363",
-      "destination": "/lab-workbench/359",
-      "permanent": false
-    },
-    {
-      "source": "/laboratory/363/",
-      "destination": "/lab-workbench/359",
-      "permanent": false
-    },
-    {
-      "source": "/radiology/371",
-      "destination": "/new-imaging-request/357",
-      "permanent": false
-    },
-    {
-      "source": "/radiology/371/",
-      "destination": "/new-imaging-request/357",
-      "permanent": false
-    },
-    {
-      "source": "/radiology/372",
-      "destination": "/imaging-requests/356",
-      "permanent": false
-    },
-    {
-      "source": "/radiology/372/",
-      "destination": "/imaging-requests/356",
-      "permanent": false
-    },
-    {
-      "source": "/radiology/373",
-      "destination": "/imaging-workbench/355",
-      "permanent": false
-    },
-    {
-      "source": "/radiology/373/",
-      "destination": "/imaging-workbench/355",
-      "permanent": false
-    },
-    {
-      "source": "/convertor/64",
-      "destination": "/tool/64",
-      "permanent": false
-    },
-    {
-      "source": "/convertor/64/",
-      "destination": "/tool/64",
-      "permanent": false
-    },
-    {
       "source": "/account-recovery/390",
       "destination": "/?mode=token",
       "permanent": false
@@ -342,6 +102,200 @@
       "source": "/forgot-phone-number/392/",
       "destination": "/?mode=phone",
       "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/stock-management/397",
+      "destination": "/stock-register/348"
+    },
+    {
+      "source": "/stock-management/397/",
+      "destination": "/stock-register/348"
+    },
+    {
+      "source": "/stock-management/398",
+      "destination": "/stock-progress/347"
+    },
+    {
+      "source": "/stock-management/398/",
+      "destination": "/stock-progress/347"
+    },
+    {
+      "source": "/stock-management/399",
+      "destination": "/stock-change/346"
+    },
+    {
+      "source": "/stock-management/399/",
+      "destination": "/stock-change/346"
+    },
+    {
+      "source": "/ward-management/331",
+      "destination": "/ward-registration/331"
+    },
+    {
+      "source": "/ward-management/331/",
+      "destination": "/ward-registration/331"
+    },
+    {
+      "source": "/ward-management/332",
+      "destination": "/bed-management/332"
+    },
+    {
+      "source": "/ward-management/332/",
+      "destination": "/bed-management/332"
+    },
+    {
+      "source": "/ward-management/333",
+      "destination": "/ward-occupancy/333"
+    },
+    {
+      "source": "/ward-management/333/",
+      "destination": "/ward-occupancy/333"
+    },
+    {
+      "source": "/ward-management/334",
+      "destination": "/bed-assignment/334"
+    },
+    {
+      "source": "/ward-management/334/",
+      "destination": "/bed-assignment/334"
+    },
+    {
+      "source": "/ward-management/335",
+      "destination": "/ward-bed-transfers/335"
+    },
+    {
+      "source": "/ward-management/335/",
+      "destination": "/ward-bed-transfers/335"
+    },
+    {
+      "source": "/ward-management/336",
+      "destination": "/cleaning-maintenance/336"
+    },
+    {
+      "source": "/ward-management/336/",
+      "destination": "/cleaning-maintenance/336"
+    },
+    {
+      "source": "/ward-management/337",
+      "destination": "/ward-register/337"
+    },
+    {
+      "source": "/ward-management/337/",
+      "destination": "/ward-register/337"
+    },
+    {
+      "source": "/ward-management/338",
+      "destination": "/bed-transfer-history/338"
+    },
+    {
+      "source": "/ward-management/338/",
+      "destination": "/bed-transfer-history/338"
+    },
+    {
+      "source": "/patient-admission/341",
+      "destination": "/new-admission/341"
+    },
+    {
+      "source": "/patient-admission/341/",
+      "destination": "/new-admission/341"
+    },
+    {
+      "source": "/patient-admission/342",
+      "destination": "/admission-list/342"
+    },
+    {
+      "source": "/patient-admission/342/",
+      "destination": "/admission-list/342"
+    },
+    {
+      "source": "/patient-admission/343",
+      "destination": "/admission-details/343"
+    },
+    {
+      "source": "/patient-admission/343/",
+      "destination": "/admission-details/343"
+    },
+    {
+      "source": "/patient-discharge/351",
+      "destination": "/start-discharge/351"
+    },
+    {
+      "source": "/patient-discharge/351/",
+      "destination": "/start-discharge/351"
+    },
+    {
+      "source": "/patient-discharge/352",
+      "destination": "/discharge-list/352"
+    },
+    {
+      "source": "/patient-discharge/352/",
+      "destination": "/discharge-list/352"
+    },
+    {
+      "source": "/patient-discharge/353",
+      "destination": "/discharge-details/353"
+    },
+    {
+      "source": "/patient-discharge/353/",
+      "destination": "/discharge-details/353"
+    },
+    {
+      "source": "/laboratory/361",
+      "destination": "/new-lab-request/361"
+    },
+    {
+      "source": "/laboratory/361/",
+      "destination": "/new-lab-request/361"
+    },
+    {
+      "source": "/laboratory/362",
+      "destination": "/lab-request-list/362"
+    },
+    {
+      "source": "/laboratory/362/",
+      "destination": "/lab-request-list/362"
+    },
+    {
+      "source": "/laboratory/363",
+      "destination": "/lab-workbench/359"
+    },
+    {
+      "source": "/laboratory/363/",
+      "destination": "/lab-workbench/359"
+    },
+    {
+      "source": "/radiology/371",
+      "destination": "/new-imaging-request/357"
+    },
+    {
+      "source": "/radiology/371/",
+      "destination": "/new-imaging-request/357"
+    },
+    {
+      "source": "/radiology/372",
+      "destination": "/imaging-requests/356"
+    },
+    {
+      "source": "/radiology/372/",
+      "destination": "/imaging-requests/356"
+    },
+    {
+      "source": "/radiology/373",
+      "destination": "/imaging-workbench/355"
+    },
+    {
+      "source": "/radiology/373/",
+      "destination": "/imaging-workbench/355"
+    },
+    {
+      "source": "/convertor/64",
+      "destination": "/tool/64"
+    },
+    {
+      "source": "/convertor/64/",
+      "destination": "/tool/64"
     }
   ],
   "buildCommand": "node SERVER/sync.js"

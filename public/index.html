@@ -13,6 +13,7 @@
       min-height: 100%;
       margin: 0;
       overflow: hidden;
+      background: #0f172a;
     }
 
     #jamali-app {
@@ -27,11 +28,82 @@
 <body>
   <iframe
     id="jamali-app"
-    src="/home/1"
+    src="about:blank"
     title="JAMALI application"
     allow="clipboard-read; clipboard-write"
-  >
-    <p>Your browser does not support embedded pages. <a href="/home/1">Open JAMALI</a>.</p>
-  </iframe>
+  ></iframe>
+  <script>
+    /* JAMALI root shell. Every page of the app opens inside this frame,
+     * so the address bar only ever shows the site root. Pages announce
+     * their moves through jamali-bridge.js with postMessage; nothing is
+     * redirected in the open and no route path reaches the interface. */
+    (function () {
+      "use strict";
+
+      var HOME = "/home/1";
+      var BOOT_KEY = "JAMALI_BOOT_PAGE";
+      var LAST_KEY = "JAMALI_LAST_PAGE";
+      var frame = document.getElementById("jamali-app");
+
+      function norm(target) {
+        var t = String(target == null ? "" : target).trim();
+        if (!t) return null;
+        if (t.charAt(0) === "#") return null;
+        if (/^(https?:)?\/\//i.test(t)) return null;
+        if (/^(mailto|tel|sms|blob|data|javascript|about|file):/i.test(t)) return null;
+        if (t === "/" || t === "/index.html") return HOME;
+        if (t.charAt(0) !== "/") return null;
+        if (/^\/RESERVE(\/|$)/i.test(t)) return null;
+        t = t.replace(/\.html(?=$|[?#])/i, "");
+        return t;
+      }
+
+      /* If this shell was somehow served on a route path, quietly settle
+       * the address bar back onto the root - no reload, no redirect. */
+      if (location.pathname !== "/") {
+        try { history.replaceState(null, "", "/" + (location.search || "") + (location.hash || "")); }
+        catch (e) {}
+      }
+
+      /* Where to open first: a page that bounced in from its own route
+       * wins, then a query typed on the root (for example /?mode=token),
+       * then the page the user was on before a refresh, then home. */
+      var boot = null;
+      try {
+        boot = sessionStorage.getItem(BOOT_KEY);
+        sessionStorage.removeItem(BOOT_KEY);
+      } catch (e) {}
+
+      var topQuery = (location.search || "") + (location.hash || "");
+      var last = null;
+      try { last = sessionStorage.getItem(LAST_KEY); } catch (e) {}
+
+      var initial = norm(boot) ||
+        (topQuery ? norm(HOME + topQuery) : null) ||
+        norm(last) || HOME;
+      frame.src = initial;
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== location.origin) return;
+        var d = ev.data;
+        if (!d || d.type !== "JAMALI_NAV") return;
+        var t = norm(d.target);
+        if (!t) return;
+        try { frame.contentWindow.location.replace(t); }
+        catch (e) { frame.src = t; }
+      });
+
+      /* Remember the page the user is on so a refresh reopens it inside
+       * the root shell. */
+      frame.addEventListener("load", function () {
+        try {
+          var here = frame.contentWindow.location;
+          if (!here || here.protocol === "about:") return;
+          var cur = here.pathname + (here.search || "") + (here.hash || "");
+          if (cur && cur !== "/") sessionStorage.setItem(LAST_KEY, cur);
+        } catch (e) {}
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -114,10 +114,27 @@ const VERCEL_SPEC = {
   cleanUrls: true,
   trailingSlash: true,
   outputDirectory: "public",
-  redirects: VERCEL_REDIRECTS.flatMap(function (pair) {
+  /* Routes that land on the root itself stay real redirects: the bar
+   * ends on "/" (or "/?mode=..."), so no route path is exposed. Every
+   * legacy page route turned into an invisible rewrite instead - the
+   * browser keeps the address it asked for, the page content arrives
+   * quietly, and jamali-bridge.js then folds the visit back into the
+   * root shell. No redirect is seen happening at the bottom or anywhere
+   * else, and every route stays internal. */
+  redirects: VERCEL_REDIRECTS.filter(function (pair) {
+    return pair[1] === "/" || pair[1].indexOf("/?") === 0;
+  }).flatMap(function (pair) {
     return [
       { source: pair[0], destination: pair[1], permanent: false },
       { source: pair[0] + "/", destination: pair[1], permanent: false }
+    ];
+  }),
+  rewrites: VERCEL_REDIRECTS.filter(function (pair) {
+    return pair[1] !== "/" && pair[1].indexOf("/?") !== 0;
+  }).flatMap(function (pair) {
+    return [
+      { source: pair[0], destination: pair[1] },
+      { source: pair[0] + "/", destination: pair[1] }
     ];
   }),
   buildCommand: "node SERVER/sync.js"
