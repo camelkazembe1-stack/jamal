@@ -84,6 +84,10 @@ form.addEventListener("submit", async (e) => {
   try {
     await setDoc(PROFILE_REF, data, { merge: true });
     say(msg, "Profile saved.", true);
+    setTimeout(() => {
+      if (window.JAMALI_INTERNAL_GO) window.JAMALI_INTERNAL_GO("/business/2");
+      else location.replace("/business/2.html");
+    }, 600);
   } catch (err) {
     say(msg, "Not saved: " + (err && err.message || err), false);
   } finally {
