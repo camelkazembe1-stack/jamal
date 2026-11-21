@@ -235,6 +235,7 @@ p.label + "</a>";
    " body.jamali-has-sidebar{padding-top:58px}",
    " body.jamali-has-sidebar{padding-top:58px}",
    " body.jamali-has-sidebar{padding-top:58px}",
+   " body.jamali-has-sidebar{padding-top:58px}",
    " #jamali-sidebar{transform:translateX(-100%)}",
    " body.jamali-sidebar-open #jamali-sidebar{transform:none}",
    " #jamali-burger{display:flex}",
@@ -292,6 +293,18 @@ p.label + "</a>";
  document.body.insertBefore(aside, document.body.firstChild);
  document.body.insertBefore(burger, document.body.firstChild);
  document.body.classList.add("jamali-has-sidebar");
+
+ /* The sidebar answers the page: the active item is scrolled into
+  * view, so opening the menu always shows where you are. */
+ (function jamaliActiveReveal() {
+   var navEl = aside.querySelector("nav");
+   var act = aside.querySelector("a.active");
+   if (!navEl || !act) return;
+   requestAnimationFrame(function () {
+     var nr = navEl.getBoundingClientRect(), ar = act.getBoundingClientRect();
+     navEl.scrollTop += (ar.top - nr.top) - (navEl.clientHeight - ar.height) / 2;
+   });
+ })();
 
  /* The sidebar answers the page: the active item is scrolled into
   * view, so opening the menu always shows where you are. */
