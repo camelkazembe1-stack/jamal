@@ -253,6 +253,8 @@ p.label + "</a>";
    "#jamali-side-comment small{font-size:10px;font-weight:700;color:#94a3b8}",
    "#jamali-side-comment:hover{background:#334155;color:#fff}",
    "#jamali-side-comment:hover small{color:#e2e8f0}",
+   "#jamali-side-comment.active{background:#0ea5e9;color:#fff}",
+   "#jamali-side-comment.active small{color:#fff}",
    "#jamali-owner-comments{position:fixed;top:12px;right:12px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
    "#jamali-owner-comments:hover{background:#1e293b}",
    "#jamali-owner-comments[hidden]{display:none}",
@@ -286,7 +288,7 @@ p.label + "</a>";
     // left the footer - its panel code stays below as RESERVE.
     "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
     "<button type=\"button\" id=\"jamali-side-auth\" class=\"login\" title=\"Not signed in - click to sign in with Google\">Login</button>" +
-    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner\">&#128172;<small>Comment</small></button>" +
+    "<button type=\"button\" id=\"jamali-side-comment\"" + (current === "comments" ? " class=\"active\"" : "") + " title=\"Write a comment to the owner\">&#128172;<small>Comment</small></button>" +
     "</div></div>";
 
  document.body.insertBefore(overlay, document.body.firstChild);
