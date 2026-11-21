@@ -1,21 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JAMALI - MultiSystem Management</title>
-<link rel="stylesheet" href="/home/1.css">
-<script src="/menu.js" defer></script>
-<script src="/sidebar.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>JAMALI - MultiSystem Management</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #jamali-app {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      border: 0;
+    }
+  </style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="grid" id="app-grid"></section>
-    <section id="sub-wrap" hidden>
-      <h3 class="sub-title">Modules</h3>
-      <div class="grid small" id="sub-grid"></div>
-    </section>
-  </main>
-  <script type="module" src="/home/1.js"></script>
+  <iframe
+    id="jamali-app"
+    src="/home/1"
+    title="JAMALI application"
+    allow="clipboard-read; clipboard-write"
+  >
+    <p>Your browser does not support embedded pages. <a href="/home/1">Open JAMALI</a>.</p>
+  </iframe>
 </body>
 </html>
