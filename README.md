@@ -24,7 +24,7 @@ HOW TO READ THIS GUIDE
 
 One folder per page. The public folder is the web root, and every page lives in its own folder as N.html, N.css and N.js, addressed without the extension, for example /petty-cash/7. This guide names every file in the repository. One entry per page, and the entry numbers are the page numbers themselves: 1. home, 2. business, and so on, up to 399. The convertor tools are entries 65 to 320, one entry per tool, in the order the hub shows them. Every entry is followed by a blank line before the next number, and each entry ends with the files the folder carries.
 
-THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL PENDING)
+THE BOOKKEEPING PAGES, 1 TO 61
 
 1. home - the landing page after sign in: three square tiles, Business, Computer and Health. The tiles paint at once - the Firebase SDK (502.js and the Google CDN bundles it pulls) is fetched in the background, only when a signed-in account exists whose grants may have changed, the same lazy import the sidebar already uses, so the first screen never waits for the network. Files: 1.html, 1.css, 1.js.
 
@@ -62,9 +62,9 @@ THE BOOKKEEPING PAGES, 1 TO 61 (19 AND 20 ARE RESERVED FOR BILLS, FOLDERS STILL 
 
 18. ledger - every account on its own T page: DR and CR sides, balance carried down and brought down. Every posting on both sides carries a pen to edit and a bin to delete it. Also home of the shared 512.js engine. Files: 18.html, 18.css, 18.js, plus 512.js - the shared posting engine the other book pages import.
 
-19. bills receivable (folder pending) - bills drawn on customers, tracked to settlement. The bills collection is already in the security rules. Files: none yet - the folder is still pending.
+19. bills-receivable - bills drawn on customers, tracked to settlement. Files: 19.html, 19.css, 19.js.
 
-20. bills payable (folder pending) - bills accepted from suppliers, tracked to payment. The bills collection is already in the security rules. Files: none yet - the folder is still pending.
+20. bills-payable - bills accepted from suppliers, tracked to payment. Files: 20.html, 20.css, 20.js.
 
 21. sales-order-book - customer orders taken, not yet invoiced. Files: 21.html, 21.css, 21.js.
 
@@ -755,6 +755,8 @@ THE STOCK PAGES, 396 TO 399
 398. stock-progress - Stock Progress, opened from the Stock Management hub - the live position of every registered stock: S/N, Stock Name, Units Present, Unit SP and Package BP, with Units Present updated the moment a Stock Change is saved. Files: 398.html, 398.css, 398.js.
 
 399. stock-change - Stock Change, opened from the Stock Management hub - all fourteen stock-change buttons in four groups: Stock IN with money (Purchases, Sales Returns), Stock IN without money (Free Stock Received, Stock Transfers IN, Stock Adjustments IN), Stock OUT with money (Sales, Purchases Returns) and Stock OUT without money (Stock Damage, Stock Expiry, Theft, Internal Use, Free Samples, Stock Transfers OUT, Stock Adjustments OUT). Pick a cause, pick the stock from the search grid, type the quantity as Packages or as Units - the two calculate each other from Units per Package - and save: the stock quantity moves in one batch (IN adds, OUT deducts, never below zero), the movement lands in stockChanges, and a transaction record joins the business transactions - the cause as its Transaction Name, Cash / Credit / Bank following the Add Transaction process for the money causes, type IN and the amount at Unit SP when money comes in, type OUT at BP when money goes out, and type NEUTRAL at BP with no flow method when no money moves. Files: 399.html, 399.css, 399.js.
+
+391. business-settings - Business Settings, opened from the Business hub: the Business Profile (name, legal name, country, address, phone, email, website, tax ID, VAT/GST number, currency code and symbol, financial year start month, default tax rate, logo and invoice footer, saved as businessProfile/main) and Backup & Restore - Download Backup saves every JAMALI key of this browser's Local Storage into one jamali-backup_DATE.json file, Restore from Backup loads such a file back after a confirmation and reloads. Files: 391.html, 391.css, 391.js.
 
 THE FILES WITHOUT A PAGE NUMBER
 
