@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>General Hospital Inventory Management — JAMALI Health</title>
+<link rel="stylesheet" href="/hospital-inventory/386.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden>Loading saved records…</p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>General Hospital Inventory Management</h1>
+  <p class="sub">Stock quantities, storage locations, stock movements and levels — every department supplied while preventing shortages, wastage and losses.</p>
+
+  <div class="dash-grid" id="dash"><div class='dash'><b id='d-0'>0</b><span>Movements recorded</span></div><div class='dash'><b id='d-1'>0</b><span>Receipts today</span></div><div class='dash'><b id='d-2'>0</b><span>Issues today</span></div><div class='dash'><b id='d-3'>0</b><span>Pending check</span></div></div>
+
+  <div class="card" id="qa-card">
+    <h2>Queue & announcements</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Waiting cases</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel qa-none" id="qa-current-box">
+        <div class="qa-k">Next case</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub">Nothing waiting</div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce</button>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for this module. When saved, the speaker reads through everything set here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. General Hospital Inventory"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Staff NAME"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Room 02"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Register / record</h2>
+    <p class="mini-note">Every record is saved on this device under the signed-in zone and stays there until deleted &mdash; nothing is hard-coded.</p>
+    <form id="rec-form" autocomplete="off">
+      <div class="rec-form"><label class="f-field">Item code<input id="f-itemCode" type="text" placeholder="e.g. GLV-001" required></label><label class="f-field">Item name<input id="f-itemName" type="text" placeholder="e.g. Examination gloves" required></label><label class="f-field">Movement<select id="f-movement" required><option value="">— Select —</option><option>Receive</option><option>Issue</option><option>Transfer</option><option>Adjustment</option></select></label><label class="f-field">Quantity<input id="f-qty" type="number" placeholder="100" required></label><label class="f-field">Unit<input id="f-unit" type="text" placeholder="e.g. pairs, boxes"></label><label class="f-field">Storage location<input id="f-location" type="text" placeholder="e.g. Main store, shelf B"></label><label class="f-field">Batch / expiry<input id="f-batchNo" type="text" placeholder="batch no & expiry date"></label></div>
+      <p class="form-err" id="rec-err" hidden></p>
+      <p class="form-ok" id="rec-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Records</h2>
+    <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="table-wrap">
+      <table class="rec" id="rec-table">
+        <thead><tr><th>Ref</th><th>ref</th><th>itemCode</th><th>itemName</th><th>movement</th><th>qty</th><th>unit</th><th>location</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rec-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="rec-empty">No records yet — the first saved record appears here.</p>
+  </div>
+
+  <div class="card">
+    <h2>How General Hospital Inventory works</h2>
+    <p><b>What it does.</b> Registers stock items with codes, categories and minimum levels, records incoming stock linked to suppliers and purchase orders, organises storage locations, issues items to departments with receiving personnel, transfers stock between stores, monitors low and out-of-stock items with replenishment alerts, tracks expiry, damage and adjustments, and supports physical stocktaking with discrepancy records.</p><p><b>Example.</b> 500 pairs of gloves are received and placed in the main store; 100 pairs are issued to outpatients; the balance updates to 400 and the storekeeper is alerted when the minimum level is reached.</p><p><b>Users.</b> Storekeepers, Inventory Officers, Pharmacy Store Officers, Department Heads, Procurement Officers, Warehouse Managers, Hospital Administrators.</p>
+  </div>
+</main>
+<script type="module" src="/hospital-inventory/386.js"></script>
+</body>
+</html>

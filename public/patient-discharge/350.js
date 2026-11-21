@@ -5,7 +5,7 @@
 
 
 
-import { requireAuth, db, collection, doc, setDoc, onSnapshot } from "/502.js";
+import { requireAuth, db, collection, doc, setDoc, onSnapshot, getDoc } from "/502.js";
 
 window.__p54 = { page: "350", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
 
@@ -88,6 +88,31 @@ function qaCfgLine() {
   if (t.office) bits.push("Office: " + t.office);
   if (!t.staff && t.dept) bits.push("Department: " + t.dept);
   return bits.join(" \u00b7 ");
+}
+function qaSpeakNow(text) {
+  try {
+    if (!("speechSynthesis" in window)) return false;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-GB";
+    u.rate = qaRate();
+    const vs = synth.getVoices().filter((v) => /^en/i.test(v.lang || ""));
+    if (vs.length) u.voice = vs.find((v) => /GB/i.test(v.lang || "")) || vs[0];
+    synth.speak(u);
+    return true;
+  } catch (e) { return false; }
+}
+function qaSettingsLine() {
+  const t = qaText();
+  const bits = ["Speaker settings saved."];
+  if (t.dept) bits.push("Department: " + t.dept + ".");
+  if (t.staff) bits.push("Staff: " + t.staff + ".");
+  if (t.office) bits.push("Office: " + t.office + ".");
+  if (t.room) bits.push("Room: " + t.room + ".");
+  if (!t.dept && !t.staff && !t.office && !t.room) bits.push("Voice speed: " + qaRate() + ".");
+  bits.push("Sample announcement: " + qaSentence("1, 2, 3"));
+  return bits.join(" ");
 }
 function qaRenderPanel() {
   qaSet("qa-waiting", String(qaState.waitingCount));
@@ -180,7 +205,11 @@ if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
   qaSaveBtn.disabled = true;
   try {
     await setDoc(doc(db, "healthQueueConfig", QA_MODULE), data, { merge: true });
-    if (qao) { qao.hidden = false; qao.textContent = "Speaker settings saved — every announcement from now on uses them."; }
+    // the reader must read through the info set in the speaker settings:
+    qaApplyCfg(data);
+    const qaline = qaSettingsLine();
+    if (qao) { qao.hidden = false; qao.textContent = "Speaker settings saved — the speaker is reading them through now."; }
+    if (!qaSpeakNow(qaline)) qaSet("qa-note", "This browser cannot speak — " + qaline);
   } catch (e) {
     if (qae) {
       qae.hidden = false;
@@ -189,18 +218,29 @@ if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
     }
   } finally { qaSaveBtn.disabled = false; }
 });
-try {
-  onSnapshot(doc(db, "healthQueueConfig", QA_MODULE), (s) => {
-    qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 },
-      s.exists() ? s.data() : {});
-    try { localStorage.setItem("jamali_qacfg_" + QA_MODULE, JSON.stringify(qaCfg)); } catch (e) {}
-    qaRenderPanel();
-    bootAnswered();
-  }, (e) => {
+function qaApplyCfg(data) {
+  qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 }, data || {});
+  try { localStorage.setItem("jamali_qacfg_" + QA_MODULE, JSON.stringify(qaCfg)); } catch (e) {}
+  qaRenderPanel();
+  bootAnswered();
+}
+// config load: a real document read (a doc-shaped subscription is not
+// supported by the local data engine), plus a live collection listener
+(async () => {
+  try {
+    const s = await getDoc(doc(db, "healthQueueConfig", QA_MODULE));
+    qaApplyCfg(s.exists() ? s.data() : {});
+  } catch (e) {
     const code = String((e && (e.code || e.message)) || "unknown");
     if (window.__p54) window.__p54.errs.push("healthQueueConfig: " + code);
     qaSet("qa-note", "Speaker settings could not load (" + code + ") — the module's default name is in use.");
-  });
+  }
+})();
+try {
+  onSnapshot(collection(db, "healthQueueConfig"), (snap) => {
+    const row = (snap.docs || []).find((d) => d.id === QA_MODULE);
+    if (row) qaApplyCfg(row.data());
+  }, () => { });
 } catch (e) {   }
 
  

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infection Prevention and Control — JAMALI Health</title>
+<link rel="stylesheet" href="/infection-control/382.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden>Loading saved records…</p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Infection Prevention and Control</h1>
+  <p class="sub">Surveillance, prevention and management of infections in the facility — cases, isolation, outbreaks, staff exposure and compliance.</p>
+
+  <div class="dash-grid" id="dash"><div class='dash'><b id='d-0'>0</b><span>Open cases</span></div><div class='dash'><b id='d-1'>0</b><span>Isolated</span></div><div class='dash'><b id='d-2'>0</b><span>Outbreaks</span></div><div class='dash'><b id='d-3'>0</b><span>Closed</span></div></div>
+
+  <div class="card" id="qa-card">
+    <h2>Queue & announcements</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Waiting cases</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel qa-none" id="qa-current-box">
+        <div class="qa-k">Next case</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub">Nothing waiting</div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce</button>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for this module. When saved, the speaker reads through everything set here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Infection Prevention and Control"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Staff NAME"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Room 02"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Register / record</h2>
+    <p class="mini-note">Every record is saved on this device under the signed-in zone and stays there until deleted &mdash; nothing is hard-coded.</p>
+    <form id="rec-form" autocomplete="off">
+      <div class="rec-form"><label class="f-field">Patient ID (or area)<input id="f-patientId" type="text" placeholder="e.g. REG-240001 / Ward 2" required></label><label class="f-field">Infection type<input id="f-infectionType" type="text" placeholder="e.g. surgical site infection" required></label><label class="f-field">Association<select id="f-site"><option value="">— Select —</option><option>Community</option><option>Surgical site</option><option>Catheter-associated</option><option>Ventilator-associated</option><option>Other</option></select></label><label class="f-field">Department<input id="f-department" type="text" placeholder="where identified"></label><label class="f-field">Isolation required<select id="f-isolation"><option value="">— Select —</option><option>No</option><option>Yes - contact</option><option>Yes - droplet</option><option>Yes - airborne</option></select></label><label class="f-field">Isolation room<input id="f-isolationRoom" type="text" placeholder="e.g. Isolation 1"></label></div>
+      <p class="form-err" id="rec-err" hidden></p>
+      <p class="form-ok" id="rec-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Records</h2>
+    <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="table-wrap">
+      <table class="rec" id="rec-table">
+        <thead><tr><th>Ref</th><th>ref</th><th>patientId</th><th>infectionType</th><th>site</th><th>department</th><th>isolation</th><th>isolationRoom</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rec-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="rec-empty">No records yet — the first saved record appears here.</p>
+  </div>
+
+  <div class="card">
+    <h2>How Infection Prevention and Control works</h2>
+    <p><b>What it does.</b> Records suspected and confirmed infection cases linked to patients, monitors healthcare-associated infections (surgical site, catheter, ventilator), tracks trends and outbreak signals, manages isolation rooms with precautions and dates, records hand-hygiene and PPE compliance, documents outbreaks and staff exposure incidents with corrective actions, and produces surveillance reports.</p><p><b>Example.</b> A patient is diagnosed with an infectious disease: the case is recorded against the Registration ID, precautions identified, an isolation room coordinated, authorised personnel notified, and isolation closed when authorised.</p><p><b>Users.</b> IPC Officers, Infection Control Nurses, Medical Microbiologists, Hospital Epidemiologists, Ward Nurses, Environmental Health Officers, Hospital Management.</p>
+  </div>
+</main>
+<script type="module" src="/infection-control/382.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mental Health Services — JAMALI Health</title>
+<link rel="stylesheet" href="/mental-health/377.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden>Loading saved records…</p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Mental Health Services</h1>
+  <p class="sub">Organised, confidential and continuous mental healthcare — assessments, psychiatric consultations, treatment plans, counselling and follow-up.</p>
+
+  <div class="dash-grid" id="dash"><div class='dash'><b id='d-0'>0</b><span>Registered cases</span></div><div class='dash'><b id='d-1'>0</b><span>In counselling</span></div><div class='dash'><b id='d-2'>0</b><span>High risk</span></div><div class='dash'><b id='d-3'>0</b><span>Admitted</span></div></div>
+
+  <div class="card" id="qa-card">
+    <h2>Queue & announcements</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Waiting cases</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel qa-none" id="qa-current-box">
+        <div class="qa-k">Next case</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub">Nothing waiting</div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce</button>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for this module. When saved, the speaker reads through everything set here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Mental Health Services"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Staff NAME"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Room 02"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Register / record</h2>
+    <p class="mini-note">Every record is saved on this device under the signed-in zone and stays there until deleted &mdash; nothing is hard-coded.</p>
+    <form id="rec-form" autocomplete="off">
+      <div class="rec-form"><label class="f-field">Patient ID<input id="f-patientId" type="text" placeholder="e.g. REG-240001 (kept confidential)" required></label><label class="f-field">Presenting concerns<input id="f-concerns" type="text" placeholder="e.g. persistent distress, sleeping difficulty" required></label><label class="f-field">Risk level<select id="f-riskLevel"><option value="">— Select —</option><option>Low</option><option>Moderate</option><option>High - urgent intervention</option></select></label><label class="f-field">Assessment findings<input id="f-assessment" type="text" placeholder="psychological assessment"></label><label class="f-field">Treatment plan<input id="f-treatmentPlan" type="text" placeholder="medication, counselling, therapy"></label><label class="f-field">Next session<input id="f-nextSession" type="date" placeholder=""></label></div>
+      <p class="form-err" id="rec-err" hidden></p>
+      <p class="form-ok" id="rec-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Records</h2>
+    <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="table-wrap">
+      <table class="rec" id="rec-table">
+        <thead><tr><th>Ref</th><th>ref</th><th>patientId</th><th>riskLevel</th><th>treatmentPlan</th><th>nextSession</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rec-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="rec-empty">No records yet — the first saved record appears here.</p>
+  </div>
+
+  <div class="card">
+    <h2>How Mental Health Services works</h2>
+    <p><b>What it does.</b> Registers patients for mental health services against their Registration ID with confidentiality and restricted access, records psychological assessments and behavioural observations, documents psychiatric consultations and diagnoses, assesses self-harm and harm-to-others risk with safety plans, manages treatment plans and counselling sessions, monitors psychiatric medication and side effects, and handles specialised admissions and follow-up.</p><p><b>Example.</b> A patient with persistent distress and sleeping difficulty: registered, concerns documented, assessment conducted, treatment plan created, counselling scheduled, progress monitored at follow-up.</p><p><b>Users.</b> Psychiatrists, Clinical Psychologists, Counselling Psychologists, Mental Health Nurses, Psychiatric Social Workers, Mental Health Department Manager.</p>
+  </div>
+</main>
+<script type="module" src="/mental-health/377.js"></script>
+</body>
+</html>

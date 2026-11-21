@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blood Bank and Transfusion Management — JAMALI Health</title>
+<link rel="stylesheet" href="/blood-bank/378.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden>Loading saved records…</p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Blood Bank and Transfusion Management</h1>
+  <p class="sub">Blood donation, collection, screening, storage, compatibility testing and transfusion — safe and compatible blood available when patients need it.</p>
+
+  <div class="dash-grid" id="dash"><div class='dash'><b id='d-0'>0</b><span>Units available</span></div><div class='dash'><b id='d-1'>0</b><span>Awaiting screening</span></div><div class='dash'><b id='d-2'>0</b><span>Reserved</span></div><div class='dash'><b id='d-3'>0</b><span>Issued</span></div></div>
+
+  <div class="card" id="qa-card">
+    <h2>Queue & announcements</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Waiting cases</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel qa-none" id="qa-current-box">
+        <div class="qa-k">Next case</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub">Nothing waiting</div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce</button>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for this module. When saved, the speaker reads through everything set here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Blood Bank and Transfusion"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Staff NAME"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Room 02"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Register / record</h2>
+    <p class="mini-note">Every record is saved on this device under the signed-in zone and stays there until deleted &mdash; nothing is hard-coded.</p>
+    <form id="rec-form" autocomplete="off">
+      <div class="rec-form"><label class="f-field">Donor ID / name<input id="f-donorId" type="text" placeholder="e.g. DON-001 / A. JUMA" required></label><label class="f-field">Blood group<select id="f-bloodGroup" required><option value="">— Select —</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></label><label class="f-field">Units collected<input id="f-units" type="number" placeholder="1"></label><label class="f-field">Screening<select id="f-screening"><option value="">— Select —</option><option>Pending</option><option>Passed</option><option>Failed</option></select></label><label class="f-field">Storage location<input id="f-storageLocation" type="text" placeholder="e.g. Fridge 2, shelf A"></label><label class="f-field">Expiry date<input id="f-expiry" type="date" placeholder=""></label></div>
+      <p class="form-err" id="rec-err" hidden></p>
+      <p class="form-ok" id="rec-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Records</h2>
+    <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="table-wrap">
+      <table class="rec" id="rec-table">
+        <thead><tr><th>Ref</th><th>ref</th><th>donorId</th><th>bloodGroup</th><th>units</th><th>screening</th><th>storageLocation</th><th>expiry</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rec-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="rec-empty">No records yet — the first saved record appears here.</p>
+  </div>
+
+  <div class="card">
+    <h2>How Blood Bank and Transfusion works</h2>
+    <p><b>What it does.</b> Registers donors with eligibility history, records donations with unique unit numbers, maintains the blood-group inventory (ABO and Rh), tracks infectious-disease screening (only screened units may be released), monitors storage locations and expiry, manages crossmatching and compatibility results, reserves and allocates units to patients, and documents transfusions with observations and reactions.</p><p><b>Example.</b> A patient needs transfusion after blood loss: the request is received, compatibility tested, suitable screened units reserved and authorised, issued to the department, and the transfusion documented with observations.</p><p><b>Users.</b> Blood Bank Scientists, Laboratory Technologists, Blood Transfusion Officers, Haematologists, Medical Officers, Blood Bank Manager, Nursing Staff.</p>
+  </div>
+</main>
+<script type="module" src="/blood-bank/378.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intensive Care Unit (ICU) Management — JAMALI Health</title>
+<link rel="stylesheet" href="/icu-management/370.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden>Loading saved records…</p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Intensive Care Unit (ICU) Management</h1>
+  <p class="sub">Coordinates ICU admissions, bed allocation, continuous monitoring, intensive treatment and patient progress — specialised care for critically ill patients.</p>
+
+  <div class="dash-grid" id="dash"><div class='dash'><b id='d-0'>0</b><span>In ICU</span></div><div class='dash'><b id='d-1'>0</b><span>Critical</span></div><div class='dash'><b id='d-2'>0</b><span>Awaiting bed</span></div><div class='dash'><b id='d-3'>0</b><span>Released today</span></div></div>
+
+  <div class="card" id="qa-card">
+    <h2>Queue & announcements</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Waiting cases</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel qa-none" id="qa-current-box">
+        <div class="qa-k">Next case</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub">Nothing waiting</div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce</button>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for this module. When saved, the speaker reads through everything set here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Intensive Care Unit (ICU)"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Staff NAME"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Room 02"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Register / record</h2>
+    <p class="mini-note">Every record is saved on this device under the signed-in zone and stays there until deleted &mdash; nothing is hard-coded.</p>
+    <form id="rec-form" autocomplete="off">
+      <div class="rec-form"><label class="f-field">Patient ID<input id="f-patientId" type="text" placeholder="e.g. REG-240001" required></label><label class="f-field">ICU bed<input id="f-bedNo" type="text" placeholder="e.g. ICU-03"></label><label class="f-field">Reason for ICU admission<input id="f-reason" type="text" placeholder="e.g. severe breathing complications" required></label><label class="f-field">Referring doctor / department<input id="f-referringDoctor" type="text" placeholder="who sent the patient"></label><label class="f-field">Support in use<select id="f-support"><option value="">— Select —</option><option>None</option><option>Oxygen therapy</option><option>Ventilator</option><option>Both</option></select></label><label class="f-field">Latest observations<input id="f-vitals" type="text" placeholder="HR, BP, RR, SpO2, temperature"></label></div>
+      <p class="form-err" id="rec-err" hidden></p>
+      <p class="form-ok" id="rec-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Records</h2>
+    <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="table-wrap">
+      <table class="rec" id="rec-table">
+        <thead><tr><th>Ref</th><th>ref</th><th>patientId</th><th>bedNo</th><th>reason</th><th>support</th><th>vitals</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rec-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="rec-empty">No records yet — the first saved record appears here.</p>
+  </div>
+
+  <div class="card">
+    <h2>How Intensive Care Unit (ICU) works</h2>
+    <p><b>What it does.</b> Registers ICU admissions with reasons and referring doctors, tracks ICU beds (available, occupied, cleaning), keeps observation charts (heart rate, blood pressure, respiratory rate, oxygen saturation, temperature), documents oxygen and ventilator support, medications and nursing care, and manages transfer to ordinary wards with a complete admission history.</p><p><b>Example.</b> A patient with severe breathing complications: admission recorded, an ICU bed assigned, vital signs tracked at intervals, oxygen and ventilator support documented, and transfer to a general ward recorded when clinically authorised.</p><p><b>Users.</b> ICU Doctors and Nurses, Critical Care Specialists, Respiratory Therapists, ICU Department Manager, Hospital Administrator.</p>
+  </div>
+</main>
+<script type="module" src="/icu-management/370.js"></script>
+</body>
+</html>

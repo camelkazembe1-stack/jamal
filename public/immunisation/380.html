@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immunisation and Vaccination Management — JAMALI Health</title>
+<link rel="stylesheet" href="/immunisation/380.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden>Loading saved records…</p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Immunisation and Vaccination Management</h1>
+  <p class="sub">Vaccination schedules, administration, vaccine stock and cold chain — the right vaccines at the right ages and intervals.</p>
+
+  <div class="dash-grid" id="dash"><div class='dash'><b id='d-0'>0</b><span>Doses today</span></div><div class='dash'><b id='d-1'>0</b><span>Overdue</span></div><div class='dash'><b id='d-2'>0</b><span>Due - upcoming</span></div><div class='dash'><b id='d-3'>0</b><span>Adverse events</span></div></div>
+
+  <div class="card" id="qa-card">
+    <h2>Queue & announcements</h2>
+    <div class="qa-counts">
+      <div class="qa-count"><span class="qa-num" id="qa-waiting">0</span><span class="qa-k">Waiting cases</span></div>
+    </div>
+    <div class="qa-panels">
+      <div class="qa-panel qa-none" id="qa-current-box">
+        <div class="qa-k">Next case</div>
+        <div class="qa-id" id="qa-next-id">&mdash;</div>
+        <div class="qa-sub" id="qa-next-sub">Nothing waiting</div>
+        <div class="qa-sub" id="qa-dest-line"></div>
+        <div class="qa-btns">
+          <button type="button" class="ghost-btn qa-announce" id="qa-announce" disabled>&#128266; Announce</button>
+        </div>
+      </div>
+    </div>
+    <p class="mini-note" id="qa-note"></p>
+    <div class="qa-actions"><button type="button" class="ghost-btn" id="qa-settings-btn">&#128266; Speaker settings</button></div>
+    <div class="qa-settings" id="qa-settings" hidden>
+      <p class="mini-note">Saved once for this module. When saved, the speaker reads through everything set here &mdash; nothing is hard-coded.</p>
+      <div class="qa-form">
+        <label>Department / service name<input id="qa-dept" type="text" placeholder="e.g. Immunisation and Vaccination"></label>
+        <label>Staff name<input id="qa-staff" type="text" placeholder="e.g. Staff NAME"></label>
+        <label>Office number<input id="qa-office" type="text" placeholder="e.g. Office 01"></label>
+        <label>Room number<input id="qa-room" type="text" placeholder="e.g. Room 02"></label>
+        <label>Voice speed<select id="qa-speed">
+          <option value="0.6">Slow &middot; 0.6</option>
+          <option value="0.75" selected>Clear &middot; 0.75</option>
+          <option value="0.95">Normal &middot; 0.95</option>
+        </select></label>
+      </div>
+      <p class="form-err" id="qa-err" hidden></p>
+      <p class="form-ok" id="qa-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="qa-save" type="button">Save Speaker Settings</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Register / record</h2>
+    <p class="mini-note">Every record is saved on this device under the signed-in zone and stays there until deleted &mdash; nothing is hard-coded.</p>
+    <form id="rec-form" autocomplete="off">
+      <div class="rec-form"><label class="f-field">Patient ID<input id="f-patientId" type="text" placeholder="e.g. REG-240001" required></label><label class="f-field">Vaccine<input id="f-vaccine" type="text" placeholder="e.g. BCG / OPV / DTP / Measles" required></label><label class="f-field">Dose number<input id="f-doseNo" type="number" placeholder="1"></label><label class="f-field">Site & route<select id="f-site"><option value="">— Select —</option><option>Left arm</option><option>Right arm</option><option>Left thigh</option><option>Right thigh</option><option>Oral</option></select></label><label class="f-field">Batch number<input id="f-batchNo" type="text" placeholder="vaccine batch"></label><label class="f-field">Next dose due<input id="f-nextDue" type="date" placeholder=""></label></div>
+      <p class="form-err" id="rec-err" hidden></p>
+      <p class="form-ok" id="rec-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Records</h2>
+    <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="table-wrap">
+      <table class="rec" id="rec-table">
+        <thead><tr><th>Ref</th><th>ref</th><th>patientId</th><th>vaccine</th><th>doseNo</th><th>site</th><th>batchNo</th><th>nextDue</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rec-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="rec-empty">No records yet — the first saved record appears here.</p>
+  </div>
+
+  <div class="card">
+    <h2>How Immunisation and Vaccination works</h2>
+    <p><b>What it does.</b> Registers vaccination patients against their Registration ID, maintains the recommended schedules with doses and intervals, records each administration (vaccine, dose number, site, route, professional), tracks vaccine stock, batches and expiry with cold-chain temperatures, records adverse events following immunisation, and follows up missed doses with reminders.</p><p><b>Example.</b> A six-week-old baby attends: previous vaccinations checked, vaccines due identified, stock and batch confirmed, doses administered and recorded, and the next date set.</p><p><b>Users.</b> Immunisation Nurses, Vaccination Officers, Paediatric Nurses, Public Health Officers, Pharmacy Staff, Cold Chain Officers, Immunisation Programme Manager.</p>
+  </div>
+</main>
+<script type="module" src="/immunisation/380.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Reports and Analytics — JAMALI Health</title>
+<link rel="stylesheet" href="/hospital-reports/368.css">
+<script src="/menu.js" defer></script>
+<script src="/sidebar.js" defer></script>
+</head>
+<body>
+<main class="wrap">
+  <p class="p-boot" id="p-boot" hidden>Loading saved records…</p>
+  <p class="p-err" id="p-err" hidden></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Hospital Reports and Analytics</h1>
+  <p class="sub">Collects information from every operational module and turns it into patient, clinical, departmental and financial statistics — live numbers, one overview for management.</p>
+
+  <div class="dash-grid" id="dash"><div class='dash'><b id='d-0'>0</b><span>Registered patients</span></div><div class='dash'><b id='d-1'>0</b><span>Doctor consultations</span></div><div class='dash'><b id='d-2'>0</b><span>Lab requests</span></div><div class='dash'><b id='d-3'>0</b><span>Imaging requests</span></div><div class='dash'><b id='d-4'>0</b><span>Admissions</span></div><div class='dash'><b id='d-5'>0</b><span>Discharges</span></div><div class='dash'><b id='d-6'>0</b><span>Prescriptions</span></div><div class='dash'><b id='d-7'>0</b><span>Treatment orders</span></div></div>
+
+
+  <div class="card">
+    <h2>Register / record</h2>
+    <p class="mini-note">Every record is saved on this device under the signed-in zone and stays there until deleted &mdash; nothing is hard-coded.</p>
+    <form id="rec-form" autocomplete="off">
+      <div class="rec-form"><label class="f-field">Report period<select id="f-period"><option value="">— Select —</option><option>Today</option><option>This week</option><option>This month</option><option>This year</option></select></label><label class="f-field">Report topic<input id="f-topic" type="text" placeholder="e.g. November performance summary"></label><label class="f-field">Findings / notes<input id="f-note" type="text" placeholder="management remarks"></label></div>
+      <p class="form-err" id="rec-err" hidden></p>
+      <p class="form-ok" id="rec-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Records</h2>
+    <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="table-wrap">
+      <table class="rec" id="rec-table">
+        <thead><tr><th>Ref</th><th>ref</th><th>period</th><th>topic</th><th>note</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <tbody id="rec-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="rec-empty">No records yet — the first saved record appears here.</p>
+  </div>
+
+  <div class="card">
+    <h2>How Hospital Reports and Analytics works</h2>
+    <p><b>What it does.</b> Patient reports (registrations, admissions, discharges, demographics), clinical reports (consultations, diagnoses, laboratory and imaging activity), departmental performance, financial summaries, staff activity, pharmacy and stock, and operational indicators such as bed occupancy and waiting times. Reports for a specific period can be filtered and printed.</p><p><b>Example.</b> For November: 1,200 registered patients, 950 consultations, 600 laboratory tests, 150 admissions, 130 discharges, revenue TSh 15,000,000, outstanding TSh 2,000,000 — the numbers below are counted live from the stored records of every module.</p><p><b>Users.</b> Hospital Administrator, Medical Director, Department Heads, Accountant, HR Officer, Management. Operational modules record the daily work; this page turns those records into indicators.</p>
+  </div>
+</main>
+<script type="module" src="/hospital-reports/368.js"></script>
+</body>
+</html>
