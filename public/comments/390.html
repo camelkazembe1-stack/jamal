@@ -13,20 +13,7 @@
   <main class="wrap">
     <a class="back" href="/home/1">&larr; Home</a>
     <h1>💬 Comments</h1>
-    <p class="sub">The comment desk on its own page — write to the owner below; every comment lands straight in the owner's mailbox.</p>
-
-    <section class="card" id="send-card">
-      <div class="card-head">
-        <b>Send a comment</b>
-        <span class="from-line" id="from-line"></span>
-      </div>
-      <textarea id="comment-text" maxlength="2000" placeholder="Write your comment - it goes straight to the owner"></textarea>
-      <div class="under-row">
-        <span class="count" id="char-count">0 / 2000</span>
-        <button type="button" class="send" id="send-btn">Send comment</button>
-      </div>
-      <div class="msg" id="send-msg" hidden></div>
-    </section>
+    <p class="sub">The mailbox on its own page — every comment a visitor sends lands here, newest first. Visitors write from the Comment button on any page; the mailbox carries no send setup.</p>
 
     <section class="card owner" id="owner-gate" hidden>
       <div class="card-head">
@@ -44,6 +31,7 @@
       </div>
       <p class="owner-note">You are signed in as the owner - every visitor's comment arrives here live, newest first.</p>
       <div class="count-line" id="mailbox-count">loading&#8230;</div>
+      <div class="msg" id="mailbox-msg" hidden></div>
       <div class="list" id="mailbox-items"></div>
     </section>
   </main>

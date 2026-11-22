@@ -16,12 +16,14 @@ JAMALI
 > collection addressed to the owner (camelkazembe1@gmail.com), and only the
 > owner reads and deletes the mailbox from the Comments button at the top
 > right. Publishing firestore.rules once (bash apply-rules.sh) switches it on.
-> When the desk page (/comments/390) is opened by somebody who is not the
-> owner, a sign-in card takes the mailbox's place: one Google sign-in as
-> camelkazembe1@gmail.com and every received comment displays right away,
-> newest first, live. With that email signed in, the sidebar footer Comment
-> button is not allowed to be seen - the owner never writes a comment to
-> himself; every other visitor keeps the button.
+> The Comment button opens a write popup right on the page the visitor is on;
+> the receiver page /comments/390 is the mailbox itself and carries NO send
+> setup. When that page is opened by somebody who is not the owner, a sign-in
+> card takes the mailbox's place: one Google sign-in as camelkazembe1@gmail.com
+> and every received comment displays right away, newest first, live. With
+> that email signed in, the sidebar footer Comment button is not allowed to
+> be seen - the owner never writes a comment to himself; every other visitor
+> keeps the button.
 
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app

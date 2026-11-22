@@ -10,17 +10,13 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 .card { background: #111827; border: 1px solid #334155; border-radius: 14px; padding: 16px 18px; color: #e2e8f0; font-size: 13.5px; box-shadow: 0 10px 26px rgba(15, 23, 42, .14); margin-bottom: 18px; }
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .card-head b { font-size: 15px; }
-.from-line { color: #64748b; font-size: 11.5px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-#comment-text { width: 100%; box-sizing: border-box; border: 1px solid #334155; border-radius: 9px; background: #0b1220; color: #e2e8f0; font: inherit; padding: 9px 10px; resize: vertical; min-height: 110px; }
-#comment-text:focus { outline: none; border-color: #0ea5e9; }
-.under-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.count { color: #64748b; font-size: 11.5px; }
+/* The receiver carries no send setup any more: visitors write from the
+   sidebar Comment button (the write popup on any page). The .send button
+   below styles the sign-in button on the owner gate card. */
 .send { margin-left: auto; border: 0; border-radius: 10px; background: #16a34a; color: #fff; font-weight: 800; font-size: 13.5px; padding: 10px 22px; cursor: pointer; transition: background .25s ease; }
 .send:hover { background: #15803d; }
 .send:disabled { opacity: .55; cursor: wait; }
-.send.jc-sent { background: #2563eb; opacity: 1; cursor: default; }
-.send.jc-sent:hover { background: #2563eb; }
 
 .msg { border-radius: 10px; padding: 9px 12px; margin: 10px 0 0; line-height: 1.5; font-size: 12.5px; }
 .msg.jc-ok { background: #052e16; border: 1px solid #4ade80; color: #bbf7d0; }

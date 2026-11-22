@@ -1,13 +1,12 @@
-/* JAMALI - public/comments/390.js, the comment desk page.
+/* JAMALI - public/comments/390.js, the comment mailbox page.
  *
- * The comment desk used to live in two popups on the sidebar. Now it is
- * a complete page of its own:
- *   - every visitor (signed in or not) writes a comment at the top and
- *     it goes straight to the owner; the page the visitor came from
- *     travels along in the ?from= hint so the owner can see where the
- *     comment was written;
- *   - when the owner is signed in, the mailbox opens underneath: every
- *     comment, newest first, live, with a delete button on each one;
+ * This page is the RECEIVER and it carries no send-comment setup any
+ * more. Visitors write from the sidebar Comment button, which opens the
+ * write popup on any page; what lands in the shared "comments"
+ * collection is exactly the same as before. The page itself does one
+ * job:
+ *   - when the owner is signed in, the mailbox opens: every comment,
+ *     newest first, live, with a delete button on each one;
  *   - when nobody is signed in (or a non-owner is), a sign-in card takes
  *     the mailbox's place: one Google sign-in as the owner's email and
  *     the received comments display immediately.
@@ -15,17 +14,9 @@
  * the owner only.
  */
 
-var PAGE_REF = "";
-try {
-  var q = new URLSearchParams(location.search);
-  PAGE_REF = (q.get("from") || "").replace(/\.html$/, "");
-} catch (e) { PAGE_REF = ""; }
-if (!PAGE_REF) PAGE_REF = "/home/1";
-
 var FALLBACK_OWNER = "camelkazembe1@gmail.com";
 var ownerEmail = FALLBACK_OWNER;
 var mailboxUnsub = null;
-var sentTimer = null;
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -41,64 +32,22 @@ function errText(e) {
   return m;
 }
 
-var ta = document.getElementById("comment-text");
-var countEl = document.getElementById("char-count");
-var sendBtn = document.getElementById("send-btn");
-var sendMsg = document.getElementById("send-msg");
-var fromLine = document.getElementById("from-line");
 var mailboxCard = document.getElementById("mailbox-card");
 var countLine = document.getElementById("mailbox-count");
 var items = document.getElementById("mailbox-items");
 var refreshBtn = document.getElementById("refresh-btn");
+var mailboxMsg = document.getElementById("mailbox-msg");
 var gateCard = document.getElementById("owner-gate");
 var gateText = document.getElementById("gate-text");
 var gateBtn = document.getElementById("owner-signin-btn");
 var gateMsg = document.getElementById("gate-msg");
 
-function paintCount() {
-  countEl.textContent = ta.value.length + " / 2000";
-}
-ta.addEventListener("input", paintCount);
-paintCount();
-
-fromLine.textContent = "from " + PAGE_REF;
-
 function showMsg(ok, text) {
-  sendMsg.className = "msg " + (ok ? "jc-ok" : "jc-bad");
-  sendMsg.hidden = false;
-  sendMsg.textContent = text;
+  if (!mailboxMsg) return;
+  mailboxMsg.className = "msg " + (ok ? "jc-ok" : "jc-bad");
+  mailboxMsg.hidden = false;
+  mailboxMsg.textContent = text;
 }
-
-sendBtn.addEventListener("click", function () {
-  var text = ta.value.trim();
-  sendMsg.className = "msg";
-  sendMsg.hidden = true;
-  if (!text) {
-    showMsg(false, "Write the comment first - the box is empty.");
-    return;
-  }
-  sendBtn.disabled = true;
-  import("/502.js").then(function (fb) {
-    if (fb && fb.commentOwner) ownerEmail = String(fb.commentOwner).toLowerCase();
-    return fb.commentSend(text, PAGE_REF);
-  }).then(function () {
-    sendBtn.classList.add("jc-sent");
-    sendBtn.textContent = "Sent";
-    showMsg(true, "Sent - thank you. Your comment is in the owner's mailbox.");
-    sentTimer = setTimeout(function () {
-      sentTimer = null;
-      sendBtn.classList.remove("jc-sent");
-      sendBtn.textContent = "Send comment";
-      sendBtn.disabled = false;
-      ta.value = "";
-      paintCount();
-      sendMsg.hidden = true;
-    }, 3000);
-  }).catch(function (e) {
-    sendBtn.disabled = false;
-    showMsg(false, "NOT sent - " + errText(e) + " Your text is still here - try again.");
-  });
-});
 
 /* ---- the owner's mailbox, live ---- */
 
@@ -257,6 +206,6 @@ import("/502.js").then(function (fb) {
     }).catch(function () {});
   }
 }).catch(function () {
-  /* No Firebase (offline or blocked): the send form stays; the mailbox
-     stays hidden and the desk works again when the network returns. */
+  /* No Firebase (offline or blocked): the mailbox stays hidden behind
+     its sign-in card and works again when the network returns. */
 });

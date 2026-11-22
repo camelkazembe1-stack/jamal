@@ -253,14 +253,36 @@ p.label + "</a>";
    "#jamali-side-comment small{font-size:10px;font-weight:700;color:#94a3b8}",
    "#jamali-side-comment:hover{background:#334155;color:#fff}",
    "#jamali-side-comment:hover small{color:#e2e8f0}",
-   "#jamali-side-comment.active{background:#0ea5e9;color:#fff}",
-   "#jamali-side-comment.active small{color:#fff}",
    "#jamali-owner-comments{position:fixed;top:12px;right:12px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
    "#jamali-owner-comments:hover{background:#1e293b}",
    "#jamali-owner-comments[hidden]{display:none}",
    "#jamali-side-comment[hidden]{display:none}",
    "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
-   "#jamali-toast.jamali-toast-on{opacity:1}"
+   "#jamali-toast.jamali-toast-on{opacity:1}",
+
+   // THE WRITE-COMMENT POPUP - the send half of the comment desk lives
+   // here on the sidebar; the receiver page (/comments/390) carries no
+   // send setup any more.
+   "#jamali-cpop-veil{position:fixed;inset:0;background:rgba(2,6,23,.55);z-index:1004}",
+   "#jamali-cpop-veil[hidden]{display:none}",
+   "#jamali-cpop{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1005;width:min(520px,92vw);max-height:86vh;overflow-y:auto;background:#111827;border:1px solid #334155;border-radius:14px;padding:16px 18px;color:#e2e8f0;font-size:13.5px;box-shadow:0 18px 44px rgba(0,0,0,.5)}",
+   "#jamali-cpop[hidden]{display:none}",
+   "#jamali-cpop .cpop-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}",
+   "#jamali-cpop .cpop-head b{font-size:15px}",
+   "#jamali-cpop-close{border:0;background:none;color:#94a3b8;font-size:19px;line-height:1;cursor:pointer;padding:2px 7px}",
+   "#jamali-cpop-close:hover{color:#fff}",
+   "#jamali-cpop-from{color:#64748b;font-size:11.5px;margin:-2px 0 8px}",
+   "#jamali-cpop-text{width:100%;box-sizing:border-box;border:1px solid #334155;border-radius:9px;background:#0b1220;color:#e2e8f0;font:inherit;padding:9px 10px;resize:vertical;min-height:110px}",
+   "#jamali-cpop-text:focus{outline:none;border-color:#0ea5e9}",
+   "#jamali-cpop .cpop-under{display:flex;align-items:center;gap:10px;margin-top:8px}",
+   "#jamali-cpop .cpop-count{color:#64748b;font-size:11.5px}",
+   "#jamali-cpop-send{margin-left:auto;border:0;border-radius:10px;background:#16a34a;color:#fff;font-weight:800;font-size:13.5px;padding:10px 22px;cursor:pointer;transition:background .25s ease}",
+   "#jamali-cpop-send:hover{background:#15803d}",
+   "#jamali-cpop-send:disabled{opacity:.55;cursor:wait}",
+   "#jamali-cpop-send.cpop-sent{background:#2563eb;opacity:1;cursor:default}",
+   "#jamali-cpop .msg{border-radius:10px;padding:9px 12px;margin:10px 0 0;line-height:1.5;font-size:12.5px}",
+   "#jamali-cpop .msg.cpop-ok{background:#052e16;border:1px solid #4ade80;color:#bbf7d0}",
+   "#jamali-cpop .msg.cpop-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}"
  ].join("");
  document.head.appendChild(css);
 
@@ -289,7 +311,7 @@ p.label + "</a>";
     // left the footer - its panel code stays below as RESERVE.
     "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
     "<button type=\"button\" id=\"jamali-side-auth\" class=\"login\" title=\"Not signed in - click to sign in with Google\">Login</button>" +
-    "<button type=\"button\" id=\"jamali-side-comment\"" + (current === "comments" ? " class=\"active\"" : "") + " title=\"Write a comment to the owner\">&#128172;<small>Comment</small></button>" +
+    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner\">&#128172;<small>Comment</small></button>" +
     "</div></div>";
 
  document.body.insertBefore(overlay, document.body.firstChild);
@@ -366,13 +388,113 @@ p.label + "</a>";
     toastTimer = setTimeout(function () { toast.classList.remove("jamali-toast-on"); }, 2000);
   }
   document.getElementById("jamali-side-comment").addEventListener("click", function () {
-    // THE COMMENT PAGE: the desk lives on its own complete page
-    // (/comments/390) - no popup. The page the visitor is on travels
-    // along in the ?from= hint so the owner sees where it came from.
-    var here = PAGE_ID ? "/comments/390?from=" + encodeURIComponent(PAGE_ID) : "/comments/390";
-    if (window.JAMALI_INTERNAL_GO) window.JAMALI_INTERNAL_GO(here);
-    else location.replace("/comments/390.html");
+    // THE WRITE POPUP: the receiver page (/comments/390) carries no send
+    // setup any more - it is the mailbox only. The Comment button opens
+    // the write popup right here on any page; the page the visitor is on
+    // travels along as the from hint so the owner sees where it came from.
+    jamaliCommentPopOpen();
   });
+
+  // THE WRITE-COMMENT POPUP - the send half of the comment desk. The
+  // receiver page /comments/390 is the mailbox only: no send setup there.
+  // Visitors write from this popup on any page (signed in or not) and the
+  // comment lands in the shared "comments" collection addressed to the
+  // owner (camelkazembe1@gmail.com) with the current page as the from
+  // hint - exactly what the desk page used to send.
+  (function jamaliCommentPopEnsure() {
+    if (document.getElementById("jamali-cpop")) return;
+    var veil = document.createElement("div");
+    veil.id = "jamali-cpop-veil";
+    veil.hidden = true;
+    veil.addEventListener("click", jamaliCommentPopClose);
+    var pop = document.createElement("div");
+    pop.id = "jamali-cpop";
+    pop.hidden = true;
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", "Write a comment to the owner");
+    pop.innerHTML =
+      "<div class=\"cpop-head\"><b>&#9997;&#65039; Write a comment</b>" +
+      "<button type=\"button\" id=\"jamali-cpop-close\" title=\"Close\">&times;</button></div>" +
+      "<div id=\"jamali-cpop-from\"></div>" +
+      "<textarea id=\"jamali-cpop-text\" maxlength=\"2000\" placeholder=\"Write your comment - it goes straight to the owner\"></textarea>" +
+      "<div class=\"cpop-under\"><span class=\"cpop-count\" id=\"jamali-cpop-count\">0 / 2000</span>" +
+      "<button type=\"button\" id=\"jamali-cpop-send\">Send comment</button></div>" +
+      "<div class=\"msg\" id=\"jamali-cpop-msg\" hidden></div>";
+    document.body.appendChild(veil);
+    document.body.appendChild(pop);
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !pop.hidden) jamaliCommentPopClose();
+    });
+    var ta = document.getElementById("jamali-cpop-text");
+    var countEl = document.getElementById("jamali-cpop-count");
+    ta.addEventListener("input", function () {
+      countEl.textContent = ta.value.length + " / 2000";
+    });
+    document.getElementById("jamali-cpop-close").addEventListener("click", jamaliCommentPopClose);
+    document.getElementById("jamali-cpop-send").addEventListener("click", jamaliCommentPopSend);
+  })();
+
+  function jamaliCommentPopOpen() {
+    var pop = document.getElementById("jamali-cpop");
+    var veil = document.getElementById("jamali-cpop-veil");
+    if (!pop || !veil) return;
+    document.getElementById("jamali-cpop-from").textContent =
+      "from " + (PAGE_ID || "/home/1");
+    pop.hidden = false;
+    veil.hidden = false;
+    var ta = document.getElementById("jamali-cpop-text");
+    setTimeout(function () { try { ta.focus(); } catch (e) {} }, 30);
+  }
+
+  function jamaliCommentPopClose() {
+    var pop = document.getElementById("jamali-cpop");
+    var veil = document.getElementById("jamali-cpop-veil");
+    if (pop) pop.hidden = true;
+    if (veil) veil.hidden = true;
+    var msg = document.getElementById("jamali-cpop-msg");
+    if (msg) { msg.hidden = true; }
+  }
+
+  function jamaliCommentPopSend() {
+    var ta = document.getElementById("jamali-cpop-text");
+    var send = document.getElementById("jamali-cpop-send");
+    var msg = document.getElementById("jamali-cpop-msg");
+    if (!ta || !send || !msg) return;
+    var text = ta.value.trim();
+    msg.className = "msg";
+    msg.hidden = true;
+    if (!text) {
+      msg.className = "msg cpop-bad";
+      msg.hidden = false;
+      msg.textContent = "Write the comment first - the box is empty.";
+      return;
+    }
+    send.disabled = true;
+    import("/502.js").then(function (fb) {
+      return fb.commentSend(text, PAGE_ID || "/home/1");
+    }).then(function () {
+      send.classList.add("cpop-sent");
+      send.textContent = "Sent";
+      try { jamaliToast("Comment sent - it is in the owner's mailbox."); } catch (e2) {}
+      setTimeout(function () {
+        send.classList.remove("cpop-sent");
+        send.textContent = "Send comment";
+        send.disabled = false;
+        ta.value = "";
+        document.getElementById("jamali-cpop-count").textContent = "0 / 2000";
+        jamaliCommentPopClose();
+      }, 1600);
+    }).catch(function (e) {
+      send.disabled = false;
+      var m = e && (e.code || e.message) ? (e.code || "") + " " + (e.message || "") : String(e);
+      if (String(m).indexOf("permission-denied") !== -1) {
+        m += " - the comment desk rules are not published yet. Publish the rules from the Firebase console once, then send again.";
+      }
+      msg.className = "msg cpop-bad";
+      msg.hidden = false;
+      msg.textContent = "NOT sent - " + m + " Your text is still here - try again.";
+    });
+  }
 
   // SIDEBAR LOGIN / LOGOUT - the optional Google identity button, pinned
   // at the bottom of the fixed sidebar. The system keeps working without
@@ -434,16 +556,18 @@ p.label + "</a>";
   });
 
   // ====================================================================
-  // THE COMMENT DESK (20 Nov 2026) - comments travel, data does not.
+  // THE COMMENT DESK (22 Nov 2026) - comments travel, data does not.
   // Everything a visitor saves stays in their own browser; a COMMENT is
   // the one exception, because its whole purpose is to reach the owner
   // (camelkazembe1@gmail.com). ANY visitor - signed in or not - clicks
-  // the Comment button in the footer row and sends; the comment lands
-  // in the shared "comments" collection in the cloud, addressed to the
-  // owner. The owner sees a "Comments" button at the top right of every
-  // page; it opens the mailbox: every comment, newest first, with a
-  // delete icon at the end of each one. The database rules enforce the
-  // same split: create for anybody, read/delete for the owner only.
+  // the Comment button in the footer row, the write popup opens right
+  // there and they send; the comment lands in the shared "comments"
+  // collection in the cloud, addressed to the owner. The owner sees a
+  // "Comments" button at the top right of every page; it opens the
+  // receiver page /comments/390 - the mailbox itself, with NO send setup
+  // on it: every comment, newest first, with a delete icon at the end of
+  // each one. The database rules enforce the same split: create for
+  // anybody, read/delete for the owner only.
   // ====================================================================
   var commentOwnerEmail = "camelkazembe1@gmail.com";
   function jcEsc(s) {
@@ -482,9 +606,10 @@ p.label + "</a>";
     if (writeBtn) writeBtn.hidden = isOwner;
   }
 
-  // THE COMMENT PAGE: the send panel and the owner mailbox moved to
-  // their own complete page, /comments/390 (public/comments/). The
-  // two buttons above navigate there internally.
+  // THE COMMENT PAGE: the receiver (the owner mailbox) lives on its own
+  // complete page, /comments/390 (public/comments/), with no send setup
+  // on it; the owner's Comments button navigates there. Visitors never
+  // need the page - they write from the write popup above.
 
   // RESERVE (admin removed): the floating Admin button that opened
   // /system-admin/380 was deactivated with the login system. The
