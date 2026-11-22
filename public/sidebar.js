@@ -286,11 +286,14 @@ service cloud.firestore {
     }
 
     match /comments/{docId} {
-      // THE COMMENT DESK (20 Nov 2026): the one collection visitors still
-      // write to. A comment is a letter to the owner, so any visitor -
-      // signed in or anonymous - may post one (text only, 1-2000 chars).
-      // Reading the mailbox and removing comments is the owner's alone.
-      allow create: if request.resource.data.get("text", "") is string
+      // THE COMMENT DESK: the one collection visitors still write to.
+      // USERS ONLY (demand): a comment is a letter from a signed-in user
+      // to the owner - the AI and anonymous writers are not allowed and
+      // the database refuses them (text only, 1-2000 chars). Reading the
+      // mailbox and removing comments is the owner's alone.
+      allow create: if isSignedIn()
+        && request.auth.token.email != null
+        && request.resource.data.get("text", "") is string
         && request.resource.data.get("text", "").size() > 0
         && request.resource.data.get("text", "").size() <= 2000
         && request.resource.data.get("from", "") is string
@@ -516,19 +519,46 @@ var authCallbacks = [];
 var authReadyResolve = null;
 var authReady = new Promise(function (resolve) { authReadyResolve = resolve; });
 
-function fireAuthCallbacks(user) {
-  activeUser = user || null;
+/* NO SYSTEM LOADING ON OPEN PAGE: the last known identity is cached in
+ * Local Storage and seeded into the zone BEFORE anything async runs, so
+ * every page paints the instant it is clicked, in the right data zone,
+ * instead of waiting (up to 4s) for Google to report in. The real
+ * identity still settles in the background and corrects the zone live. */
+try {
+  var identityCacheSeed = window.localStorage.getItem("jamaliIdentityCache");
+  if (identityCacheSeed) activeUser = { email: identityCacheSeed };
+} catch (e) { /* no storage (private mode): start anonymous */ }
+
+/* confirmed = Google itself reported this state (its onAuthStateChanged
+ * fired). The 4s timeout and the offline fallback are NOT confirmed: they
+ * must never wipe the identity cache or flip the zone away from it, or a
+ * signed-in visitor on a slow connection would lose their data zone on
+ * the next page. */
+function fireAuthCallbacks(user, confirmed) {
+  if (user && user.email) {
+    activeUser = user;
+    try { window.localStorage.setItem("jamaliIdentityCache", String(activeUser.email)); } catch (e) {}
+  } else if (confirmed) {
+    activeUser = null;
+    try { window.localStorage.removeItem("jamaliIdentityCache"); } catch (e) {}
+  } else {
+    /* Unconfirmed "no user" (4s timeout, offline, hung network): the
+     * cached identity stands - the zone does not flip away from it. */
+    var cached = null;
+    try { cached = window.localStorage.getItem("jamaliIdentityCache"); } catch (e) {}
+    activeUser = cached ? { email: cached } : null;
+  }
   for (var i = 0; i < authCallbacks.length; i++) {
     try { authCallbacks[i](activeUser); } catch (e) {}
   }
   localZoneChanged();
 }
 
-function authFirstDone(user) {
+function authFirstDone(user, confirmed) {
   if (authFirstSeen) return;
   authFirstSeen = true;
   authReadyResolve(user || null);
-  fireAuthCallbacks(user);
+  fireAuthCallbacks(user, confirmed);
 }
 
 var authModRef = null; // the loaded firebase-auth module, or null
@@ -545,8 +575,8 @@ var appRef = null;     // the Firebase app handle - the cloud comment desk
     provider = new authMod.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     authMod.onAuthStateChanged(auth, function (user) {
-      authFirstDone(user);
-      fireAuthCallbacks(user);
+      authFirstDone(user, true);
+      fireAuthCallbacks(user, true);
     });
     // If the identity never reports in (hung network), go on anonymously.
     setTimeout(function () { authFirstDone(null); }, 4000);
@@ -582,10 +612,21 @@ export function signOut(authArg) {
   return authModRef.signOut(auth);
 }
 
-// requireAuth - every page awaits this before it touches data. It now
-// resolves as soon as the identity (and with it the data zone) is known,
-// so the first read always happens in the right zone.
+// requireAuth - every page awaits this before it touches data. NO SYSTEM
+// LOADING ON OPEN PAGE: it resolves immediately, from the identity cache
+// seeded above, so the page engines paint the instant the page is
+// clicked - in the right zone, with zero waiting for Google. When the
+// real identity later reports a different state, localZoneChanged()
+// repaints the live listeners under the corrected zone.
 export function requireAuth() {
+  return Promise.resolve(activeUser);
+}
+
+// authSettled - resolves when the REAL Google identity has settled
+// (signed in, confirmed anonymous, or offline). Consumers that must see
+// the live auth handle - the sidebar Login button, the comment desk page
+// - wait on this one; every page engine keeps requireAuth (instant).
+export function authSettled() {
   return authReady.then(function () { return null; });
 }
 
@@ -1225,9 +1266,14 @@ function commentQuery(fs, cdb) {
   return fs.query(base, fs.orderBy("createdAt", "desc"), fs.limit(300));
 }
 
-// commentSend - any visitor, signed in or not, posts a comment to the
-// owner. This is the one create the rules allow without an account.
+// commentSend - USERS ONLY (demand: users only are required to send
+// comment; the AI is not allowed): the sender must be signed in, and the
+// comment goes to the owner with the account email as the from line.
+// Anonymous visitors get the sign-in gate in the write popup instead.
 export function commentSend(text, pageRef) {
+  if (!activeUser || !activeUser.email) {
+    return Promise.reject(new Error("Sign in with Google to send a comment - comments come from signed-in users only."));
+  }
   var t = String(text == null ? "" : text).trim();
   if (!t) return Promise.reject(new Error("Write the comment first - the box is empty."));
   if (t.length > 2000) return Promise.reject(new Error("The comment is over 2000 characters - shorten it and send it again."));
@@ -1530,7 +1576,10 @@ export const server = {
  
 window.JAMALI_MENU = [
     { label: "Home", icon: "🏠", folder: "home", n: 1, d: 0 },
-    { label: "Organisation Settings", icon: "⚙️", folder: "organisation-settings", n: 391, d: 1 },
+    // RESERVE (23 Nov 2026): the Organisation Settings entry left the
+    // menu tree and the Home grid - the settings gear in the footer row
+    // (1/4, next to the Login/Logout button's 3/4) opens the
+    // organisation settings panel instead.
     // RESERVE (admin removed): the "Account Administration" entry was
     // deactivated with the login system; the panel lives in
     // public/RESERVE/admin/.
@@ -2197,7 +2246,7 @@ p.label + "</a>";
    " body.jamali-sidebar-open #jamali-overlay{display:block}}",
    "#jamali-side-foot{flex:0 0 auto;padding:12px 14px;border-top:1px solid #1e293b;background:#0f172a}",
    ".jamali-foot-row{display:flex;align-items:stretch;gap:8px}",
-   "#jamali-side-auth{flex:1 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 4px;font-size:14px;font-weight:800;line-height:1.15;cursor:pointer;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}",
+   "#jamali-side-auth{flex:3 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 4px;font-size:14px;font-weight:800;line-height:1.15;cursor:pointer;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}",
    "#jamali-side-auth small{font-size:9.5px;font-weight:600;opacity:.9;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
    "#jamali-side-auth.login{background:#16a34a}",
    "#jamali-side-auth.login:hover{background:#15803d}",
@@ -2208,6 +2257,11 @@ p.label + "</a>";
    "#jamali-side-comment small{font-size:10px;font-weight:700;color:#94a3b8}",
    "#jamali-side-comment:hover{background:#334155;color:#fff}",
    "#jamali-side-comment:hover small{color:#e2e8f0}",
+   "#jamali-side-gear{flex:1 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 2px;font-size:17px;line-height:1;cursor:pointer;color:#cbd5e1;background:#1e293b;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}",
+   "#jamali-side-gear small{font-size:10px;font-weight:700;color:#94a3b8}",
+   "#jamali-side-gear:hover{background:#334155;color:#fff}",
+   "#jamali-side-gear:hover small{color:#e2e8f0}",
+   ".jamali-foot-row + .jamali-foot-row{margin-top:8px}",
    "#jamali-owner-comments{position:fixed;top:12px;right:12px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
    "#jamali-owner-comments:hover{background:#1e293b}",
    "#jamali-owner-comments[hidden]{display:none}",
@@ -2237,7 +2291,11 @@ p.label + "</a>";
    "#jamali-cpop-send.cpop-sent{background:#2563eb;opacity:1;cursor:default}",
    "#jamali-cpop .msg{border-radius:10px;padding:9px 12px;margin:10px 0 0;line-height:1.5;font-size:12.5px}",
    "#jamali-cpop .msg.cpop-ok{background:#052e16;border:1px solid #4ade80;color:#bbf7d0}",
-   "#jamali-cpop .msg.cpop-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}"
+   "#jamali-cpop .msg.cpop-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}",
+   "#jamali-cpop-gate{border:1px solid #1e3a5f;background:#0b1220;border-radius:10px;padding:12px;text-align:center}",
+   "#jamali-cpop-gate p{margin:0 0 10px;color:#bae6fd;font-size:13px;line-height:1.5}",
+   "#jamali-cpop-gate-in{border:0;border-radius:10px;background:#0ea5e9;color:#fff;font-weight:800;font-size:13.5px;padding:10px 18px;cursor:pointer}",
+   "#jamali-cpop-gate-in:hover{background:#0284c7}"
  ].join("");
  document.head.appendChild(css);
 
@@ -2261,12 +2319,18 @@ p.label + "</a>";
   aside.innerHTML =
     "<div class=\"brand\"><i>JA</i>JAMAL</div>" +
     "<nav>" + nav + "</nav>" +
-    // THE FOOTER ROW (20 Nov 2026): the Login/Logout button and the
-    // Comment button share ONE row, 50% / 50%. The old settings gear
-    // left the footer - its panel code stays below as RESERVE.
-    "<div id=\"jamali-side-foot\"><div class=\"jamali-foot-row\">" +
+    // THE FOOTER (23 Nov 2026): the Comment button keeps its own
+    // full-width row on top (users only - signed-in visitors write, the
+    // AI is not allowed; the owner never sees the button); below it the
+    // Login/Logout button takes 3/4 of the row and the settings gear
+    // 1/4 - clicking the gear opens the organisation settings panel.
+    "<div id=\"jamali-side-foot\">" +
+    "<div class=\"jamali-foot-row\">" +
+    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner (signed-in users only)\">&#128172;<small>Comment</small></button>" +
+    "</div>" +
+    "<div class=\"jamali-foot-row\">" +
     "<button type=\"button\" id=\"jamali-side-auth\" class=\"login\" title=\"Not signed in - click to sign in with Google\">Login</button>" +
-    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner\">&#128172;<small>Comment</small></button>" +
+    "<button type=\"button\" id=\"jamali-side-gear\" title=\"Organisation settings\">&#9881;&#65039;<small>Settings</small></button>" +
     "</div></div>";
 
  document.body.insertBefore(overlay, document.body.firstChild);
@@ -2350,6 +2414,14 @@ p.label + "</a>";
     jamaliCommentPopOpen();
   });
 
+  // THE SETTINGS GEAR (23 Nov 2026): 1/4 of the footer row, next to the
+  // Login/Logout button's 3/4. Clicking it opens the organisation
+  // settings panel - the gear is the only way in since the Organisation
+  // Settings entry left the menu tree and the Home grid.
+  document.getElementById("jamali-side-gear").addEventListener("click", function () {
+    jamaliSettingsOpen();
+  });
+
   // THE WRITE-COMMENT POPUP - the send half of the comment desk. The
   // receiver page /comments/390 is the mailbox only: no send setup there.
   // Visitors write from this popup on any page (signed in or not) and the
@@ -2374,7 +2446,11 @@ p.label + "</a>";
       "<textarea id=\"jamali-cpop-text\" maxlength=\"2000\" placeholder=\"Write your comment - it goes straight to the owner\"></textarea>" +
       "<div class=\"cpop-under\"><span class=\"cpop-count\" id=\"jamali-cpop-count\">0 / 2000</span>" +
       "<button type=\"button\" id=\"jamali-cpop-send\">Send comment</button></div>" +
-      "<div class=\"msg\" id=\"jamali-cpop-msg\" hidden></div>";
+      "<div class=\"msg\" id=\"jamali-cpop-msg\" hidden></div>" +
+      "<div id=\"jamali-cpop-gate\" hidden>" +
+      "<p>Comments come from signed-in users only - the AI is not allowed to send.</p>" +
+      "<button type=\"button\" id=\"jamali-cpop-gate-in\">Sign in with Google</button>" +
+      "</div>";
     document.body.appendChild(veil);
     document.body.appendChild(pop);
     document.addEventListener("keydown", function (e) {
@@ -2387,12 +2463,43 @@ p.label + "</a>";
     });
     document.getElementById("jamali-cpop-close").addEventListener("click", jamaliCommentPopClose);
     document.getElementById("jamali-cpop-send").addEventListener("click", jamaliCommentPopSend);
+    // USERS ONLY: the gate button reuses the sidebar Login button, so all
+    // its wiring (Google popup, error toasts, disabled states) stays in
+    // one place; the gate repaints itself when the identity changes.
+    document.getElementById("jamali-cpop-gate-in").addEventListener("click", function () {
+      var authBtn = document.getElementById("jamali-side-auth");
+      if (authBtn) authBtn.click();
+    });
+    import("/sidebar.js").then(function (fb) {
+      if (fb && fb.onAuthStateChanged) {
+        fb.onAuthStateChanged(null, function () { jamaliCommentPopPaintGate(); });
+      }
+    }).catch(function () { /* offline: the gate still paints on open */ });
   })();
+
+  // USERS ONLY: signed-in visitors get the composer, anonymous visitors
+  // (and anything automated) get the sign-in gate. Painted on open and
+  // again on every auth change.
+  function jamaliCommentPopPaintGate() {
+    var gate = document.getElementById("jamali-cpop-gate");
+    var ta = document.getElementById("jamali-cpop-text");
+    var under = document.querySelector("#jamali-cpop .cpop-under");
+    var from = document.getElementById("jamali-cpop-from");
+    if (!gate || !ta || !under || !from) return;
+    import("/sidebar.js").then(function (fb) {
+      var signed = !!(fb && fb.localZone && fb.localZone().signedIn);
+      gate.hidden = signed;
+      ta.hidden = !signed;
+      under.hidden = !signed;
+      from.hidden = !signed;
+    }).catch(function () { /* offline: keep the last painted state */ });
+  }
 
   function jamaliCommentPopOpen() {
     var pop = document.getElementById("jamali-cpop");
     var veil = document.getElementById("jamali-cpop-veil");
     if (!pop || !veil) return;
+    jamaliCommentPopPaintGate();
     document.getElementById("jamali-cpop-from").textContent =
       "from " + (PAGE_ID || "/home/1");
     pop.hidden = false;
@@ -2480,12 +2587,15 @@ p.label + "</a>";
   window.JAMALI_SIDEBAR_AUTH = { render: sideAuthRender };
   import("/sidebar.js").then(function (fb) {
     if (!fb || !fb.onAuthStateChanged) return;
-    // The Google identity SDK loads asynchronously INSIDE 502.js, so fb.auth
-    // is still null here more often than not. requireAuth() resolves the
-    // moment the identity is settled (signed in, anonymous, or offline) -
-    // waiting for it instead of racing the boot is what makes the button
-    // (and the owner's Comments button) come alive reliably.
-    (fb.requireAuth ? fb.requireAuth() : Promise.resolve()).then(function () {
+    // The Google identity SDK loads asynchronously INSIDE sidebar.js, so
+    // fb.auth is still null here more often than not. authSettled()
+    // resolves the moment the REAL identity is settled (signed in,
+    // anonymous, or offline) - waiting for it instead of racing the boot
+    // is what makes the button (and the owner's Comments button) come
+    // alive reliably. requireAuth itself now resolves instantly from the
+    // identity cache - pages must open with no system loading - so the
+    // button waits on authSettled, not on requireAuth.
+    (fb.authSettled ? fb.authSettled() : (fb.requireAuth ? fb.requireAuth() : Promise.resolve())).then(function () {
       if (!fb.auth) return; // no connection to Google - quiet anonymous use
       fb.onAuthStateChanged(fb.auth, sideAuthRender);
       sideAuthBtn.addEventListener("click", function () {
@@ -2843,7 +2953,7 @@ wireToggles(aside);
   function jamaliSettingsPaint() {
     if (!SETTINGS_EL) return;
     var h = "";
-    h += "<div class=\"jd-head\"><b>Settings</b><button type=\"button\" class=\"jd-close\" title=\"Close\">&#215;</button></div>";
+    h += "<div class=\"jd-head\"><b>Organisation Settings</b><button type=\"button\" class=\"jd-close\" title=\"Close\">&#215;</button></div>";
     h += "<div class=\"jd-who\"><b></b><span></span></div>";
     h += "<div class=\"jd-zone\" id=\"jd-zone\"><b>Data lives in this browser</b><span>checking the data zone&hellip;</span></div>";
     h += "<div class=\"jd-cap\">Data</div>";

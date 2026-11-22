@@ -184,12 +184,14 @@ import("/sidebar.js").then(function (fb) {
   if (fb && fb.commentOwner) ownerEmail = String(fb.commentOwner).toLowerCase();
   var live = false;
   if (fb && fb.onAuthStateChanged) {
-    // Wait for requireAuth() FIRST and only then look at fb.auth: the
-    // Google identity SDK boots asynchronously INSIDE 502.js, so fb.auth
-    // is still null the moment this import resolves - checking it before
-    // the wait skipped the whole block and the mailbox never displayed.
-    // The sidebar fixes the same race this way; the desk now does too.
-    (fb.requireAuth ? fb.requireAuth() : Promise.resolve()).then(function () {
+    // Wait for authSettled() FIRST and only then look at fb.auth: the
+    // Google identity SDK boots asynchronously INSIDE sidebar.js, so
+    // fb.auth is still null the moment this import resolves - checking
+    // it before the wait skipped the whole block and the mailbox never
+    // displayed. (requireAuth now resolves instantly from the identity
+    // cache so pages open with no loading - the desk needs the REAL
+    // settled identity, so it waits on authSettled.)
+    (fb.authSettled ? fb.authSettled() : (fb.requireAuth ? fb.requireAuth() : Promise.resolve())).then(function () {
       if (!fb.auth) return;
       fb.onAuthStateChanged(fb.auth, function (user) {
         paintGate(user);

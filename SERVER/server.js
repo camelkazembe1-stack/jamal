@@ -248,11 +248,14 @@ service cloud.firestore {
     }
 
     match /comments/{docId} {
-      // THE COMMENT DESK (20 Nov 2026): the one collection visitors still
-      // write to. A comment is a letter to the owner, so any visitor -
-      // signed in or anonymous - may post one (text only, 1-2000 chars).
-      // Reading the mailbox and removing comments is the owner's alone.
-      allow create: if request.resource.data.get("text", "") is string
+      // THE COMMENT DESK: the one collection visitors still write to.
+      // USERS ONLY (demand): a comment is a letter from a signed-in user
+      // to the owner - the AI and anonymous writers are not allowed and
+      // the database refuses them (text only, 1-2000 chars). Reading the
+      // mailbox and removing comments is the owner's alone.
+      allow create: if isSignedIn()
+        && request.auth.token.email != null
+        && request.resource.data.get("text", "") is string
         && request.resource.data.get("text", "").size() > 0
         && request.resource.data.get("text", "").size() <= 2000
         && request.resource.data.get("from", "") is string
@@ -478,19 +481,46 @@ var authCallbacks = [];
 var authReadyResolve = null;
 var authReady = new Promise(function (resolve) { authReadyResolve = resolve; });
 
-function fireAuthCallbacks(user) {
-  activeUser = user || null;
+/* NO SYSTEM LOADING ON OPEN PAGE: the last known identity is cached in
+ * Local Storage and seeded into the zone BEFORE anything async runs, so
+ * every page paints the instant it is clicked, in the right data zone,
+ * instead of waiting (up to 4s) for Google to report in. The real
+ * identity still settles in the background and corrects the zone live. */
+try {
+  var identityCacheSeed = window.localStorage.getItem("jamaliIdentityCache");
+  if (identityCacheSeed) activeUser = { email: identityCacheSeed };
+} catch (e) { /* no storage (private mode): start anonymous */ }
+
+/* confirmed = Google itself reported this state (its onAuthStateChanged
+ * fired). The 4s timeout and the offline fallback are NOT confirmed: they
+ * must never wipe the identity cache or flip the zone away from it, or a
+ * signed-in visitor on a slow connection would lose their data zone on
+ * the next page. */
+function fireAuthCallbacks(user, confirmed) {
+  if (user && user.email) {
+    activeUser = user;
+    try { window.localStorage.setItem("jamaliIdentityCache", String(activeUser.email)); } catch (e) {}
+  } else if (confirmed) {
+    activeUser = null;
+    try { window.localStorage.removeItem("jamaliIdentityCache"); } catch (e) {}
+  } else {
+    /* Unconfirmed "no user" (4s timeout, offline, hung network): the
+     * cached identity stands - the zone does not flip away from it. */
+    var cached = null;
+    try { cached = window.localStorage.getItem("jamaliIdentityCache"); } catch (e) {}
+    activeUser = cached ? { email: cached } : null;
+  }
   for (var i = 0; i < authCallbacks.length; i++) {
     try { authCallbacks[i](activeUser); } catch (e) {}
   }
   localZoneChanged();
 }
 
-function authFirstDone(user) {
+function authFirstDone(user, confirmed) {
   if (authFirstSeen) return;
   authFirstSeen = true;
   authReadyResolve(user || null);
-  fireAuthCallbacks(user);
+  fireAuthCallbacks(user, confirmed);
 }
 
 var authModRef = null; // the loaded firebase-auth module, or null
@@ -507,8 +537,8 @@ var appRef = null;     // the Firebase app handle - the cloud comment desk
     provider = new authMod.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
     authMod.onAuthStateChanged(auth, function (user) {
-      authFirstDone(user);
-      fireAuthCallbacks(user);
+      authFirstDone(user, true);
+      fireAuthCallbacks(user, true);
     });
     // If the identity never reports in (hung network), go on anonymously.
     setTimeout(function () { authFirstDone(null); }, 4000);
@@ -544,10 +574,21 @@ export function signOut(authArg) {
   return authModRef.signOut(auth);
 }
 
-// requireAuth - every page awaits this before it touches data. It now
-// resolves as soon as the identity (and with it the data zone) is known,
-// so the first read always happens in the right zone.
+// requireAuth - every page awaits this before it touches data. NO SYSTEM
+// LOADING ON OPEN PAGE: it resolves immediately, from the identity cache
+// seeded above, so the page engines paint the instant the page is
+// clicked - in the right zone, with zero waiting for Google. When the
+// real identity later reports a different state, localZoneChanged()
+// repaints the live listeners under the corrected zone.
 export function requireAuth() {
+  return Promise.resolve(activeUser);
+}
+
+// authSettled - resolves when the REAL Google identity has settled
+// (signed in, confirmed anonymous, or offline). Consumers that must see
+// the live auth handle - the sidebar Login button, the comment desk page
+// - wait on this one; every page engine keeps requireAuth (instant).
+export function authSettled() {
   return authReady.then(function () { return null; });
 }
 
@@ -1187,9 +1228,14 @@ function commentQuery(fs, cdb) {
   return fs.query(base, fs.orderBy("createdAt", "desc"), fs.limit(300));
 }
 
-// commentSend - any visitor, signed in or not, posts a comment to the
-// owner. This is the one create the rules allow without an account.
+// commentSend - USERS ONLY (demand: users only are required to send
+// comment; the AI is not allowed): the sender must be signed in, and the
+// comment goes to the owner with the account email as the from line.
+// Anonymous visitors get the sign-in gate in the write popup instead.
 export function commentSend(text, pageRef) {
+  if (!activeUser || !activeUser.email) {
+    return Promise.reject(new Error("Sign in with Google to send a comment - comments come from signed-in users only."));
+  }
   var t = String(text == null ? "" : text).trim();
   if (!t) return Promise.reject(new Error("Write the comment first - the box is empty."));
   if (t.length > 2000) return Promise.reject(new Error("The comment is over 2000 characters - shorten it and send it again."));

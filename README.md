@@ -10,12 +10,21 @@ JAMALI
 > explains exactly how to bring every piece back later. All business data is
 > saved in the Local Storage of the browser that creates it - Google login stays
 > optional and the shared anonymous Firestore collections are closed so data can never mix between users; the system* collections stay locked as before.
-> THE COMMENT DESK is the one cloud exception: every visitor - signed in or
-> not - may send a comment from the sidebar footer (the Comment button, next
-> to Login/Logout in one 50% / 50% row), it lands in the shared "comments"
+> THE COMMENT DESK is the one cloud exception: signed-in users only may send
+> a comment - the AI and anonymous writers are not allowed (the write popup
+> shows anonymous visitors a Google sign-in gate, and the database rules
+> refuse anonymous creates). It lands in the shared "comments"
 > collection addressed to the owner (camelkazembe1@gmail.com), and only the
 > owner reads and deletes the mailbox from the Comments button at the top
 > right. Publishing firestore.rules once (bash apply-rules.sh) switches it on.
+> THE SIDEBAR FOOTER (23 Nov 2026): the Comment button keeps its own
+> full-width row; below it the Login/Logout button takes 3/4 of the row and
+> the settings gear 1/4 - clicking the gear opens the organisation settings
+> panel. The Organisation Settings entry is gone from the menu tree and the
+> Home grid. NO SYSTEM LOADING ON OPEN PAGE: every page paints the instant
+> it is clicked - requireAuth resolves immediately from the identity cache
+> in Local Storage and the real Google identity settles in the background
+> (authSettled) for the Login button and the comment desk.
 > The Comment button opens a write popup right on the page the visitor is on;
 > the receiver page /comments/390 is the mailbox itself and carries NO send
 > setup. When that page is opened by somebody who is not the owner, a sign-in
