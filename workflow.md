@@ -1,6 +1,7 @@
 Whenever I send you a development request, follow this workflow:
 
-### 1. Understand My Request
+### 1. Understand My Request    "the requesr  is at "ssystem new demand" when ypu complete the task mentioned  in that file  please delete a part  a file is allowed to be  empty nort allowed to be deleted
+
 - Read my entire request carefully.
 - Understand exactly what I want.
 - Identify the expected outcome.
