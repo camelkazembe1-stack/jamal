@@ -9,7 +9,7 @@
 
 
 
-import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/502.js";
+import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/sidebar.js";
 
 window.__p52 = { page: "343", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
 

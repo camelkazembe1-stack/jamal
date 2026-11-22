@@ -1,5 +1,5 @@
 
 
-import { requireAuth } from "/502.js";
+import { requireAuth } from "/sidebar.js";
 
 await requireAuth(); 

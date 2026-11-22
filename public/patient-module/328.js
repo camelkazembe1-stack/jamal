@@ -8,7 +8,7 @@
 
 
 
-import { requireAuth, db, collection, query, onSnapshot, updateDoc, writeBatch, doc } from "/502.js";
+import { requireAuth, db, collection, query, onSnapshot, updateDoc, writeBatch, doc } from "/sidebar.js";
 
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
@@ -145,7 +145,7 @@ window.__p46.listeners = 6;
  
 setTimeout(() => {
   if (loaded.reg || window.__p46.errs.length) return;
-  import("/502.js").then((m) => {
+  import("/sidebar.js").then((m) => {
     if (typeof m.getDocs !== "function") {
       loadErr("healthRegistrations (fallback)",
         new Error("the live listener never answered and this 502.js has no getDocs"));

@@ -25,6 +25,18 @@ JAMALI
 > be seen - the owner never writes a comment to himself; every other visitor
 > keeps the button.
 
+> THE SHARED CODE lives in one place. The five loose scripts the web root
+> used to carry - 502.js (the runtime module every page imports), menu.js,
+> jamali-bridge.js, pickers.js and health-books.js - are now sections inside
+> public/sidebar.js, the one shared module. The web root keeps only
+> index.html (the shell) and sidebar.js (the one module every page loads,
+> <script type="module" src="/sidebar.js">), plus 404.html, which the host
+> itself serves for unknown routes and so stays a root file. Every page
+> module imports its data layer from that same file. The 502 core section is
+> still written out of SERVER/server.js by node SERVER/sync.js - now between
+> the JAMALI_502_BLOCK markers inside sidebar.js instead of a separate
+> public/502.js.
+
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app
 
@@ -778,12 +790,12 @@ THE FILES WITHOUT A PAGE NUMBER
 - public/index.html - the front door: the Google gate, and where signed out visitors land. One authenticated Google identity opens the plain login straight away: log in with any username and four-digit token - from any Google email at all - or follow the Create Account link below the button. Nothing about the people who use the device is ever displayed: no account list, no email, no waiting screen - a refresh always shows the same login and create-account forms, and approval is told only as a message on the login itself. A pending account that tries to log in is told it is saved but still waits for the administrator's approval; a rejected one that it was not approved; a deleted one that it was disapproved by the administrator and deleted from the system when it had been approved, or that the registration was removed before approval when it had not, and to please create a new account. Creating an account lands on the login with the username filled in and the same waiting message, so trying to log in is itself the status check: approved opens the system, not approved explains itself. The administrator credentials are shared the same way: any of your Google emails that logs in with the administrator username and token takes the administrator seat, and on a brand-new database (a whole server change) the first administrator login builds the administrator account, the claim marker and the credentials in one batch by itself. A red Google logout button sits at the top left of the card on every screen after the gate, and the next sign in always asks Google which account to use.
 
 
-- public/502.js - the one Firebase module every page imports: Google auth, Firestore exports and the requireAuth guard that bounces signed out visitors to the start page.
 
 
-- public/menu.js - the family tree as data: one line per page (label, icon, folder, page number, depth). The ONE file to edit when a page is added, renamed or reordered; the sidebar reads it and draws.
 
-- public/sidebar.js - the frozen tree renderer shared by every page: draws the collapsible sidebar from the menu.js data, highlights the active page, opens its path, cleans the address bar and folds away behind a burger button on the phone. Also carries the grant filter that decides which links an account sees, with the ALWAYS_OPEN list (home, file-viewer).
+- public/sidebar.js - the ONE shared module at the web root, six sections in one file: the 502 core (generated from SERVER/server.js between the JAMALI_502_BLOCK markers - Google identity, the local data engine, the comment desk; the runtime module every page module imports its data layer from), the nav bridge (was jamali-bridge.js), the menu tree (was menu.js - window.JAMALI_MENU, one line per page, still the one place to edit when a page is added, renamed or reordered), the sidebar renderer itself (the collapsible tree, the footer buttons, the comment desk wiring), the register pickers (was pickers.js) and hospital money in the books (was health-books.js). Every page loads exactly one script tag, <script type="module" src="/sidebar.js">, and the web root keeps only index.html, sidebar.js and 404.html.
+
+- public/404.html - the host's error page for a route that matches nothing: the visit folds back into the root shell (inside the shell the frame goes home; on its own the page hands its address to the shell, which reopens it - and a second miss lands home). It stays a loose root file because the host looks for it exactly there.
 
 
 - public/504.js - the quiet half of the field control pair: carries each page's identity and applies the saved field configuration, so the admin's - and + decisions become the form the user actually sees.
@@ -798,13 +810,13 @@ THE FILES WITHOUT A PAGE NUMBER
 
 - public/health, the extra files - besides page 321 the folder carries 514.js and 513.css - the shared chip the health stage pages load to show a patient's every record by Registration ID.
 
-- SERVER - the server folder at the repository root, outside the web root, and the single settings source of the whole system: server.js picks the Firebase project and configuration, wires the Google auth and Firestore, and carries the marked settings block that holds the full content of vercel.json, firebase.json, .firebaserc, firestore.rules and apply-rules.sh; linker.js is the connection point the modules talk through, and public/502.js - the only module pages import - carries the same wiring into every page. Running node SERVER/sync.js writes every one of those files out of the block and copies server.js itself into public/502.js, so one edit at the server reaches every page, every settings file and the next deploy.
+- SERVER - the server folder at the repository root, outside the web root, and the single settings source of the whole system: server.js picks the Firebase project and configuration, wires the Google auth and Firestore, and carries the marked settings block that holds the full content of vercel.json, firebase.json, .firebaserc, firestore.rules and apply-rules.sh; linker.js is the connection point the modules talk through, and the 502 core section inside public/sidebar.js - the runtime module every page imports - carries the same wiring into every page. Running node SERVER/sync.js writes the server content into the marked JAMALI_502_BLOCK section of public/sidebar.js, so one edit at the server reaches every page, every settings file and the next deploy.
 
 - apply-rules.sh - the one-shot publisher for the Firestore rules, written out of the settings block in SERVER/server.js: it walks you through the Firebase sign in, publishes firestore.rules to the project the code really runs on, and is safe to run again at any time - kept out of the app, nothing on the website imports it, and a hand edit is pointless because the next sync writes it back. When the firebase CLI is missing it borrows firebase-tools through npx, so node/npm alone is enough.
 
 - firestore.rules - the guard dog. Decides who may read or write each collection: reads on the account and credential records are open to every signed-in Google identity so a system account opens with its username and token from any sign-in, account creation stays bound to the Google email that made it and always starts pending, approvals, grants and deletes stay administrator only through the systemAdmins check, and anything not matched is denied. The systemDeleted tombstones are written, changed and removed by the administrator only, and read by every signed-in identity so the login can explain a deleted account. One extra door: on a database where the systemSetup claim marker does not exist yet (a fresh server), the first administrator login may create the approved administrator account, and the door closes again the moment the claim marker exists. The file itself is written out of the settings block in SERVER/server.js - change the rules at the server and let node SERVER/sync.js land them here.
 
-- vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root. Its build line runs node SERVER/sync.js, which rewrites every settings file from the server and copies server.js into public/502.js, keeping every deploy level with the server.
+- vercel.json - the routing table. Turns clean URLs like /petty-cash/7 into the real petty-cash/7.html, so the address bar stays at the domain root. Its build line runs node SERVER/sync.js, which writes the server content into the 502 core block of public/sidebar.js, keeping every deploy level with the server.
 
 - firebase.json and .firebaserc - the Firebase CLI's project settings, written out of the settings block in SERVER/server.js and kept pointing at firestore.rules and the project the code really uses.
 

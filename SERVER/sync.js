@@ -3,7 +3,9 @@
 // SERVER/server.js is the single settings source: the marked block inside
 // it holds the whole content of the settings - hosting, authentication
 // and database - and this script writes the one runtime copy the site
-// imports:   public/502.js (a verbatim copy of the server).
+// uses: the 502 CORE section inside public/sidebar.js, between the two
+// JAMALI_502_BLOCK markers. (The old separate public/502.js is gone -
+// sidebar.js is the one shared module of the web root.)
 // The old generated settings files (vercel.json, firebase.json,
 // .firebaserc, firestore.rules, apply-rules.sh) no longer live in the
 // repository: their content stays here in SERVER/server.js, and the
@@ -17,6 +19,8 @@ const path = require("path");
 
 const START = "// ==== JAMALI SETTINGS SOURCE";
 const END = "// ==== END JAMALI SETTINGS SOURCE ====";
+const BLOCK_BEGIN = "/* ==== JAMALI_502_BLOCK_BEGIN (generated from SERVER/server.js) ==== */";
+const BLOCK_END = "/* ==== JAMALI_502_BLOCK_END ==== */";
 
 function fail(message) {
   console.error("ABORT: " + message);
@@ -52,21 +56,20 @@ if (typeof S.APPLY_RULES_SH !== "string"
   fail("APPLY_RULES_SH does not look like the rules publisher.");
 }
 
-const json = (value) => JSON.stringify(value, null, 2) + "\n";
-const text = (value) => (value.endsWith("\n") ? value : value + "\n");
-
-const files = [
-  ["public/502.js", serverText]
-];
-
-for (const [name, content] of files) {
-  const target = path.join(root, name);
-  fs.writeFileSync(target, content);
-  if (name === "apply-rules.sh") fs.chmodSync(target, 0o755);
+const sidebarPath = path.join(root, "public", "sidebar.js");
+if (!fs.existsSync(sidebarPath)) fail("public/sidebar.js is missing - the web root keeps index.html, sidebar.js and 404.html.");
+const sidebarText = fs.readFileSync(sidebarPath, "utf8");
+const bi = sidebarText.indexOf(BLOCK_BEGIN);
+const be = sidebarText.indexOf(BLOCK_END);
+if (bi === -1 || be === -1 || be <= bi) {
+  fail("the JAMALI_502_BLOCK_BEGIN/END markers are missing from public/sidebar.js - cannot write the 502 core.");
 }
+
+const coreText = BLOCK_BEGIN + "\n" + serverText.replace(/\s+$/, "") + "\n" + BLOCK_END;
+const newSidebar = sidebarText.slice(0, bi) + coreText + sidebarText.slice(be + BLOCK_END.length);
+
+fs.writeFileSync(sidebarPath, newSidebar);
 
 console.log("JAMALI settings sync - written out of SERVER/server.js (project " + S.DATABASE_PROJECT + "):");
-for (const [name, content] of files) {
-  console.log("  " + name + "  (" + Buffer.byteLength(content) + " bytes)");
-}
+console.log("  public/sidebar.js - the 502 CORE block (" + Buffer.byteLength(coreText) + " bytes)");
 console.log("done - commit what changed. Hosting, auth and database settings live in SERVER/server.js content.");

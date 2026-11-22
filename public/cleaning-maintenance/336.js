@@ -6,7 +6,7 @@
 
 
 
-import { requireAuth, db, collection, doc, setDoc, updateDoc, onSnapshot, arrayUnion } from "/502.js";
+import { requireAuth, db, collection, doc, setDoc, updateDoc, onSnapshot, arrayUnion } from "/sidebar.js";
 
 window.__p52 = { page: "336", build: "52m1", auth: false, listeners: 0, docs: -1, errs: [] };
 

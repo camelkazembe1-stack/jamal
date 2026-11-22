@@ -1,7 +1,7 @@
 
 
 
-import { requireAuth, db, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from "/502.js";
+import { requireAuth, db, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from "/sidebar.js";
 
 window.__p388 = { page: "388", build: "388", auth: false, listeners: 0, docs: -1, errs: [] };
 

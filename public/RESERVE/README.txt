@@ -85,3 +85,21 @@ HOW TO BRING IT BACK LATER
 8. Put the requireAuth() guard back in SERVER/server.js out of
    requireAuth-guard.txt, run  node SERVER/sync.js  and commit.
 9. Commit and push - Vercel rebuilds with the login gate again.
+
+----------------------------------------------------------
+NOTE (23 Nov 2026) - THE SHARED ROOT FILES WERE CONSOLIDATED
+----------------------------------------------------------
+The five loose scripts at the web root - 502.js, menu.js,
+jamali-bridge.js, pickers.js and health-books.js - were merged into
+public/sidebar.js as sections (the 502 core between the JAMALI_502_BLOCK
+markers, then the nav bridge, the menu tree, the sidebar, the pickers
+and the health-books mirror). Every page now loads one module tag,
+<script type="module" src="/sidebar.js">, and page modules import the
+data layer from /sidebar.js. The copies in this folder are untouched.
+
+Restoring login/sidebar-with-login.js or login/menu-with-admin.js over
+the live public/sidebar.js would wipe the merged sections. To restore
+the login system: port the login changes into the current sidebar.js
+sections, or copy the RESERVE file back and then re-run
+    node SERVER/sync.js
+so the 502 core block is written back into sidebar.js.

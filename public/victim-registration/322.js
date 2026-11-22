@@ -6,7 +6,7 @@
 
 
 
-import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/502.js";
+import { requireAuth, db, collection, query, addDoc, onSnapshot, serverTimestamp } from "/sidebar.js";
 
 await requireAuth(); 
 
@@ -297,7 +297,7 @@ resetArrival();
   return;
 
 
-  import("/502.js").then(function (fb) {
+  import("/sidebar.js").then(function (fb) {
     return fb.getDoc(fb.doc(fb.db, "systemPageConfig", PAGE_ID));
   }).then(function (snap) {
     if (!snap.exists()) return;

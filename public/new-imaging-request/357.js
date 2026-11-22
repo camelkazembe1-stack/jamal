@@ -4,7 +4,7 @@
 
 
 
-import { requireAuth, db, collection, addDoc, onSnapshot } from "/502.js";
+import { requireAuth, db, collection, addDoc, onSnapshot } from "/sidebar.js";
 
 window.__p54 = { page: "371", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
 

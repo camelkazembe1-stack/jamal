@@ -1,5 +1,5 @@
 import { requireAuth, db, collection, doc, getDoc, query, orderBy, onSnapshot,
-         writeBatch, increment, serverTimestamp } from "/502.js";
+         writeBatch, increment, serverTimestamp } from "/sidebar.js";
 
 await requireAuth();
 

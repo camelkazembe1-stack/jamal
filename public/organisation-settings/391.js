@@ -1,4 +1,4 @@
-import { requireAuth, db, doc, getDoc, setDoc, serverTimestamp, localZone } from "/502.js";
+import { requireAuth, db, doc, getDoc, setDoc, serverTimestamp, localZone } from "/sidebar.js";
 
 await requireAuth();
 

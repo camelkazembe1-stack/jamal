@@ -1,5 +1,5 @@
 /* JAMALI CORE — restored shared engine, inlined so every folder keeps 1 html + 1 css + 1 js */
-import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jamaliCoreGetDocs, doc as jamaliCoreDoc, deleteDoc as jamaliCoreDeleteDoc, requireAuth as jamaliCoreRequireAuth, onSnapshot as jamaliCoreOnSnapshot } from "/502.js";
+import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jamaliCoreGetDocs, doc as jamaliCoreDoc, deleteDoc as jamaliCoreDeleteDoc, requireAuth as jamaliCoreRequireAuth, onSnapshot as jamaliCoreOnSnapshot } from "/sidebar.js";
 (function () {
   if (typeof window === "undefined" || window.JAMALI_CORE) return;
   window.JAMALI_CORE = true;
@@ -579,7 +579,7 @@ initRecords({
 
 
 
-import { requireAuth, db, collection, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from "/502.js";
+import { requireAuth, db, collection, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from "/sidebar.js";
 
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

@@ -7,7 +7,7 @@
 
 
 
-import { requireAuth, db, collection, doc, updateDoc, setDoc, onSnapshot, writeBatch, arrayUnion } from "/502.js";
+import { requireAuth, db, collection, doc, updateDoc, setDoc, onSnapshot, writeBatch, arrayUnion } from "/sidebar.js";
 
 window.__p54 = { page: "353", build: "54", auth: false, listeners: 0, docs: -1, errs: [] };
 

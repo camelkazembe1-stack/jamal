@@ -1,5 +1,5 @@
 /* JAMALI CORE — restored shared engine, inlined so every folder keeps 1 html + 1 css + 1 js */
-import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jamaliCoreGetDocs, doc as jamaliCoreDoc, deleteDoc as jamaliCoreDeleteDoc, requireAuth as jamaliCoreRequireAuth, onSnapshot as jamaliCoreOnSnapshot } from "/502.js";
+import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jamaliCoreGetDocs, doc as jamaliCoreDoc, deleteDoc as jamaliCoreDeleteDoc, requireAuth as jamaliCoreRequireAuth, onSnapshot as jamaliCoreOnSnapshot } from "/sidebar.js";
 (function () {
   if (typeof window === "undefined" || window.JAMALI_CORE) return;
   window.JAMALI_CORE = true;
@@ -537,7 +537,7 @@ initDep({ root: "#app" });
 // Pages 31, 33, 46, 47 and 48 import from here.
 // ---------------------------------------------------------------------------
 
-import { requireAuth } from "/502.js";
+import { requireAuth } from "/sidebar.js";
 
 export async function initStock(cfg) {
   await requireAuth();

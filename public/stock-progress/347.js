@@ -1,4 +1,4 @@
-import { requireAuth, db, collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "/502.js";
+import { requireAuth, db, collection, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "/sidebar.js";
 
 await requireAuth();
 

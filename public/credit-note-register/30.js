@@ -55,7 +55,7 @@ initRecords({
 
 
 
-import { requireAuth, db, collection, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from "/502.js";
+import { requireAuth, db, collection, doc, addDoc, updateDoc, onSnapshot, serverTimestamp } from "/sidebar.js";
 
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

@@ -6,7 +6,7 @@
 
 
 
-import { requireAuth, auth, db, collection, query, updateDoc, doc, setDoc, onSnapshot, getDoc } from "/502.js";
+import { requireAuth, auth, db, collection, query, updateDoc, doc, setDoc, onSnapshot, getDoc } from "/sidebar.js";
  
 let showPatient = function () {}, hidePatient = function () {};
 try {

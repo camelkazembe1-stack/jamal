@@ -6,8 +6,9 @@
 // other repository file to work. Running
 //     node SERVER/sync.js
 // reads the marked settings block below and writes vercel.json, firebase.json,
-// .firebaserc, firestore.rules, apply-rules.sh and public/502.js - this file
-// verbatim, the one module every page imports - and SERVER/linker.js is the
+// .firebaserc, firestore.rules, apply-rules.sh and the 502 core block inside
+// public/sidebar.js - this content verbatim, the one module every page imports
+// from - and SERVER/linker.js is the
 // connection point the modules talk through.
 //
 // LOCAL DATA ENGINE (20 Nov 2026) - the data layer of the whole system:
@@ -44,7 +45,8 @@
 // Everything the deploys need is declared between this line and the END
 // marker. SERVER/sync.js reads this block and writes every settings file
 // out of it: vercel.json, firebase.json, .firebaserc, firestore.rules,
-// apply-rules.sh and public/502.js - a verbatim copy of this file. Edit
+// apply-rules.sh and the 502 core block inside public/sidebar.js - a verbatim
+// copy of this content. Edit
 // here, run node SERVER/sync.js and commit what it writes: the written
 // files are outputs, and the Vercel build line runs the same sync, so the
 // next deploy always matches the server.
@@ -1253,13 +1255,13 @@ export const SERVER_CONFIG = {
   hosting: {
     platform: "Vercel",
     outputDirectory: "public",
-    runtimeModule: "/502.js",
+    runtimeModule: "/sidebar.js",
     buildLine: "node SERVER/sync.js",
     syncCommand: "node SERVER/sync.js",
     settingsSource: "SERVER/server.js",
     generatedFiles: [
       "vercel.json", "firebase.json", ".firebaserc",
-      "firestore.rules", "apply-rules.sh", "public/502.js"
+      "firestore.rules", "apply-rules.sh", "public/sidebar.js"
     ]
   },
   rules: {

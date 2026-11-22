@@ -179,7 +179,7 @@ refreshBtn.addEventListener("click", function () {
   if (window.__jamaliCommentFb) startMailbox(window.__jamaliCommentFb);
 });
 
-import("/502.js").then(function (fb) {
+import("/sidebar.js").then(function (fb) {
   window.__jamaliCommentFb = fb;
   if (fb && fb.commentOwner) ownerEmail = String(fb.commentOwner).toLowerCase();
   var live = false;
