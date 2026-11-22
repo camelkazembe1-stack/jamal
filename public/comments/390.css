@@ -28,6 +28,8 @@ h1 { font-size: 24px; margin-bottom: 6px; }
 
 .owner { border-color: #1d4ed8; }
 .owner-note { color: #93c5fd; font-size: 12.5px; margin: 2px 0 8px; }
+#owner-signin-btn { margin-top: 4px; }
+#owner-gate[hidden] { display: none; }
 .refresh { border: 1px solid #334155; background: #0b1220; color: #cbd5e1; border-radius: 9px; font-size: 12px; font-weight: 700; padding: 5px 10px; cursor: pointer; }
 .refresh:hover { background: #1e293b; color: #fff; }
 .count-line { color: #64748b; font-size: 12px; margin: 2px 0 4px; }

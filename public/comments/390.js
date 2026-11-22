@@ -7,7 +7,10 @@
  *     travels along in the ?from= hint so the owner can see where the
  *     comment was written;
  *   - when the owner is signed in, the mailbox opens underneath: every
- *     comment, newest first, live, with a delete button on each one.
+ *     comment, newest first, live, with a delete button on each one;
+ *   - when nobody is signed in (or a non-owner is), a sign-in card takes
+ *     the mailbox's place: one Google sign-in as the owner's email and
+ *     the received comments display immediately.
  * The database rules stay the same: create for anybody, read/delete for
  * the owner only.
  */
@@ -47,6 +50,10 @@ var mailboxCard = document.getElementById("mailbox-card");
 var countLine = document.getElementById("mailbox-count");
 var items = document.getElementById("mailbox-items");
 var refreshBtn = document.getElementById("refresh-btn");
+var gateCard = document.getElementById("owner-gate");
+var gateText = document.getElementById("gate-text");
+var gateBtn = document.getElementById("owner-signin-btn");
+var gateMsg = document.getElementById("gate-msg");
 
 function paintCount() {
   countEl.textContent = ta.value.length + " / 2000";
@@ -94,6 +101,50 @@ sendBtn.addEventListener("click", function () {
 });
 
 /* ---- the owner's mailbox, live ---- */
+
+/* THE OWNER GATE: the mailbox displays only for the owner's email. When
+ * the visitor is not that email, the sign-in card shows in its place -
+ * one Google sign-in as the owner and every received comment displays
+ * right here, newest first, live. A signed-in non-owner is told which
+ * account opens the mailbox. */
+function paintGate(user) {
+  if (!gateCard) return;
+  var mail = user && user.email ? String(user.email).toLowerCase() : "";
+  var isOwner = !!(mail && mail === ownerEmail);
+  mailboxCard.hidden = !isOwner;
+  gateCard.hidden = isOwner;
+  if (gateMsg) gateMsg.hidden = true;
+  if (!isOwner) {
+    gateText.textContent = mail
+      ? "You are signed in as " + mail + " - the mailbox opens only for " + ownerEmail + ", the owner. Sign in with the owner's account and every received comment displays here."
+      : "The mailbox is the owner's. Sign in as " + ownerEmail + " and every received comment displays here, newest first, live.";
+  }
+}
+
+if (gateBtn) {
+  gateBtn.addEventListener("click", function () {
+    var fb = window.__jamaliCommentFb;
+    if (!fb || !fb.signInWithPopup || !fb.auth) {
+      gateMsg.className = "msg jc-bad";
+      gateMsg.hidden = false;
+      gateMsg.textContent = "Google sign-in is not available right now (no connection to Google) - try again when you are back online.";
+      return;
+    }
+    gateBtn.disabled = true;
+    gateMsg.hidden = true;
+    fb.signInWithPopup(fb.auth, fb.provider).then(function () {
+      gateBtn.disabled = false;
+      // the auth listener paints the mailbox the moment the owner lands
+    }).catch(function (e) {
+      gateBtn.disabled = false;
+      var code = e && e.code ? String(e.code).replace(/^auth\//, "") : "";
+      if (code === "popup-closed-by-user" || code === "cancelled-popup-request") return;
+      gateMsg.className = "msg jc-bad";
+      gateMsg.hidden = false;
+      gateMsg.textContent = "Sign in failed - " + (code || "please try again") + ".";
+    });
+  });
+}
 
 function stopWatch() {
   if (mailboxUnsub) {
@@ -183,13 +234,18 @@ import("/502.js").then(function (fb) {
   window.__jamaliCommentFb = fb;
   if (fb && fb.commentOwner) ownerEmail = String(fb.commentOwner).toLowerCase();
   var live = false;
-  if (fb && fb.onAuthStateChanged && fb.auth) {
+  if (fb && fb.onAuthStateChanged) {
+    // Wait for requireAuth() FIRST and only then look at fb.auth: the
+    // Google identity SDK boots asynchronously INSIDE 502.js, so fb.auth
+    // is still null the moment this import resolves - checking it before
+    // the wait skipped the whole block and the mailbox never displayed.
+    // The sidebar fixes the same race this way; the desk now does too.
     (fb.requireAuth ? fb.requireAuth() : Promise.resolve()).then(function () {
       if (!fb.auth) return;
       fb.onAuthStateChanged(fb.auth, function (user) {
+        paintGate(user);
         var mail = user && user.email ? String(user.email).toLowerCase() : "";
-        var isOwner = mail && mail === ownerEmail;
-        mailboxCard.hidden = !isOwner;
+        var isOwner = !!(mail && mail === ownerEmail);
         if (isOwner && !live) {
           live = true;
           startMailbox(fb);

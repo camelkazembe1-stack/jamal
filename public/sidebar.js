@@ -258,6 +258,7 @@ p.label + "</a>";
    "#jamali-owner-comments{position:fixed;top:12px;right:12px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
    "#jamali-owner-comments:hover{background:#1e293b}",
    "#jamali-owner-comments[hidden]{display:none}",
+   "#jamali-side-comment[hidden]{display:none}",
    "#jamali-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1003;background:#111827;color:#e2e8f0;border:1px solid #334155;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s ease}",
    "#jamali-toast.jamali-toast-on{opacity:1}"
  ].join("");
@@ -469,10 +470,16 @@ p.label + "</a>";
   })();
 
   function jamaliOwnerPaint(user) {
-    var btn = document.getElementById("jamali-owner-comments");
-    if (!btn) return;
     var mail = user && user.email ? String(user.email).toLowerCase() : "";
-    btn.hidden = mail !== commentOwnerEmail;
+    var isOwner = !!(mail && mail === commentOwnerEmail);
+    // The top-right Comments button exists for the owner's eyes only.
+    var btn = document.getElementById("jamali-owner-comments");
+    if (btn) btn.hidden = !isOwner;
+    // THE SIDEBAR RULE: with the owner's email signed in, the footer
+    // Comment (write) button is NOT ALLOWED TO BE SEEN - the owner never
+    // writes a comment to himself; every other visitor keeps it.
+    var writeBtn = document.getElementById("jamali-side-comment");
+    if (writeBtn) writeBtn.hidden = isOwner;
   }
 
   // THE COMMENT PAGE: the send panel and the owner mailbox moved to

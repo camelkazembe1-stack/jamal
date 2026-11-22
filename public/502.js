@@ -1238,6 +1238,12 @@ export function commentWatch(cb) {
   });
 }
 
+// commentOwner - the owner email as a plain export. The comment desk page
+// reads it directly (fb.commentOwner) instead of hard-coding a guess: the
+// mailbox card, the owner sign-in card and the sidebar all compare the
+// signed-in email against this one exact address.
+export const commentOwner = COMMENT_OWNER_EMAIL;
+
 // ======================================================================
 // SERVER CONFIG - hosting facts and the server handle SERVER/linker.js
 // talks through. The data methods below are the LOCAL implementations.
