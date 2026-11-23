@@ -89,4 +89,8 @@ tbody tr:hover { background: #f8fafc; }
 .empty-icon { font-size: 34px; margin-bottom: 10px; }
 .empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }
 .empty-sub { color: #64748b; font-size: 14px; }
+/* one patient ID: live hint under the Registration ID box */
+.f-hint { display: block; font-size: 12px; font-weight: 700; margin-top: 4px; min-height: 14px; }
+.f-hint.ok { color: #166534; }
+.f-hint.bad { color: #b91c1c; }
 @media (max-width: 640px) { .wrap { padding: 20px 14px; } .form-grid { grid-template-columns: 1fr; } }

@@ -1,5 +1,6 @@
 
-import { requireAuth, db, collection, doc, addDoc, deleteDoc, onSnapshot } from "/sidebar.js";
+import { requireAuth, db, collection, doc, addDoc, deleteDoc, onSnapshot,
+         watchHealthPatients, patientById } from "/sidebar.js";
 
 window.__p03.ran = true;
 
@@ -48,6 +49,31 @@ onSnapshot(collection(db, "healthBranches"), (snap) => {
     .map((b) => String(b.name || ""));
   $("#f-branches").innerHTML = BRANCH_NAMES.map((n) => '<option value="' + esc(n) + '">').join("");
 }, () => { });
+
+// ---- ONE PATIENT ID ----------------------------------------------------------
+// Mother's Registration ID comes from the one registry (page 322). The box
+// offers the live list and shows the mother under the box. A certificate
+// may still be saved when the mother is not registered here (the field is
+// optional), but a wrong ID is flagged so it gets corrected.
+const who = (p) => (p && p.isUnidentified) ? "Unidentified" : ((p && p.fullName) || "Unnamed");
+const regInput = $("#f-regid");
+const regHint = $("#f-regid-hint");
+const regList = $("#f-regids");
+function regPaint() {
+  if (!regInput || !regHint) return;
+  const v = String(regInput.value || "").trim();
+  if (!v) { regHint.textContent = ""; regHint.className = "f-hint"; return; }
+  const p = patientById(v);
+  if (p) { regHint.textContent = "\u2713 " + who(p); regHint.className = "f-hint ok"; }
+  else { regHint.textContent = "\u2717 Not a registered Registration ID \u2014 pick from the list, or register the mother on page 322.";
+         regHint.className = "f-hint bad"; }
+}
+watchHealthPatients((rows) => {
+  if (regList) regList.innerHTML = rows.map((p) =>
+    '<option value="' + esc(String(p.regId || "")) + '">' + esc(who(p)) + "</option>").join("");
+  regPaint();
+});
+if (regInput) regInput.addEventListener("input", regPaint);
 
 window.__p03.listeners = 2;
 

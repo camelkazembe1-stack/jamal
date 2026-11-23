@@ -1,5 +1,6 @@
 
-import { requireAuth, db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "/sidebar.js";
+import { requireAuth, db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot,
+         watchHealthPatients, patientById } from "/sidebar.js";
 
 window.__p02.ran = true;
 
@@ -32,6 +33,34 @@ catch (e) { herr("the sign-in check", e); throw e; }
 let recs = [];
 const todayLocal = () => { const d = new Date();
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+
+// ---- ONE PATIENT ID ----------------------------------------------------------
+// A session carries the patient's single Registration ID (4 digits + 4
+// letters, e.g. 4827ABCD) from Registration (page 322). The ID box offers
+// the live registry as you type and shows the patient under the box; a
+// typed ID must be registered, and a name that matches one registered
+// patient fills its ID automatically.
+const who = (p) => (p && p.isUnidentified) ? "Unidentified" : ((p && p.fullName) || "Unnamed");
+let REG_ROWS = [];
+const regInput = $("#f-regid");
+const regHint = $("#f-regid-hint");
+const regList = $("#f-regids");
+function regPaint() {
+  if (!regInput || !regHint) return;
+  const v = String(regInput.value || "").trim();
+  if (!v) { regHint.textContent = ""; regHint.className = "f-hint"; return; }
+  const p = patientById(v);
+  if (p) { regHint.textContent = "\u2713 " + who(p); regHint.className = "f-hint ok"; }
+  else { regHint.textContent = "\u2717 Not a registered Registration ID \u2014 pick from the list (e.g. 4827ABCD).";
+         regHint.className = "f-hint bad"; }
+}
+watchHealthPatients((rows) => {
+  REG_ROWS = rows;
+  if (regList) regList.innerHTML = rows.map((p) =>
+    '<option value="' + esc(String(p.regId || "")) + '">' + esc(who(p)) + "</option>").join("");
+  regPaint();
+});
+if (regInput) regInput.addEventListener("input", regPaint);
 
 onSnapshot(collection(db, "healthTelemedicine"), (snap) => {
   recs = snap.docs.map((d) => Object.assign({}, d.data({ serverTimestamps: "estimate" }), { __id: d.id }))
@@ -99,8 +128,19 @@ form.addEventListener("submit", async (ev) => {
   const reason = $("#f-reason").value.trim();
   if (!patientName || !reason)
     { err.textContent = "Fill in the patient name and the reason."; err.hidden = false; return; }
+  const regTyped = String(($("#f-regid") || {}).value || "").trim();
+  if (regTyped && !patientById(regTyped)) {
+    err.textContent = "Registration ID must be a registered one (e.g. 4827ABCD) \u2014 pick the patient from the list, or leave it empty and the name will be matched.";
+    err.hidden = false; return;
+  }
+  let regOut = regTyped;
+  if (!regOut) {
+    const hits = REG_ROWS.filter((p) => !p.isUnidentified &&
+      String(p.fullName || "").trim().toLowerCase() === patientName.toLowerCase());
+    if (hits.length === 1) regOut = String(hits[0].regId || "");
+  }
   const data = {
-    regId: $("#f-regid").value.trim(),
+    regId: regOut,
     patientName, phone: $("#f-phone").value.trim(), reason,
     scheduledAt: $("#f-when").value,
     meetLink: $("#f-link").value.trim(),

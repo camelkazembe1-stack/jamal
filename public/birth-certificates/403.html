@@ -34,7 +34,7 @@
       <label>Date of birth<input id="f-dob" type="date" required></label>
       <label>Time of birth<input id="f-time" type="time"></label>
       <label>Mother's name<input id="f-mother" type="text" required placeholder="mother's full name"></label>
-      <label>Mother's Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (if registered)"></label>
+      <label>Mother's Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (if registered)" autocomplete="off" list="f-regids"><span class="f-hint" id="f-regid-hint"></span><datalist id="f-regids"></datalist></label>
       <label>Father's name<input id="f-father" type="text" placeholder="father's full name (optional)"></label>
       <label>Birth weight (grams)<input id="f-weight" type="number" min="0" placeholder="e.g. 3200"></label>
       <label>Delivery type<select id="f-delivery">

@@ -3556,6 +3556,39 @@ wireToggles(aside);
 })();
 
 /* ======================================================================
+   THE ONE PATIENT ID - the live registry of healthRegistrations, shared
+   by every health module. A patient carries ONE Registration ID (4 digits
+   + 4 letters, e.g. 4827ABCD) created once on Registration (page 322);
+   every module that names a patient stores that same ID. Pages call
+   watchHealthPatients(cb) to receive the live rows (for ID datalists and
+   name hints) and patientById(id) to resolve one patient.
+   ====================================================================== */
+let __jamaliPatients = [];
+const __jamaliPatientCbs = new Set();
+let __jamaliPatientsLive = false;
+export function watchHealthPatients(cb) {
+  if (typeof cb !== "function") return;
+  __jamaliPatientCbs.add(cb);
+  if (!__jamaliPatientsLive) {
+    __jamaliPatientsLive = true;
+    try {
+      onSnapshot(query(collection(db, "healthRegistrations")), (snap) => {
+        __jamaliPatients = snap.docs.map((d) =>
+          Object.assign({}, d.data({ serverTimestamps: "estimate" }), { __id: d.id }));
+        __jamaliPatientCbs.forEach((fn) => { try { fn(__jamaliPatients); } catch (e) {} });
+      }, () => {});
+    } catch (e) { __jamaliPatientsLive = false; }
+  }
+  try { cb(__jamaliPatients); } catch (e) {}
+}
+export function patientById(id) {
+  const want = String(id == null ? "" : id).trim().toLowerCase();
+  if (!want) return null;
+  return __jamaliPatients.find((p) =>
+    String(p.regId || "").trim().toLowerCase() === want) || null;
+}
+
+/* ======================================================================
    THE REGISTER PICKERS - was public/pickers.js, wrapped in its own scope
    (its top-level names stay private, exactly as they were as a module).
    ====================================================================== */

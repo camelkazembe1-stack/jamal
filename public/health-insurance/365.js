@@ -1,7 +1,8 @@
 
 
 
-import { requireAuth, db, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from "/sidebar.js";
+import { requireAuth, db, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot,
+         watchHealthPatients, patientById } from "/sidebar.js";
 
 window.__p365 = { page: "365", build: "365", auth: false, listeners: 0, docs: -1, errs: [] };
 
@@ -111,6 +112,36 @@ const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+// ---- ONE PATIENT ID ----------------------------------------------------------
+// A claim names the patient by their single Registration ID (4 digits + 4
+// letters, e.g. 4827ABCD) from Registration (page 322). The ID box offers
+// the live registry as you type, shows the patient under the box, and a
+// claim cannot be saved against an ID that is not registered.
+const pidInput = document.getElementById("f-patientId");
+const pidHint = document.getElementById("f-patientId-hint");
+const pidList = document.getElementById("f-regids");
+const who = (p) => (p && p.isUnidentified) ? "Unidentified" : ((p && p.fullName) || "Unnamed");
+function pidHintFor(v) {
+  if (!String(v || "").trim()) return { cls: "", txt: "" };
+  const p = patientById(v);
+  if (!p) return { cls: "bad", txt: "\u2717 Not a registered Registration ID \u2014 pick the patient from the list (e.g. 4827ABCD)." };
+  const bits = [p.sex, (p.age !== "" && p.age != null) ? String(p.age) : ""].filter(Boolean);
+  return { cls: "ok", txt: "\u2713 " + who(p) + (bits.length ? " \u00b7 " + bits.join(" \u00b7 ") : "") };
+}
+function pidPaint() {
+  if (!pidInput || !pidHint) return;
+  const h = pidHintFor(pidInput.value);
+  pidHint.textContent = h.txt;
+  pidHint.className = "f-hint " + h.cls;
+}
+watchHealthPatients((rows) => {
+  if (pidList) pidList.innerHTML = rows.map((p) =>
+    '<option value="' + esc(String(p.regId || "")) + '">' + esc(who(p)) + "</option>").join("");
+  pidPaint();
+  renderTable();
+});
+if (pidInput) pidInput.addEventListener("input", pidPaint);
+
 function loadErr(coll, e) {
   const box = document.getElementById("p-err");
   const boot = document.getElementById("p-boot");
@@ -202,7 +233,15 @@ function renderTable() {
   if (empty) empty.hidden = rows.length > 0;
   body.innerHTML = rows.map((r) => {
     const tds = ["<td class='mono'><span class='ref'>" + esc(r.ref || "") + "</span></td>"];
-    for (const c of CFG.columns) tds.push("<td>" + esc(String(r[c] || "") || "—") + "</td>");
+    for (const c of CFG.columns) {
+      if (c === "patientId") {
+        const p = patientById(r.patientId);
+        tds.push("<td>" + esc(String(r.patientId || "") || "—") +
+          (p ? '<span class="cell-sub">' + esc(who(p)) + "</span>" : "") + "</td>");
+      } else {
+        tds.push("<td>" + esc(String(r[c] || "") || "—") + "</td>");
+      }
+    }
     tds.push("<td>" + esc(String(r.createdAt || "").slice(0, 10)) + "</td>");
     tds.push("<td><select class='st-sel' data-id='" + esc(r.__id) + "'>" +
       CFG.statuses.map((s) => "<option" + (s === r.status ? " selected" : "") + ">" + esc(s) + "</option>").join("") +
@@ -255,6 +294,11 @@ if (form) form.addEventListener("submit", async (ev) => {
       return;
     }
     rec[f.id] = v;
+  }
+  if (String(rec.patientId || "").trim() && !patientById(rec.patientId)) {
+    if (err) { err.hidden = false; err.textContent =
+      "Patient ID must be a registered Registration ID (e.g. 4827ABCD) \u2014 pick the patient from the list, or register them on page 322 first."; }
+    return;
   }
   const saveBtn = document.getElementById("rec-save");
   saveBtn.disabled = true;

@@ -37,7 +37,7 @@
       <label>Cause of death (ICD-10)<input id="f-icd" list="f-icd10" placeholder="search or type, e.g. B54">
         <datalist id="f-icd10"></datalist></label>
       <label>Cause in words<input id="f-cause" type="text" required placeholder="e.g. severe malaria"></label>
-      <label>Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (if registered)"></label>
+      <label>Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (if registered)" autocomplete="off" list="f-regids"><span class="f-hint" id="f-regid-hint"></span><datalist id="f-regids"></datalist></label>
       <label>Branch<input id="f-branch" list="f-branches" placeholder="e.g. Main facility">
         <datalist id="f-branches"></datalist></label>
       <label>Certified by<input id="f-attendant" type="text" required placeholder="doctor who certified"></label>

@@ -107,6 +107,11 @@ tbody tr:hover { background: #f8fafc; }
   color: #334155; font-weight: 700; text-align: center; }
 .cert-ref { margin-top: 18px; text-align: center; font-size: 12px; color: #64748b; font-weight: 700; }
 
+/* one patient ID: live hint under the Mother's Registration ID box */
+.f-hint { display: block; font-size: 12px; font-weight: 700; margin-top: 4px; min-height: 14px; }
+.f-hint.ok { color: #166534; }
+.f-hint.bad { color: #b91c1c; }
+
 @media print {
   body.printing .wrap, body.printing .p-boot, body.printing .p-err { display: none !important; }
   body.printing .cert-zone { position: static; background: #fff; padding: 0; display: block; }

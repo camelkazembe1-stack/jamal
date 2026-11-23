@@ -29,7 +29,7 @@
   <div class="card add-card">
     <button class="add-toggle s-toggle" type="button">&#xFF0B; Book a remote consultation</button>
     <form class="form-grid s-form" hidden>
-      <label>Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (optional)"></label>
+      <label>Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (optional)" autocomplete="off" list="f-regids"><span class="f-hint" id="f-regid-hint"></span><datalist id="f-regids"></datalist></label>
       <label>Patient name<input id="f-name" type="text" required placeholder="e.g. Juma Hassan"></label>
       <label>Phone<input id="f-phone" type="text" placeholder="e.g. 0712 345 678"></label>
       <label>Reason<input id="f-reason" type="text" required placeholder="e.g. follow-up, blood pressure review"></label>

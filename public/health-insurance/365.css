@@ -90,6 +90,12 @@ table.rec .row-del { border: 1px solid #fecaca; background: #fef2f2; color: #b91
 table.rec .row-del:hover { background: #fee2e2; }
 .empty-note { font-size: 12.5px; color: #94a3b8; font-weight: 700; padding: 6px 0; }
 
+/* one patient ID: live hint under the Patient ID box + name under the table cell */
+.f-hint { display: block; font-size: 12px; font-weight: 700; margin-top: 4px; min-height: 14px; }
+.f-hint.ok { color: #166534; }
+.f-hint.bad { color: #b91c1c; }
+.cell-sub { display: block; font-size: 11px; color: #64748b; font-weight: 700; }
+
 .mod-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px; margin: 0 0 16px; }
 .mod { display: flex; align-items: center; gap: 10px; background: #fff;
