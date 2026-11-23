@@ -59,6 +59,14 @@ h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
 .edit-row .lbl { font-size: 11px; font-weight: 800; letter-spacing: .05em;
   text-transform: uppercase; color: #64748b; }
 
+.edit-row input.qty { flex: 0 0 84px; text-align: center; }
+.ed-stockline { flex-basis: 100%; }
+.ed-stock { display: inline-block; font-size: 12px; font-weight: 700;
+  padding: 4px 10px; border-radius: 999px; }
+.ed-stock.ok { background: #d1fae5; color: #047857; }
+.ed-stock.bad { background: #fee2e2; color: #b91c1c; }
+.ed-stock.off { background: #f1f5f9; color: #64748b; font-weight: 600; }
+
 .mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
 .mini-note b { color: #065f46; }
 .cell-sub { display: block; font-size: 11.5px; font-weight: 600; color: #64748b; margin-top: 2px; }

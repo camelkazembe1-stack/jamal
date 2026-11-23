@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharmacy Stock — JAMALI Health</title>
+<link rel="stylesheet" href="/pharmacy-stock/395.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span><span class="p-err-hint" id="h-err-hint" hidden>
+    Sign in again, then make sure the updated Firestore rules are published in the Firebase console.</span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Pharmacy Stock</h1>
+  <p class="sub">The drug store behind the Pharmacy desk: every medicine here is live stock that the
+  Pharmacy page takes from when it dispenses a prescription. Receiving, removing and dispensing all
+  move the same numbers, and everything lands in the business books through Stock Management.</p>
+
+  <div class="dash-grid">
+    <div class="dash good"><b id="d-items">0</b><span>Drugs in the store</span></div>
+    <div class="dash warn"><b id="d-low">0</b><span>Low stock (at reorder level)</span></div>
+    <div class="dash bad"><b id="d-expired">0</b><span>Expired batches</span></div>
+    <div class="dash info"><b id="d-soon">0</b><span>Expiring within 90 days</span></div>
+  </div>
+
+  <div class="alert-card" id="alert-card" hidden>
+    <h2>Alerts — act now</h2>
+    <ul class="alert-list" id="alert-list"></ul>
+  </div>
+
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Register a new drug</button>
+    <form class="form-grid s-form" hidden>
+      <label>Medicine name<input id="f-name" type="text" required placeholder="e.g. Paracetamol 500mg tabs"></label>
+      <label>Pack / unit<input id="f-unit" type="text" placeholder="e.g. tablet, bottle, vial"></label>
+      <label>Buying price (TSh)<input id="f-buy" type="number" step="any" min="0" placeholder="0"></label>
+      <label>Selling price (TSh)<input id="f-sell" type="number" step="any" min="0" placeholder="0"></label>
+      <label>Batch number<input id="f-batch" type="text" placeholder="e.g. B2411A"></label>
+      <label>Expiry date<input id="f-expiry" type="date"></label>
+      <label>Reorder level (units)<input id="f-reorder" type="number" step="any" min="0" placeholder="e.g. 50"></label>
+      <label>Opening units<input id="f-open" type="number" step="any" min="0" placeholder="e.g. 200"></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Save Drug</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>Drugs in stock</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr>
+          <th>Medicine</th><th>Batch</th><th>Expiry</th><th class="amt">Units</th>
+          <th class="amt">Reorder</th><th class="amt">Buy / Sell (TSh)</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128230;</div>
+    <p class="empty-title">No drugs registered yet</p>
+    <p class="empty-sub">Register the first medicine with <b>Register a new drug</b> &mdash; give it a batch number
+    and expiry date, then the Pharmacy desk can dispense against it.</p>
+  </div>
+
+  <div class="card move-card">
+    <h2>Receive stock (IN)</h2>
+    <div class="move-grid">
+      <label>Drug<input id="r-name" list="r-drugs" placeholder="Pick or type the medicine name" autocomplete="off">
+        <datalist id="r-drugs"></datalist></label>
+      <label>Units in<input id="r-units" type="number" step="any" min="1" placeholder="e.g. 100"></label>
+      <label>Reason<select id="r-cause">
+        <option>Purchases</option>
+        <option>Free Stock Received</option>
+        <option>Stock Transfers IN</option>
+        <option>Stock Adjustments IN</option>
+      </select></label>
+      <label>Method<select id="r-method">
+        <option>Cash</option><option>Bank</option><option>Credit</option><option value="">No money moves</option>
+      </select></label>
+      <label>Person / supplier (Credit)<input id="r-person" type="text" placeholder="Supplier name"></label>
+    </div>
+    <p class="form-err" id="r-err" hidden></p>
+    <p class="save-note" id="r-ok" hidden></p>
+    <div class="form-actions"><button class="btn-primary r-save" type="button">Receive Stock</button></div>
+    <p class="mini-note">Purchases with Cash or Bank also write a business transaction, exactly like
+    Stock Change does. Receiving is logged in the movement history below.</p>
+  </div>
+
+  <div class="card move-card">
+    <h2>Remove stock (OUT &mdash; without money)</h2>
+    <div class="move-grid">
+      <label>Drug<input id="o-name" list="o-drugs" placeholder="Pick or type the medicine name" autocomplete="off">
+        <datalist id="o-drugs"></datalist></label>
+      <label>Units out<input id="o-units" type="number" step="any" min="1" placeholder="e.g. 5"></label>
+      <label>Reason<select id="o-cause">
+        <option>Stock Damage</option>
+        <option>Stock Expiry</option>
+        <option>Internal Use</option>
+        <option>Free Samples</option>
+        <option>Stock Transfers OUT</option>
+        <option>Stock Adjustments OUT</option>
+        <option>Theft</option>
+      </select></label>
+    </div>
+    <p class="form-err" id="o-err" hidden></p>
+    <p class="save-note" id="o-ok" hidden></p>
+    <div class="form-actions"><button class="btn-primary o-save" type="button">Remove Stock</button></div>
+    <p class="mini-note">For dispensing to patients do NOT use this &mdash; dispense happens on the
+    <a href="/pharmacy/326">Pharmacy page</a> and moves stock automatically.</p>
+  </div>
+
+  <div class="card move-card">
+    <h2>Movement history &mdash; last 60 moves on drugs</h2>
+    <div class="table-wrap" id="m-wrap" hidden>
+      <table class="bk">
+        <thead><tr><th>When</th><th>Medicine</th><th>Cause</th><th>Direction</th>
+          <th class="amt">Units</th><th class="amt">Amount (TSh)</th><th>Ref / Person</th></tr></thead>
+        <tbody id="m-body"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="m-empty" hidden>
+      <div class="empty-icon">&#128230;</div>
+      <p class="empty-title">No movements yet</p>
+      <p class="empty-sub">Receiving, removing and every dispense from the Pharmacy desk appear here.</p>
+    </div>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Pharmacy Stock \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p95 = { page: "395", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p95 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") +
+      ". Hard refresh with Ctrl+Shift+R, or re-run the task script and git push again.");
+  }, 12000);
+</script>
+<script type="module" src="/pharmacy-stock/395.js"></script>
+</body>
+</html>

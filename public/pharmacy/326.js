@@ -6,7 +6,8 @@
 
 
 
-import { requireAuth, auth, db, collection, query, updateDoc, doc, setDoc, onSnapshot, getDoc } from "/sidebar.js";
+import { requireAuth, auth, db, collection, query, updateDoc, doc, setDoc, onSnapshot, getDoc,
+         writeBatch, increment, serverTimestamp } from "/sidebar.js";
  
 let showPatient = function () {}, hidePatient = function () {};
 try {
@@ -112,7 +113,46 @@ onSnapshot(query(collection(db, "healthDoctorConsultations")), (snap) => {
     .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
   if (currentId) renderPatient();
 }, (e) => herr("healthDoctorConsultations", e));
-window.__p47.listeners = 5;
+window.__p47.listeners = 6;
+
+
+// ---- PHARMACY <-> STOCK INTEGRATION -----------------------------------------
+// The drug store lives in the shared stockItems collection (category "Drugs",
+// managed on Pharmacy Stock, page 395). Dispensing a prescription line takes
+// the units off the shelf in the same atomic batch that marks the line
+// dispensed, and the movement is logged to stockChanges with the patient's
+// Registration ID - so the Patient File shows exactly which medicine left
+// the store for which patient, and Stock Management sees the same numbers.
+let drugStock = [];
+let drugMap = new Map();
+onSnapshot(query(collection(db, "stockItems")), (snap) => {
+  drugStock = snap.docs.map((d) => Object.assign({}, d.data({ serverTimestamps: "estimate" }), { __id: d.id }))
+    .filter((r) => String(r.category || "") === "Drugs");
+  drugMap = new Map(drugStock.map((d) => [String(d.name || "").toLowerCase(), d]));
+  rerender();
+}, (e) => console.warn("JAMALI pharmacy stock:", e && (e.code || e.message)));
+
+function drugOf(name) {
+  return drugMap.get(String(name || "").trim().toLowerCase()) || null;
+}
+function stockHintFor(name) {
+  const d = drugOf(name);
+  if (!d) return '<span class="ed-stock off">not in the drug store \u2014 dispenses without a stock movement</span>';
+  const units = Number(d.units || 0);
+  const exp = String(d.expiry || "");
+  const expTxt = exp ? " \u00b7 expires " + exp : "";
+  const cls = units <= 0 ? "bad" : "ok";
+  return '<span class="ed-stock ' + cls + '">' + esc(d.name) + ": " + units + " " +
+    esc(d.unit || "units") + " on the shelf" + expTxt +
+    (units <= 0 ? " \u2014 NOTHING IN STOCK" : "") + "</span>";
+}
+const byMe = () => String((auth && auth.currentUser && (auth.currentUser.email || auth.currentUser.uid)) || PHARM || "unknown");
+function stockNote(msg, isErr) {
+  const hint = $("#ed-stock");
+  if (!hint) return;
+  hint.innerHTML = msg ? '<span class="ed-stock ' + (isErr ? "bad" : "ok") + '">' + esc(msg) + "</span>"
+    : "";
+}
 
 function qaStart(id) { qerr(""); openPatient(id); }
 
@@ -427,8 +467,10 @@ function editorRow(l, cols) {
     const def = l.status === "accepted" && l.alt && l.alt.medicine ? l.alt.medicine : l.medicine;
     inner = '<span class="lbl">Dispensing</span>' +
       '<input id="ed-what" type="text" value="' + esc(def || "") + '" placeholder="What is actually dispensed">' +
+      '<input id="ed-qty" class="qty" type="number" min="1" step="any" value="1" title="Units to take from the drug store">' +
       '<button type="button" class="ghost-btn ed-ok" data-id="' + esc(l.__id) + '">Confirm dispense</button>' +
-      '<button type="button" class="ghost-btn ed-no">Cancel</button>';
+      '<button type="button" class="ghost-btn ed-no">Cancel</button>' +
+      '<div class="ed-stockline" id="ed-stock">' + stockHintFor(def) + "</div>";
   } else {
     inner = '<span class="lbl">Proposed alternative</span>' +
       '<input id="ed-alt" type="text" placeholder="Alternative medicine, e.g. Medicine B">' +
@@ -518,7 +560,13 @@ async function lineActionClick(e) {
     edit = { id: disp.getAttribute("data-id"), mode: "dispense" };
     rerender();
     const inp = $("#ed-what");
-    if (inp) { inp.focus(); inp.select(); }
+    if (inp) {
+      inp.focus(); inp.select();
+      inp.addEventListener("input", () => {
+        const hint = $("#ed-stock");
+        if (hint) hint.innerHTML = stockHintFor(inp.value);
+      });
+    }
   } else if (alt) {
     edit = { id: alt.getAttribute("data-id"), mode: "alt" };
     rerender();
@@ -535,10 +583,42 @@ async function lineActionClick(e) {
       if (edit.mode === "dispense") {
         const what = ($("#ed-what") ? $("#ed-what").value : "").trim();
         if (!what) return; 
-        await updateDoc(doc(db, "healthPrescriptions", id), {
-          status: "dispensed",
-          dispensed: { what, by: PHARM, at: new Date().toISOString() }
-        });
+        const qty = Math.max(1, Number(($("#ed-qty") ? $("#ed-qty").value : "1") || 1));
+        const drug = drugOf(what);
+        if (drug) {
+          if (Number(drug.units || 0) < qty) {
+            stockNote("Only " + Number(drug.units || 0) + " units of " + drug.name +
+              " are on the shelf \u2014 receive stock on Pharmacy Stock (page 395) first.", true);
+            return;
+          }
+          const at = new Date().toISOString();
+          const batch = writeBatch(db);
+          batch.update(doc(db, "healthPrescriptions", id), {
+            status: "dispensed",
+            dispensed: { what, qty, by: PHARM, at }
+          });
+          batch.update(doc(db, "stockItems", drug.__id), { units: increment(-qty) });
+          batch.set(doc(collection(db, "stockChanges")), {
+            stockId: drug.__id, stockName: drug.name,
+            cause: "Pharmacy Dispense", direction: "OUT", units: qty,
+            amount: 0, transactionType: "NEUTRAL", flowMethod: "",
+            name: String(line.regId || ""), by: byMe(), at,
+            createdAt: serverTimestamp()
+          });
+          batch.set(doc(collection(db, "healthAudit")), {
+            at, by: byMe(), action: "dispense",
+            coll: "healthPrescriptions", refId: id,
+            detail: "dispensed " + qty + " x " + drug.name + " (stock " +
+              Number(drug.units || 0) + " -> " + (Number(drug.units || 0) - qty) + ") for " + (line.regId || "")
+          });
+          await batch.commit();
+        } else {
+          stockNote("", false);
+          await updateDoc(doc(db, "healthPrescriptions", id), {
+            status: "dispensed",
+            dispensed: { what, qty, by: PHARM, at: new Date().toISOString() }
+          });
+        }
       } else {
         const medicine = ($("#ed-alt") ? $("#ed-alt").value : "").trim();
         const note = ($("#ed-note") ? $("#ed-note").value : "").trim();

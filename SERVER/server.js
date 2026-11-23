@@ -991,6 +991,35 @@ function afterAuthReady(fn) {
   });
 }
 
+// ---- the health audit trail ------------------------------------------
+// Every create, write, update or delete that lands in a collection whose
+// name starts with "health" is recorded in the shared "healthAudit"
+// collection: who did it, what kind of action, which collection and
+// document, and which fields changed. The audit trail must never break
+// a real write, so the whole hook is wrapped in try/catch and writes the
+// record directly into the collection map (no recursion through addDoc).
+// Batch commits (writeBatch) are not hooked - bulk deletions go through
+// the governed Data Deletion Requests flow, which keeps its own records.
+var AUDIT_COLL = "healthAudit";
+function auditHealthWrite(action, collName, docId, keys) {
+  try {
+    var c = String(collName || "");
+    if (c.indexOf("health") !== 0 || c === AUDIT_COLL) return;
+    var ans = currentNamespace();
+    var amap = loadColl(ans, AUDIT_COLL);
+    amap[newLocalId()] = {
+      at: new Date().toISOString(),
+      by: (activeUser && activeUser.email) ? String(activeUser.email) : "unknown",
+      action: String(action || ""),
+      coll: c,
+      refId: String(docId || ""),
+      detail: String(keys || "").slice(0, 400)
+    };
+    saveColl(ans, AUDIT_COLL);
+    notifyCollection(AUDIT_COLL);
+  } catch (e) { /* the audit trail must never break a real write */ }
+}
+
 // ---- the write and read operations, Firestore signatures ----
 export function addDoc(collRef, data) {
   return afterAuthReady(function () {
@@ -1000,6 +1029,7 @@ export function addDoc(collRef, data) {
     map[id] = applyData({}, data);
     saveColl(ns, collRef.name);
     notifyCollection(collRef.name);
+    auditHealthWrite("create", collRef.name, id, Object.keys(map[id] || {}).join(", "));
     return { id: id };
   });
 }
@@ -1019,6 +1049,7 @@ export function setDoc(docRef, data, opts) {
     }
     saveColl(ns, docRef.name);
     notifyCollection(docRef.name);
+    auditHealthWrite("write", docRef.name, id, Object.keys(map[id] || {}).join(", "));
     return undefined;
   });
 }
@@ -1034,6 +1065,7 @@ export function updateDoc(docRef, data) {
     applyData(map[docRef.id], data);
     saveColl(ns, docRef.name);
     notifyCollection(docRef.name);
+    auditHealthWrite("update", docRef.name, docRef.id, Object.keys(data || {}).join(", "));
     return undefined;
   });
 }
@@ -1045,6 +1077,7 @@ export function deleteDoc(docRef) {
     delete map[docRef.id];
     saveColl(ns, docRef.name);
     notifyCollection(docRef.name);
+    auditHealthWrite("delete", docRef.name, docRef.id, "");
     return undefined;
   });
 }

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referrals — JAMALI Health</title>
+<link rel="stylesheet" href="/referrals/397.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span><span class="p-err-hint" id="h-err-hint" hidden>
+    Sign in again, then make sure the updated Firestore rules are published in the Firebase console.</span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Referrals</h1>
+  <p class="sub">Send a patient onward to another facility or specialist, and receive patients referred
+  to this hospital. Every referral carries the patient's Registration ID, so the whole story stays in
+  the Patient File.</p>
+
+  <div class="card add-card">
+    <button class="add-toggle r-toggle" type="button">&#xFF0B; New referral</button>
+    <form class="form-grid" id="rf" hidden>
+      <label>Patient Registration ID<input id="f-regid" list="f-regs" placeholder="e.g. 4827ABCD" autocomplete="off" required>
+        <datalist id="f-regs"></datalist></label>
+      <label>Direction<select id="f-type">
+        <option>To another facility</option>
+        <option>Received from another facility</option>
+      </select></label>
+      <label>Facility<input id="f-facility" type="text" placeholder="Hospital / centre name" required></label>
+      <label>Department / specialist<input id="f-dept" type="text" placeholder="e.g. Orthopaedics"></label>
+      <label>Reason<input id="f-reason" type="text" placeholder="e.g. X-ray not available here" required></label>
+      <label>Priority<select id="f-priority">
+        <option>Routine</option>
+        <option>Urgent</option>
+        <option>Emergency</option>
+      </select></label>
+      <label class="span-all">Notes<textarea id="f-notes" rows="2" placeholder="Anything the receiving side should know"></textarea></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary" id="f-save" type="submit">Save Referral</button>
+        <button class="btn-ghost r-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+    <p class="mini-note" id="f-line" hidden></p>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr>
+          <th>Ref no.</th><th>Registered</th><th>Patient</th><th>Direction</th><th>Facility</th>
+          <th>Department</th><th>Reason</th><th>Priority</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128278;</div>
+    <p class="empty-title">No referrals on record</p>
+    <p class="empty-sub">When a patient is sent to another facility or received from one, the referral
+    appears here with its status from Pending to Completed.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Referrals \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p97 = { page: "397", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p97 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") +
+      ". Hard refresh with Ctrl+Shift+R, or re-run the task script and git push again.");
+  }, 12000);
+</script>
+<script type="module" src="/referrals/397.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Audit Trail — JAMALI Health</title>
+<link rel="stylesheet" href="/health-audit/398.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span><span class="p-err-hint" id="h-err-hint" hidden>
+    Sign in again, then make sure the updated Firestore rules are published in the Firebase console.</span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Health Audit Trail</h1>
+  <p class="sub">Who touched which health record, when and how. Every create, update and delete on a
+  health collection is written here automatically by the shared module &mdash; registrations, triage,
+  consultations, prescriptions, laboratory, imaging, wards, admissions, discharges, referrals,
+  billing, payments and insurance.</p>
+
+  <div class="dash-grid">
+    <div class="dash"><b id="a-total">0</b><span>Entries on this device</span></div>
+    <div class="dash info"><b id="a-create">0</b><span>Created</span></div>
+    <div class="dash warn"><b id="a-update">0</b><span>Updated</span></div>
+    <div class="dash bad"><b id="a-delete">0</b><span>Deleted</span></div>
+    <div class="dash good"><b id="a-today">0</b><span>Today</span></div>
+  </div>
+
+  <div class="card find-card">
+    <div class="find-row">
+      <input id="q" type="search" placeholder="Search by collection, record id, account or field&#8230;" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>When</th><th>By</th><th>Action</th><th>Collection</th><th>Record</th><th>Fields</th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128274;</div>
+    <p class="empty-title">The audit trail is empty</p>
+    <p class="empty-sub">From now on, every change made on the health pages lands here automatically.
+    Bulk deletions go through Data Deletion Requests, which keeps its own governed records.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Health Audit \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p98 = { page: "398", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p98 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") +
+      ". Hard refresh with Ctrl+Shift+R, or re-run the task script and git push again.");
+  }, 12000);
+</script>
+<script type="module" src="/health-audit/398.js"></script>
+</body>
+</html>

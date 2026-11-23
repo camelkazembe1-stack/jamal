@@ -1029,6 +1029,35 @@ function afterAuthReady(fn) {
   });
 }
 
+// ---- the health audit trail ------------------------------------------
+// Every create, write, update or delete that lands in a collection whose
+// name starts with "health" is recorded in the shared "healthAudit"
+// collection: who did it, what kind of action, which collection and
+// document, and which fields changed. The audit trail must never break
+// a real write, so the whole hook is wrapped in try/catch and writes the
+// record directly into the collection map (no recursion through addDoc).
+// Batch commits (writeBatch) are not hooked - bulk deletions go through
+// the governed Data Deletion Requests flow, which keeps its own records.
+var AUDIT_COLL = "healthAudit";
+function auditHealthWrite(action, collName, docId, keys) {
+  try {
+    var c = String(collName || "");
+    if (c.indexOf("health") !== 0 || c === AUDIT_COLL) return;
+    var ans = currentNamespace();
+    var amap = loadColl(ans, AUDIT_COLL);
+    amap[newLocalId()] = {
+      at: new Date().toISOString(),
+      by: (activeUser && activeUser.email) ? String(activeUser.email) : "unknown",
+      action: String(action || ""),
+      coll: c,
+      refId: String(docId || ""),
+      detail: String(keys || "").slice(0, 400)
+    };
+    saveColl(ans, AUDIT_COLL);
+    notifyCollection(AUDIT_COLL);
+  } catch (e) { /* the audit trail must never break a real write */ }
+}
+
 // ---- the write and read operations, Firestore signatures ----
 export function addDoc(collRef, data) {
   return afterAuthReady(function () {
@@ -1038,6 +1067,7 @@ export function addDoc(collRef, data) {
     map[id] = applyData({}, data);
     saveColl(ns, collRef.name);
     notifyCollection(collRef.name);
+    auditHealthWrite("create", collRef.name, id, Object.keys(map[id] || {}).join(", "));
     return { id: id };
   });
 }
@@ -1057,6 +1087,7 @@ export function setDoc(docRef, data, opts) {
     }
     saveColl(ns, docRef.name);
     notifyCollection(docRef.name);
+    auditHealthWrite("write", docRef.name, id, Object.keys(map[id] || {}).join(", "));
     return undefined;
   });
 }
@@ -1072,6 +1103,7 @@ export function updateDoc(docRef, data) {
     applyData(map[docRef.id], data);
     saveColl(ns, docRef.name);
     notifyCollection(docRef.name);
+    auditHealthWrite("update", docRef.name, docRef.id, Object.keys(data || {}).join(", "));
     return undefined;
   });
 }
@@ -1083,6 +1115,7 @@ export function deleteDoc(docRef) {
     delete map[docRef.id];
     saveColl(ns, docRef.name);
     notifyCollection(docRef.name);
+    auditHealthWrite("delete", docRef.name, docRef.id, "");
     return undefined;
   });
 }
@@ -1924,8 +1957,11 @@ window.JAMALI_MENU = [
     { label: "Nurse Consultation", icon: "💉", folder: "nurse-consultation", n: 324, d: 2 },
     { label: "Doctor Consultation", icon: "🩺", folder: "doctor-consultation", n: 325, d: 2 },
     { label: "Pharmacy", icon: "💊", folder: "pharmacy", n: 326, d: 2 },
+    { label: "Pharmacy Stock", icon: "📦", folder: "pharmacy-stock", n: 395, d: 2 },
     { label: "Treatment / Procedures", icon: "🩹", folder: "treatment-procedures", n: 327, d: 2 },
     { label: "Patient List", icon: "🗂️", folder: "patient-module", n: 328, d: 2 },
+    { label: "Patient File", icon: "🗃️", folder: "patient-file", n: 396, d: 2 },
+    { label: "Referrals", icon: "📤", folder: "referrals", n: 397, d: 2 },
     { label: "Ward Management", icon: "🏥", folder: "ward-management", n: 330, d: 2 },
     { label: "Ward Registration", icon: "🏥", folder: "ward-registration", n: 331, d: 3 },
     { label: "Bed Management", icon: "🛏️", folder: "bed-management", n: 332, d: 3 },
@@ -1980,6 +2016,7 @@ window.JAMALI_MENU = [
     { label: "Dietary & Nutrition", icon: "🍽️", folder: "dietary-nutrition", n: 387, d: 2 },
     { label: "Laundry", icon: "🧺", folder: "laundry-management", n: 388, d: 2 },
     { label: "Housekeeping & Environmental Services", icon: "🧹", folder: "housekeeping", n: 389, d: 2 },
+    { label: "Health Audit Trail", icon: "🔐", folder: "health-audit", n: 398, d: 2 },
 ];
 
 // Modules switched off in Organisation Settings leave the menu and Home.
@@ -2798,7 +2835,7 @@ wireToggles(aside);
       "healthDestinations", "healthWards", "healthBeds", "healthBedAssignments",
       "healthBedTransfers", "healthBedMaintenance", "healthAdmissions",
       "healthDischarges", "healthLabRequests", "healthImagingRequests",
-      "healthQueueConfig"
+      "healthQueueConfig", "healthReferrals", "healthAudit"
     ] }
   };
 

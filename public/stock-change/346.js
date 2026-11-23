@@ -26,6 +26,7 @@ const GROUPS = [
     { name: "Stock Expiry",           icon: "\u{23F0}" },
     { name: "Theft",                  icon: "\u{1F6A8}" },
     { name: "Internal Use",           icon: "\u{1F3E2}" },
+    { name: "Pharmacy Dispense",      icon: "\u{1F48A}" },
     { name: "Free Samples",           icon: "\u{1F9FA}" },
     { name: "Stock Transfers OUT",    icon: "\u{1F4E4}" },
     { name: "Stock Adjustments OUT",  icon: "\u{2796}" }

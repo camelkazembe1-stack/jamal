@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient File — JAMALI Health</title>
+<link rel="stylesheet" href="/patient-file/396.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span><span class="p-err-hint" id="h-err-hint" hidden>
+    Sign in again, then make sure the updated Firestore rules are published in the Firebase console.</span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Patient File</h1>
+  <p class="sub">The whole story of one patient on one page: registration, triage, every consultation,
+  prescriptions and what the pharmacy dispensed, treatments, laboratory and imaging, admissions and
+  discharges, referrals, bills, payments and insurance &mdash; gathered live from every module.</p>
+
+  <div class="card find-card">
+    <h2>Open a patient's file</h2>
+    <div class="find-row">
+      <input id="q-regid" list="q-regids" placeholder="Registration ID, e.g. 4827ABCD" autocomplete="off">
+      <datalist id="q-regids"></datalist>
+      <button class="btn-primary" id="q-find" type="button">Open File</button>
+    </div>
+    <p class="form-err" id="q-err" hidden></p>
+    <div class="cand-list" id="q-cands" hidden></div>
+  </div>
+
+  <div id="file-zone" hidden>
+    <div class="card head-card">
+      <div class="head-line">
+        <span class="reg-id" id="p-regid">&mdash;</span>
+        <span class="who" id="p-who"></span>
+        <span class="st" id="p-badge" hidden></span>
+      </div>
+      <div class="rec-grid" id="p-reg"></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash info"><b id="c-visits">0</b><span>Clinical visits</span></div>
+      <div class="dash good"><b id="c-rx">0</b><span>Prescription lines</span></div>
+      <div class="dash info"><b id="c-lab">0</b><span>Lab + imaging</span></div>
+      <div class="dash warn"><b id="c-adm">0</b><span>Admissions</span></div>
+      <div class="dash"><b id="c-money">0</b><span>TSh billed / paid</span></div>
+    </div>
+
+    <div class="card tl-card">
+      <h2>Timeline &mdash; newest first</h2>
+      <div class="tl" id="timeline"></div>
+    </div>
+  </div>
+
+  <div class="empty card" id="start-empty" hidden>
+    <div class="empty-icon">&#128193;</div>
+    <p class="empty-title">No patient open</p>
+    <p class="empty-sub">Type a Registration ID above, or search by name. Every record the hospital
+    keeps for that patient appears here as one timeline.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Patient File \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p96 = { page: "396", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p96 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") +
+      ". Hard refresh with Ctrl+Shift+R, or re-run the task script and git push again.");
+  }, 12000);
+</script>
+<script type="module" src="/patient-file/396.js"></script>
+</body>
+</html>
