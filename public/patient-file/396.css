@@ -226,3 +226,8 @@ body {
 }
 @media print { body { background: #fff; } }
 /* =============== end jamali-supportive-background ================ */
+
+/* FHIR export button in the file header */
+.fhir-btn { border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 12px;
+  font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.fhir-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }

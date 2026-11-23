@@ -14,7 +14,8 @@
 
 
 
-import { requireAuth, auth, db, collection, query, addDoc, updateDoc, doc, setDoc, onSnapshot, serverTimestamp, writeBatch, getDoc } from "/sidebar.js";
+import { requireAuth, auth, db, collection, query, addDoc, updateDoc, doc, setDoc, onSnapshot, serverTimestamp, writeBatch, getDoc,
+         ICD10_CODES } from "/sidebar.js";
  
 let showPatient = function () {}, hidePatient = function () {};
 try {
@@ -729,8 +730,16 @@ $("#c-back").addEventListener("click", (e) => {
 const FIELDS = ["#d-pc", "#d-hpi", "#d-hist", "#d-meds", "#d-allergies",
   "#d-temp", "#d-pulse", "#d-rr", "#d-bp", "#d-spo2",
   "#d-exam", "#d-findings", "#d-notes",
-  "#d-dx1", "#d-dx2", "#d-dxnotes", "#d-investigations", "#d-plan"];
+  "#d-dx1", "#d-icd1", "#d-dx2", "#d-dxnotes", "#d-investigations", "#d-plan"];
 function g(s) { return $(s).value.trim(); }
+
+// the ICD-10 code picker reads the shared catalogue from the sidebar module
+(function fillIcd10() {
+  const dl = document.getElementById("d-icd10");
+  if (!dl) return;
+  dl.innerHTML = ICD10_CODES.map(([code, title]) =>
+    '<option value="' + code + '">' + code + " \u2014 " + title + "</option>").join("");
+})();
 
 function rxRowHTML() {
   return '<div class="row-ed">' +
@@ -783,6 +792,7 @@ function collect() {
     clinicalFindings: g("#d-findings"),
     additionalNotes: g("#d-notes"),
     dxPrimary: g("#d-dx1"),
+    dxPrimaryCode: g("#d-icd1"),
     dxAdditional: g("#d-dx2"),
     dxType: $("#d-dxtype").value,
     dxNotes: g("#d-dxnotes"),
@@ -808,6 +818,7 @@ function applyForm(c) {
   $("#d-findings").value = c.clinicalFindings || "";
   $("#d-notes").value = c.additionalNotes || "";
   $("#d-dx1").value = c.dxPrimary || "";
+  $("#d-icd1").value = c.dxPrimaryCode || "";
   $("#d-dx2").value = c.dxAdditional || "";
   $("#d-dxtype").value = c.dxType || "working";
   $("#d-dxnotes").value = c.dxNotes || "";
@@ -829,7 +840,7 @@ async function saveConsult(complete) {
   const d = collect();
   const touched = ["presentingComplaint", "hpi", "relevantHistory", "currentMedications", "allergies",
     "vTemp", "vPulse", "vRR", "vBP", "vSpO2", "physicalExam", "clinicalFindings", "additionalNotes",
-    "dxPrimary", "dxAdditional", "dxNotes", "investigations", "treatmentPlan"]
+    "dxPrimary", "dxPrimaryCode", "dxAdditional", "dxNotes", "investigations", "treatmentPlan"]
     .some((k) => d[k] !== "") ||
     d.rxRows.some((r) => r.medicine) || d.ordRows.some((r) => r.order);
   if (!touched) return serr("Record at least one finding before saving — or go back and pick the patient from the queue.");
@@ -854,6 +865,7 @@ async function saveConsult(complete) {
     clinicalFindings: d.clinicalFindings,
     additionalNotes: d.additionalNotes,
     dxPrimary: d.dxPrimary,
+    dxPrimaryCode: d.dxPrimaryCode,
     dxAdditional: d.dxAdditional,
     dxType: d.dxType,
     dxNotes: d.dxNotes,

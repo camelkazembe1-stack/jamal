@@ -277,6 +277,26 @@ service cloud.firestore {
       allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
+    match /healthStaff/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthTelemedicine/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthBirths/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthDeaths/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthBranches/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
     match /stockItems/{docId} {
       allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
@@ -2017,6 +2037,118 @@ window.JAMALI_MENU = [
     { label: "Laundry", icon: "🧺", folder: "laundry-management", n: 388, d: 2 },
     { label: "Housekeeping & Environmental Services", icon: "🧹", folder: "housekeeping", n: 389, d: 2 },
     { label: "Health Audit Trail", icon: "🔐", folder: "health-audit", n: 398, d: 2 },
+    { label: "Staff Roles", icon: "🪪", folder: "staff-roles", n: 399, d: 2 },
+    { label: "ICD-10 Finder", icon: "🔎", folder: "icd10", n: 400, d: 2 },
+    { label: "DHIS2 Export", icon: "📡", folder: "dhis2-export", n: 401, d: 2 },
+    { label: "Telemedicine", icon: "💻", folder: "telemedicine", n: 402, d: 2 },
+    { label: "Birth Certificates", icon: "👶", folder: "birth-certificates", n: 403, d: 2 },
+    { label: "Death Certificates", icon: "🕯️", folder: "death-certificates", n: 404, d: 2 },
+    { label: "Branches", icon: "🏢", folder: "branches", n: 405, d: 2 },
+];
+
+/* ======================================================================
+   THE ICD-10 CATALOGUE - the shared diagnosis coding list (WHO ICD-10).
+   The Doctor Consultation page (325) fills its code picker from
+   ICD10_CODES, the ICD-10 Finder (400) searches it, and Death
+   Certificates (404) picks the cause-of-death code from it.
+   Chapters first, then the everyday codes the facility writes.
+   Edit this list to grow the catalogue - it ships to every page.
+   ====================================================================== */
+export const ICD10_CHAPTERS = [
+  ["A00–B99", "Certain infectious and parasitic diseases"],
+  ["C00–D48", "Neoplasms"],
+  ["D50–D89", "Diseases of the blood and blood-forming organs"],
+  ["E00–E89", "Endocrine, nutritional and metabolic diseases"],
+  ["F00–F99", "Mental and behavioural disorders"],
+  ["G00–G99", "Diseases of the nervous system"],
+  ["H00–H59", "Diseases of the eye and adnexa"],
+  ["H60–H95", "Diseases of the ear and mastoid process"],
+  ["I00–I99", "Diseases of the circulatory system"],
+  ["J00–J99", "Diseases of the respiratory system"],
+  ["K00–K93", "Diseases of the digestive system"],
+  ["L00–L99", "Diseases of the skin and subcutaneous tissue"],
+  ["M00–M99", "Diseases of the musculoskeletal system"],
+  ["N00–N99", "Diseases of the genitourinary system"],
+  ["O00–O99", "Pregnancy, childbirth and the puerperium"],
+  ["P00–P96", "Certain conditions originating in the perinatal period"],
+  ["Q00–Q99", "Congenital malformations and chromosomal abnormalities"],
+  ["R00–R99", "Symptoms, signs and abnormal clinical findings"],
+  ["S00–T98", "Injury, poisoning and certain other consequences of external causes"],
+  ["Z00–Z99", "Factors influencing health status and contact with health services"]
+];
+export const ICD10_CODES = [
+  ["A00", "Cholera"], ["A01.0", "Typhoid fever"],
+  ["A09", "Diarrhoea and gastroenteritis of presumed infectious origin"],
+  ["A15", "Respiratory tuberculosis, bacteriologically confirmed"],
+  ["A16", "Respiratory tuberculosis, not confirmed bacteriologically"],
+  ["A18", "Tuberculosis of other organs"],
+  ["A35", "Tetanus"], ["A36", "Diphtheria"], ["A80", "Acute poliomyelitis"],
+  ["A82", "Rabies"], ["A90", "Dengue fever"], ["A91", "Dengue haemorrhagic fever"],
+  ["B05", "Measles"], ["B15", "Acute hepatitis A"], ["B16", "Acute hepatitis B"],
+  ["B18", "Chronic viral hepatitis"],
+  ["B20", "HIV disease resulting in infectious and parasitic diseases"],
+  ["B24", "Unspecified HIV disease"],
+  ["B34", "Viral infection of unspecified site"],
+  ["B35", "Dermatophytosis (tinea)"],
+  ["B50", "Plasmodium falciparum malaria"], ["B51", "Plasmodium vivax malaria"],
+  ["B54", "Malaria, unspecified"], ["B99", "Other infectious diseases"],
+  ["U07.1", "COVID-19, virus identified"],
+  ["C16", "Malignant neoplasm of stomach"],
+  ["C22", "Malignant neoplasm of liver and intrahepatic bile ducts"],
+  ["C34", "Malignant neoplasm of bronchus and lung"],
+  ["C50", "Malignant neoplasm of breast"],
+  ["C53", "Malignant neoplasm of cervix uteri"],
+  ["C61", "Malignant neoplasm of prostate"],
+  ["C64", "Malignant neoplasm of kidney"],
+  ["D50", "Iron deficiency anaemia"],
+  ["D57", "Sickle-cell disorders"],
+  ["D57.0", "Sickle-cell anaemia with crisis"],
+  ["D64", "Other anaemias"],
+  ["E03.9", "Hypothyroidism, unspecified"],
+  ["E05", "Thyrotoxicosis (hyperthyroidism)"],
+  ["E10", "Type 1 diabetes mellitus"], ["E11", "Type 2 diabetes mellitus"],
+  ["E43", "Unspecified severe protein-energy malnutrition"],
+  ["E44", "Moderate protein-energy malnutrition"],
+  ["E46", "Unspecified protein-energy malnutrition"],
+  ["F03", "Unspecified dementia"], ["F20", "Schizophrenia"],
+  ["F31", "Bipolar affective disorder"],
+  ["F32", "Depressive episode"], ["F33", "Recurrent depressive disorder"],
+  ["F41.1", "Generalized anxiety disorder"],
+  ["G40", "Epilepsy"], ["G43", "Migraine"],
+  ["H66", "Suppurative and unspecified otitis media"],
+  ["I10", "Essential (primary) hypertension"], ["I20", "Angina pectoris"],
+  ["I21", "Acute myocardial infarction"], ["I50", "Heart failure"],
+  ["I63", "Cerebral infarction"],
+  ["I64", "Stroke, not specified as haemorrhage or infarction"],
+  ["J02.9", "Acute pharyngitis, unspecified"],
+  ["J06", "Acute upper respiratory infection, multiple and unspecified sites"],
+  ["J11.1", "Influenza with respiratory manifestations, virus not identified"],
+  ["J18", "Pneumonia, unspecified organism"],
+  ["J30.4", "Allergic rhinitis, unspecified"],
+  ["J44", "Other chronic obstructive pulmonary disease"],
+  ["J45", "Asthma"],
+  ["K02", "Dental caries"], ["K04", "Diseases of pulp and periapical tissues"],
+  ["K29", "Gastritis and duodenitis"], ["K30", "Functional dyspepsia"],
+  ["K35", "Acute appendicitis"], ["K40", "Inguinal hernia"],
+  ["L30", "Dermatitis and eczema"],
+  ["M19", "Other and unspecified osteoarthritis"],
+  ["N18", "Chronic kidney disease"],
+  ["N39.0", "Urinary tract infection, site not specified"],
+  ["O80", "Encounter for full-term uncomplicated delivery"],
+  ["O82", "Encounter for caesarean delivery without indication"],
+  ["P07", "Disorders related to short gestation and low birthweight"],
+  ["P36.9", "Bacterial sepsis of newborn, unspecified"],
+  ["R05", "Cough"], ["R06.0", "Dyspnoea"],
+  ["R10", "Abdominal and pelvic pain"], ["R42", "Dizziness and giddiness"],
+  ["R50", "Fever of other and unknown origin"], ["R51", "Headache"],
+  ["S02", "Fracture of skull and facial bones"],
+  ["S06", "Intracranial injury"], ["S52", "Fracture of forearm"],
+  ["S72", "Fracture of femur"],
+  ["S82", "Fracture of lower leg, including ankle"],
+  ["T14", "Injury of unspecified body region"],
+  ["T78.2", "Anaphylactic shock, unspecified"],
+  ["Z00", "General medical examination"],
+  ["Z34", "Supervision of normal pregnancy"]
 ];
 
 // Modules switched off in Organisation Settings leave the menu and Home.
@@ -2835,7 +2967,9 @@ wireToggles(aside);
       "healthDestinations", "healthWards", "healthBeds", "healthBedAssignments",
       "healthBedTransfers", "healthBedMaintenance", "healthAdmissions",
       "healthDischarges", "healthLabRequests", "healthImagingRequests",
-      "healthQueueConfig", "healthReferrals", "healthAudit"
+      "healthQueueConfig", "healthReferrals", "healthAudit",
+      "healthStaff", "healthTelemedicine", "healthBirths",
+      "healthDeaths", "healthBranches"
     ] }
   };
 

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICD-10 Finder — JAMALI Health</title>
+<link rel="stylesheet" href="/icd10/400.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>ICD-10 Finder</h1>
+  <p class="sub">The WHO International Classification of Diseases, 10th revision - the code book
+  behind <a href="/doctor-consultation/325">Doctor Consultation</a> and
+  <a href="/death-certificates/404">Death Certificates</a>. Search a diagnosis, press
+  <b>Copy</b>, and paste the code anywhere - the facility's case mix becomes countable for
+  national reporting.</p>
+
+  <div class="dash-grid">
+    <div class="dash good"><b id="d-codes">0</b><span>Codes in the catalogue</span></div>
+    <div class="dash info"><b id="d-chapters">0</b><span>Chapters (A00 to Z99)</span></div>
+    <div class="dash warn"><b id="d-found">0</b><span>Matching your search</span></div>
+  </div>
+
+  <div class="card search-card">
+    <input id="q" type="text" placeholder="Search a diagnosis or a code - e.g. malaria, A00, diabetes, fracture" autocomplete="off">
+    <label class="chapters-toggle"><input type="checkbox" id="q-chapters" checked> show chapters too</label>
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Code</th><th>Title</th><th>Kind</th><th></th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128269;</div>
+    <p class="empty-title">Nothing matches that search</p>
+    <p class="empty-sub">Try a shorter word - "malaria", "diabetes", "fracture" - or the bare code.</p>
+  </div>
+
+  <p class="mini-note">The catalogue lives in the shared sidebar module
+  (<b>ICD10_CODES</b> and <b>ICD10_CHAPTERS</b>), so every page that needs a code picker reads the
+  same list. Missing a common diagnosis? Add it there and every page sees it.</p>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "ICD-10 Finder \u00b7 build 1 \u00b7 opening\u2026"; }
+    window.__p00 = { page: "400", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p00 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/icd10/400.js"></script>
+</body>
+</html>

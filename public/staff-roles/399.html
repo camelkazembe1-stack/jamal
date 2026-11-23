@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Roles — JAMALI Health</title>
+<link rel="stylesheet" href="/staff-roles/399.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Staff Roles</h1>
+  <p class="sub">Who may do what on this facility device. Every staff member sits against their
+  Google account email with one role; the sensitive pages check this registry before they let
+  changes through. The registry lives with the rest of the health records on this device and
+  every change lands in the <a href="/health-audit/398">audit trail</a>.</p>
+
+  <div class="who-card card">
+    <h2>Who is looking right now</h2>
+    <div class="kv"><span class="k">Signed-in account</span><span class="v" id="who-email">&mdash;</span></div>
+    <div class="kv"><span class="k">Role in this registry</span><span class="v" id="who-role">&mdash;</span></div>
+    <div class="kv"><span class="k">Access on this page</span><span class="v" id="who-access">&mdash;</span></div>
+    <p class="mini-note" id="who-note">Sign in from the footer (Login / Logout button) with the
+    Google account that carries your role — the page re-checks the moment the identity settles.</p>
+  </div>
+
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Add a staff member</button>
+    <form class="form-grid s-form" hidden>
+      <label>Full name<input id="f-name" type="text" required placeholder="e.g. Asha Mwinyi"></label>
+      <label>Google account email<input id="f-email" type="email" required placeholder="name@gmail.com"></label>
+      <label>Role<select id="f-role">
+        <option>Administrator</option>
+        <option>Doctor</option>
+        <option>Nurse</option>
+        <option>Pharmacist</option>
+        <option>Lab technician</option>
+        <option>Receptionist</option>
+        <option>Billing officer</option>
+        <option>Records officer</option>
+        <option>Viewer</option>
+      </select></label>
+      <label>Branch<input id="f-branch" list="f-branches" placeholder="e.g. Main facility">
+        <datalist id="f-branches"></datalist></label>
+      <label>Status<select id="f-status">
+        <option>Active</option>
+        <option>Suspended</option>
+      </select></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Save Staff Member</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash good"><b id="d-total">0</b><span>Staff in the registry</span></div>
+    <div class="dash info"><b id="d-active">0</b><span>Active</span></div>
+    <div class="dash warn"><b id="d-suspended">0</b><span>Suspended</span></div>
+    <div class="dash"><b id="d-admins">0</b><span>Administrators</span></div>
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>The registry</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr>
+          <th>Name</th><th>Email</th><th>Role</th><th>Branch</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#129708;</div>
+    <p class="empty-title">No staff registered yet</p>
+    <p class="empty-sub">Add the first staff member with <b>Add a staff member</b> &mdash; start with
+    yourself as <b>Administrator</b>, using the email you sign in with from the footer.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Staff Roles \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p99 = { page: "399", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p99 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") +
+      ". Hard refresh with Ctrl+Shift+R, or re-run the task script and git push again.");
+  }, 12000);
+</script>
+<script type="module" src="/staff-roles/399.js"></script>
+</body>
+</html>

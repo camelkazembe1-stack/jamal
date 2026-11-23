@@ -433,6 +433,29 @@ try {
   window.__p365.listeners++;
 } catch (e) { }
 
+// ================= fund batch export =================
+// The monthly CSV the fund officer (NHIF / SHIF / any scheme) receives:
+// every claim raised that month with its amount and where it stands.
+// Downloaded to this device - nothing is sent anywhere by itself.
+$("#claim-month").value = todayLocal().slice(0, 7);
+$("#claim-export").addEventListener("click", () => {
+  const month = String($("#claim-month").value || "");
+  if (!/^\d{4}-\d{2}$/.test(month)) { qaSet("qa-note", ""); window.alert("Pick the month first."); return; }
+  const rows = recs.filter((r) => String(r.createdAt || "").slice(0, 7) === month);
+  if (!rows.length) { window.alert("No claims were raised in " + month + " on this device."); return; }
+  const csv = ["ref,patientId,provider,membershipNo,claimAmount,services,status,raisedOn"]
+    .concat(rows.map((r) => [r.ref, r.patientId, r.provider, r.membershipNo, r.claimAmount,
+      String(r.services || "").replace(/,/g, ";"), r.status, String(r.createdAt || "").slice(0, 10)]
+      .map((v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"').join(","))).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "jamali-claims-" + month + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+});
+
 // ================= live records =================
 try {
   onSnapshot(collection(db, CFG.collection), (snap) => {

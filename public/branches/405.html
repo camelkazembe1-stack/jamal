@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branches — JAMALI Health</title>
+<link rel="stylesheet" href="/branches/405.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Branches</h1>
+  <p class="sub">The facility's sites: the main building, a dispensary across town, an outreach
+  point. The branch chosen here is the one certificates, telemedicine bookings and the
+  <a href="/dhis2-export/401">DHIS2 export</a> carry as the place of care or org unit. One branch
+  is <b>active</b> at a time on this device.</p>
+
+  <div class="active-line card">
+    <span class="k">Active branch on this device</span>
+    <span class="v" id="active-name">&mdash;</span>
+  </div>
+
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Add a branch</button>
+    <form class="form-grid s-form" hidden>
+      <label>Branch name<input id="f-name" type="text" required placeholder="e.g. Main facility"></label>
+      <label>Short code<input id="f-code" type="text" required placeholder="e.g. OU-001 / MAIN"></label>
+      <label>Town / area<input id="f-town" type="text" placeholder="e.g. Kariakoo, Dar es Salaam"></label>
+      <label>Phone<input id="f-phone" type="text" placeholder="e.g. 022 234 5678"></label>
+      <label>In charge<input id="f-incharge" type="text" placeholder="who runs the branch"></label>
+      <label>Status<select id="f-status"><option>Active</option><option>Closed</option></select></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Save Branch</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>Branch registry</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Code</th><th>Branch</th><th>Town / area</th><th>Phone</th>
+          <th>In charge</th><th>Status</th><th></th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#127970;</div>
+    <p class="empty-title">No branches yet</p>
+    <p class="empty-sub">Add the main site first with <b>Add a branch</b>, then press
+    <b>Set active</b> on it - the other pages pick it up immediately.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Branches \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p05 = { page: "405", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p05 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/branches/405.js"></script>
+</body>
+</html>

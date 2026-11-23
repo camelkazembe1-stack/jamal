@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telemedicine — JAMALI Health</title>
+<link rel="stylesheet" href="/telemedicine/402.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Telemedicine</h1>
+  <p class="sub">Care that reaches the patient without the journey: book a remote consultation,
+  keep the joining link, run the consult, and write the outcome - all of it lands in the patient's
+  <a href="/patient-file/396">Patient File</a> and the audit trail like every other visit.</p>
+
+  <div class="dash-grid">
+    <div class="dash warn"><b id="d-waiting">0</b><span>Waiting</span></div>
+    <div class="dash info"><b id="d-active">0</b><span>In progress</span></div>
+    <div class="dash good"><b id="d-done">0</b><span>Completed</span></div>
+    <div class="dash"><b id="d-cancelled">0</b><span>Cancelled</span></div>
+  </div>
+
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Book a remote consultation</button>
+    <form class="form-grid s-form" hidden>
+      <label>Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (optional)"></label>
+      <label>Patient name<input id="f-name" type="text" required placeholder="e.g. Juma Hassan"></label>
+      <label>Phone<input id="f-phone" type="text" placeholder="e.g. 0712 345 678"></label>
+      <label>Reason<input id="f-reason" type="text" required placeholder="e.g. follow-up, blood pressure review"></label>
+      <label>Scheduled at<input id="f-when" type="datetime-local"></label>
+      <label>Joining link<input id="f-link" type="text" placeholder="https://meet... (paste the call link)"></label>
+      <label>Doctor / nurse<input id="f-doctor" type="text" placeholder="who will take the consult"></label>
+      <label>Notes<textarea id="f-notes" rows="2" placeholder="anything the consult should know"></textarea></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Book Consultation</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+  </div>
+
+  <div class="card search-card">
+    <input id="rec-search" type="text" placeholder="Search by patient, phone, reason or reference" autocomplete="off">
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>Remote consultations</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Ref</th><th>When</th><th>Patient</th><th>Reason</th>
+          <th>Call</th><th>Status</th><th></th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128187;</div>
+    <p class="empty-title">No remote consultations yet</p>
+    <p class="empty-sub">Book the first one with <b>Book a remote consultation</b> - the joining
+    link can be any call the patient can open (the clinic's meeting room link, a phone call note).</p>
+  </div>
+
+  <p class="mini-note">JAMALI keeps the queue, the record and the link. The call itself happens on
+  whatever channel the patient has - a phone call, WhatsApp, or a meeting link - because the
+  patient's phone, not the clinic's computer, is what answers.</p>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Telemedicine \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p02 = { page: "402", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p02 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/telemedicine/402.js"></script>
+</body>
+</html>

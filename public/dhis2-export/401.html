@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DHIS2 Export — JAMALI Health</title>
+<link rel="stylesheet" href="/dhis2-export/401.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>DHIS2 Export</h1>
+  <p class="sub">One month of the facility's work, counted the way the national DHIS2 likes it:
+  one row per indicator with a period and an org unit. Download the CSV or JSON and hand it to
+  your DHIS2 officer - the counts come straight from this device's health records.</p>
+
+  <div class="card build-card">
+    <div class="build-grid">
+      <label>Month<input id="b-month" type="month"></label>
+      <label>Org unit code<input id="b-orgunit" list="b-branches" placeholder="DHIS2 org unit code, e.g. OU-001">
+        <datalist id="b-branches"></datalist></label>
+      <div class="form-actions">
+        <button class="btn-primary b-build" type="button">Build the month</button>
+        <button class="btn-ghost b-csv" type="button" disabled>Download CSV</button>
+        <button class="btn-ghost b-json" type="button" disabled>Download JSON</button>
+      </div>
+    </div>
+    <p class="form-err" id="b-err" hidden></p>
+    <p class="save-note" id="b-ok" hidden></p>
+    <p class="mini-note">The org unit code must match what your DHIS2 instance uses - pick it from
+    the <a href="/branches/405">Branches</a> registry if your branches carry DHIS2 codes as their
+    code. Exported files never leave the device by themselves.</p>
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2 id="t-title">The month at a glance</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Indicator</th><th class="amt">Value</th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128225;</div>
+    <p class="empty-title">No month built yet</p>
+    <p class="empty-sub">Pick the month, fill the org unit code, and press <b>Build the month</b>.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "DHIS2 Export \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p01 = { page: "401", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p01 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/dhis2-export/401.js"></script>
+</body>
+</html>

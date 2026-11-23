@@ -52,6 +52,9 @@ const KINDS = [
   { kind: "k-adm",     coll: "healthAdmissions",          title: "Admission",             mod: ["Patient Admission", "/patient-admission/340"], match: "patientId" },
   { kind: "k-dis",     coll: "healthDischarges",          title: "Discharge",             mod: ["Patient Discharge", "/patient-discharge/350"], match: "patientId" },
   { kind: "k-ref",     coll: "healthReferrals",           title: "Referral",              mod: ["Referrals", "/referrals/397"],              match: "regId" },
+  { kind: "k-tele",    coll: "healthTelemedicine",        title: "Telemedicine",          mod: ["Telemedicine", "/telemedicine/402"],        match: "regId" },
+  { kind: "k-birth",   coll: "healthBirths",              title: "Birth (this facility)", mod: ["Birth Certificates", "/birth-certificates/403"], match: "regId" },
+  { kind: "k-death",   coll: "healthDeaths",              title: "Death (this facility)", mod: ["Death Certificates", "/death-certificates/404"], match: "regId" },
   { kind: "k-money",   coll: "healthBilling",             title: "Bill",                  mod: ["Hospital Billing", "/hospital-billing/363"], match: "patientId" },
   { kind: "k-money",   coll: "healthPayments",            title: "Payment",               mod: ["Payments & Financial", "/hospital-payments/364"], match: "patientId" },
   { kind: "k-money",   coll: "healthInsurance",           title: "Insurance claim",       mod: ["Health Insurance", "/health-insurance/365"], match: "patientId" }
@@ -62,7 +65,7 @@ const SHOW = {
   healthRegistrations: [["incidentType", "Incident type"], ["incidentDescription", "Description"], ["department", "Department"], ["priority", "Priority"], ["referral", "Referred in"], ["referredBy", "From facility"]],
   healthTriage: [["complaint", "Complaint"], ["condition", "Condition"], ["level", "Level"], ["priority", "Priority"], ["notes", "Notes"], ["vitals", "Vitals"]],
   healthNurseConsultations: [["complaint", "Complaint"], ["vitals", "Vitals"], ["temperature", "Temperature"], ["bp", "Blood pressure"], ["pulse", "Pulse"], ["weight", "Weight"], ["notes", "Notes"], ["status", "Status"]],
-  healthDoctorConsultations: [["complaint", "Complaint"], ["diagnosis", "Diagnosis"], ["findings", "Findings"], ["notes", "Notes"], ["priority", "Priority"], ["status", "Status"], ["destinations", "Sent to"]],
+  healthDoctorConsultations: [["presentingComplaint", "Complaint"], ["physicalExam", "Physical examination"], ["dxPrimary", "Diagnosis"], ["dxPrimaryCode", "ICD-10 code"], ["dxAdditional", "Additional diagnoses"], ["treatmentPlan", "Treatment plan"], ["status", "Status"], ["doctor", "Doctor"]],
   healthPrescriptions: [["medicine", "Medicine"], ["dose", "Dose"], ["frequency", "Frequency"], ["duration", "Duration"], ["status", "Status"], ["priority", "Priority"]],
   healthTreatmentOrders: [["order", "Order"], ["status", "Status"], ["performed", "Performed"], ["outcome", "Outcome"], ["worker", "By"], ["notes", "Notes"]],
   healthLabRequests: [["requestNumber", "Request no."], ["status", "Status"], ["specimen", "Specimen"], ["tests", "Tests"], ["clinicalInfo", "Clinical info"], ["priority", "Priority"]],
@@ -72,7 +75,10 @@ const SHOW = {
   healthReferrals: [["type", "Direction"], ["facility", "Facility"], ["department", "Department"], ["reason", "Reason"], ["priority", "Priority"], ["status", "Status"], ["notes", "Notes"]],
   healthBilling: [["ref", "Ref"], ["services", "Services"], ["amount", "Amount (TSh)"], ["discount", "Discount"], ["status", "Status"]],
   healthPayments: [["ref", "Ref"], ["invoiceNo", "Invoice"], ["amount", "Amount (TSh)"], ["method", "Method"], ["kind", "Kind"], ["status", "Status"]],
-  healthInsurance: [["ref", "Ref"], ["insurer", "Insurer"], ["claimAmount", "Claim (TSh)"], ["status", "Status"]]
+  healthInsurance: [["ref", "Ref"], ["insurer", "Insurer"], ["claimAmount", "Claim (TSh)"], ["status", "Status"]],
+  healthTelemedicine: [["reason", "Reason"], ["scheduledAt", "Scheduled"], ["doctor", "Doctor"], ["status", "Status"], ["notes", "Notes"]],
+  healthBirths: [["childName", "Child"], ["sex", "Sex"], ["dob", "Born"], ["deliveryType", "Delivery"], ["weightGrams", "Weight (g)"], ["ref", "Register ref"]],
+  healthDeaths: [["deceasedName", "Deceased"], ["dod", "Died"], ["causeText", "Cause"], ["icd10Code", "ICD-10"], ["ref", "Register ref"]]
 };
 
 const WHEN = ["savedAt", "admissionDate", "dischargeDate", "createdAt", "date", "at"];
@@ -263,6 +269,7 @@ function renderHead(reg) {
   ];
   $("#p-reg").innerHTML = fields.map((kv) =>
     '<div class="kv"><span class="k">' + esc(kv[0]) + '</span> <span class="v">' + esc(String(kv[1])) + "</span></div>").join("");
+  $("#fhir-export").hidden = false;
 }
 
 function renderTimeline() {
@@ -298,5 +305,108 @@ function renderTimeline() {
   '<p class="mini-note">The timeline gathers live from every module on this device. ' +
   count("stockChanges") + " medicine movement(s) recorded against this Registration ID in Pharmacy Stock.</p>";
 }
+
+// ---- the FHIR R4 export ------------------------------------------------------
+// Builds a FHIR R4 Bundle (JSON) out of the open patient's timeline: a
+// Patient resource, one Encounter per doctor consultation, Conditions with
+// the ICD-10 coding, MedicationRequests from the prescriptions and
+// Observations from the recorded vital signs. Downloaded to this device -
+// nothing is sent anywhere. interop-ready for systems that speak FHIR.
+const icdSystem = "http://hl7.org/fhir/sid/icd-10";
+function fhirEntries() {
+  const entries = [];
+  const add = (resource) => entries.push({ resource });
+  const reg = REGS.find((r) => r.regId === openId) || {};
+  const iso = (v) => String(v || "").slice(0, 10) || undefined;
+  add({
+    resourceType: "Patient",
+    id: String(openId),
+    identifier: [{ system: "urn:jamali:regId", value: String(openId) }],
+    name: reg.isUnidentified ? undefined : [{ text: String(reg.fullName || "") }],
+    gender: String(reg.sex || "").toLowerCase() || undefined,
+    contact: (reg.phone || reg.emergencyContact) ?
+      [{ telecom: [{ system: "phone", value: String(reg.phone || reg.emergencyContact) }] }] : undefined
+  });
+  for (const e of ENTRIES) {
+    const r = e.r;
+    if (e.coll === "healthDoctorConsultations") {
+      add({
+        resourceType: "Encounter",
+        identifier: [{ system: "urn:jamali:consultation", value: String(r.consultationId || e.coll) }],
+        status: String(r.status) === "completed" ? "finished" : "in-progress",
+        class: { code: "AMB", display: "ambulatory" },
+        subject: { reference: "Patient/" + openId },
+        period: { start: iso(r.savedAt) },
+        participant: [{ individual: { display: String(r.doctor || "doctor") } }]
+      });
+      if (String(r.dxPrimary || "")) {
+        add({
+          resourceType: "Condition",
+          subject: { reference: "Patient/" + openId },
+          recordedDate: iso(r.savedAt),
+          code: {
+            coding: String(r.dxPrimaryCode || "") ?
+              [{ system: icdSystem, code: String(r.dxPrimaryCode), display: String(r.dxPrimary) }] : undefined,
+            text: String(r.dxPrimary)
+          }
+        });
+      }
+      const V = [["vTemp", "Body temperature", "degC"], ["vPulse", "Heart rate", "/min"],
+        ["vRR", "Respiratory rate", "/min"], ["vSpO2", "Oxygen saturation", "%"]];
+      for (const [k, label, unit] of V) {
+        if (r[k] === "" || r[k] == null) continue;
+        add({
+          resourceType: "Observation",
+          status: "final",
+          category: [{ coding: [{ system: "http://terminology.hl7.org/CodeSystem/observation-category", code: "vital-signs" }] }],
+          code: { text: label },
+          subject: { reference: "Patient/" + openId },
+          effectiveDateTime: String(r.savedAt || ""),
+          valueQuantity: { value: num(r[k]), unit }
+        });
+      }
+      if (String(r.vBP || "")) {
+        add({
+          resourceType: "Observation",
+          status: "final",
+          category: [{ coding: [{ system: "http://terminology.hl7.org/CodeSystem/observation-category", code: "vital-signs" }] }],
+          code: { text: "Blood pressure" },
+          subject: { reference: "Patient/" + openId },
+          effectiveDateTime: String(r.savedAt || ""),
+          component: [
+            { code: { text: "Systolic" }, valueQuantity: { value: num(String(r.vBP).split("/")[0]), unit: "mmHg" } },
+            { code: { text: "Diastolic" }, valueQuantity: { value: num(String(r.vBP).split("/")[1]), unit: "mmHg" } }
+          ]
+        });
+      }
+    } else if (e.coll === "healthPrescriptions" && String(r.medicine || "")) {
+      add({
+        resourceType: "MedicationRequest",
+        status: String(r.status) === "dispensed" ? "completed" : "active",
+        intent: "order",
+        subject: { reference: "Patient/" + openId },
+        medicationCodeableConcept: { text: String(r.medicine) },
+        authoredOn: iso(r.savedAt),
+        dosageInstruction: [{ text: [r.dose, r.frequency, r.duration].filter(Boolean).join(" · ") }]
+      });
+    }
+  }
+  return entries;
+}
+$("#fhir-export").addEventListener("click", () => {
+  const bundle = {
+    resourceType: "Bundle",
+    type: "collection",
+    timestamp: new Date().toISOString(),
+    entry: fhirEntries()
+  };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/fhir+json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "jamali-fhir-" + openId + "-" + new Date().toISOString().slice(0, 10) + ".json";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
+});
 
 bootDone();

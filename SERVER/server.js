@@ -239,6 +239,26 @@ service cloud.firestore {
       allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }
 
+    match /healthStaff/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthTelemedicine/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthBirths/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthDeaths/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
+    match /healthBranches/{docId} {
+      allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
+    }
+
     match /stockItems/{docId} {
       allow read, write: if false;  // LOCAL STORAGE MOVE: closed, data is per browser
     }

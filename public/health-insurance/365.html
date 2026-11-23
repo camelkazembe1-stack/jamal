@@ -69,6 +69,11 @@
   <div class="card">
     <h2>Records</h2>
     <input id="rec-search" class="search" type="search" placeholder="Search records…">
+    <div class="export-line">
+      <label for="claim-month">Fund batch export &mdash; month:</label>
+      <input id="claim-month" type="month">
+      <button type="button" class="ghost-btn" id="claim-export">Download claims CSV</button>
+    </div>
     <div class="table-wrap">
       <table class="rec" id="rec-table">
         <thead><tr><th>Ref</th><th>patientId</th><th>provider</th><th>membershipNo</th><th>claimAmount</th><th>services</th><th>Created</th><th>Status</th><th></th></tr></thead>

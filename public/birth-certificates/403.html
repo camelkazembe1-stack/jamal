@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birth Certificates — JAMALI Health</title>
+<link rel="stylesheet" href="/birth-certificates/403.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Birth Certificates</h1>
+  <p class="sub">The facility's birth register: every child born here gets a row, a reference
+  number, and a printable birth notification certificate - the paper the parents take to the
+  civil registrar. Print uses the plain sheet; the screen keeps the register.</p>
+
+  <div class="dash-grid">
+    <div class="dash good"><b id="d-total">0</b><span>Births registered</span></div>
+    <div class="dash info"><b id="d-month">0</b><span>This month</span></div>
+    <div class="dash"><b id="d-normal">0</b><span>Normal deliveries</span></div>
+    <div class="dash warn"><b id="d-cs">0</b><span>Caesarean deliveries</span></div>
+  </div>
+
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Register a birth</button>
+    <form class="form-grid s-form" hidden>
+      <label>Child's name<input id="f-child" type="text" required placeholder="e.g. Amina Juma Hassan"></label>
+      <label>Sex<select id="f-sex"><option>Female</option><option>Male</option></select></label>
+      <label>Date of birth<input id="f-dob" type="date" required></label>
+      <label>Time of birth<input id="f-time" type="time"></label>
+      <label>Mother's name<input id="f-mother" type="text" required placeholder="mother's full name"></label>
+      <label>Mother's Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (if registered)"></label>
+      <label>Father's name<input id="f-father" type="text" placeholder="father's full name (optional)"></label>
+      <label>Birth weight (grams)<input id="f-weight" type="number" min="0" placeholder="e.g. 3200"></label>
+      <label>Delivery type<select id="f-delivery">
+        <option>Normal</option><option>Vacuum</option><option>Caesarean</option>
+      </select></label>
+      <label>Attendant<input id="f-attendant" type="text" required placeholder="midwife / doctor"></label>
+      <label>Branch<input id="f-branch" list="f-branches" placeholder="e.g. Main facility">
+        <datalist id="f-branches"></datalist></label>
+      <label>Complications<textarea id="f-comp" rows="2" placeholder="none, or what happened"></textarea></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Save Birth Record</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+  </div>
+
+  <div class="card search-card">
+    <input id="rec-search" type="text" placeholder="Search by child, mother, reference or date" autocomplete="off">
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>The birth register</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Ref</th><th>Date</th><th>Child</th><th>Sex</th>
+          <th>Mother</th><th>Delivery</th><th>Weight</th><th></th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128118;</div>
+    <p class="empty-title">No births registered yet</p>
+    <p class="empty-sub">Register the first birth with <b>Register a birth</b> - the certificate
+    prints from the row's <b>Certificate</b> button.</p>
+  </div>
+
+  <p class="mini-note">This is the facility's notification of a birth in its own register. The
+  official birth certificate is issued by the civil registrar (RITA in Tanzania) - this printed
+  notice is what supports that application.</p>
+
+</main>
+
+<div class="cert-zone" id="cert-zone" hidden>
+  <button type="button" class="mini-btn cert-close"></button>
+  <div class="cert" id="cert-paper"></div>
+</div>
+
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Birth Certificates \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p03 = { page: "403", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p03 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/birth-certificates/403.js"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+[hidden] { display: none !important; }
+
+h1 { position: relative; padding-left: 15px; }
+h1::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px;
+  width: 5px; border-radius: 3px; background: #059669; }
+
+.p-boot { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: #64748b; }
+.p-err { margin: 12px 0 0; padding: 10px 12px; border: 1px solid #fecaca;
+  background: #fef2f2; color: #b91c1c; border-radius: 10px; font-size: 13px; font-weight: 700; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { background: #f1f5f9; color: #0f172a; }
+.wrap { padding: 28px 34px; max-width: 1300px; margin: 0 auto; }
+.back { display: inline-block; color: #64748b; text-decoration: none; font-weight: 700; font-size: 13.5px; margin-bottom: 14px; }
+.back:hover { color: #0ea5e9; }
+h1 { font-size: 24px; margin-bottom: 6px; }
+.sub { color: #64748b; font-size: 14px; margin-bottom: 18px; }
+.sub a { color: #0ea5e9; font-weight: 700; text-decoration: none; }
+.sub a:hover { text-decoration: underline; }
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .06); }
+.mini-note { font-size: 11.5px; color: #64748b; font-weight: 600; }
+.mini-note a { color: #0ea5e9; font-weight: 700; text-decoration: none; }
+.mini-note a:hover { text-decoration: underline; }
+
+.add-card { padding: 16px 20px; margin-bottom: 18px; }
+.add-toggle { border: 1px solid #059669; color: #059669; background: #ecfdf5;
+  font-weight: 800; font-size: 13.5px; padding: 9px 16px; border-radius: 9px; cursor: pointer; }
+.add-toggle:hover { background: #d1fae5; }
+.form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 14px; margin: 14px 0 2px; }
+.form-grid label { font-size: 12px; font-weight: 700; color: #475569;
+  display: flex; flex-direction: column; gap: 5px; }
+.form-grid input, .form-grid select, .form-grid textarea { border: 1px solid #cbd5e1; border-radius: 8px;
+  padding: 8px 10px; font-size: 14px; width: 100%; background: #fff; }
+.form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus { outline: 2px solid #a7f3d0; border-color: #059669; }
+.span-all { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 10px; margin-top: 12px; }
+.btn-primary { background: #059669; color: #fff; border: 0; font-weight: 800;
+  padding: 9px 18px; border-radius: 9px; cursor: pointer; font-size: 14px; }
+.btn-primary:disabled { opacity: .55; cursor: default; }
+.btn-ghost { background: #fff; color: #475569; border: 1px solid #cbd5e1;
+  font-weight: 700; padding: 9px 16px; border-radius: 9px; cursor: pointer; font-size: 14px; }
+.form-err { color: #b91c1c; font-size: 13px; font-weight: 600; margin-top: 10px; }
+.save-note { color: #047857; font-size: 13px; font-weight: 700; margin-top: 10px; }
+
+.search-card { padding: 12px 16px; margin-bottom: 18px; }
+.search-card input { width: 100%; border: 1px solid #cbd5e1; border-radius: 9px;
+  padding: 10px 13px; font-size: 14px; }
+.search-card input:focus { outline: 2px solid #a7f3d0; border-color: #059669; }
+
+.dash-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px; margin: 0 0 16px; }
+.dash { border: 1px solid #e2e8f0; background: #fff; border-radius: 12px;
+  padding: 12px 14px; box-shadow: 0 6px 18px rgba(15, 23, 42, .05); }
+.dash b { display: block; font-size: 26px; line-height: 1.15; }
+.dash span { font-size: 11.5px; color: #64748b; font-weight: 700; }
+.dash.good b { color: #047857; } .dash.info b { color: #075985; } .dash.warn b { color: #b45309; }
+@media (max-width: 900px) { .dash-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.table-card { padding: 16px 20px; margin-bottom: 18px; }
+.table-card h2 { font-size: 15px; margin-bottom: 10px; }
+.table-wrap { overflow-x: auto; }
+table.bk { width: 100%; border-collapse: collapse; }
+thead th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+  color: #64748b; padding: 12px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; background: #f8fafc; }
+thead th.amt { text-align: right; }
+tbody td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: #f8fafc; }
+.ref { font-weight: 800; font-size: 12.5px; color: #334155; white-space: nowrap; }
+.c-name { font-weight: 700; }
+.c-date { white-space: nowrap; color: #475569; }
+.c-amount { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mini-btn { border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 12px;
+  font-weight: 700; padding: 5px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.mini-btn:hover { border-color: #059669; color: #059669; }
+.row-del { border: 1px solid #e5e7eb; background: #fff; color: #b91c1c; font-size: 12px;
+  font-weight: 700; padding: 5px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.row-del:hover { border-color: #b91c1c; }
+.c-act { white-space: nowrap; text-align: right; }
+.count-line { color: #94a3b8; font-size: 12.5px; margin-top: 12px; }
+.empty { padding: 46px 20px; text-align: center; }
+.empty-icon { font-size: 34px; margin-bottom: 10px; }
+.empty-title { font-weight: 800; font-size: 16px; margin-bottom: 6px; }
+.empty-sub { color: #64748b; font-size: 14px; }
+@media (max-width: 640px) { .wrap { padding: 20px 14px; } .form-grid { grid-template-columns: 1fr; } }
+
+/* ---- the printable certificate ---------------------------------------------- */
+.cert-zone { position: fixed; inset: 0; background: rgba(15, 23, 42, .55);
+  display: flex; align-items: center; justify-content: center; padding: 30px; z-index: 50; }
+.cert-zone .cert-close { position: absolute; top: 14px; right: 18px; }
+.cert { width: 760px; max-width: 96vw; background: #fff; border: 2px solid #0f172a;
+  padding: 40px 48px; }
+.cert-head { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 14px; margin-bottom: 22px; }
+.cert-head h2 { font-size: 20px; letter-spacing: .12em; text-transform: uppercase; }
+.cert-head .fac { font-size: 15px; font-weight: 800; margin-top: 6px; }
+.cert-head .sub { font-size: 12.5px; color: #475569; margin-top: 4px; }
+.cert h3 { text-align: center; font-size: 16px; margin-bottom: 20px; letter-spacing: .06em; }
+.cert-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 26px; }
+.cert-body .row { display: flex; justify-content: space-between; gap: 12px;
+  border-bottom: 1px dotted #94a3b8; padding: 6px 0; font-size: 14px; }
+.cert-body .row .k { color: #475569; font-weight: 600; }
+.cert-body .row .v { font-weight: 800; text-align: right; }
+.cert-foot { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.cert-foot .sig { border-top: 1px solid #0f172a; padding-top: 6px; font-size: 12.5px;
+  color: #334155; font-weight: 700; text-align: center; }
+.cert-ref { margin-top: 18px; text-align: center; font-size: 12px; color: #64748b; font-weight: 700; }
+
+@media print {
+  body.printing .wrap, body.printing .p-boot, body.printing .p-err { display: none !important; }
+  body.printing .cert-zone { position: static; background: #fff; padding: 0; display: block; }
+  body.printing .cert-close { display: none !important; }
+  body.printing .cert { border: 2px solid #0f172a; width: 100%; max-width: none; }
+}

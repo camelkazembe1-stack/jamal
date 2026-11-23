@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Death Certificates — JAMALI Health</title>
+<link rel="stylesheet" href="/death-certificates/404.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Death Certificates</h1>
+  <p class="sub">The facility's death register: every death here is recorded with its cause coded
+  in <a href="/icd10/400">ICD-10</a>, and a printable death notification certificate supports the
+  family's application to the civil registrar. Coded causes make the facility's mortality countable
+  for national reporting.</p>
+
+  <div class="dash-grid">
+    <div class="dash"><b id="d-total">0</b><span>Deaths registered</span></div>
+    <div class="dash info"><b id="d-month">0</b><span>This month</span></div>
+    <div class="dash warn"><b id="d-coded">0</b><span>With an ICD-10 cause</span></div>
+    <div class="dash good"><b id="d-infect">0</b><span>Infectious causes (A00–B99)</span></div>
+  </div>
+
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Register a death</button>
+    <form class="form-grid s-form" hidden>
+      <label>Deceased's name<input id="f-name" type="text" required placeholder="full name as on the record"></label>
+      <label>Sex<select id="f-sex"><option>Female</option><option>Male</option></select></label>
+      <label>Age (years)<input id="f-age" type="number" min="0" placeholder="e.g. 67"></label>
+      <label>Date of death<input id="f-dod" type="date" required></label>
+      <label>Cause of death (ICD-10)<input id="f-icd" list="f-icd10" placeholder="search or type, e.g. B54">
+        <datalist id="f-icd10"></datalist></label>
+      <label>Cause in words<input id="f-cause" type="text" required placeholder="e.g. severe malaria"></label>
+      <label>Registration ID<input id="f-regid" type="text" placeholder="e.g. 4827ABCD (if registered)"></label>
+      <label>Branch<input id="f-branch" list="f-branches" placeholder="e.g. Main facility">
+        <datalist id="f-branches"></datalist></label>
+      <label>Certified by<input id="f-attendant" type="text" required placeholder="doctor who certified"></label>
+      <label>Notes<textarea id="f-notes" rows="2" placeholder="anything the record should carry"></textarea></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Save Death Record</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+  </div>
+
+  <div class="card search-card">
+    <input id="rec-search" type="text" placeholder="Search by name, cause, reference or date" autocomplete="off">
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>The death register</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Ref</th><th>Date</th><th>Deceased</th><th>Age</th>
+          <th>Cause</th><th>ICD-10</th><th></th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128366;&#65039;</div>
+    <p class="empty-title">No deaths registered yet</p>
+    <p class="empty-sub">Register the first death with <b>Register a death</b> - the certificate
+    prints from the row's <b>Certificate</b> button.</p>
+  </div>
+
+  <p class="mini-note">This is the facility's notification of a death in its own register. The
+  official death certificate is issued by the civil registrar (RITA in Tanzania) - this printed
+  notice is what supports that application.</p>
+
+</main>
+
+<div class="cert-zone" id="cert-zone" hidden>
+  <button type="button" class="mini-btn cert-close"></button>
+  <div class="cert" id="cert-paper"></div>
+</div>
+
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Death Certificates \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p04 = { page: "404", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p04 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/death-certificates/404.js"></script>
+</body>
+</html>
