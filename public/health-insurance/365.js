@@ -1,7 +1,7 @@
 
 
 
-import { requireAuth, db, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot,
+import { requireAuth, db, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, arrayUnion,
          watchHealthPatients, patientById } from "/sidebar.js";
 
 window.__p365 = { page: "365", build: "365", auth: false, listeners: 0, docs: -1, errs: [] };
@@ -246,6 +246,9 @@ function renderTable() {
     tds.push("<td><select class='st-sel' data-id='" + esc(r.__id) + "'>" +
       CFG.statuses.map((s) => "<option" + (s === r.status ? " selected" : "") + ">" + esc(s) + "</option>").join("") +
       "</select></td>");
+    const logN = (r.insurerLog || []).length;
+    tds.push("<td class='c-trip'><button type='button' class='mini-btn row-log' data-id='" + esc(r.__id) + "'>Log response</button> " +
+      "<button type='button' class='mini-btn row-hist' data-id='" + esc(r.__id) + "'>View (" + logN + ")</button></td>");
     tds.push("<td><button type='button' class='row-del' data-id='" + esc(r.__id) + "'>Delete</button></td>");
     return "<tr>" + tds.join("") + "</tr>";
   }).join("");
@@ -260,13 +263,50 @@ function wireTable() {
     const id = sel.getAttribute("data-id");
     const rec = recs.find((r) => r.__id === id);
     if (!rec) return;
-    updateDoc(doc(db, CFG.collection, id), { status: sel.value, updatedAt: new Date().toISOString() })
+    const prev = String(rec.status || "");
+    const next = sel.value;
+    updateDoc(doc(db, CFG.collection, id), {
+      status: next, updatedAt: new Date().toISOString(),
+      insurerLog: arrayUnion({ at: new Date().toISOString(), by: "claims desk",
+        from: prev, to: next, note: "status changed " + prev + " -> " + next })
+    })
       .catch(() => { rec.status = sel.value; renderDash(); renderTable(); });
     rec.status = sel.value;
+    rec.insurerLog = (rec.insurerLog || []).concat([{ at: new Date().toISOString(),
+      by: "claims desk", from: prev, to: next, note: "status changed " + prev + " -> " + next }]);
     rec.updatedAt = new Date().toISOString();
     renderDash();
+    renderTable();
   });
   body.addEventListener("click", (ev) => {
+    const logBtn = ev.target.closest("button.row-log");
+    if (logBtn) {
+      const id = logBtn.getAttribute("data-id");
+      const rec = recs.find((r) => r.__id === id);
+      if (!rec) return;
+      const note = window.prompt("Insurer response for " + (rec.ref || "the claim") +
+        " (what the fund said, who said it, reference numbers):\n", "");
+      if (note == null) return;
+      const entry = { at: new Date().toISOString(), by: "claims desk",
+        from: String(rec.status || ""), to: String(rec.status || ""), note: String(note).trim() };
+      updateDoc(doc(db, CFG.collection, id), { insurerLog: arrayUnion(entry) })
+        .catch(() => {});
+      rec.insurerLog = (rec.insurerLog || []).concat([entry]);
+      renderTable();
+      return;
+    }
+    const histBtn = ev.target.closest("button.row-hist");
+    if (histBtn) {
+      const id = histBtn.getAttribute("data-id");
+      const rec = recs.find((r) => r.__id === id);
+      if (!rec) return;
+      const lines = (rec.insurerLog || []).map((e) =>
+        String(e.at || "").slice(0, 16).replace("T", " ") + "  " + (e.from || "") + " -> " + (e.to || "") +
+        "  " + (e.note || "")).join("\n");
+      window.alert((rec.ref || "Claim") + " round-trip:\n\n" +
+        (lines || "No insurer responses logged yet - use 'Log response' when the fund replies, and the status select to move the claim along."));
+      return;
+    }
     const btn = ev.target.closest("button.row-del");
     if (!btn) return;
     const id = btn.getAttribute("data-id");
@@ -306,6 +346,8 @@ if (form) form.addEventListener("submit", async (ev) => {
     rec.ref = CFG.refp + "-" + todayLocal().replace(/-/g, "").slice(2) + "-" +
               String((recs.length + 1) % 10000).padStart(4, "0");
     rec.status = CFG.statuses[0];
+    rec.insurerLog = [{ at: new Date().toISOString(), by: "claims desk",
+      from: "", to: CFG.statuses[0], note: "claim raised" }];
     rec.createdAt = new Date().toISOString();
     await addDoc(collection(db, CFG.collection), rec);
     if (ok) { ok.hidden = false; ok.textContent = "Saved as " + rec.ref + " (" + rec.status + ")."; }
@@ -522,3 +564,49 @@ renderDash();
 renderTable();
 qaRenderPanel();
 wireTable();
+
+// ================= tariff chips (the Tariff Engine, page 406) =================
+// Claims are priced from the official insurance tariff, not guessed: every
+// tap adds the service's insurance tariff to the claim amount.
+let TARIFF = [];
+try {
+  onSnapshot(collection(db, "healthTariff"), (snap) => {
+    TARIFF = snap.docs.map((d) => d.data())
+      .filter((t) => String(t.status || "Active") === "Active")
+      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+    paintTariff();
+  }, () => {});
+  window.__p365.listeners++;
+} catch (e) {}
+
+let tariffSum = 0;
+function paintTariff() {
+  const box = document.getElementById("tariff-chips");
+  if (!box) return;
+  const q = String((document.getElementById("tariff-search") || {}).value || "").trim().toLowerCase();
+  const rows = !q ? TARIFF : TARIFF.filter((t) =>
+    ["code", "name", "cat"].some((k) => String(t[k] || "").toLowerCase().includes(q)));
+  box.innerHTML = rows.slice(0, 24).map((t) => {
+    const price = Number(t.nhif || t.price || 0);
+    return '<button type="button" class="tariff-chip" data-name="' + esc(String(t.name || "")) +
+      '" data-price="' + price + '">' + esc(String(t.name || "")) +
+      ' <span class="chip-amt">' + price.toLocaleString() + "</span></button>";
+  }).join("") || '<span class="mini-note">No tariff entries yet - price the services on page 406 (Tariff Engine) first.</span>';
+}
+document.getElementById("tariff-search").addEventListener("input", paintTariff);
+document.getElementById("tariff-chips").addEventListener("click", (ev) => {
+  const chip = ev.target.closest(".tariff-chip");
+  if (!chip) return;
+  const name = chip.getAttribute("data-name");
+  const price = Number(chip.getAttribute("data-price") || 0);
+  const sv = document.getElementById("f-services");
+  const am = document.getElementById("f-claimAmount");
+  const parts = String(sv.value || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (!parts.some((p) => p.toLowerCase() === String(name).toLowerCase())) parts.push(name);
+  sv.value = parts.join(", ");
+  tariffSum += price;
+  am.value = tariffSum || "";
+  document.getElementById("tariff-sum").textContent = tariffSum
+    ? "Insurance tariff total tapped: TSh " + tariffSum.toLocaleString() + " - the claim amount follows it."
+    : "";
+});

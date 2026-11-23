@@ -64,6 +64,14 @@
       <p class="form-ok" id="rec-ok" hidden></p>
       <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
     </form>
+    <div class="tariff-box" id="tariff-box">
+      <p class="mini-note" style="margin-bottom:8px"><b>Price the claim from the Tariff Engine (page 406):</b> tap the services
+      claimed &mdash; each tap adds the service's <b>insurance tariff</b> to the claim amount and its name
+      to the services line.</p>
+      <input id="tariff-search" type="search" placeholder="Search the tariff&hellip;" autocomplete="off">
+      <div class="tariff-chips" id="tariff-chips"></div>
+      <p class="mini-note" id="tariff-sum" style="margin-top:8px"></p>
+    </div>
   </div>
 
   <div class="card">
@@ -76,7 +84,7 @@
     </div>
     <div class="table-wrap">
       <table class="rec" id="rec-table">
-        <thead><tr><th>Ref</th><th>patientId</th><th>provider</th><th>membershipNo</th><th>claimAmount</th><th>services</th><th>Created</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Ref</th><th>patientId</th><th>provider</th><th>membershipNo</th><th>claimAmount</th><th>services</th><th>Created</th><th>Status</th><th>Insurer round-trip</th><th></th></tr></thead>
         <tbody id="rec-body"></tbody>
       </table>
     </div>

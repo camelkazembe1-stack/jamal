@@ -64,6 +64,14 @@
       <p class="form-ok" id="rec-ok" hidden></p>
       <div class="form-actions"><button class="btn-primary" id="rec-save" type="submit">Save record</button></div>
     </form>
+    <div class="tariff-box" id="tariff-box">
+      <p class="mini-note" style="margin-bottom:8px"><b>Price from the Tariff Engine (page 406):</b> tap the services this invoice
+      charges &mdash; each tap adds its price to the amount and its name to the services line, so the bill
+      always matches the official price list.</p>
+      <input id="tariff-search" type="search" placeholder="Search the tariff&hellip;" autocomplete="off">
+      <div class="tariff-chips" id="tariff-chips"></div>
+      <p class="mini-note" id="tariff-sum" style="margin-top:8px"></p>
+    </div>
   </div>
 
   <div class="card">

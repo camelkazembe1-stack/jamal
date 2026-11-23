@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Instrument Bridge — JAMALI Health</title>
+<link rel="stylesheet" href="/lab-instrument-bridge/408.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/laboratory/360">&larr; Laboratory</a>
+  <h1>Lab Instrument Bridge</h1>
+  <p class="sub">The doorway between the bench machines and the records: bring a results file
+  from an analyser (HL7 ORU, ASTM-style, or a plain CSV the machine exports), check each line
+  against the open <a href="/lab-request-list/362">lab requests</a> by Registration ID, and accept
+  the good ones straight into the workbench. Completed results can be exported back as HL7 ORU
+  for a connected system.</p>
+
+  <div class="card import-card">
+    <h2>Bring a results file</h2>
+    <div class="import-grid">
+      <label class="file-btn btn-ghost">Choose the instrument file<input type="file" id="i-file"
+        accept=".csv,.txt,.hl7,.astm,.oru" hidden></label>
+      <span class="mini-note">CSV columns: <code>regId,test,result,unit,refRange</code> (a header row is fine).
+      HL7 ORU and ASTM-style text are parsed automatically.</span>
+    </div>
+    <details class="paste-box">
+      <summary>or paste the text instead</summary>
+      <textarea id="i-paste" rows="5" placeholder="4827ABCD,FBC - Full blood count,Hb 9.2 g/dL … or a raw HL7/ASTM dump"></textarea>
+      <div class="form-actions"><button class="btn-primary" id="i-parse" type="button">Parse the text</button></div>
+    </details>
+    <p class="form-err" id="i-err" hidden></p>
+    <p class="save-note" id="i-ok" hidden></p>
+  </div>
+
+  <div class="card table-card" id="p-card" hidden>
+    <h2>Parsed lines &mdash; <span id="p-title"></span></h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Registration ID</th><th>Patient</th><th>Test</th><th>Result</th>
+          <th>Unit</th><th>Range</th><th>Flag</th><th>Matches open request</th></tr></thead>
+        <tbody id="p-body"></tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" id="p-accept" type="button">Accept the matched results</button>
+      <button class="btn-ghost" id="p-clear" type="button">Discard</button>
+    </div>
+    <p class="count-line" id="p-count"></p>
+    <p class="form-err" id="p-err" hidden></p>
+    <p class="save-note" id="p-ok" hidden></p>
+  </div>
+
+  <div class="card export-card">
+    <h2>Export results outward (HL7 ORU)</h2>
+    <div class="import-grid">
+      <label>From day<input id="e-from" type="date"></label>
+      <label>To day<input id="e-to" type="date"></label>
+      <button class="btn-ghost" id="e-go" type="button">Download HL7 ORU</button>
+    </div>
+    <p class="count-line" id="e-count"></p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Lab Instrument Bridge \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p08 = { page: "408", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p08 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/lab-instrument-bridge/408.js"></script>
+</body>
+</html>

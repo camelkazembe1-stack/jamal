@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tariff Engine — JAMALI Health</title>
+<link rel="stylesheet" href="/tariff-engine/406.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Tariff Engine</h1>
+  <p class="sub">One price list for the whole facility: every service with its price and its
+  insurance tariff. The cashier's <a href="/hospital-billing/363">billing page</a> picks services
+  from here instead of typing amounts, and the <a href="/health-insurance/365">claims desk</a>
+  prices its claims from the insurance column - so the same service always costs the same.</p>
+
+  <div class="dash-grid">
+    <div class="dash"><b id="d-total">0</b><span>Services priced</span></div>
+    <div class="dash good"><b id="d-active">0</b><span>Active</span></div>
+    <div class="dash info"><b id="d-nhif">0</b><span>With an insurance tariff</span></div>
+    <div class="dash warn"><b id="d-cats">0</b><span>Categories in use</span></div>
+  </div>
+
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Add / price a service</button>
+    <form class="form-grid s-form" hidden>
+      <label>Service code<input id="f-code" type="text" required placeholder="e.g. CONS-GEN, LAB-FBC"></label>
+      <label>Service name<input id="f-name" type="text" required placeholder="e.g. General consultation"></label>
+      <label>Category<select id="f-cat">
+        <option>Consultation</option><option>Laboratory</option><option>Imaging</option>
+        <option>Procedure</option><option>Ward per diem</option><option>Theatre</option>
+        <option>Pharmacy service</option><option>Other</option></select></label>
+      <label>Price (TSh)<input id="f-price" type="number" min="0" step="any" required placeholder="e.g. 5000"></label>
+      <label>Insurance tariff (TSh)<input id="f-nhif" type="number" min="0" step="any" placeholder="what NHIF/SHIF pays"></label>
+      <label>Effective from<input id="f-eff" type="date"></label>
+      <label>Status<select id="f-status"><option>Active</option><option>Suspended</option></select></label>
+      <label>Notes<input id="f-notes" type="text" placeholder="e.g. includes urinalysis"></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Save Service</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="f-err" hidden></p>
+    <p class="save-note" id="f-ok" hidden></p>
+  </div>
+
+  <div class="card search-card">
+    <input id="rec-search" type="text" placeholder="Search by code, name, category" autocomplete="off">
+    <button class="btn-ghost t-export" id="t-export" type="button">Download CSV</button>
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>The tariff</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Code</th><th>Service</th><th>Category</th><th class="amt">Price (TSh)</th>
+          <th class="amt">Insurance (TSh)</th><th>Effective</th><th>Status</th><th></th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <div class="empty card" id="t-empty" hidden>
+    <div class="empty-icon">&#128176;</div>
+    <p class="empty-title">The price list is empty</p>
+    <p class="empty-sub">Start with the everyday services - consultation, the common lab tests,
+    the ward day rate - then the billing page and the claims desk pick them up automatically.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Tariff Engine \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p06 = { page: "406", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p06 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/tariff-engine/406.js"></script>
+</body>
+</html>

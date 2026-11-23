@@ -480,3 +480,142 @@ renderDash();
 renderTable();
 qaRenderPanel();
 wireTable();
+
+// ================= patient-level issuance & the transfusion register =================
+// A unit is issued to ONE patient, named by their single Registration ID.
+// ABO/Rh compatibility is checked in the page before the unit moves; the
+// issuance flips the unit to Issued and writes a transfusion record.
+import("/sidebar.js").then((m) => {
+  const { watchHealthPatients, patientById } = m;
+
+  let rows = [];
+  const ABO = {
+    "O-":  ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
+    "O+":  ["O+", "A+", "B+", "AB+"],
+    "A-":  ["A-", "A+", "AB-", "AB+"],
+    "A+":  ["A+", "AB+"],
+    "B-":  ["B-", "B+", "AB-", "AB+"],
+    "B+":  ["B+", "AB+"],
+    "AB-": ["AB-", "AB+"],
+    "AB+": ["AB+"]
+  };
+  const GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const who = (p) => (p && p.isUnidentified) ? "Unidentified" : ((p && p.fullName) || "Unnamed");
+  const iFail = (msg) => { const e = document.getElementById("i-err"); e.hidden = !msg; e.textContent = msg; };
+  const iOk = (msg) => { const o = document.getElementById("i-ok"); o.hidden = !msg; o.textContent = msg; };
+
+  function unitById(id) { return recs.find((r) => r.__id === id) || null; }
+  function paintUnitOptions() {
+    const sel = document.getElementById("i-unit");
+    if (!sel) return;
+    const keep = sel.value;
+    const units = recs.filter((r) => String(r.status) === "Available");
+    sel.innerHTML = '<option value="">&mdash; pick an available unit &mdash;</option>' +
+      units.map((u) => '<option value="' + u.__id + '">' + (u.ref || "") + " \u00b7 " + (u.bloodGroup || "?") +
+        " \u00b7 " + (u.units || 1) + " unit(s) \u00b7 " + (u.screening || "screening " + "?") +
+        (u.expiry ? " \u00b7 exp " + String(u.expiry).slice(0, 10) : "") + "</option>").join("");
+    if (keep) sel.value = keep;
+  }
+  function paintRegIds() {
+    const dl = document.getElementById("i-regids");
+    if (dl) dl.innerHTML = rows.map((p) =>
+      '<option value="' + esc(String(p.regId || "")) + '">' + esc(who(p)) + "</option>").join("");
+  }
+  function paintHint() {
+    const inp = document.getElementById("i-regid");
+    const hint = document.getElementById("i-hint");
+    if (!inp || !hint) return;
+    const v = String(inp.value || "").trim();
+    if (!v) { hint.textContent = ""; hint.className = "f-hint"; return; }
+    const p = patientById(v);
+    if (p) { hint.textContent = "\u2713 " + who(p); hint.className = "f-hint ok"; }
+    else { hint.textContent = "\u2717 Not a registered Registration ID \u2014 pick from the list."; hint.className = "f-hint bad"; }
+  }
+  watchHealthPatients((rs) => { rows = rs; paintRegIds(); paintHint(); });
+  document.getElementById("i-regid").addEventListener("input", paintHint);
+
+  document.getElementById("issue-form").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    iFail(""); iOk("");
+    const unitId = document.getElementById("i-unit").value;
+    const unit = unitById(unitId);
+    const regId = document.getElementById("i-regid").value.trim();
+    const ptGroup = document.getElementById("i-group").value;
+    const cross = document.getElementById("i-cross").value.trim();
+    const by = document.getElementById("i-by").value.trim();
+    const note = document.getElementById("i-note").value.trim();
+    if (!unit) { iFail("Pick the blood unit first."); return; }
+    if (!regId || !patientById(regId)) {
+      iFail("Recipient must be a registered Registration ID (e.g. 4827ABCD) \u2014 register the patient on page 322 first.");
+      return;
+    }
+    if (!ptGroup) { iFail("State the recipient's blood group."); return; }
+    if (!by) { iFail("Fill in who releases the unit."); return; }
+    if (String(unit.screening || "") !== "Passed") {
+      iFail("Unit " + (unit.ref || "") + " is not screening-passed \u2014 only Passed units may be issued.");
+      return;
+    }
+    const compatible = (ABO[String(unit.bloodGroup || "?")] || []).includes(ptGroup);
+    if (!compatible) {
+      if (!window.confirm("INCOMPATIBLE: donor " + (unit.bloodGroup || "?") + " cannot be given safely to recipient " +
+        ptGroup + ".\nOnly continue in a life-threatening emergency with a doctor's explicit instruction.")) {
+        iFail("Issuing stopped \u2014 the groups do not match.");
+        return;
+      }
+    } else if (!cross) {
+      iFail("Record the crossmatch result before issuing (type it even if it is 'crossmatch OK').");
+      return;
+    }
+    const p = patientById(regId);
+    const at = new Date().toISOString();
+    const btn = document.getElementById("issue-save");
+    btn.disabled = true; btn.textContent = "Issuing\u2026";
+    try {
+      await updateDoc(doc(db, CFG.collection, unit.__id), {
+        status: "Issued",
+        issuedTo: { regId, name: who(p), group: ptGroup, crossmatch: cross, by, note, at },
+        updatedAt: at
+      });
+      await addDoc(collection(db, "healthTransfusions"), {
+        unitRef: unit.ref || "", unitId: unit.__id, donorId: unit.donorId || "",
+        group: unit.bloodGroup || "",
+        regId, patientName: who(p), patientGroup: ptGroup,
+        compatibility: compatible ? "compatible" : "INCOMPATIBLE - emergency authorisation",
+        crossmatch: cross, issuedBy: by, note, at, createdAt: at
+      });
+      iOk("Unit " + (unit.ref || "") + " (" + (unit.bloodGroup || "?") + ") issued to " + who(p) +
+        " (" + regId + ", " + ptGroup + ")" + (compatible ? " - compatible." : " - EMERGENCY authorisation recorded."));
+      document.getElementById("issue-form").reset();
+      paintHint();
+    } catch (e) {
+      iFail("Issue failed: " + ((e && (e.code || e.message)) || e));
+    } finally { btn.disabled = false; btn.textContent = "Issue unit & record transfusion"; }
+  });
+
+  try {
+    onSnapshot(collection(db, "healthTransfusions"), (snap) => {
+      const rows = snap.docs.map((d) => Object.assign({}, d.data({ serverTimestamps: "estimate" }), { __id: d.id }))
+        .sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+      const body = document.getElementById("tr-body");
+      document.getElementById("tr-empty").hidden = rows.length > 0;
+      if (body) body.innerHTML = rows.map((t) => "<tr>" +
+        '<td><span class="ref">' + esc(String(t.at || "").slice(0, 16).replace("T", " ")) + "</span></td>" +
+        "<td>" + esc(t.unitRef || "") + "</td>" +
+        "<td><b>" + esc(t.group || "") + "</b></td>" +
+        '<td class="c-name">' + esc(t.patientName || "") + '<br><span class="cell-sub">' + esc(t.regId || "") + "</span></td>" +
+        "<td><b>" + esc(t.patientGroup || "") + "</b></td>" +
+        "<td>" + (String(t.compatibility || "").indexOf("INCOMPATIBLE") === 0
+          ? '<span class="st st-bad">emergency</span>' : '<span class="st st-good">compatible</span>') + "</td>" +
+        "<td>" + esc(t.issuedBy || "") + "</td>" +
+        "<td>" + esc(t.crossmatch || "\u2014") + "</td></tr>").join("");
+    }, () => {});
+    window.__p378.listeners++;
+  } catch (e) {}
+
+  const origRender = window.__p378.__renderTable;
+  window.__p378.__renderTable = true;
+  // repaint the unit options whenever the records render (statuses change)
+  setInterval(paintUnitOptions, 3000);
+  paintUnitOptions();
+  paintRegIds();
+});

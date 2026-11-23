@@ -62,3 +62,19 @@ tr.sec-row td { background: #f0fdf4; font-weight: 800; color: #065f46; }
 .empty-sub { color: #64748b; font-size: 14px; }
 @media (max-width: 900px) { .build-grid { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .wrap { padding: 20px 14px; } }
+
+/* live push card */
+.push-card { padding: 16px 20px; margin-bottom: 18px; }
+.push-card h2 { font-size: 15px; margin-bottom: 8px; }
+.push-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px 14px; align-items: end; }
+.push-grid label { font-size: 12px; font-weight: 700; color: #475569;
+  display: flex; flex-direction: column; gap: 5px; }
+.push-grid input, .push-grid select { border: 1px solid #cbd5e1; border-radius: 8px;
+  padding: 8px 10px; font-size: 14px; width: 100%; }
+.push-grid input:focus, .push-grid select:focus { outline: 2px solid #a7f3d0; border-color: #059669; }
+.push-grid .span-all { grid-column: 1 / -1; }
+.push-grid .span2 { grid-column: span 2; }
+.push-card code { background: #f1f5f9; border-radius: 5px; padding: 1px 6px; font-size: 12px; }
+.push-card .form-actions { margin-top: 12px; }
+@media (max-width: 900px) { .push-grid { grid-template-columns: repeat(2, 1fr); } }

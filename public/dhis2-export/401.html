@@ -37,6 +37,28 @@
     code. Exported files never leave the device by themselves.</p>
   </div>
 
+  <div class="card push-card">
+    <h2>Push straight to DHIS2 (live)</h2>
+    <p class="mini-note" style="margin-bottom:10px">Build the month first, then send the same data
+    values straight into your DHIS2 server over its Web API
+    (<code>POST /api/dataValueSets</code>) &mdash; no file to hand over. Your credentials stay in
+    this browser and each push is recorded.</p>
+    <div class="push-grid">
+      <label class="span2">DHIS2 base URL<input id="d-url" type="text" placeholder="https://dhis2.example.org"></label>
+      <label>Username<input id="d-user" type="text" placeholder="API user" autocomplete="off"></label>
+      <label>Access token / password<input id="d-token" type="password" placeholder="PAT or password" autocomplete="off"></label>
+      <label>Auth mode<select id="d-mode"><option value="pat">Personal access token (Bearer)</option><option value="basic">Basic (username + password)</option></select></label>
+      <label>Data set ID<input id="d-ds" type="text" placeholder="e.g. JAMALI_DS (optional)"></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary d-push" id="d-push" type="button" disabled>POST the data values</button>
+        <button class="btn-ghost d-savecfg" id="d-savecfg" type="button">Save connection on this device</button>
+      </div>
+    </div>
+    <p class="form-err" id="d-err" hidden></p>
+    <p class="save-note" id="d-ok" hidden></p>
+    <p class="mini-note" id="d-hist"></p>
+  </div>
+
   <div class="card table-card" id="t-card" hidden>
     <h2 id="t-title">The month at a glance</h2>
     <div class="table-wrap">

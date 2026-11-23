@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Development — JAMALI Health</title>
+<link rel="stylesheet" href="/staff-development/409.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Staff Development</h1>
+  <p class="sub">The human side of the health system: structured performance appraisals for the
+  people in <a href="/hospital-staff/366">Hospital Staff</a>, and the training / CPD record that
+  shows who has been trained on what - the two things regulators and insurers ask for and paper
+  files keep losing.</p>
+
+  <div class="dash-grid">
+    <div class="dash"><b id="d-appr">0</b><span>Appraisals recorded</span></div>
+    <div class="dash good"><b id="d-avg">&mdash;</b><span>Average overall score</span></div>
+    <div class="dash info"><b id="d-trn">0</b><span>Trainings recorded</span></div>
+    <div class="dash warn"><b id="d-cpd">0</b><span>CPD points earned (all staff)</span></div>
+  </div>
+
+  <!-- ======================= appraisals ======================= -->
+  <div class="card add-card">
+    <button class="add-toggle s-toggle" type="button">&#xFF0B; Record an appraisal</button>
+    <form class="form-grid s-form" hidden>
+      <label>Staff member<input id="a-staff" data-f="employee" type="text" required placeholder="e.g. Dr. Amina Juma"></label>
+      <label>Period<input id="a-period" type="text" required placeholder="e.g. Q4 2026 / Jan–Mar"></label>
+      <label>Clinical quality (1&ndash;5)<input id="a-q1" type="number" min="1" max="5" required></label>
+      <label>Teamwork (1&ndash;5)<input id="a-q2" type="number" min="1" max="5" required></label>
+      <label>Punctuality (1&ndash;5)<input id="a-q3" type="number" min="1" max="5" required></label>
+      <label>Patient care (1&ndash;5)<input id="a-q4" type="number" min="1" max="5" required></label>
+      <label>Reviewer<input id="a-reviewer" type="text" required placeholder="who conducted it"></label>
+      <label>Status<select id="a-status"><option>Draft</option><option>Shared with staff</option><option>Acknowledged</option></select></label>
+      <label class="span-all">Strengths<input id="a-strengths" type="text" placeholder="what this person does well"></label>
+      <label class="span-all">To improve<input id="a-improve" type="text" placeholder="the development focus for the next period"></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary s-save" type="submit">Save Appraisal</button>
+        <button class="btn-ghost s-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="a-err" hidden></p>
+    <p class="save-note" id="a-ok" hidden></p>
+  </div>
+
+  <div class="card search-card">
+    <input id="a-search" type="text" placeholder="Search appraisals by staff, reviewer, period" autocomplete="off">
+  </div>
+
+  <div class="card table-card" id="a-card" hidden>
+    <h2>Appraisals</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Staff</th><th>Period</th><th>Clinical</th><th>Team</th><th>Punctual</th>
+          <th>Care</th><th>Overall</th><th>Reviewer</th><th>Status</th><th></th></tr></thead>
+        <tbody id="a-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="a-count"></p>
+  </div>
+  <div class="empty card" id="a-empty" hidden>
+    <div class="empty-icon">&#127891;</div>
+    <p class="empty-title">No appraisals yet</p>
+    <p class="empty-sub">Record the first one with <b>Record an appraisal</b> - scores are 1 to 5,
+    and the overall average is computed for you.</p>
+  </div>
+
+  <!-- ======================= training ======================= -->
+  <div class="card add-card">
+    <button class="add-toggle t-toggle" type="button">&#xFF0B; Record a training</button>
+    <form class="form-grid t-form" hidden>
+      <label>Staff member<input id="t-staff" data-f="employee" type="text" required placeholder="who was trained"></label>
+      <label>Course / topic<input id="t-course" type="text" required placeholder="e.g. Infection prevention refresher"></label>
+      <label>Provider<input id="t-provider" type="text" placeholder="e.g. MoHCDGEC, NHIF, internal"></label>
+      <label>Start<input id="t-start" type="date"></label>
+      <label>End<input id="t-end" type="date"></label>
+      <label>CPD points<input id="t-points" type="number" min="0" step="any" placeholder="e.g. 10"></label>
+      <label>Certificate ref<input id="t-cert" type="text" placeholder="certificate number, if any"></label>
+      <label>Status<select id="t-status"><option>Planned</option><option>Ongoing</option><option>Completed</option><option>Dropped</option></select></label>
+      <label class="span-all">Notes<input id="t-notes" type="text" placeholder="anything worth keeping"></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary t-save" type="submit">Save Training</button>
+        <button class="btn-ghost t-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="t-err" hidden></p>
+    <p class="save-note" id="t-ok" hidden></p>
+  </div>
+
+  <div class="card search-card">
+    <input id="tr-search" type="text" placeholder="Search trainings by staff, course, provider" autocomplete="off">
+  </div>
+
+  <div class="card table-card" id="tr-card" hidden>
+    <h2>Training &amp; CPD</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Staff</th><th>Course</th><th>Provider</th><th>Start</th><th>End</th>
+          <th>CPD</th><th>Certificate</th><th>Status</th><th></th></tr></thead>
+        <tbody id="tr-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="tr-count"></p>
+  </div>
+  <div class="empty card" id="tr-empty" hidden>
+    <div class="empty-icon">&#128218;</div>
+    <p class="empty-title">No trainings yet</p>
+    <p class="empty-sub">Every workshop, induction and refresher counts - record them as they
+    happen and the CPD column adds itself up.</p>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Staff Development \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p09 = { page: "409", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p09 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/staff-development/409.js"></script>
+</body>
+</html>

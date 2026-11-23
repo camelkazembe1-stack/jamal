@@ -72,6 +72,53 @@
     </div>
     <p class="note small">Restore replaces the records of every area included in the file. Records not in the file stay as they are.</p>
   </section>
+
+  <section class="card pad" id="sec-card">
+    <h2>Security &mdash; two-factor sign-in &amp; device lock</h2>
+    <p class="note">Two protections for shared clinic computers, both running entirely in this browser
+    with Web Crypto (no outside service): <b>2FA</b> turns the authenticator app on your phone into a
+    second key for this account, and the <b>device lock</b> is a password the browser asks for when the
+    shell opens. The lock password follows the policy: at least 8 characters with at least 3 of
+    lowercase, uppercase, digits, symbols.</p>
+
+    <div class="sec-block">
+      <h3>Two-factor authentication (TOTP)</h3>
+      <p class="note small" id="fa-status">&mdash;</p>
+      <div id="fa-setup" hidden>
+        <p class="note small">1. Scan the code (or type the secret) into Google Authenticator / Authy / FreeOTP &mdash;
+        add it as a <i>time-based</i> entry.</p>
+        <div class="qr-wrap"><img id="fa-qr" alt="2FA QR code" hidden></div>
+        <p class="note small">Secret: <code id="fa-secret" class="sec-code"></code>
+        &middot; one-time recovery code: <code id="fa-recovery" class="sec-code"></code> (keep it offline, it works once if you lose the phone)</p>
+        <div class="fa-row">
+          <input id="fa-code" type="text" inputmode="numeric" placeholder="6-digit code from the app" autocomplete="off">
+          <button type="button" class="btn-primary" id="fa-verify">Verify &amp; turn on 2FA</button>
+        </div>
+      </div>
+      <div class="fa-row" id="fa-off-row" hidden>
+        <input id="fa-off-code" type="text" placeholder="current 6-digit code to switch 2FA off" autocomplete="off">
+        <button type="button" class="btn-ghost" id="fa-disable">Turn 2FA off</button>
+      </div>
+      <div class="fa-row" id="fa-start-row" hidden>
+        <button type="button" class="btn-primary" id="fa-enroll">Set up 2FA for this account</button>
+      </div>
+      <p class="msg" id="fa-msg"></p>
+    </div>
+
+    <div class="sec-block">
+      <h3>Device lock (app lock)</h3>
+      <p class="note small" id="lock-status">&mdash;</p>
+      <div class="fa-row" id="lock-set-row">
+        <input id="lock-new" type="password" placeholder="new lock password (policy enforced)" autocomplete="new-password">
+        <button type="button" class="btn-primary" id="lock-set">Set / change the lock</button>
+      </div>
+      <div class="fa-row" id="lock-remove-row" hidden>
+        <input id="lock-cur" type="password" placeholder="current lock password" autocomplete="current-password">
+        <button type="button" class="btn-ghost" id="lock-remove">Remove the lock</button>
+      </div>
+      <p class="msg" id="lock-msg"></p>
+    </div>
+  </section>
 </main>
 <script type="module" src="/organisation-settings/391.js"></script>
 </body>

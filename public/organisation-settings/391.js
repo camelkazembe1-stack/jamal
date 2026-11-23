@@ -197,3 +197,107 @@ $("restore-file").addEventListener("change", (e) => {
 
 loadProfile().catch((err) => say($("profile-msg"), "Could not load the profile: " + (err && err.message || err), false));
 paintStats();
+
+// ================= Security: 2FA (TOTP) + device app lock =================
+// Everything runs locally through the sidebar security core - Web Crypto
+// only, no outside service. The QR (optional) comes from a tiny CDN
+// library; if it cannot load, the base32 secret is typed by hand instead.
+import("/sidebar.js").then(async (m) => {
+  const { twofaStatus, twofaEnroll, twofaVerify, twofaDisable,
+          passwordCheck, lockSet, lockStatus, lockRemove } = m;
+
+  const faMsg = (t, good) => { const el = $("fa-msg"); if (el) { el.textContent = t; el.style.color = good ? "#047857" : "#b91c1c"; } };
+  const lkMsg = (t, good) => { const el = $("lock-msg"); if (el) { el.textContent = t; el.style.color = good ? "#047857" : "#b91c1c"; } };
+
+  function paintFa() {
+    const st = twofaStatus();
+    $("fa-status").textContent = !st.enrolled
+      ? "2FA is not set up for this account yet."
+      : (st.enabled ? "2FA is ON for this account - the shell asks for the 6-digit code when you reopen the system."
+                    : "2FA is enrolled but not confirmed yet - finish the verify step below.");
+    $("fa-start-row").hidden = st.enrolled && st.enabled ? true : !!(st.enrolled && !st.enabled);
+    $("fa-off-row").hidden = !(st.enrolled && st.enabled);
+    $("fa-setup").hidden = st.enrolled && st.enabled ? true : true; // only shown right after enrolling
+    if (st.enrolled && !st.enabled) {
+      // resume a pending enrollment: re-show the verify row without new secret
+      $("fa-setup").hidden = false;
+      $("fa-qr").hidden = true;
+      $("fa-secret").textContent = "(the secret you saved earlier - scroll up in your authenticator)";
+      $("fa-recovery").textContent = "(saved earlier)";
+    }
+  }
+  function paintLock() {
+    const st = lockStatus();
+    $("lock-status").textContent = st.set
+      ? "A device lock is set (since " + String(st.setAt || "").slice(0, 10) + ") - the shell asks for it when the system opens on this browser."
+      : "No device lock is set on this browser.";
+    $("lock-remove-row").hidden = !st.set;
+  }
+
+  let pending = null;
+  $("fa-enroll").addEventListener("click", async () => {
+    try {
+      pending = await twofaEnroll();
+      $("fa-setup").hidden = false;
+      $("fa-secret").textContent = pending.secret;
+      $("fa-recovery").textContent = pending.recovery;
+      $("fa-status").textContent = "Scan or type the secret, then verify a 6-digit code to switch 2FA on.";
+      // the QR: optional, loads from a CDN; typing the secret by hand works too
+      try {
+        const lib = await import("https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js");
+        const qr = window.qrcode ? window.qrcode : (lib.default || lib);
+        const q = qr(0, "M");
+        q.addData(pending.otpauth);
+        q.make();
+        $("fa-qr").src = q.createDataURL(4, 8);
+        $("fa-qr").hidden = false;
+      } catch (e) { $("fa-qr").hidden = true; }
+      paintFa();
+    } catch (e) { faMsg("Could not create the secret: " + ((e && e.message) || e), false); }
+  });
+
+  $("fa-verify").addEventListener("click", async () => {
+    const code = $("fa-code").value.trim();
+    if (!code) { faMsg("Type the 6-digit code from the authenticator app.", false); return; }
+    const r = await twofaVerify(code);
+    if (r.ok) {
+      faMsg("2FA is ON. Keep the recovery code offline - it works once if the phone is lost." +
+        (r.via === "recovery" ? " (verified with the recovery code)" : ""), true);
+      pending = null;
+      $("fa-setup").hidden = true;
+      paintFa();
+    } else {
+      faMsg("Verification failed (" + (r.reason || "wrong code") + ") - check the code and try again, remember the clock must be right on both devices.", false);
+    }
+  });
+
+  $("fa-disable").addEventListener("click", async () => {
+    const code = $("fa-off-code").value.trim();
+    if (!code) { faMsg("Type the current 6-digit code to switch 2FA off.", false); return; }
+    const r = await twofaDisable(code);
+    if (r.ok) { faMsg("2FA is off for this account.", true); paintFa(); }
+    else faMsg("Could not switch it off (" + (r.reason || "wrong code") + ").", false);
+  });
+
+  $("lock-set").addEventListener("click", async () => {
+    const pw = $("lock-new").value;
+    if (!pw) { lkMsg("Type the lock password first.", false); return; }
+    const r = await lockSet(pw);
+    if (r.ok) {
+      lkMsg("Device lock saved - the shell will ask for it when the system opens on this browser." +
+        " Do not lose it: it lives only in this browser's storage.", true);
+      $("lock-new").value = "";
+      paintLock();
+    } else {
+      lkMsg("The password does not meet the policy - needs " + (r.problems || []).join("; ") + ".", false);
+    }
+  });
+  $("lock-remove").addEventListener("click", async () => {
+    const r = await lockRemove($("lock-cur").value);
+    if (r.ok) { lkMsg("Device lock removed from this browser.", true); paintLock(); }
+    else lkMsg("Wrong current password.", false);
+  });
+
+  paintFa();
+  paintLock();
+});

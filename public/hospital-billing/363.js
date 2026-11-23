@@ -449,3 +449,57 @@ renderDash();
 renderTable();
 qaRenderPanel();
 wireTable();
+
+// ================= tariff picker (the Tariff Engine, page 406) =================
+// The cashier taps services instead of typing amounts: every tap adds the
+// service's official price to the amount box and its name to the services
+// line, so the invoice always matches the facility's price list.
+let TARIFF = [];
+try {
+  onSnapshot(collection(db, "healthTariff"), (snap) => {
+    TARIFF = snap.docs.map((d) => d.data())
+      .filter((t) => String(t.status || "Active") === "Active")
+      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+    paintTariff();
+  }, () => {});
+  window.__p363.listeners++;
+} catch (e) {}
+
+let tariffSum = 0;
+function paintTariff() {
+  const box = document.getElementById("tariff-chips");
+  if (!box) return;
+  const q = String((document.getElementById("tariff-search") || {}).value || "").trim().toLowerCase();
+  const rows = !q ? TARIFF : TARIFF.filter((t) =>
+    ["code", "name", "cat"].some((k) => String(t[k] || "").toLowerCase().includes(q)));
+  box.innerHTML = rows.slice(0, 24).map((t) =>
+    '<button type="button" class="tariff-chip" data-code="' + esc(String(t.code || "")) + '" data-name="' +
+      esc(String(t.name || "")) + '" data-price="' + Number(t.price || 0) + '">' +
+      esc(String(t.name || "")) + ' <span class="chip-amt">' + Number(t.price || 0).toLocaleString() + "</span></button>").join("")
+    || '<span class="mini-note">No tariff entries yet - price the services on page 406 (Tariff Engine) first.</span>';
+}
+document.getElementById("tariff-search").addEventListener("input", paintTariff);
+document.getElementById("tariff-chips").addEventListener("click", (ev) => {
+  const chip = ev.target.closest(".tariff-chip");
+  if (!chip) return;
+  const name = chip.getAttribute("data-name");
+  const price = Number(chip.getAttribute("data-price") || 0);
+  const sv = document.getElementById("f-services");
+  const am = document.getElementById("f-amount");
+  const parts = String(sv.value || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (!parts.some((p) => p.toLowerCase() === String(name).toLowerCase())) parts.push(name);
+  sv.value = parts.join(", ");
+  tariffSum += price;
+  am.value = tariffSum || "";
+  paintSum();
+});
+document.getElementById("f-amount").addEventListener("input", () => {
+  const v = Number(document.getElementById("f-amount").value || 0);
+  if (v !== tariffSum && (!v || !tariffSum)) tariffSum = v || 0;
+  paintSum();
+});
+function paintSum() {
+  document.getElementById("tariff-sum").textContent = tariffSum
+    ? "Tariff total tapped so far: TSh " + tariffSum.toLocaleString() + " - the amount box follows it (type over it for manual adjustments)."
+    : "";
+}

@@ -116,3 +116,18 @@ table.rec .row-del:hover { background: #fee2e2; }
 .export-line label { font-size: 12.5px; font-weight: 700; color: #475569; }
 .export-line input[type=month] { border: 1px solid #cbd5e1; border-radius: 7px;
   padding: 6px 9px; font-size: 13px; }
+
+/* tariff chips + round-trip column */
+.tariff-box { margin-top: 14px; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+.tariff-box input[type="search"] { width: 100%; max-width: 340px; border: 1px solid #cbd5e1;
+  border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+.tariff-box input[type="search"]:focus { outline: 2px solid #a7f3d0; border-color: #059669; }
+.tariff-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tariff-chip { border: 1px solid #cbd5e1; background: #fff; border-radius: 999px;
+  padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.tariff-chip:hover { border-color: #059669; background: #ecfdf5; }
+.tariff-chip .chip-amt { color: #047857; font-weight: 800; margin-left: 4px; }
+.mini-btn { border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 12px;
+  font-weight: 700; padding: 5px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.mini-btn:hover { border-color: #059669; color: #047857; }
+.c-trip { white-space: nowrap; }

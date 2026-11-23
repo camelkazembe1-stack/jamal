@@ -94,3 +94,25 @@ tbody tr:hover { background: #f8fafc; }
 .f-hint.ok { color: #166534; }
 .f-hint.bad { color: #b91c1c; }
 @media (max-width: 640px) { .wrap { padding: 20px 14px; } .form-grid { grid-template-columns: 1fr; } }
+
+/* the video room - WebRTC picture-in-picture stage */
+.video-card { padding: 16px 20px; margin-bottom: 18px; }
+.video-card h2 { font-size: 15px; margin-bottom: 12px; }
+.v-stage { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px; }
+.v-box { position: relative; background: #0f172a; border-radius: 12px; overflow: hidden;
+  aspect-ratio: 4 / 3; }
+.v-box video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.v-tag { position: absolute; left: 8px; top: 8px; background: rgba(15, 23, 42, .72);
+  color: #fff; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+.v-hold { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #cbd5e1; font-size: 13px; font-weight: 700; text-align: center; padding: 16px;
+  background: rgba(15, 23, 42, .5); }
+.v-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.v-controls .v-end { color: #b91c1c; border-color: #fecaca; }
+.v-controls .v-end:hover { background: #fef2f2; }
+.v-state { font-size: 12px; font-weight: 800; color: #475569; margin-left: auto;
+  padding: 4px 10px; background: #f1f5f9; border-radius: 999px; }
+.v-state.live { background: #d1fae5; color: #047857; }
+.mini-btn.v-open { border-color: #a7f3d0; color: #047857; }
+.mini-btn.v-open:hover { border-color: #059669; background: #ecfdf5; }
+@media (max-width: 700px) { .v-stage { grid-template-columns: 1fr; } }

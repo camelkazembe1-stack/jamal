@@ -1,5 +1,5 @@
 
-import { requireAuth, db, collection, getDocs } from "/sidebar.js";
+import { requireAuth, db, collection, getDocs, addDoc, onSnapshot } from "/sidebar.js";
 
 window.__p01.ran = true;
 
@@ -201,3 +201,106 @@ $(".b-json").addEventListener("click", () => {
 });
 
 bootDone();
+
+// ================= live DHIS2 push (the Web API bridge) =================
+// The same indicator rows the CSV carries, POSTed straight to the DHIS2
+// Web API: POST /api/dataValueSets with { dataSet?, period, orgUnit,
+// dataValues: [{dataElement, period, orgUnit, value}] }. Credentials live
+// only in this browser; every attempt is logged to healthDhis2Pushes.
+const CFG_KEY = "jamaliDhis2Push";
+const CFGS = ["d-url", "d-user", "d-ds"];
+try {
+  const saved = JSON.parse(localStorage.getItem(CFG_KEY) || "{}");
+  for (const id of CFGS) { const el = document.getElementById(id); if (el && saved[id]) el.value = saved[id]; }
+  if (saved["d-mode"]) document.getElementById("d-mode").value = saved["d-mode"];
+} catch (e) {}
+
+function saveDhisCfg() {
+  try {
+    const data = {};
+    for (const id of CFGS) data[id] = document.getElementById(id).value.trim();
+    data["d-mode"] = document.getElementById("d-mode").value;
+    localStorage.setItem(CFG_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+$("#d-savecfg").addEventListener("click", () => {
+  saveDhisCfg();
+  const ok = $("#d-ok");
+  ok.hidden = false;
+  ok.textContent = "Connection saved on this device (the token is NOT stored - fill it per push, or type it in again next time).";
+});
+
+function paintHist(rows) {
+  const el = $("#d-hist");
+  if (!rows.length) { el.textContent = ""; return; }
+  el.innerHTML = "Recent pushes: " + rows.slice(0, 5).map((r) =>
+    String(r.at || "").slice(0, 16).replace("T", " ") + " \u00b7 " + esc(String(r.period || "")) +
+    " \u00b7 " + esc(String(r.outcome || ""))).join(" &nbsp;|&nbsp; ");
+}
+try {
+  onSnapshot(collection(db, "healthDhis2Pushes"), (snap) => {
+    paintHist(snap.docs.map((d) => d.data())
+      .sort((a, b) => String(b.at || "").localeCompare(String(a.at || ""))));
+  }, () => {});
+  window.__p01.listeners = (window.__p01.listeners || 0) + 1;
+} catch (e) {}
+
+$("#d-push").addEventListener("click", async () => {
+  const err = $("#d-err"), ok = $("#d-ok");
+  err.hidden = true; ok.hidden = true;
+  if (!LAST) { err.textContent = "Build the month first."; err.hidden = false; return; }
+  const base = String($("#d-url").value || "").trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(base)) { err.textContent = "Fill the DHIS2 base URL (https://...)."; err.hidden = false; return; }
+  const mode = document.getElementById("d-mode").value;
+  const user = String($("#d-user").value || "").trim();
+  const token = String($("#d-token").value || "").trim();
+  if (!token) { err.textContent = "Fill the access token (or the API password)."; err.hidden = false; return; }
+  const ds = String($("#d-ds").value || "").trim();
+  const headers = { "Content-Type": "application/json" };
+  if (mode === "basic") headers.Authorization = "Basic " + btoa(user + ":" + token);
+  else headers.Authorization = "Bearer " + token;
+  const payload = {
+    period: LAST.period,
+    orgUnit: LAST.orgUnit,
+    dataValues: LAST.rows.map(([de, , v]) => Object.assign(
+      { dataElement: de, period: LAST.period, orgUnit: LAST.orgUnit, value: String(v) },
+      ds ? { dataSet: ds } : {}))
+  };
+  const btn = document.getElementById("d-push");
+  btn.disabled = true; btn.textContent = "POSTing\u2026";
+  const at = new Date().toISOString();
+  let outcome = "";
+  let okPush = false;
+  try {
+    const resp = await fetch(base + "/api/dataValueSets", { method: "POST", headers, body: JSON.stringify(payload) });
+    const text = await resp.text();
+    let extra = "";
+    try {
+      const j = JSON.parse(text);
+      if (j && j.status) extra = " (import " + String(j.status) +
+        (j.importCount ? ", " + j.importCount.imported + " imported, " + j.importCount.updated + " updated, " +
+          j.importCount.ignored + " ignored" : "") + ")";
+    } catch (e) {}
+    outcome = "HTTP " + resp.status + extra;
+    okPush = resp.ok;
+    if (okPush) { ok.textContent = "Pushed " + payload.dataValues.length + " data values for " +
+      LAST.period + " / " + LAST.orgUnit + " - " + outcome; ok.hidden = false; }
+    else { err.textContent = "The server refused the push - " + outcome + ". " +
+      "Check the data element codes against your DHIS2 instance."; err.hidden = false; }
+  } catch (e) {
+    outcome = "network error: " + ((e && e.message) || e);
+    err.textContent = "Push failed - " + outcome +
+      ". (A DHIS2 server must allow this browser's origin in its CORS settings for a direct push.)";
+    err.hidden = false;
+  } finally {
+    btn.disabled = false; btn.textContent = "POST the data values";
+    saveDhisCfg();
+  }
+  try {
+    await addDoc(collection(db, "healthDhis2Pushes"), {
+      at, period: LAST.period, orgUnit: LAST.orgUnit,
+      values: payload.dataValues.length, mode,
+      base, outcome, ok: okPush, savedAt: at
+    });
+  } catch (e) {}
+});

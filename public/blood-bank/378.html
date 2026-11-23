@@ -79,6 +79,39 @@
   </div>
 
   <div class="card">
+    <h2>Issue a unit to a patient</h2>
+    <p class="mini-note" style="margin-bottom:8px">Patient-level issuance: pick an <b>Available, screening-passed</b> unit, name the
+    recipient by their Registration ID, state the patient's blood group, and record the crossmatch. The page checks
+    ABO/Rh compatibility before the unit can leave the fridge, and every issuance lands in the transfusion register
+    below (and on the patient's file trail through the audit).</p>
+    <form id="issue-form" autocomplete="off">
+      <div class="rec-form">
+        <label class="f-field">Blood unit<select id="i-unit" required><option value="">&mdash; pick an available unit &mdash;</option></select></label>
+        <label class="f-field">Recipient Registration ID<input id="i-regid" type="text" placeholder="e.g. 4827ABCD" autocomplete="off" list="i-regids" required><span class="f-hint" id="i-hint"></span><datalist id="i-regids"></datalist></label>
+        <label class="f-field">Recipient blood group<select id="i-group" required><option value="">&mdash; Select &mdash;</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></label>
+        <label class="f-field">Crossmatch / compatibility test<input id="i-cross" type="text" placeholder="e.g. crossmatch OK, unit U123 vs pt sample"></label>
+        <label class="f-field">Issued by<input id="i-by" type="text" placeholder="who releases the unit" required></label>
+        <label class="f-field">Notes<input id="i-note" type="text" placeholder="ward, indication, anything else"></label>
+      </div>
+      <p class="form-err" id="i-err" hidden></p>
+      <p class="form-ok" id="i-ok" hidden></p>
+      <div class="form-actions"><button class="btn-primary" id="issue-save" type="submit">Issue unit &amp; record transfusion</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Transfusion register</h2>
+    <div class="table-wrap">
+      <table class="rec" id="tr-table">
+        <thead><tr><th>Ref</th><th>Unit</th><th>Group</th><th>Recipient</th><th>Recipient group</th>
+          <th>Compatibility</th><th>Issued by</th><th>When</th><th></th></tr></thead>
+        <tbody id="tr-body"></tbody>
+      </table>
+    </div>
+    <p class="empty-note" id="tr-empty">No transfusions recorded yet.</p>
+  </div>
+
+  <div class="card">
     <h2>How Blood Bank and Transfusion works</h2>
     <p><b>What it does.</b> Registers donors with eligibility history, records donations with unique unit numbers, maintains the blood-group inventory (ABO and Rh), tracks infectious-disease screening (only screened units may be released), monitors storage locations and expiry, manages crossmatching and compatibility results, reserves and allocates units to patients, and documents transfusions with observations and reactions.</p><p><b>Example.</b> A patient needs transfusion after blood loss: the request is received, compatibility tested, suitable screened units reserved and authorised, issued to the department, and the transfusion documented with observations.</p><p><b>Users.</b> Blood Bank Scientists, Laboratory Technologists, Blood Transfusion Officers, Haematologists, Medical Officers, Blood Bank Manager, Nursing Staff.</p>
   </div>

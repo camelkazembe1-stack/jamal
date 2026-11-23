@@ -7,7 +7,7 @@
 
 
 import { requireAuth, auth, db, collection, query, updateDoc, doc, setDoc, onSnapshot, getDoc,
-         writeBatch, increment, serverTimestamp } from "/sidebar.js";
+         writeBatch, increment, serverTimestamp, checkInteractions } from "/sidebar.js";
  
 let showPatient = function () {}, hidePatient = function () {};
 try {
@@ -582,8 +582,28 @@ async function lineActionClick(e) {
     try {
       if (edit.mode === "dispense") {
         const what = ($("#ed-what") ? $("#ed-what").value : "").trim();
-        if (!what) return; 
+        if (!what) return;
         const qty = Math.max(1, Number(($("#ed-qty") ? $("#ed-qty").value : "1") || 1));
+        // ---- the safety net at the counter: check what is going out of
+        // the pharmacy NOW against the patient's other active medicines
+        // (the remaining prescription lines) with the shared table.
+        // Major matches ask for an explicit, informed confirmation.
+        try {
+          const sheet = rxLines
+            .filter((l) => String(l.regId || "") === String(line.regId || "") &&
+              String(l.status || "") !== "dispensed")
+            .map((l) => String((l.medicine || (l.dispensed && l.dispensed.what) || "")).trim())
+            .filter(Boolean);
+          const names = sheet.includes(what) ? sheet : sheet.concat(what);
+          const hits = checkInteractions(names);
+          const majors = hits.filter((m) => m.severity === "Major");
+          if (majors.length) {
+            const msg = majors.map((m) =>
+              "MAJOR: " + m.a + " + " + m.b + " \u2014 " + m.effect + ". " + m.action).join("\n");
+            if (!window.confirm("Drug interaction check:\n\n" + msg +
+              "\n\nDispense anyway? Only continue if the doctor has confirmed this combination.")) return;
+          }
+        } catch (e) { /* the check must never block a dispensing that is otherwise valid */ }
         const drug = drugOf(what);
         if (drug) {
           if (Number(drug.units || 0) < qty) {

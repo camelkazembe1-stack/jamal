@@ -286,3 +286,16 @@ body {
 }
 @media print { body { background: #fff; } }
 /* =============== end jamali-supportive-background ================ */
+
+/* the prescription safety net - live interaction / allergy warnings */
+.rx-warn { margin-top: 10px; border: 1px solid #fde68a; background: #fffbeb;
+  border-radius: 10px; padding: 10px 12px; }
+.rx-warn .w-title { font-size: 12px; font-weight: 800; color: #92400e;
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.rx-warn .w-item { font-size: 13px; color: #44403c; padding: 5px 0 5px 12px;
+  border-left: 3px solid #fbbf24; margin: 4px 0; }
+.rx-warn .w-item.w-major { border-left-color: #dc2626; background: #fef2f2;
+  border-radius: 0 8px 8px 0; padding-left: 12px; color: #7f1d1d; }
+.rx-warn .w-item.w-mod { border-left-color: #f59e0b; }
+.rx-warn .w-item.w-min { border-left-color: #fbbf24; }
+.rx-warn .w-item i { color: #64748b; }

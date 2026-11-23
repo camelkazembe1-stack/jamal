@@ -1978,6 +1978,7 @@ window.JAMALI_MENU = [
     { label: "Doctor Consultation", icon: "🩺", folder: "doctor-consultation", n: 325, d: 2 },
     { label: "Pharmacy", icon: "💊", folder: "pharmacy", n: 326, d: 2 },
     { label: "Pharmacy Stock", icon: "📦", folder: "pharmacy-stock", n: 395, d: 2 },
+    { label: "Drug Interactions", icon: "⚗️", folder: "drug-interactions", n: 407, d: 2 },
     { label: "Treatment / Procedures", icon: "🩹", folder: "treatment-procedures", n: 327, d: 2 },
     { label: "Patient List", icon: "🗂️", folder: "patient-module", n: 328, d: 2 },
     { label: "Patient File", icon: "🗃️", folder: "patient-file", n: 396, d: 2 },
@@ -2003,6 +2004,7 @@ window.JAMALI_MENU = [
     { label: "New Lab Request", icon: "🧪", folder: "new-lab-request", n: 361, d: 3 },
     { label: "Lab Request List", icon: "🗒️", folder: "lab-request-list", n: 362, d: 3 },
     { label: "Lab Workbench", icon: "🔬", folder: "lab-workbench", n: 359, d: 3 },
+    { label: "Lab Instrument Bridge", icon: "🔗", folder: "lab-instrument-bridge", n: 408, d: 3 },
     { label: "Radiology / Imaging", icon: "🩻", folder: "radiology", n: 358, d: 2 },
     { label: "New Imaging Request", icon: "🩻", folder: "new-imaging-request", n: 357, d: 3 },
     { label: "Imaging Requests", icon: "🗒️", folder: "imaging-requests", n: 356, d: 3 },
@@ -2012,6 +2014,7 @@ window.JAMALI_MENU = [
     { label: "Hospital Billing & Invoicing", icon: "🧾", folder: "hospital-billing", n: 363, d: 2 },
     { label: "Payments & Financial", icon: "💵", folder: "hospital-payments", n: 364, d: 2 },
     { label: "Health Insurance", icon: "🛡️", folder: "health-insurance", n: 365, d: 2 },
+    { label: "Tariff Engine", icon: "💱", folder: "tariff-engine", n: 406, d: 2 },
     { label: "Staff & Human Resource", icon: "👥", folder: "hospital-staff", n: 366, d: 2 },
     { label: "Doctor Scheduling & Duty Roster", icon: "🗓️", folder: "doctor-schedule", n: 367, d: 2 },
     { label: "Hospital Reports & Analytics", icon: "📊", folder: "hospital-reports", n: 368, d: 2 },
@@ -2038,12 +2041,14 @@ window.JAMALI_MENU = [
     { label: "Housekeeping & Environmental Services", icon: "🧹", folder: "housekeeping", n: 389, d: 2 },
     { label: "Health Audit Trail", icon: "🔐", folder: "health-audit", n: 398, d: 2 },
     { label: "Staff Roles", icon: "🪪", folder: "staff-roles", n: 399, d: 2 },
+    { label: "Staff Development", icon: "🎓", folder: "staff-development", n: 409, d: 2 },
     { label: "ICD-10 Finder", icon: "🔎", folder: "icd10", n: 400, d: 2 },
     { label: "DHIS2 Export", icon: "📡", folder: "dhis2-export", n: 401, d: 2 },
     { label: "Telemedicine", icon: "💻", folder: "telemedicine", n: 402, d: 2 },
     { label: "Birth Certificates", icon: "👶", folder: "birth-certificates", n: 403, d: 2 },
     { label: "Death Certificates", icon: "🕯️", folder: "death-certificates", n: 404, d: 2 },
     { label: "Branches", icon: "🏢", folder: "branches", n: 405, d: 2 },
+    { label: "FHIR Bridge", icon: "🌐", folder: "fhir-bridge", n: 410, d: 2 },
 ];
 
 /* ======================================================================
@@ -2150,6 +2155,160 @@ export const ICD10_CODES = [
   ["Z00", "General medical examination"],
   ["Z34", "Supervision of normal pregnancy"]
 ];
+
+/* ======================================================================
+   THE DRUG INTERACTION TABLE - the shared safety net for prescribing and
+   dispensing. The Doctor Consultation (325) warns while the prescription
+   rows are typed, the Pharmacy desk (326) re-checks at the moment of
+   dispensing, and the Drug Interactions finder (407) searches the table.
+   Pairs are clinically real, everyday combinations; severity follows the
+   practical rule: Major = avoid or adjust under specialist advice,
+   Moderate = monitor the patient / adjust timing, Minor = usually fine.
+   Add pairs freely - one entry per pair, ["Drug A", "Drug B", severity,
+   effect, action]; matching is by word stem so "amoxicillin" matches
+   "Amoxiclav" too.
+   ====================================================================== */
+export const DRUG_INTERACTIONS = [
+  ["warfarin", "aspirin", "Major", "Increased bleeding risk - antiplatelet adds to anticoagulant effect", "Avoid the combination; if unavoidable, monitor INR closely and watch for bleeding"],
+  ["warfarin", "ibuprofen", "Major", "NSAID raises bleeding risk and can displace warfarin from plasma proteins", "Use paracetamol instead; if an NSAID is essential, monitor INR"],
+  ["warfarin", "diclofenac", "Major", "NSAID raises bleeding risk and gastric erosion on anticoagulation", "Avoid; use paracetamol for pain"],
+  ["warfarin", "erythromycin", "Moderate", "Macrolide inhibits warfarin metabolism - INR climbs", "Monitor INR within 3-5 days of starting; consider azithromycin"],
+  ["warfarin", "ciprofloxacin", "Moderate", "Fluoroquinolone potentiates warfarin effect", "Monitor INR within 3-5 days of starting"],
+  ["warfarin", "metronidazole", "Major", "Potent CYP2C9 inhibition - marked INR rise and bleeding", "Reduce warfarin dose and monitor INR closely, or choose another antibiotic"],
+  ["warfarin", "fluconazole", "Major", "CYP2C9/3A4 inhibition - INR rises sharply", "Monitor INR within 2-3 days; adjust dose"],
+  ["warfarin", "cotrimoxazole", "Major", "Trimethoprim-sulfamethoxazole potentiates warfarin strongly", "Monitor INR within 2-3 days; consider alternative antibiotic"],
+  ["aspirin", "ibuprofen", "Moderate", "Ibuprofen competes for the same platelet binding - cardioprotective effect of aspirin is blunted", "Give aspirin 2 hours before ibuprofen, or use another analgesic"],
+  ["aspirin", "clopidogrel", "Moderate", "Dual antiplatelet effect - bleeding risk roughly doubles", "Only together when a doctor asks for dual therapy (e.g. after stent); review duration"],
+  ["clopidogrel", "omeprazole", "Moderate", "Omeprazole blocks CYP2C19 activation of clopidogrel - effect weakens", "Use pantoprazole instead if gastric protection is needed"],
+  ["ace inhibitor", "potassium sparing diuretic", "Major", "Both retain potassium - risk of dangerous hyperkalaemia", "Check potassium and creatinine within 1 week of starting the combination"],
+  ["enalapril", "spironolactone", "Major", "Hyperkalaemia risk - ACE inhibition plus potassium retention", "Monitor potassium at baseline, 1 week, then monthly"],
+  ["lisinopril", "spironolactone", "Major", "Hyperkalaemia risk - ACE inhibition plus potassium retention", "Monitor potassium at baseline, 1 week, then monthly"],
+  ["ramipril", "spironolactone", "Major", "Hyperkalaemia risk - ACE inhibition plus potassium retention", "Monitor potassium at baseline, 1 week, then monthly"],
+  ["enalapril", "ibuprofen", "Moderate", "NSAID blunts blood-pressure control and stresses the kidneys", "Avoid regular NSAID use; monitor creatinine if combined"],
+  ["lisinopril", "diclofenac", "Moderate", "NSAID blunts BP control; renal function may fall", "Avoid regular NSAID use; monitor creatinine and BP"],
+  ["metformin", "iodinated contrast", "Major", "Contrast nephropathy can cause metformin accumulation and lactic acidosis", "Stop metformin at contrast administration, restart after 48 h once renal function is confirmed"],
+  ["metformin", "furosemide", "Minor", "Furosemide may raise metformin levels slightly; metformin can blunt diuresis", "Usually fine; monitor renal function in dehydration"],
+  ["digoxin", "furosemide", "Moderate", "Loop diuretic lowers potassium - digoxin toxicity risk rises", "Monitor potassium and magnesium; keep digoxin level checked"],
+  ["digoxin", "amiodarone", "Major", "Amiodarone doubles digoxin exposure - toxicity (visual changes, arrhythmia)", "Halve the digoxin dose when amiodarone starts; monitor level"],
+  ["digoxin", "clarithromycin", "Major", "Macrolide raises digoxin concentration sharply", "Choose another antibiotic or reduce digoxin dose and monitor"],
+  ["amiodarone", "levofloxacin", "Major", "Both prolong QT - torsades risk", "Avoid; choose an antibiotic that does not prolong QT"],
+  ["amiodarone", "azithromycin", "Moderate", "Both prolong QT - arrhythmia risk in susceptible patients", "Avoid if possible; monitor ECG if unavoidable"],
+  ["ciprofloxacin", "theophylline", "Major", "Fluoroquinolone raises theophylline levels - seizures, palpitations", "Halve theophylline dose or use another antibiotic; check level"],
+  ["ciprofloxacin", "ferrous sulfate", "Moderate", "Iron chelates ciprofloxacin in the gut - antibiotic absorption collapses", "Give iron at least 2 hours apart from the antibiotic"],
+  ["ciprofloxacin", "calcium carbonate", "Moderate", "Calcium binds ciprofloxacin - absorption falls", "Give calcium 2 hours before or 6 hours after the antibiotic"],
+  ["erythromycin", "theophylline", "Major", "Macrolide raises theophylline levels - toxicity", "Halve theophylline dose or choose another antibiotic"],
+  ["simvastatin", "clarithromycin", "Major", "Strong CYP3A4 inhibition - rhabdomyolysis risk", "Pause the statin while on the macrolide, or use azithromycin"],
+  ["atorvastatin", "clarithromycin", "Moderate", "CYP3A4 inhibition raises statin exposure - myopathy risk", "Temporarily pause the statin or pick another antibiotic"],
+  ["simvastatin", "fluconazole", "Moderate", "Raised statin levels - myopathy risk", "Watch for muscle pain; consider pausing the statin"],
+  ["methotrexate", "cotrimoxazole", "Major", "Both block folate pathways plus renal clearance competition - severe marrow suppression", "Avoid the combination entirely"],
+  ["methotrexate", "ibuprofen", "Moderate", "NSAID reduces methotrexate clearance - toxicity risk", "Use paracetamol; if NSAID needed, monitor blood counts"],
+  ["lithium", "ibuprofen", "Major", "NSAID raises lithium levels towards toxicity (tremor, confusion)", "Avoid NSAIDs; use paracetamol; check lithium level if combined"],
+  ["lithium", "hydrochlorothiazide", "Major", "Thiazide raises lithium reabsorption - toxicity", "Avoid; if unavoidable, monitor lithium level within 5-7 days"],
+  ["haloperidol", "ciprofloxacin", "Moderate", "Both can prolong QT - arrhythmia risk", "Avoid if possible; monitor ECG when combined"],
+  ["chloroquine", "amiodarone", "Major", "Both prolong QT - torsades risk", "Avoid the combination; monitor ECG if unavoidable"],
+  ["tramadol", "fluoxetine", "Major", "Serotonin syndrome risk plus tramadol effect blunted", "Watch for agitation, fever, tremor; consider another analgesic"],
+  ["tramadol", "amitriptyline", "Moderate", "Serotonin syndrome and seizure threshold lowered", "Use caution at doses above usual; watch for agitation and tremor"],
+  ["morphine", "diazepam", "Major", "Combined sedation - respiratory depression", "Avoid together, especially in the elderly; if unavoidable, reduce both doses and monitor breathing"],
+  ["codeine", "diazepam", "Moderate", "Combined sedation on the breathing centre", "Avoid in the elderly and children; monitor drowsiness"],
+  ["phenytoin", "rifampicin", "Moderate", "Rifampicin accelerates phenytoin clearance - seizure control lost", "Monitor levels and raise the dose as needed"],
+  ["phenytoin", "fluconazole", "Moderate", "Fluconazole raises phenytoin levels - toxicity", "Monitor level and watch for nystagmus, drowsiness"],
+  ["carbamazepine", "clarithromycin", "Major", "CYP3A4 inhibition raises carbamazepine sharply - ataxia, drowsiness", "Choose another antibiotic or reduce the carbamazepine dose"],
+  ["sildenafil", "isosorbide dinitrate", "Major", "Nitrate plus PDE5 inhibitor - severe, dangerous hypotension", "Never combine - at least 24 hours apart, and in practice avoid"],
+  ["sildenafil", "nitroglycerin", "Major", "Nitrate plus PDE5 inhibitor - severe hypotension", "Never combine"],
+  ["insulin", "ciprofloxacin", "Moderate", "Fluoroquinolones can swing blood sugar both ways", "Monitor glucose more often while on the antibiotic"],
+  ["glibenclamide", "fluconazole", "Moderate", "Raised sulfonylurea levels - hypoglycaemia risk", "Watch glucose; consider dose reduction"],
+  ["glibenclamide", "aspirin", "Minor", "Aspirin can potentiate the sulfonylurea slightly", "Usually fine; watch for hypoglycaemia signs"],
+  ["levothyroxine", "ferrous sulfate", "Moderate", "Iron binds thyroxine in the gut - absorption lost", "Give iron at least 4 hours apart from levothyroxine"],
+  ["levothyroxine", "calcium carbonate", "Moderate", "Calcium binds thyroxine - absorption falls", "Give calcium at least 4 hours apart from levothyroxine"],
+  ["aluminium hydroxide", "ciprofloxacin", "Moderate", "Antacid binds the antibiotic - absorption collapses", "Give the antacid 2 hours after the antibiotic"],
+  ["omeprazole", "ketoconazole", "Moderate", "Acid suppression reduces ketoconazole absorption", "Give the antifungal with acidic drink, or switch antifungal"],
+  ["amlodipine", "simvastatin", "Minor", "Amlodipine mildly raises simvastatin levels", "Keep simvastatin at 20 mg or less daily"],
+  ["hydrochlorothiazide", "ibuprofen", "Moderate", "NSAID blunts the diuretic and can strain the kidneys", "Avoid regular NSAID use; monitor BP and creatinine"],
+  ["furosemide", "gentamicin", "Major", "Both are ototoxic and nephrotoxic - hearing and kidney damage risk stacks", "Avoid together where possible; monitor hearing and creatinine"],
+  ["gentamicin", "vancomycin", "Major", "Stacked nephrotoxicity and ototoxicity", "Avoid unless specialist asks; monitor levels, creatinine, hearing"]
+];
+
+// wordStem - a loose stem so "amoxicillin" matches "Amoxiclav 625",
+// "potassium sparing diuretic" is matched token-wise, and plurals fold.
+function __jamaliStems(name) {
+  const s = String(name || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ");
+  const toks = s.split(/\s+/).filter(Boolean);
+  const stems = new Set();
+  for (const t of toks) {
+    if (t.length < 4) { stems.add(t); continue; }
+    stems.add(t);
+    stems.add(t.replace(/(ine|ate|ol|in|ium|ide|vir|mab)$/, ""));
+    stems.add(t.replace(/s$/, ""));
+  }
+  return stems;
+}
+function __jamaliNameHits(drugName, entryName) {
+  // entry names may be multi-word ("potassium sparing diuretic") - every
+  // word of the entry must hit the drug text's stems.
+  const drugStems = __jamaliStems(drugName);
+  const parts = String(entryName || "").toLowerCase().split(/\s+/).filter(Boolean);
+  return parts.every((p) => {
+    const ps = __jamaliStems(p);
+    for (const q of ps) if (drugStems.has(q)) return true;
+    return false;
+  });
+}
+// checkInteractions(names) - names is the list of drug names on the sheet
+// (prescription rows or dispense lines). Returns matches:
+// [{ a, b, severity, effect, action }] - a and b are the matched names.
+export function checkInteractions(names) {
+  const items = (Array.isArray(names) ? names : [])
+    .map((n) => String(n || "").trim()).filter(Boolean);
+  const out = [];
+  for (const [ea, eb, sev, eff, act] of DRUG_INTERACTIONS) {
+    const hitA = items.filter((n) => __jamaliNameHits(n, ea));
+    const hitAset = new Set(hitA.map((n) => n.toLowerCase()));
+    const hitB = items.filter((n) => __jamaliNameHits(n, eb) &&
+      !hitAset.has(n.toLowerCase()));
+    for (const a of hitA) for (const b of hitB) {
+      if (a.toLowerCase() === b.toLowerCase()) continue;
+      if (out.some((m) => (m.a === a && m.b === b) || (m.a === b && m.b === a))) continue;
+      out.push({ a, b, severity: sev, effect: eff, action: act });
+    }
+  }
+  const rank = { Major: 0, Moderate: 1, Minor: 2 };
+  out.sort((x, y) => (rank[x.severity] ?? 3) - (rank[y.severity] ?? 3));
+  return out;
+}
+// checkAllergies(names, allergyText) - a light screen: known allergy words
+// in the patient record against the drugs being given. Word-stem based
+// plus a family map, so "penicillin allergy" fires on amoxicillin /
+// Amoxiclav / flucloxacillin too. Advisory only.
+const __ALLERGY_FAMILIES = {
+  "penicillin": ["amoxicillin", "amoxiclav", "ampicillin", "flucloxacillin",
+    "piperacillin", "ticarcillin", "penicillin", "co-amoxiclav"],
+  "sulfa": ["cotrimoxazole", "sulfamethoxazole", "sulfasalazine", "sulfadiazine"],
+  "aspirin": ["aspirin", "acetylsalicylic"],
+  "nsaid": ["ibuprofen", "diclofenac", "naproxen", "indomethacin", "aspirin", "ketoprofen"],
+  "iodine": ["iodinated", "povidone", "contrast"]
+};
+export function checkAllergies(names, allergyText) {
+  const txt = String(allergyText || "").toLowerCase();
+  if (!txt.trim() || /^(no|none|nil|nkda|nka)\b/.test(txt.trim())) return [];
+  const out = [];
+  for (const n of (Array.isArray(names) ? names : []).map((x) => String(x || "").trim()).filter(Boolean)) {
+    const low = n.toLowerCase();
+    for (const word of txt.split(/[,;/]+/).map((w) => w.trim()).filter((w) => w.length >= 4)) {
+      const stems = __jamaliStems(word);
+      let hit = [...stems].some((s) => s.length >= 4 && low.includes(s));
+      if (!hit) {
+        // the family map: every word of the allergy phrase must be either a
+        // family keyword match or a filler word (allergy, sensitivity...)
+        for (const [key, fam] of Object.entries(__ALLERGY_FAMILIES)) {
+          if (!word.includes(key)) continue;
+          if (fam.some((d) => low.includes(d) || low.includes(d.replace(/-/g, "")))) { hit = true; break; }
+        }
+      }
+      if (hit) { out.push({ drug: n, allergy: word }); break; }
+    }
+  }
+  return out;
+}
 
 // Modules switched off in Organisation Settings leave the menu and Home.
 (function () {
@@ -3587,6 +3746,278 @@ export function patientById(id) {
   return __jamaliPatients.find((p) =>
     String(p.regId || "").trim().toLowerCase() === want) || null;
 }
+
+/* ======================================================================
+   THE SECURITY CORE - two-factor sign-in (TOTP), the device app lock and
+   the password policy, all Web Crypto - no outside service.
+   ====================================================================== */
+// --- base32 helpers (RFC 4648, no padding) ---
+const __b32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+function __b32encode(buf) {
+  let bits = 0, val = 0, out = "";
+  for (const byte of buf) {
+    val = (val << 8) | byte; bits += 8;
+    while (bits >= 5) { out += __b32[(val >>> (bits - 5)) & 31]; bits -= 5; }
+  }
+  if (bits > 0) out += __b32[(val << (5 - bits)) & 31];
+  return out;
+}
+function __b32decode(str) {
+  const clean = String(str || "").toUpperCase().replace(/[^A-Z2-7]/g, "");
+  let bits = 0, val = 0, out = [];
+  for (const ch of clean) {
+    val = (val << 5) | __b32.indexOf(ch); bits += 5;
+    if (bits >= 8) { out.push((val >>> (bits - 8)) & 255); bits -= 8; }
+  }
+  return new Uint8Array(out);
+}
+async function __sha256hex(text) {
+  const d = await crypto.subtle.digest("SHA-256",
+    new TextEncoder().encode(String(text)));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+// __totpNow(secretB32, stepSeconds, driftSteps) - the RFC 6238 code, using
+// HMAC-SHA-1 through Web Crypto. Returns the 6-digit string or "".
+async function __totpNow(secretB32, stepSeconds, driftSteps) {
+  try {
+    const keyBytes = __b32decode(secretB32);
+    if (!keyBytes.length) return "";
+    const step = Math.floor(Date.now() / 1000 / (stepSeconds || 30)) + (driftSteps || 0);
+    const msg = new Uint8Array(8);
+    const big = BigInt(step);                       // big-endian 8-byte counter
+    for (let i = 7; i >= 0; i--) msg[i] = Number((big >> BigInt(8 * (7 - i))) & 255n);
+    const key = await crypto.subtle.importKey("raw", keyBytes,
+      { name: "HMAC", hash: "SHA-1" }, false, ["sign"]);
+    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, msg));
+    const off = mac[19] & 15;
+    const bin = ((mac[off] & 127) << 24) | (mac[off + 1] << 16) |
+                (mac[off + 2] << 8) | mac[off + 3];
+    return String(bin % 1000000).padStart(6, "0");
+  } catch (e) { return ""; }
+}
+// --- the per-account store: keyed by the same zone as the data layer ---
+function __secKey(kind) {
+  return ZONE_PREFIX + "jamaliSec::" + currentNamespace() + "::" + kind;
+}
+function __secGet(kind, fallback) {
+  try { return JSON.parse(lsGet(__secKey(kind)) || "null") || fallback; }
+  catch (e) { return fallback; }
+}
+function __secSet(kind, data) { try { lsSet(__secKey(kind), JSON.stringify(data)); } catch (e) {} }
+function __secDel(kind) { try { lsDel(__secKey(kind)); } catch (e) {} }
+
+// twofaStatus() - { enrolled, enabled, hasRecovery } for this account.
+export function twofaStatus() {
+  const rec = __secGet("2fa", null);
+  return { enrolled: !!(rec && rec.secret), enabled: !!(rec && rec.enabled),
+           hasRecovery: !!(rec && rec.recovery) };
+}
+// twofaEnroll() - creates the secret, returns { secret, otpauth, recovery }.
+// The authenticator app (Google Authenticator, Authy, FreeOTP...) scans the
+// otpauth QR or takes the base32 secret; verification with twofaVerify(code)
+// turns it on. A one-time recovery code is returned for lost phones.
+export async function twofaEnroll() {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  const secret = __b32encode(bytes);
+  const recBytes = new Uint8Array(6);
+  crypto.getRandomValues(recBytes);
+  const recovery = [...recBytes].map((b) => "abcdefghjkmnpqrstuvwxyz23456789"[b % 31]).join("");
+  const ns = currentNamespace();
+  const who = ns.indexOf("u::") === 0 ? ns.slice(3) : "this device";
+  const st = twofaStatus();
+  const otpauth = "otpauth://totp/JAMALI:" + encodeURIComponent(who) +
+    "?secret=" + secret + "&issuer=JAMALI&algorithm=SHA1&digits=6&period=30";
+  __secSet("2fa", { secret, enabled: false, recovery,
+                    enrolledAt: new Date().toISOString() });
+  return { secret, otpauth, recovery, wasEnabled: st.enabled, account: who };
+}
+// twofaVerify(code) - checks the 6-digit code (accepts the neighbouring
+// time step for clock drift) or the recovery code. On success the factor
+// is switched on (and the recovery code is burned when used for that).
+export async function twofaVerify(code) {
+  const rec = __secGet("2fa", null);
+  const c = String(code || "").replace(/\s+/g, "");
+  if (!rec || !rec.secret) return { ok: false, reason: "not enrolled" };
+  if (rec.recovery && c.toLowerCase() === String(rec.recovery).toLowerCase()) {
+    delete rec.recovery;
+    rec.enabled = true;
+    rec.enabledAt = new Date().toISOString();
+    __secSet("2fa", rec);
+    return { ok: true, via: "recovery" };
+  }
+  if (!/^\d{6}$/.test(c)) return { ok: false, reason: "bad code" };
+  for (const drift of [-1, 0, 1]) {
+    const want = await __totpNow(rec.secret, 30, drift);
+    if (want && want === c) {
+      rec.enabled = true;
+      rec.enabledAt = new Date().toISOString();
+      __secSet("2fa", rec);
+      return { ok: true, via: "totp" };
+    }
+  }
+  return { ok: false, reason: "wrong code" };
+}
+// twofaDisable(code) - the factor can only be switched off with a valid
+// current code, exactly as it was switched on.
+export async function twofaDisable(code) {
+  const rec = __secGet("2fa", null);
+  if (!rec || !rec.secret) return { ok: false, reason: "not enrolled" };
+  const c = String(code || "").replace(/\s+/g, "");
+  const viaRecovery = rec.recovery && c.toLowerCase() === String(rec.recovery).toLowerCase();
+  let okTotp = false;
+  if (/^\d{6}$/.test(c)) {
+    for (const drift of [-1, 0, 1]) {
+      const want = await __totpNow(rec.secret, 30, drift);
+      if (want && want === c) { okTotp = true; break; }
+    }
+  }
+  if (!okTotp && !viaRecovery) return { ok: false, reason: "wrong code" };
+  __secDel("2fa");
+  return { ok: true };
+}
+
+// --- the password policy + the device app lock ---
+export const PASSWORD_POLICY = {
+  minLength: 8,
+  minClasses: 3,
+  classes: ["lowercase a-z", "uppercase A-Z", "digits 0-9", "symbols !@#…"],
+  describe: "at least 8 characters with at least 3 of: lowercase, uppercase, digits, symbols"
+};
+// passwordCheck(pw) - { ok, problems: [] } against PASSWORD_POLICY.
+export function passwordCheck(pw) {
+  const p = String(pw || "");
+  const problems = [];
+  if (p.length < PASSWORD_POLICY.minLength)
+    problems.push("at least " + PASSWORD_POLICY.minLength + " characters");
+  let classes = 0;
+  if (/[a-z]/.test(p)) classes++;
+  if (/[A-Z]/.test(p)) classes++;
+  if (/[0-9]/.test(p)) classes++;
+  if (/[^A-Za-z0-9]/.test(p)) classes++;
+  if (classes < PASSWORD_POLICY.minClasses)
+    problems.push("at least " + PASSWORD_POLICY.minClasses + " of: lowercase, uppercase, digits, symbols");
+  if (/(^123456$|^password$|^qwerty$|000000|111111|abc123)/i.test(p))
+    problems.push("not a common or repeated pattern");
+  return { ok: problems.length === 0, problems };
+}
+// lockSet(pw) / lockCheck(pw) / lockStatus() - an optional lock on THIS
+// device for shared-clinic computers: only the hash is stored, the policy
+// is enforced at set time, and lockGate(pw) unlocks pages again.
+export async function lockSet(pw) {
+  const chk = passwordCheck(pw);
+  if (!chk.ok) return { ok: false, problems: chk.problems };
+  const hash = await __sha256hex("jamali-lock::" + pw);
+  __secSet("lock", { hash, setAt: new Date().toISOString() });
+  return { ok: true };
+}
+export async function lockCheck(pw) {
+  const rec = __secGet("lock", null);
+  if (!rec || !rec.hash) return { ok: false, reason: "no lock set" };
+  const hash = await __sha256hex("jamali-lock::" + pw);
+  return { ok: hash === rec.hash };
+}
+export function lockStatus() {
+  const rec = __secGet("lock", null);
+  return { set: !!(rec && rec.hash), setAt: (rec && rec.setAt) || "" };
+}
+export function lockRemove(currentPw) {
+  const rec = __secGet("lock", null);
+  if (!rec) return Promise.resolve({ ok: true });
+  return lockCheck(currentPw).then((r) => {
+    if (!r.ok) return { ok: false, reason: "wrong password" };
+    __secDel("lock");
+    return { ok: true };
+  });
+}
+
+// --- the opening gate: when 2FA or the device lock is armed, the shell
+// asks for the code / password before any page can be used. One unlock
+// per browser session (30 minutes), so page switches stay smooth.
+(function __jamaliSecurityGate() {
+  const UNLOCK_KEY = "jamaliUnlockedAt";
+  const TTL = 30 * 60 * 1000;
+  function recentlyUnlocked() {
+    try {
+      const t = Number(sessionStorage.getItem(UNLOCK_KEY) || 0);
+      return t > 0 && (Date.now() - t) < TTL;
+    } catch (e) { return false; }
+  }
+  function markUnlocked() {
+    try { sessionStorage.setItem(UNLOCK_KEY, String(Date.now())); } catch (e) {}
+  }
+  function rm(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
+  async function maybeGate() {
+    if (recentlyUnlocked()) return;
+    let lock = { set: false }, fa = { enabled: false };
+    try { lock = lockStatus(); fa = twofaStatus(); } catch (e) { return; }
+    const needLock = !!lock.set;
+    const needFa = !!fa.enabled;
+    if (!needLock && !needFa) return;
+
+    const overlay = document.createElement("div");
+    overlay.setAttribute("id", "jamali-gate");
+    overlay.setAttribute("style",
+      "position:fixed;inset:0;z-index:2147483647;background:rgba(15,23,42,.62);" +
+      "display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif");
+    const card = document.createElement("div");
+    card.setAttribute("style",
+      "background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.3);" +
+      "padding:26px 28px;max-width:420px;width:92%;color:#0f172a");
+    const title = document.createElement("h2");
+    title.textContent = "JAMALI is locked on this device";
+    title.setAttribute("style", "font-size:17px;margin:0 0 6px");
+    const sub = document.createElement("p");
+    sub.textContent = [
+      needFa ? "type the 6-digit code from your authenticator app" : "",
+      needLock ? "type the device lock password" : ""
+    ].filter(Boolean).join(" and ") + " to open the system.";
+    sub.setAttribute("style", "font-size:13px;color:#64748b;margin:0 0 14px;line-height:1.45");
+    const row = document.createElement("div");
+    row.setAttribute("style", "display:flex;gap:10px;flex-wrap:wrap");
+    const inp = document.createElement("input");
+    inp.type = needLock ? "password" : "text";
+    if (!needLock) inp.setAttribute("inputmode", "numeric");
+    inp.setAttribute("placeholder", needLock ? "lock password" : "6-digit code");
+    inp.setAttribute("autocomplete", needLock ? "current-password" : "off");
+    inp.setAttribute("style", "flex:1;min-width:180px;border:1px solid #cbd5e1;border-radius:9px;padding:10px 12px;font-size:15px");
+    const btn = document.createElement("button");
+    btn.textContent = "Unlock";
+    btn.setAttribute("style", "background:#059669;color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:800;font-size:14px;cursor:pointer");
+    const msg = document.createElement("p");
+    msg.setAttribute("style", "font-size:12.5px;font-weight:700;color:#b91c1c;min-height:16px;margin:10px 0 0");
+    row.appendChild(inp); row.appendChild(btn);
+    card.appendChild(title); card.appendChild(sub); card.appendChild(row); card.appendChild(msg);
+    overlay.appendChild(card);
+    document.body ? document.body.appendChild(overlay) : document.addEventListener("DOMContentLoaded", () => document.body.appendChild(overlay), { once: true });
+
+    let stage = needFa ? "fa" : "lock";
+    async function tryUnlock() {
+      const v = inp.value.trim();
+      if (!v) { msg.textContent = "Type it first."; return; }
+      if (stage === "fa") {
+        const r = await twofaVerify(v);
+        if (!r.ok) { msg.textContent = "That code did not verify (" + (r.reason || "wrong code") + ")."; return; }
+        if (!needLock) { markUnlocked(); rm(overlay); return; }
+        msg.textContent = "Code accepted - now the device lock password.";
+        msg.style.color = "#047857";
+        inp.value = ""; inp.type = "password";
+        inp.placeholder = "lock password";
+        stage = "lock";
+        return;
+      }
+      const r = await lockCheck(v);
+      if (!r.ok) { msg.textContent = "Wrong password."; msg.style.color = "#b91c1c"; return; }
+      markUnlocked(); rm(overlay);
+    }
+    btn.addEventListener("click", tryUnlock);
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") btn.click(); });
+    setTimeout(() => inp.focus(), 60);
+  }
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", () => { setTimeout(maybeGate, 150); }, { once: true });
+  else setTimeout(maybeGate, 150);
+})();
 
 /* ======================================================================
    THE REGISTER PICKERS - was public/pickers.js, wrapped in its own scope

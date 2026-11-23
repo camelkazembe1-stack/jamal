@@ -15,7 +15,7 @@
 
 
 import { requireAuth, auth, db, collection, query, addDoc, updateDoc, doc, setDoc, onSnapshot, serverTimestamp, writeBatch, getDoc,
-         ICD10_CODES } from "/sidebar.js";
+         ICD10_CODES, checkInteractions, checkAllergies } from "/sidebar.js";
  
 let showPatient = function () {}, hidePatient = function () {};
 try {
@@ -764,7 +764,38 @@ $("#ord-add").addEventListener("click", () => {
 $("#rx-rows").addEventListener("click", (e) => {
   const del = e.target.closest(".row-del");
   if (del) del.closest(".row-ed").remove();
+  paintRxWarn();
 });
+
+// ---- the safety net: live drug-interaction and allergy warnings ----
+// As the prescription rows are typed, every pair on the sheet is checked
+// against the shared interaction table and the patient's allergy line.
+// Warnings are advisory - the doctor sees them and decides.
+function rxNames() {
+  return readRows("rx-rows").map((r) => String(r.medicine || "").trim()).filter(Boolean);
+}
+function paintRxWarn() {
+  const box = document.getElementById("rx-warn");
+  if (!box) return;
+  const names = rxNames();
+  const hits = checkInteractions(names);
+  const alg = checkAllergies(names, $("#d-allergies").value);
+  if (!hits.length && !alg.length) { box.hidden = true; box.innerHTML = ""; return; }
+  const clsOf = (s) => s === "Major" ? "w-major" : s === "Moderate" ? "w-mod" : "w-min";
+  let html = '<div class="w-title">Safety check &mdash; read before saving</div>';
+  for (const m of hits) {
+    html += '<div class="w-item ' + clsOf(m.severity) + '"><b>' + esc(m.severity) + ":</b> " +
+      esc(m.a) + " + " + esc(m.b) + " &mdash; " + esc(m.effect) + ". <i>" + esc(m.action) + ".</i></div>";
+  }
+  for (const a of alg) {
+    html += '<div class="w-item w-major"><b>Allergy:</b> the patient\'s record says "' +
+      esc(a.allergy) + '" and the sheet has ' + esc(a.drug) + " &mdash; confirm before prescribing.</div>";
+  }
+  box.innerHTML = html;
+  box.hidden = false;
+}
+$("#rx-rows").addEventListener("input", paintRxWarn);
+$("#d-allergies").addEventListener("input", paintRxWarn);
 $("#ord-rows").addEventListener("click", (e) => {
   const del = e.target.closest(".row-del");
   if (del) del.closest(".row-ed").remove();

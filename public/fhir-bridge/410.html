@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FHIR Bridge — JAMALI Health</title>
+<link rel="stylesheet" href="/fhir-bridge/410.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>FHIR Bridge</h1>
+  <p class="sub">The records speak FHIR R4, the international health-data language: build a real
+  FHIR Bundle (Patient, Encounter, Condition with ICD-10, Observation with LOINC, MedicationRequest)
+  out of this device's records, push it to any FHIR endpoint, or validate a bundle someone sent.
+  Every resource carries the patient's single Registration ID as its identifier.</p>
+
+  <div class="card build-card">
+    <h2>Build a FHIR R4 Bundle</h2>
+    <div class="build-grid">
+      <label>Scope<select id="b-scope">
+        <option value="all">Everything on this device</option>
+        <option value="one">One patient (Registration ID below)</option>
+      </select></label>
+      <label>Registration ID<input id="b-regid" type="text" placeholder="e.g. 4827ABCD" disabled></label>
+      <label>Months back<input id="b-months" type="number" min="1" max="120" value="3"></label>
+      <div class="form-actions">
+        <button class="btn-primary b-build" type="button">Build the Bundle</button>
+        <button class="btn-ghost b-save" type="button" disabled>Download JSON</button>
+      </div>
+    </div>
+    <p class="form-err" id="b-err" hidden></p>
+    <p class="save-note" id="b-ok" hidden></p>
+    <div class="res-line" id="b-res" hidden></div>
+  </div>
+
+  <div class="card push-card">
+    <h2>Push the Bundle to a FHIR endpoint</h2>
+    <div class="build-grid">
+      <label class="span2">Endpoint URL<input id="u-url" type="text" placeholder="https://your-server/fhir"></label>
+      <label class="span2">Auth token (optional)<input id="u-token" type="password" placeholder="Bearer token / API key"></label>
+      <div class="form-actions">
+        <button class="btn-primary u-go" type="button" disabled>POST the Bundle</button>
+      </div>
+    </div>
+    <p class="form-err" id="u-err" hidden></p>
+    <p class="save-note" id="u-ok" hidden></p>
+    <p class="mini-note">The push happens from this browser straight to the endpoint you name -
+    nothing is sent anywhere else, and no record is stored on the endpoint until you push.</p>
+  </div>
+
+  <div class="card check-card">
+    <h2>Validate a FHIR Bundle</h2>
+    <details class="paste-box">
+      <summary>paste or upload a bundle JSON</summary>
+      <textarea id="v-paste" rows="5" placeholder='{"resourceType":"Bundle", ...}'></textarea>
+      <div class="import-grid">
+        <label class="file-btn btn-ghost">Choose a .json file<input type="file" id="v-file" accept=".json" hidden></label>
+        <button class="btn-primary" id="v-go" type="button">Validate</button>
+      </div>
+    </details>
+    <div class="res-line" id="v-res" hidden></div>
+  </div>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "FHIR Bridge \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p10 = { page: "410", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p10 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/fhir-bridge/410.js"></script>
+</body>
+</html>

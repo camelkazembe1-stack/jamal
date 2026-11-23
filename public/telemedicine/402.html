@@ -46,6 +46,34 @@
     <p class="save-note" id="f-ok" hidden></p>
   </div>
 
+  <div class="card video-card" id="v-card" hidden>
+    <h2>Video room &mdash; <span id="v-ref">&mdash;</span></h2>
+    <div class="v-stage">
+      <div class="v-box">
+        <video id="v-remote" autoplay playsinline></video>
+        <span class="v-tag">The other side</span>
+        <span class="v-hold" id="v-remote-hold">Waiting for the other side&hellip;</span>
+      </div>
+      <div class="v-box">
+        <video id="v-local" autoplay playsinline muted></video>
+        <span class="v-tag">You</span>
+      </div>
+    </div>
+    <div class="v-controls">
+      <button class="btn-primary v-start" id="v-start" type="button">Start / join the call</button>
+      <button class="btn-ghost v-mute" id="v-mute" type="button" disabled>Mute mic</button>
+      <button class="btn-ghost v-cam" id="v-cam" type="button" disabled>Camera off</button>
+      <button class="btn-ghost v-end" id="v-end" type="button" disabled>End call</button>
+      <button class="btn-ghost v-close" id="v-close" type="button">Close room</button>
+      <span class="v-state" id="v-state">idle</span>
+    </div>
+    <p class="form-err" id="v-err" hidden></p>
+    <p class="mini-note">The picture and sound run directly between the two browsers (WebRTC) &mdash;
+    the clinic's records only carry the handshake, never the call itself. Keep this page open on
+    both devices, press <b>Start / join the call</b> on each, and allow the camera and microphone.
+    The patient side can stay on the joining link if a phone call is easier.</p>
+  </div>
+
   <div class="card search-card">
     <input id="rec-search" type="text" placeholder="Search by patient, phone, reason or reference" autocomplete="off">
   </div>
@@ -70,8 +98,8 @@
   </div>
 
   <p class="mini-note">JAMALI keeps the queue, the record and the link. The call itself happens on
-  whatever channel the patient has - a phone call, WhatsApp, or a meeting link - because the
-  patient's phone, not the clinic's computer, is what answers.</p>
+  whatever channel the patient has - the built-in video room above, a phone call, WhatsApp, or a
+  meeting link - because the patient's phone, not the clinic's computer, is what answers.</p>
 
 </main>
 <script>

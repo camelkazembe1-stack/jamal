@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drug Interactions — JAMALI Health</title>
+<link rel="stylesheet" href="/drug-interactions/407.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+
+  <p class="p-boot" id="h-boot" hidden></p>
+  <p class="p-err" id="h-err" hidden><span id="h-err-txt"></span></p>
+
+  <a class="back" href="/health/321">&larr; Health</a>
+  <h1>Drug Interactions</h1>
+  <p class="sub">The shared safety table the whole system checks against: the doctor's
+  <a href="/doctor-consultation/325">prescription sheet</a> warns while medicines are typed, the
+  <a href="/pharmacy/326">pharmacy counter</a> re-checks at the moment of dispensing, and here you
+  can search the table directly - check a pair, or paste a whole prescription.</p>
+
+  <div class="card check-card">
+    <h2>Check a pair</h2>
+    <div class="pair-grid">
+      <label>Medicine A<input id="p-a" type="text" placeholder="e.g. Warfarin 5 mg"></label>
+      <label>Medicine B<input id="p-b" type="text" placeholder="e.g. Metronidazole 400 mg"></label>
+      <button class="btn-primary" id="p-go" type="button">Check the pair</button>
+    </div>
+    <div class="pair-result" id="p-result" hidden></div>
+  </div>
+
+  <div class="card check-card">
+    <h2>Check a whole prescription</h2>
+    <p class="mini-note">One medicine per line - the same check the doctor's sheet runs live.</p>
+    <textarea id="s-lines" rows="4" placeholder="Warfarin 5 mg&#10;Metronidazole 400 mg&#10;Paracetamol 500 mg"></textarea>
+    <div class="form-actions"><button class="btn-primary" id="s-go" type="button">Check the sheet</button></div>
+    <div class="pair-result" id="s-result" hidden></div>
+  </div>
+
+  <div class="card search-card">
+    <input id="rec-search" type="text" placeholder="Filter the table: a medicine name, or a word like 'bleeding'" autocomplete="off">
+  </div>
+
+  <div class="card table-card" id="t-card" hidden>
+    <h2>The interaction table</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Severity</th><th>Medicine A</th><th>Medicine B</th><th>What happens</th><th>What to do</th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="t-count"></p>
+  </div>
+
+  <p class="mini-note">Severity: <b>Major</b> - avoid the combination or adjust under specialist
+  advice; <b>Moderate</b> - monitor the patient or separate the timings; <b>Minor</b> - usually
+  fine, worth knowing. The table is a decision aid for clinicians, not a substitute for clinical
+  judgement. Edit it in the shared core (<b>public/sidebar.js</b>, DRUG_INTERACTIONS) to grow it.</p>
+
+</main>
+<script>
+  (function () {
+    var boot = document.getElementById("h-boot");
+    if (boot) { boot.hidden = false; boot.textContent = "Drug Interactions \u00b7 build 1 \u00b7 connecting\u2026"; }
+    window.__p07 = { page: "407", build: "1", t0: Date.now() };
+  })();
+  function __jamaliHerr(msg) {
+    var box = document.getElementById("h-err");
+    var boot = document.getElementById("h-boot");
+    if (boot) boot.hidden = true;
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    document.getElementById("h-err-txt").textContent = "Page error \u2014 " + msg;
+  }
+  window.addEventListener("error", function (e) {
+    if (!e || !e.message) return;
+    __jamaliHerr(e.message);
+  }, true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var r = e && e.reason;
+    __jamaliHerr(String((r && (r.code || r.message)) || r || "unknown rejection"));
+  });
+  setTimeout(function () {
+    var boot = document.getElementById("h-boot");
+    var s = window.__p07 || {};
+    if (!boot || boot.hidden) return;
+    __jamaliHerr("Still quiet after 12 seconds \u2014 build " + (s.build || "1") +
+      ", script " + (s.ran ? "ran" : "DID NOT run") + ".");
+  }, 12000);
+</script>
+<script type="module" src="/drug-interactions/407.js"></script>
+</body>
+</html>

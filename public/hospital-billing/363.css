@@ -103,3 +103,14 @@ table.rec .row-del:hover { background: #fee2e2; }
 .back { display: inline-block; margin: 2px 0 6px; font-size: 13px; font-weight: 800;
   color: #059669; text-decoration: none; }
 .sub { margin: 2px 0 18px; font-size: 13.5px; color: #475569; line-height: 1.5; }
+
+/* tariff picker chips */
+.tariff-box { margin-top: 14px; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+.tariff-box input[type="search"] { width: 100%; max-width: 340px; border: 1px solid #cbd5e1;
+  border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
+.tariff-box input[type="search"]:focus { outline: 2px solid #a7f3d0; border-color: #059669; }
+.tariff-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tariff-chip { border: 1px solid #cbd5e1; background: #fff; border-radius: 999px;
+  padding: 6px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.tariff-chip:hover { border-color: #059669; background: #ecfdf5; }
+.tariff-chip .chip-amt { color: #047857; font-weight: 800; margin-left: 4px; }
