@@ -208,4 +208,92 @@ document.getElementById("t-body").addEventListener("click", async (e) => {
   }
 });
 
+// ---- facility network directory -----------------------------------------------
+// The places this facility actually sends patients to (and receives from).
+// The names feed the referral form's Facility field as a datalist, so a
+// referral is typed fast and spelled the same way every time.
+let FACS = [];
+
+onSnapshot(collection(db, "healthFacilities"), (snap) => {
+  FACS = snap.docs.map((d) => Object.assign({}, d.data({ serverTimestamps: "estimate" }), { __id: d.id }))
+    .filter((f) => !f.removed)
+    .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" }));
+  renderFacs();
+}, (e) => herr("healthFacilities", e));
+window.__p97.listeners++;
+
+const kmOf = (v) => { const n = Number(v); return isFinite(n) && n > 0 ? n : null; };
+
+function renderFacs() {
+  const dl = document.getElementById("fac-list");
+  if (dl) dl.innerHTML = FACS.map((f) => '<option value="' + esc(f.name) + '">').join("");
+  const wrap = document.getElementById("fa-wrap");
+  if (!wrap) return;
+  wrap.hidden = FACS.length === 0;
+  document.getElementById("fa-body").innerHTML = FACS.map((f) => {
+    const km = kmOf(f.km);
+    return "<tr>" +
+      '<td class="c-name">' + esc(f.name || "—") + "</td>" +
+      "<td>" + esc(f.level || "—") + "</td>" +
+      "<td>" + esc(f.district || "—") + "</td>" +
+      "<td>" + esc(f.phone || "—") + "</td>" +
+      "<td>" + (km ? km + " km" : "—") + "</td>" +
+      "<td>" + esc(f.services || "—") + "</td>" +
+      '<td class="c-act"><button type="button" class="mini-btn" data-facdel="' + esc(f.__id) + '">Remove</button></td>' +
+      "</tr>";
+  }).join("");
+  document.getElementById("fa-count").textContent = FACS.length
+    ? FACS.length + " facility(ies) in the network."
+    : "";
+}
+
+document.getElementById("fac-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  err("fa-err", "");
+  ok("fa-ok", "");
+  const name = $("#fa-name").value.trim();
+  if (!name) return err("fa-err", "Enter the facility name.");
+  if (FACS.some((f) => String(f.name || "").toLowerCase() === name.toLowerCase()))
+    return err("fa-err", name + " is already in the directory.");
+  const btn = $("#fa-save");
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, "healthFacilities"), {
+      name,
+      level: $("#fa-level").value,
+      district: $("#fa-district").value.trim(),
+      phone: $("#fa-phone").value.trim(),
+      km: kmOf($("#fa-km").value) || "",
+      services: $("#fa-services").value.trim(),
+      createdBy: who(),
+      savedAt: new Date().toISOString()
+    });
+    ok("fa-ok", name + " added - the referral form can now pick it.");
+    document.getElementById("fac-form").reset();
+  } catch (e2) {
+    err("fa-err", "Save failed: " + ((e2 && (e2.code || e2.message)) || e2));
+  } finally { btn.disabled = false; }
+});
+
+document.getElementById("fa-body").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-facdel]");
+  if (!b) return;
+  const f = FACS.find((x) => x.__id === b.getAttribute("data-facdel"));
+  if (!f) return;
+  if (!window.confirm("Remove " + (f.name || "this facility") + " from the directory?")) return;
+  try { await updateDoc(doc(db, "healthFacilities", f.__id), { removed: true, removedBy: who(), removedAt: new Date().toISOString() }); }
+  catch (e2) { err("fa-err", "Remove failed: " + ((e2 && (e2.code || e2.message)) || e2)); }
+});
+
+// wire the referral form's Facility field to the directory
+(function () {
+  const input = document.getElementById("f-facility");
+  if (!input) return;
+  input.setAttribute("list", "fac-list");
+  const dl = document.createElement("datalist");
+  dl.id = "fac-list";
+  input.parentNode.appendChild(dl);
+  renderFacs();
+})();
+
 bootDone();

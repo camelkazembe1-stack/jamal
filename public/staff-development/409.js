@@ -27,7 +27,7 @@ function bootDone() {
 try { await requireAuth(); window.__p09.auth = true; }
 catch (e) { herr("the sign-in check", e); throw e; }
 
-let appr = [], trn = [];
+let appr = [], trn = [], lv = [];
 const scoreCls = (n) => n >= 4.5 ? "st-clinical" : n >= 3.5 ? "st-support" : n >= 2.5 ? "st-warn" : "st-bad";
 
 function renderDash() {
@@ -38,6 +38,7 @@ function renderDash() {
     : "\u2014";
   $("#d-trn").textContent = String(trn.length);
   $("#d-cpd").textContent = String(trn.reduce((s, t) => s + num(t.points), 0));
+  $("#d-leave").textContent = String(lv.length);
 }
 
 function renderAppr() {
@@ -86,8 +87,33 @@ function renderTrn() {
     : "";
 }
 
+function renderLeave() {
+  const q = String((($("#l-search") || {}).value || "")).trim().toLowerCase();
+  const rows = !q ? lv : lv.filter((r) =>
+    ["staff", "type", "note", "status"].some((k) =>
+      String(r[k] || "").toLowerCase().includes(q)));
+  const has = rows.length > 0;
+  $("#l-card").hidden = !has;
+  $("#l-empty").hidden = has || lv.length > 0;
+  $("#l-body").innerHTML = rows.map((r) => "<tr>" +
+    '<td class="c-name">' + esc(r.staff || "—") + "</td>" +
+    "<td>" + esc(r.type || "—") + "</td>" +
+    "<td>" + esc(String(r.from || "").slice(0, 10) || "—") + "</td>" +
+    "<td>" + esc(String(r.to || "").slice(0, 10) || "—") + "</td>" +
+    "<td><b>" + num(r.days) + "</b></td>" +
+    '<td><span class="st ' + (String(r.status) === "Resumed" ? "st-clinical"
+      : String(r.status) === "Ongoing" ? "st-warn"
+      : String(r.status) === "Cancelled" ? "st-viewer" : "st-open") + '">' + esc(r.status || "Planned") + "</span></td>" +
+    "<td>" + esc(r.note || "—") + "</td>" +
+    '<td class="c-act"><button type="button" class="row-del" data-lid="' + esc(r.__id) + '">Delete</button></td></tr>').join("");
+  $("#l-count").textContent = lv.length
+    ? rows.length + " of " + lv.length + " leave record(s)" + (q ? " matching '" + q + "'" : "") + "."
+    : "";
+}
+
 $("#a-search").addEventListener("input", renderAppr);
 $("#tr-search").addEventListener("input", renderTrn);
+$("#l-search").addEventListener("input", renderLeave);
 
 try {
   onSnapshot(collection(db, "healthAppraisals"), (snap) => {
@@ -104,6 +130,14 @@ try {
       .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
     renderDash(); renderTrn();
   }, (e) => herr("healthTrainings", e));
+  window.__p09.listeners++;
+} catch (e) {}
+try {
+  onSnapshot(collection(db, "healthLeaveRecords"), (snap) => {
+    lv = snap.docs.map((d) => Object.assign({}, d.data({ serverTimestamps: "estimate" }), { __id: d.id }))
+      .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
+    renderDash(); renderLeave();
+  }, (e) => herr("healthLeaveRecords", e));
   window.__p09.listeners++;
 } catch (e) {}
 
@@ -189,6 +223,44 @@ tForm.addEventListener("submit", async (ev) => {
   } finally { btn.disabled = false; btn.textContent = "Save Training"; }
 });
 
+// ---- leave form -------------------------------------------------------------
+const lForm = $(".l-form");
+$(".l-toggle").addEventListener("click", () => {
+  lForm.hidden = !lForm.hidden;
+  $(".l-toggle").textContent = lForm.hidden ? "\uFF0B Record a leave" : "\u00D7 Close";
+});
+$(".l-cancel").addEventListener("click", () => { lForm.hidden = true;
+  $(".l-toggle").textContent = "\uFF0B Record a leave"; });
+lForm.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const err = $("#l-err"), ok = $("#l-ok");
+  err.hidden = true; ok.hidden = true;
+  const staff = $("#l-staff").value.trim();
+  const from = $("#l-from").value, to = $("#l-to").value;
+  if (!staff) { err.textContent = "Fill in the staff member."; err.hidden = false; return; }
+  if (!from || !to) { err.textContent = "Pick both the From and the To day."; err.hidden = false; return; }
+  if (to < from) { err.textContent = "The To day is before the From day."; err.hidden = false; return; }
+  const days = Math.round((new Date(to) - new Date(from)) / 86400000) + 1;
+  const data = {
+    staff, from, to, days,
+    type: $("#l-type").value,
+    status: $("#l-status").value,
+    note: $("#l-note").value.trim(),
+    savedAt: new Date().toISOString()
+  };
+  const btn = $(".l-save");
+  btn.disabled = true; btn.textContent = "Saving\u2026";
+  try {
+    await addDoc(collection(db, "healthLeaveRecords"), data);
+    ok.textContent = staff + " - " + data.type.toLowerCase() + " leave " + from + " to " + to + " (" + days + " day" + (days === 1 ? "" : "s") + ") recorded.";
+    lForm.reset(); lForm.hidden = true;
+    $(".l-toggle").textContent = "\uFF0B Record a leave";
+  } catch (e) {
+    err.textContent = "Save failed: " + ((e && (e.code || e.message)) || e);
+    err.hidden = false;
+  } finally { btn.disabled = false; btn.textContent = "Save Leave"; }
+});
+
 // ---- deletes -----------------------------------------------------------------------
 $("#a-body").addEventListener("click", async (e) => {
   const del = e.target.closest(".row-del");
@@ -208,7 +280,17 @@ $("#tr-body").addEventListener("click", async (e) => {
   try { await deleteDoc(doc(db, "healthTrainings", r.__id)); }
   catch (e2) { window.alert("Delete failed: " + ((e2 && (e2.code || e2.message)) || e2)); }
 });
+$("#l-body").addEventListener("click", async (e) => {
+  const del = e.target.closest("[data-lid]");
+  if (!del) return;
+  const r = lv.find((x) => x.__id === del.getAttribute("data-lid"));
+  if (!r) return;
+  if (!window.confirm("Delete the leave record for " + (r.staff || "?") + " (" + (r.type || "") + ")?")) return;
+  try { await deleteDoc(doc(db, "healthLeaveRecords", r.__id)); }
+  catch (e2) { window.alert("Delete failed: " + ((e2 && (e2.code || e2.message)) || e2)); }
+});
 
 renderAppr();
 renderTrn();
+renderLeave();
 bootDone();

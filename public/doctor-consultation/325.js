@@ -800,6 +800,103 @@ $("#ord-rows").addEventListener("click", (e) => {
   const del = e.target.closest(".row-del");
   if (del) del.closest(".row-ed").remove();
 });
+
+// ---- order sets: the clinic's standard bundles --------------------------------
+// A set is { name, items: [{t:"inv"|"rx"|"ord", ...}] }. Applying a set
+// fills the investigations box and appends rows; nothing reaches Firestore
+// until the consultation itself is saved, and the safety warnings below
+// still run on every applied row. The facility can save its own sets from
+// the current sheet; three built-ins cover the common presentations.
+const DEFAULT_ORDER_SETS = [
+  { name: "Febrile illness (adult)", builtin: true, items: [
+    { t: "inv", text: "Malaria RDT / blood slide for malaria parasites (MP)" },
+    { t: "inv", text: "Full blood picture (FBP)" },
+    { t: "rx", medicine: "Paracetamol", dose: "500 mg", frequency: "3 x daily", duration: "5 days", notes: "for fever" },
+    { t: "ord", order: "Tepid sponging; vital signs every 4 hours" }
+  ] },
+  { name: "Urinary tract infection (uncomplicated)", builtin: true, items: [
+    { t: "inv", text: "Urine analysis" },
+    { t: "inv", text: "Urine culture and sensitivity" },
+    { t: "ord", order: "Encourage oral fluids; return if fever or flank pain persists" }
+  ] },
+  { name: "Wound care visit", builtin: true, items: [
+    { t: "ord", order: "Wound cleaning and dressing" },
+    { t: "inv", text: "Wound swab for culture and sensitivity (if discharging)" },
+    { t: "rx", medicine: "Ibuprofen", dose: "400 mg", frequency: "2 x daily", duration: "3 days", notes: "after food" }
+  ] }
+];
+let orderSets = DEFAULT_ORDER_SETS.slice();
+
+try {
+  onSnapshot(collection(db, "healthOrderSets"), (snap) => {
+    const live = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
+      .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
+    orderSets = live.length ? live : DEFAULT_ORDER_SETS.slice();
+    paintOrderSets();
+  }, () => {});
+  window.__p47.listeners++;
+} catch (e) {}
+
+function oerr(m) { const e = $("#os-err"); if (e) { e.hidden = !m; e.textContent = m || ""; } }
+
+function paintOrderSets() {
+  const sel = $("#os-pick");
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Choose an order set —</option>' +
+    orderSets.map((s, i) => '<option value="' + i + '">' + esc(s.name) +
+      (s.builtin ? " (built-in)" : "") + "</option>").join("");
+  if (cur && orderSets[Number(cur)]) sel.value = cur;
+  $("#os-note").textContent = orderSets.length + " set(s) available. Applying never writes to Firestore by itself - review, edit, then save the consultation as usual.";
+}
+
+function osRowFor(item) {
+  if (item.t === "rx") {
+    $("#rx-rows").insertAdjacentHTML("beforeend", rxRowHTML());
+    const row = $("#rx-rows").lastElementChild;
+    const set = (k, v) => { const el = row.querySelector('[data-k="' + k + '"]'); if (el && v) el.value = v; };
+    set("medicine", item.medicine); set("dose", item.dose);
+    set("frequency", item.frequency); set("duration", item.duration); set("notes", item.notes);
+  } else if (item.t === "ord") {
+    $("#ord-rows").insertAdjacentHTML("beforeend", ordRowHTML());
+    const row = $("#ord-rows").lastElementChild;
+    const el = row.querySelector('[data-k="order"]');
+    if (el && item.order) el.value = item.order;
+  } else if (item.t === "inv") {
+    const ta = $("#d-investigations");
+    const line = String(item.text || "").trim();
+    if (ta && line) ta.value = (ta.value ? ta.value.replace(/\s*$/, "\n") : "") + line;
+  }
+}
+
+$("#os-apply").addEventListener("click", () => {
+  oerr("");
+  const i = Number($("#os-pick").value);
+  if ($("#os-pick").value === "" || !orderSets[i]) { oerr("Choose an order set first."); return; }
+  const s = orderSets[i];
+  (s.items || []).forEach(osRowFor);
+  paintRxWarn();
+  $("#os-note").textContent = "Applied '" + s.name + "' - review the rows, edit anything, then save the consultation as usual.";
+});
+
+$("#os-save").addEventListener("click", async () => {
+  oerr("");
+  const name = window.prompt("Name this order set (e.g. 'Antenatal first visit'):");
+  if (!name || !name.trim()) return;
+  const inv = String(($("#d-investigations") || {}).value || "").split("\n").map((s) => s.trim()).filter(Boolean);
+  const rx = readRows("rx-rows").filter((r) => String(r.medicine || "").trim());
+  const ord = readRows("ord-rows").filter((r) => String(r.order || "").trim());
+  if (!inv.length && !rx.length && !ord.length) { oerr("The sheet is empty - fill investigations, medicines or orders first."); return; }
+  const items = [];
+  inv.forEach((text) => items.push({ t: "inv", text }));
+  rx.forEach((r) => items.push({ t: "rx", medicine: r.medicine, dose: r.dose, frequency: r.frequency, duration: r.duration, notes: r.notes }));
+  ord.forEach((r) => items.push({ t: "ord", order: r.order }));
+  try {
+    await addDoc(collection(db, "healthOrderSets"), { name: name.trim(), items, savedAt: nowISO(), by: DOCTOR });
+    $("#os-note").textContent = "Saved '" + name.trim() + "' - it is now in the picker for every doctor on this account.";
+  } catch (e) { oerr("Could not save the set: " + ((e && (e.code || e.message)) || e)); }
+});
+paintOrderSets();
 function readRows(containerId) {
   const out = [];
   document.querySelectorAll("#" + containerId + " .row-ed").forEach((row) => {

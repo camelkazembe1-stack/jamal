@@ -25,6 +25,7 @@
     <div class="dash good"><b id="d-avg">&mdash;</b><span>Average overall score</span></div>
     <div class="dash info"><b id="d-trn">0</b><span>Trainings recorded</span></div>
     <div class="dash warn"><b id="d-cpd">0</b><span>CPD points earned (all staff)</span></div>
+    <div class="dash good"><b id="d-leave">0</b><span>Leave records</span></div>
   </div>
 
   <!-- ======================= appraisals ======================= -->
@@ -114,6 +115,47 @@
     <p class="empty-title">No trainings yet</p>
     <p class="empty-sub">Every workshop, induction and refresher counts - record them as they
     happen and the CPD column adds itself up.</p>
+  </div>
+
+  <!-- ======================= leave / attendance ======================= -->
+  <div class="card add-card">
+    <button class="add-toggle l-toggle" type="button">&#xFF0B; Record a leave</button>
+    <form class="form-grid l-form" hidden>
+      <label>Staff member<input id="l-staff" data-f="employee" type="text" required placeholder="who is on leave"></label>
+      <label>Type<select id="l-type"><option>Annual</option><option>Sick</option><option>Maternity</option><option>Paternity</option><option>Compassionate</option><option>Study / CPD</option><option>Other</option></select></label>
+      <label>From<input id="l-from" type="date" required></label>
+      <label>To<input id="l-to" type="date" required></label>
+      <label>Status<select id="l-status"><option>Planned</option><option>Ongoing</option><option>Resumed</option><option>Cancelled</option></select></label>
+      <label class="span-all">Note<input id="l-note" type="text" placeholder="acting cover, handover, anything worth keeping"></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary l-save" type="submit">Save Leave</button>
+        <button class="btn-ghost l-cancel" type="button">Cancel</button>
+      </div>
+    </form>
+    <p class="form-err" id="l-err" hidden></p>
+    <p class="save-note" id="l-ok" hidden></p>
+  </div>
+
+  <div class="card search-card">
+    <input id="l-search" type="text" placeholder="Search leave by staff, type, note" autocomplete="off">
+  </div>
+
+  <div class="card table-card" id="l-card" hidden>
+    <h2>Leave &amp; attendance</h2>
+    <div class="table-wrap">
+      <table class="bk">
+        <thead><tr><th>Staff</th><th>Type</th><th>From</th><th>To</th><th>Days</th>
+          <th>Status</th><th>Note</th><th></th></tr></thead>
+        <tbody id="l-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="l-count"></p>
+  </div>
+  <div class="empty card" id="l-empty" hidden>
+    <div class="empty-icon">&#127769;</div>
+    <p class="empty-title">No leave records yet</p>
+    <p class="empty-sub">Annual, sick, maternity, study - record them here and the roster and
+    payroll conversations stay honest.</p>
   </div>
 
 </main>

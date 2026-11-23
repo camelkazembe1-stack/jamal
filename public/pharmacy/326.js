@@ -7,7 +7,7 @@
 
 
 import { requireAuth, auth, db, collection, query, updateDoc, doc, setDoc, onSnapshot, getDoc,
-         writeBatch, increment, serverTimestamp, checkInteractions } from "/sidebar.js";
+         writeBatch, increment, serverTimestamp, checkInteractions, code39SVG } from "/sidebar.js";
  
 let showPatient = function () {}, hidePatient = function () {};
 try {
@@ -423,7 +423,36 @@ function refreshSearchLine() {
 }
 
 const OPEN_STATUSES = ["to dispense", "alternative proposed", "accepted"];
-let edit = { id: null, mode: null }; 
+let edit = { id: null, mode: null };
+let labelId = null;   // the prescription line whose unit-dose label is shown
+
+// ---- unit-dose barcoding ------------------------------------------------------
+// Every open line can print a Code 39 label: JAM-<regId>-<DRUG>. The same
+// code is what the pack scan below expects, so a wrong pack on the counter
+// is caught BEFORE the dose is handed over.
+function medSlug(l) {
+  return String(l.medicine || "").toUpperCase().replace(/[^A-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "").slice(0, 14) || "DRUG";
+}
+function unitCode(l) { return "JAM-" + String(l.regId || "") + "-" + medSlug(l); }
+
+function labelRowHTML(l, cols) {
+  if (labelId !== l.__id) return "";
+  const code = unitCode(l);
+  const p = regMap.get(String(l.regId || ""));
+  return '<tr class="ed-tr"><td colspan="' + cols + '"><div class="label-box" id="unit-label">' +
+    '<div class="lb-title">UNIT-DOSE LABEL &middot; JAMALI PHARMACY</div>' +
+    '<div class="lb-line"><b>' + esc(l.medicine || "") + "</b> " + esc(l.dose || "") +
+      (l.frequency ? " &middot; " + esc(l.frequency) : "") +
+      (l.duration ? " &middot; " + esc(l.duration) : "") + "</div>" +
+    '<div class="lb-line">' + esc(p ? who(p) : "—") + " &middot; " + esc(l.regId || "") + "</div>" +
+    code39SVG(code, { height: 42 }) +
+    '<div class="lb-code">' + esc(code) + "</div>" +
+    '<div class="lb-foot">Check the pack against this barcode before handing the dose over. ' +
+    "Scan it in the Patient box above (or any scanner pointed at this screen).</div>" +
+    '<button type="button" class="ghost-btn a-labno">Close label</button>' +
+    "</div></td></tr>";
+}
 
 function medCell(l) {
   return "<b>" + esc(l.medicine || "—") + "</b>" +
@@ -450,6 +479,7 @@ function lineActions(l, withOpen) {
   const btns = [];
   if (l.status === "to dispense" || l.status === "accepted") {
     btns.push('<button type="button" class="ghost-btn a-disp" data-id="' + esc(l.__id) + '">Dispense</button>');
+    btns.push('<button type="button" class="ghost-btn a-label" data-id="' + esc(l.__id) + '">Label</button>');
   }
   if (l.status === "to dispense") {
     btns.push('<button type="button" class="ghost-btn a-alt" data-id="' + esc(l.__id) + '">Alternative&hellip;</button>');
@@ -494,7 +524,7 @@ function renderList() {
       "<td>" + chip(l.status) +
         (l.status === "alternative proposed" ? '<span class="cell-sub">waiting for the doctor (page 325)</span>' : "") +
       "</td>" +
-      "<td>" + lineActions(l, true) + "</td></tr>" + editorRow(l, 5);
+      "<td>" + lineActions(l, true) + "</td></tr>" + editorRow(l, 5) + labelRowHTML(l, 5);
   }).join("");
   $("#l-count").textContent = has
     ? open.length + (open.length === 1 ? " prescription line to handle."
@@ -552,6 +582,10 @@ $("#l-body").addEventListener("click", (e) => {
 
  
 async function lineActionClick(e) {
+  const lab = e.target.closest(".a-label");
+  if (lab) { labelId = lab.getAttribute("data-id"); rerender(); return; }
+  const labno = e.target.closest(".a-labno");
+  if (labno) { labelId = null; rerender(); return; }
   const disp = e.target.closest(".a-disp");
   const alt = e.target.closest(".a-alt");
   const ok = e.target.closest(".ed-ok");
@@ -725,11 +759,48 @@ function renderPatient() {
       "<span class='cell-sub'>" + esc(l.prescribedBy || "—") + "</span></td>" +
     "<td>" + chip(l.status) + "</td>" +
     "<td class='c-desc'>" + decisionCell(l) + "</td>" +
-    "<td>" + lineActions(l, false) + "</td></tr>" + editorRow(l, 5)
+    "<td>" + lineActions(l, false) + "</td></tr>" + editorRow(l, 5) + labelRowHTML(l, 5)
   ).join("");
 }
 
 $("#p-body").addEventListener("click", lineActionClick);
+
+// ---- the unit-dose scan check -----------------------------------------------
+// A scanner types the pack's code into #p-scan and presses Enter. JAMALI
+// checks patient AND medicine against the open lines on this screen and
+// says clearly whether the pack may be handed over.
+$("#p-scan").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  const msg = $("#p-scanmsg");
+  const raw = String($("#p-scan").value || "").trim().toUpperCase();
+  msg.className = "scan-msg";
+  if (!raw) { msg.textContent = ""; return; }
+  const m = raw.match(/^JAM-(\d{4}[A-Z]{4})-(.+)$/);
+  if (!m) {
+    msg.classList.add("bad");
+    msg.textContent = "Not a JAMALI unit-dose code — the label is printed from the Label button below.";
+    return;
+  }
+  if (String(m[1]) !== String(currentId)) {
+    msg.classList.add("bad");
+    msg.textContent = "WRONG PATIENT — the code is for " + m[1] + ", this screen has " + (currentId || "no patient") + ".";
+    return;
+  }
+  const hit = rxLines.find((l) => String(l.regId) === String(currentId) &&
+    (l.status === "to dispense" || l.status === "accepted") && medSlug(l) === m[2]);
+  if (!hit) {
+    msg.classList.add("bad");
+    msg.textContent = "No open line for " + m[2] + " on this patient — check the pack.";
+    return;
+  }
+  msg.classList.add("good");
+  msg.textContent = "MATCH — " + hit.medicine + ": right patient, right drug. Safe to hand over.";
+  labelId = hit.__id;
+  rerender();
+  $("#p-scan").value = "";
+  $("#p-scan").focus();
+});
 
 /* jamali-inline:512.js */
  

@@ -1,4 +1,4 @@
-import { requireAuth, db, collection, onSnapshot } from "/sidebar.js";
+import { requireAuth, db, collection, doc, addDoc, deleteDoc, onSnapshot } from "/sidebar.js";
 
 window.__p96.ran = true;
 
@@ -57,7 +57,8 @@ const KINDS = [
   { kind: "k-death",   coll: "healthDeaths",              title: "Death (this facility)", mod: ["Death Certificates", "/death-certificates/404"], match: "regId" },
   { kind: "k-money",   coll: "healthBilling",             title: "Bill",                  mod: ["Hospital Billing", "/hospital-billing/363"], match: "patientId" },
   { kind: "k-money",   coll: "healthPayments",            title: "Payment",               mod: ["Payments & Financial", "/hospital-payments/364"], match: "patientId" },
-  { kind: "k-money",   coll: "healthInsurance",           title: "Insurance claim",       mod: ["Health Insurance", "/health-insurance/365"], match: "patientId" }
+  { kind: "k-money",   coll: "healthInsurance",           title: "Insurance claim",       mod: ["Health Insurance", "/health-insurance/365"], match: "patientId" },
+  { kind: "k-doc",     coll: "healthPatientDocs",         title: "Document / scan",       mod: ["Patient File", "/patient-file/396"],  match: "regId" }
 ];
 
 // per collection: which fields to show and their labels (candidates in order)
@@ -78,7 +79,8 @@ const SHOW = {
   healthInsurance: [["ref", "Ref"], ["insurer", "Insurer"], ["claimAmount", "Claim (TSh)"], ["status", "Status"]],
   healthTelemedicine: [["reason", "Reason"], ["scheduledAt", "Scheduled"], ["doctor", "Doctor"], ["status", "Status"], ["notes", "Notes"]],
   healthBirths: [["childName", "Child"], ["sex", "Sex"], ["dob", "Born"], ["deliveryType", "Delivery"], ["weightGrams", "Weight (g)"], ["ref", "Register ref"]],
-  healthDeaths: [["deceasedName", "Deceased"], ["dod", "Died"], ["causeText", "Cause"], ["icd10Code", "ICD-10"], ["ref", "Register ref"]]
+  healthDeaths: [["deceasedName", "Deceased"], ["dod", "Died"], ["causeText", "Cause"], ["icd10Code", "ICD-10"], ["ref", "Register ref"]],
+  healthPatientDocs: [["name", "File"], ["mime", "Type"], ["size", "Size (bytes)"], ["note", "Note"]]
 };
 
 const WHEN = ["savedAt", "admissionDate", "dischargeDate", "createdAt", "date", "at"];
@@ -177,7 +179,7 @@ const KBUF = Object.create(null);
 for (const k of KINDS) {
   KBUF[k.coll] = KBUF[k.coll] || [];
   onSnapshot(collection(db, k.coll), (snap) => {
-    KBUF[k.coll] = snap.docs.map((d) => d.data({ serverTimestamps: "estimate" }));
+    KBUF[k.coll] = snap.docs.map((d) => Object.assign({}, d.data({ serverTimestamps: "estimate" }), { __id: d.id }));
     gather();
   }, (e) => herr(k.coll, e));
 }
@@ -294,6 +296,11 @@ function renderTimeline() {
     const fields = SHOW[e.coll] || [];
     let body = fields.map((f) => rowHTML(f[0], f[1], e.r[f[0]])).join("");
     if (e.coll === "healthPrescriptions") body += dispensedRow(e.r);
+    if (e.coll === "healthPatientDocs" && e.r.__id) {
+      body += '<div class="row doc-actions">' +
+        '<button type="button" class="mini-btn doc-dl" data-id="' + esc(e.r.__id) + '">Download</button>' +
+        '<button type="button" class="mini-btn doc-del" data-id="' + esc(e.r.__id) + '">Remove</button></div>';
+    }
     if (!body) body = '<div class="row muted">Saved without extra details.</div>';
     return '<div class="tl-item ' + e.kind + '">' +
       '<div class="tl-when">' + esc(fmtWhen(e.when) || "—") + "</div>" +
@@ -305,6 +312,74 @@ function renderTimeline() {
   '<p class="mini-note">The timeline gathers live from every module on this device. ' +
   count("stockChanges") + " medicine movement(s) recorded against this Registration ID in Pharmacy Stock.</p>";
 }
+
+// ---- document attachments -----------------------------------------------------
+// Small documents and scans live inside the record itself (base64 in
+// Firestore), bound to the single Registration ID - nothing leaves the
+// account, no storage bucket needed. The timeline below lists them with
+// Download / Remove.
+$("#doc-save").addEventListener("click", async () => {
+  const err = $("#doc-err"), ok = $("#doc-ok");
+  err.hidden = true; ok.hidden = true;
+  if (!openId) { err.textContent = "Open a patient's file first."; err.hidden = false; return; }
+  const f = ($("#doc-file").files || [])[0];
+  if (!f) { err.textContent = "Choose a file first."; err.hidden = false; return; }
+  if (f.size > 300 * 1024) {
+    err.textContent = "The file is " + Math.round(f.size / 1024) + " KB - keep it under 300 KB (compress it or scan at a lower resolution).";
+    err.hidden = false;
+    return;
+  }
+  const btn = $("#doc-save");
+  btn.disabled = true;
+  try {
+    const data = await new Promise((res, rej) => {
+      const rd = new FileReader();
+      rd.onload = () => res(String(rd.result || ""));
+      rd.onerror = () => rej(new Error("the file could not be read"));
+      rd.readAsDataURL(f);
+    });
+    await addDoc(collection(db, "healthPatientDocs"), {
+      regId: openId,
+      name: f.name,
+      mime: f.type || "application/octet-stream",
+      size: f.size,
+      note: String($("#doc-note").value || "").trim(),
+      data,
+      by: String(localStorage.getItem("jamaliIdentityCache") || "unknown"),
+      savedAt: new Date().toISOString()
+    });
+    ok.textContent = f.name + " attached to " + openId + " - it appears in the timeline below.";
+    $("#doc-file").value = "";
+    $("#doc-note").value = "";
+  } catch (e) {
+    err.textContent = "Attach failed: " + ((e && (e.code || e.message)) || e);
+    err.hidden = false;
+  } finally { btn.disabled = false; }
+});
+
+$("#timeline").addEventListener("click", async (e) => {
+  const dl = e.target.closest(".doc-dl");
+  if (dl) {
+    const r = (KBUF.healthPatientDocs || []).find((x) => x.__id === dl.getAttribute("data-id"));
+    if (!r || !r.data) return;
+    const a = document.createElement("a");
+    a.href = String(r.data);
+    a.download = String(r.name || "attachment");
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { a.remove(); }, 800);
+    return;
+  }
+  const del = e.target.closest(".doc-del");
+  if (del) {
+    const id = del.getAttribute("data-id");
+    const r = (KBUF.healthPatientDocs || []).find((x) => x.__id === id);
+    if (!r) return;
+    if (!window.confirm("Remove '" + (r.name || "this attachment") + "' from the file of " + openId + "?")) return;
+    try { await deleteDoc(doc(db, "healthPatientDocs", id)); }
+    catch (e2) { window.alert("Remove failed: " + ((e2 && (e2.code || e2.message)) || e2)); }
+  }
+});
 
 // ---- the FHIR R4 export ------------------------------------------------------
 // Builds a FHIR R4 Bundle (JSON) out of the open patient's timeline: a
@@ -388,6 +463,21 @@ function fhirEntries() {
         medicationCodeableConcept: { text: String(r.medicine) },
         authoredOn: iso(r.savedAt),
         dosageInstruction: [{ text: [r.dose, r.frequency, r.duration].filter(Boolean).join(" · ") }]
+      });
+    } else if (e.coll === "healthPatientDocs" && String(r.name || "")) {
+      add({
+        resourceType: "DocumentReference",
+        status: "current",
+        subject: { reference: "Patient/" + openId },
+        description: String(r.note || r.name),
+        date: String(r.savedAt || "") || undefined,
+        content: [{
+          attachment: {
+            contentType: String(r.mime || "application/octet-stream"),
+            title: String(r.name),
+            data: String(r.data || "").split(",")[1] || undefined
+          }
+        }]
       });
     }
   }

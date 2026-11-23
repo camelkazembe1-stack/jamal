@@ -102,6 +102,13 @@
     <div class="card">
       <h2>Patient</h2>
       <div class="rec-grid" id="p-reg"></div>
+      <div class="scan-row">
+        <input id="p-scan" type="text" autocomplete="off"
+          placeholder="Scan / type the unit-dose barcode on the pack (JAM-REGID-DRUG), press Enter">
+        <span class="scan-msg" id="p-scanmsg"></span>
+      </div>
+      <p class="mini-note">The unit-dose label is printed from the <b>Label</b> button on a prescription line below.
+      Scanning checks the pack against the right patient and the right medicine before the dose leaves the counter.</p>
     </div>
 
     <div class="card">
@@ -128,6 +135,24 @@
 #h-boot,#h-err{max-width:920px;margin:0 auto 14px;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.55}
 #h-boot{background:#fff7e0;color:#6b4e00;border:1px solid #e8d48a}
 #h-err{background:#fdecec;color:#8a1f1f;border:1px solid #f2b8b5}
+
+/* unit-dose barcode label + scan verify */
+.scan-row{display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.scan-row input{flex:1;min-width:260px;padding:9px 12px;border:1px solid #d8d4c8;border-radius:8px;font-size:14px}
+.scan-msg{font-size:13px;font-weight:600}
+.scan-msg.good{color:#1e7d32}
+.scan-msg.bad{color:#b3261e}
+.label-box{background:#fff;border:1px solid #d8d4c8;border-radius:10px;padding:14px 18px;max-width:420px;margin:6px auto}
+.label-box .lb-title{font-size:11px;letter-spacing:.12em;color:#5b584e;margin-bottom:6px}
+.label-box .lb-line{font-size:14px;margin:2px 0}
+.label-box .code39{display:block;margin:8px 0 4px}
+.label-box .lb-code{font-family:ui-monospace,monospace;font-size:12px;color:#333;letter-spacing:.08em}
+.label-box .lb-foot{font-size:11.5px;color:#6b6860;margin:6px 0}
+@media print{
+  body *{visibility:hidden}
+  #unit-label,#unit-label *{visibility:visible}
+  #unit-label{position:fixed;left:8mm;top:8mm;border:none}
+}
 
  
 #qa-card .qa-counts{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 14px}

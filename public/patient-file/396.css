@@ -231,3 +231,9 @@ body {
 .fhir-btn { border: 1px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 12px;
   font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
 .fhir-btn:hover { border-color: #0ea5e9; color: #0ea5e9; }
+
+/* document attachments */
+.up-card .up-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.up-card .up-row input[type="text"]{flex:1;min-width:220px}
+.up-card input[type="file"]{max-width:260px;font-size:13px}
+.doc-actions{display:flex;gap:8px;margin-top:4px}

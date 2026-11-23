@@ -4250,3 +4250,40 @@ async function reconcile() {
   SOURCES.forEach((c) => api.onSnapshot(api.collection(api.db, c), soon, () => {}));
 })();
 })();
+
+// ===================== shared barcode helper =====================
+// code39SVG(text, opts) - a Code 39 barcode as an inline SVG string. No CDN,
+// no library: the pharmacy unit-dose labels (page 326) print and scan from it.
+// Code 39 carries A-Z, 0-9, space and - . $ / + %; anything else is dropped.
+// (The password policy lives above: PASSWORD_POLICY + passwordCheck().)
+const CODE39 = {
+  "0": "101001101101", "1": "110100101011", "2": "101100101011", "3": "110110010101",
+  "4": "101001101011", "5": "110100110101", "6": "101100110101", "7": "101001011011",
+  "8": "110100101101", "9": "101100101101", "A": "110101001011", "B": "101101001011",
+  "C": "110110100101", "D": "101011001011", "E": "110101100101", "F": "101101100101",
+  "G": "101010011011", "H": "110101001101", "I": "101101001101", "J": "101011001101",
+  "K": "110101010011", "L": "101101010011", "M": "110110101001", "N": "101011010011",
+  "O": "110101101001", "P": "101101101001", "Q": "101010110011", "R": "110101011001",
+  "S": "101101011001", "T": "101011011001", "U": "110010101011", "V": "100110101011",
+  "W": "110011010101", "X": "100101101011", "Y": "110010110101", "Z": "100110110101",
+  "-": "100101011011", ".": "110010101101", " ": "100110101101", "$": "100100100101",
+  "/": "100100101001", "+": "100101001001", "%": "101001001001", "*": "100101101101"
+};
+
+export function code39SVG(text, opts) {
+  const o = Object.assign({ height: 46, module: 2, quiet: 10 }, opts || {});
+  const raw = String(text || "").toUpperCase().replace(/[^0-9A-Z\-\. \$\/\+%]/g, "");
+  let bits = "";
+  for (const ch of "*" + raw + "*") bits += (CODE39[ch] || "") + "0";
+  const w = bits.length * o.module + o.quiet * 2;
+  let bars = "";
+  let x = o.quiet;
+  for (let i = 0; i < bits.length; i++) {
+    if (bits[i] === "1") bars += '<rect x="' + x + '" y="0" width="' + o.module + '" height="' + o.height + '"/>';
+    x += o.module;
+  }
+  return '<svg class="code39" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + " " + o.height +
+    '" width="' + w + '" height="' + o.height + '" role="img" aria-label="barcode ' + raw + '">' +
+    '<rect width="' + w + '" height="' + o.height + '" fill="#ffffff"/>' +
+    '<g fill="#111111">' + bars + "</g></svg>";
+}

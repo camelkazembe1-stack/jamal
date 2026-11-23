@@ -81,6 +81,39 @@
       </div>
       <p class="count-line" id="h-count"></p>
     </div>
+
+    <div class="card" style="padding:16px 20px;">
+      <h2>Bedside nursing chart</h2>
+      <p class="mini-note" style="margin-bottom:10px;">E-charting at the bedside: one observation line per save, bound to the
+      patient's single Registration ID, the ward and the bed they are in right now. Vitals are optional &mdash; a note alone is fine.</p>
+      <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px;">
+        <label>Patient in bed (active placement)
+          <select id="c-plc"><option value="">— Choose the patient in bed —</option></select>
+        </label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+          <label>Temp (&deg;C)<input id="c-temp" type="number" step="any" placeholder="37.0"></label>
+          <label>Pulse (/min)<input id="c-pulse" type="number" step="any" placeholder="78"></label>
+          <label>BP (sys/dias)<input id="c-bp" type="text" placeholder="120/80"></label>
+          <label>SpO2 (%)<input id="c-spo2" type="number" step="any" placeholder="98"></label>
+          <label>Pain (0&ndash;10)<input id="c-pain" type="number" min="0" max="10" placeholder="2"></label>
+        </div>
+        <label>Observation note<input id="c-note" type="text" placeholder="e.g. resting well, drip running, reviewed dressing"></label>
+      </div>
+      <p class="form-err" id="c-err" hidden></p>
+      <p class="form-ok" id="c-ok" hidden></p>
+      <div class="form-actions">
+        <button class="btn-primary" id="c-save" type="button">Save observation</button>
+      </div>
+      <div class="table-wrap" id="c-hist-wrap" hidden>
+        <table class="bk">
+          <thead>
+            <tr><th>When</th><th>Patient</th><th>Bed</th><th>Vitals</th><th>Note</th><th>By</th></tr>
+          </thead>
+          <tbody id="c-hist"></tbody>
+        </table>
+      </div>
+      <p class="count-line" id="c-count"></p>
+    </div>
   </section>
 
 </main>

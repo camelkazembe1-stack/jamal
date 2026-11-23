@@ -298,6 +298,24 @@ import("/sidebar.js").then(async (m) => {
     else lkMsg("Wrong current password.", false);
   });
 
+  // ---- password policy: the rules, stated and testable ----------------------
+  const pwPolicy = m.PASSWORD_POLICY;
+  $("pw-policy").textContent = pwPolicy.describe +
+    " - enforced wherever a password or lock is set on this account.";
+  const verdict = $("pw-verdict");
+  const clsOf = (ok) => { verdict.className = "st " + (ok ? "st-clinical" : "st-warn"); };
+  $("pw-test").addEventListener("input", () => {
+    const v = $("pw-test").value;
+    if (!v) { verdict.className = "st st-open"; verdict.textContent = "\u2014"; $("pw-msg").textContent = ""; return; }
+    const r = passwordCheck(v);
+    clsOf(r.ok);
+    verdict.textContent = r.ok ? "Meets the policy" : "Not enough";
+    $("pw-msg").textContent = r.ok
+      ? "This password would be accepted."
+      : "Still needs: " + r.problems.join("; ") + ".";
+    $("pw-msg").style.color = r.ok ? "#047857" : "#b91c1c";
+  });
+
   paintFa();
   paintLock();
 });

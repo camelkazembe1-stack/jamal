@@ -299,3 +299,7 @@ body {
 .rx-warn .w-item.w-mod { border-left-color: #f59e0b; }
 .rx-warn .w-item.w-min { border-left-color: #fbbf24; }
 .rx-warn .w-item i { color: #64748b; }
+
+/* order sets */
+.os-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.os-row .os-pick{flex:1;min-width:220px}

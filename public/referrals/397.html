@@ -70,6 +70,35 @@
     appears here with its status from Pending to Completed.</p>
   </div>
 
+  <div class="card" id="fac-card">
+    <h2>Facility network directory</h2>
+    <p class="mini-note" style="margin-bottom:10px">The hospitals, health centres and clinics this facility actually works
+    with. The names feed the referral form above &mdash; start typing in the Facility field to pick one.</p>
+    <form class="form-grid" id="fac-form">
+      <label>Facility name<input id="fa-name" type="text" required placeholder="e.g. Mount Meru Regional Hospital"></label>
+      <label>Level<select id="fa-level">
+        <option>Referral hospital</option><option>Regional hospital</option><option>District hospital</option>
+        <option>Health centre</option><option>Dispensary</option><option>Clinic / private</option>
+      </select></label>
+      <label>District / region<input id="fa-district" type="text" placeholder="e.g. Arusha"></label>
+      <label>Phone<input id="fa-phone" type="text" placeholder="+255 ..."></label>
+      <label>Distance (km)<input id="fa-km" type="number" min="0" step="any" placeholder="12"></label>
+      <label class="span-all">Services offered<input id="fa-services" type="text" placeholder="e.g. CT scan, surgery, blood bank, NICU"></label>
+      <div class="form-actions span-all">
+        <button class="btn-primary" id="fa-save" type="submit">Add to the directory</button>
+      </div>
+    </form>
+    <p class="form-err" id="fa-err" hidden></p>
+    <p class="save-note" id="fa-ok" hidden></p>
+    <div class="table-wrap" id="fa-wrap" hidden>
+      <table class="bk">
+        <thead><tr><th>Facility</th><th>Level</th><th>District</th><th>Phone</th><th>Distance</th><th>Services</th><th></th></tr></thead>
+        <tbody id="fa-body"></tbody>
+      </table>
+    </div>
+    <p class="count-line" id="fa-count"></p>
+  </div>
+
 </main>
 <script>
   (function () {

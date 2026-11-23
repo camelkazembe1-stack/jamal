@@ -43,6 +43,19 @@
       <div class="rec-grid" id="p-reg"></div>
     </div>
 
+    <div class="card up-card">
+      <h2>Attach a document / scan to this file</h2>
+      <div class="up-row">
+        <input type="file" id="doc-file">
+        <input id="doc-note" type="text" placeholder="What is it? e.g. referral letter, ultrasound report">
+        <button type="button" class="mini-btn" id="doc-save">Attach</button>
+      </div>
+      <p class="mini-note">Small files up to 300&nbsp;KB (PDF, photo, scan) live inside the record itself,
+      bound to the single Registration ID and shown in the timeline below.</p>
+      <p class="form-err" id="doc-err" hidden></p>
+      <p class="form-ok" id="doc-ok" hidden></p>
+    </div>
+
     <div class="dash-grid">
       <div class="dash info"><b id="c-visits">0</b><span>Clinical visits</span></div>
       <div class="dash good"><b id="c-rx">0</b><span>Prescription lines</span></div>

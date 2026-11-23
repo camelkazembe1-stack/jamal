@@ -5,7 +5,7 @@
 
 
 
-import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion } from "/sidebar.js";
+import { requireAuth, db, collection, doc, updateDoc, onSnapshot, writeBatch, arrayUnion, addDoc } from "/sidebar.js";
 
 window.__p52 = { page: "335", build: "52t1", auth: false, listeners: 0, docs: -1, errs: [] };
 
@@ -321,3 +321,97 @@ function renderHistory() {
 
 renderPick(); renderDest(); renderWards(); renderBeds(); renderHistory();
 maybeAutoOpen();
+
+// ---- bedside nursing chart ---------------------------------------------------
+// The ward half's e-charting: one observation line per save, bound to the
+// patient's single Registration ID and the ward/bed they occupy right now.
+// Appended, never overwritten - the chart is a legal nursing record.
+let charts = [];
+
+onSnapshot(collection(db, "healthWardCharts"), (snap) => {
+  charts = snap.docs.map((d) => Object.assign({}, d.data(), { __id: d.id }))
+    .sort((a, b) => String(b.savedAt || "").localeCompare(String(a.savedAt || "")));
+  renderChart();
+}, (e) => loadErr("healthWardCharts", e));
+window.__p52.listeners++;
+
+function cerr(m) { const e = $("#c-err"); if (e) { e.hidden = !m; e.textContent = m || ""; } }
+function cok(m) { const e = $("#c-ok"); if (e) { e.hidden = !m; e.textContent = m || ""; } }
+
+function chartPlacement() {
+  return assignments.find((a) => a.status === "Active" && a.__id === $("#c-plc").value) || null;
+}
+
+function renderChart() {
+  if (!$("#c-plc")) return;
+  const act = assignments.filter((a) => a.status === "Active");
+  const cur = $("#c-plc").value;
+  $("#c-plc").innerHTML = '<option value="">— Choose the patient in bed —</option>' +
+    act.map((a) => '<option value="' + esc(a.__id) + '">' +
+      esc((a.patientName || "—") + " · " + (a.wardCode || "") + " bed " + (a.bedNumber || "") +
+        " (" + (a.patientId || "") + ")") + "</option>").join("");
+  if (cur && act.some((a) => a.__id === cur)) $("#c-plc").value = cur;
+  const id = $("#c-plc").value;
+  const pick = chartPlacement();
+  const rows = charts
+    .filter((c) => !id || String(c.assignmentId || "") === String(id) ||
+      String(c.patientId || "") === String((pick || {}).patientId || ""))
+    .slice(0, 30);
+  $("#c-hist-wrap").hidden = rows.length === 0;
+  $("#c-hist").innerHTML = rows.map((c) => {
+    const vit = [["Temp", c.temp], ["Pulse", c.pulse], ["BP", c.bp], ["SpO2", c.spo2], ["Pain", c.pain]]
+      .filter(([, v]) => v !== "" && v != null).map(([k, v]) => k + " " + v).join(" · ");
+    return "<tr>" +
+      "<td class='c-date'>" + esc(when(c.savedAt)) + "</td>" +
+      "<td class='c-party'>" + esc(c.patientName || "—") + " <span class='mini-note'>" + esc(c.patientId || "") + "</span></td>" +
+      "<td class='nowrap'>" + esc((c.wardCode || "—") + " · bed " + (c.bedNumber || "—")) + "</td>" +
+      "<td class='c-desc'>" + esc(vit || "—") + "</td>" +
+      "<td class='c-desc'>" + esc(c.note || "—") + "</td>" +
+      "<td>" + esc(c.by || "—") + "</td>" +
+      "</tr>";
+  }).join("");
+  $("#c-count").textContent = rows.length
+    ? rows.length + " recent observation(s)" + (id ? " for this placement." : " across the wards.")
+    : "";
+}
+
+$("#c-plc").addEventListener("change", renderChart);
+
+$("#c-save").addEventListener("click", async () => {
+  cerr(""); cok("");
+  const a = chartPlacement();
+  if (!a) return cerr("Choose the patient in bed first.");
+  const v = (id) => String(($("#" + id) || {}).value || "").trim();
+  const temp = v("c-temp"), pulse = v("c-pulse"), bp = v("c-bp"),
+        spo2 = v("c-spo2"), pain = v("c-pain"), note = v("c-note");
+  if (!temp && !pulse && !bp && !spo2 && !pain && !note)
+    return cerr("Record at least one vital sign or a note.");
+  if (bp && !/^\d{2,3}\s*\/\s*\d{2,3}$/.test(bp))
+    return cerr("The blood pressure looks wrong — use systolic/diastolic, e.g. 120/80.");
+  const staff = rememberedStaff() || v("t-staff") || "";
+  if (!staff) return cerr("Your name is needed — type it once in the transfer panel (step 2), or save it there first.");
+  keepStaff(staff);
+  const btn = $("#c-save");
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, "healthWardCharts"), {
+      assignmentId: a.__id,
+      patientId: a.patientId || "",
+      patientName: a.patientName || "",
+      wardId: a.wardId || "", wardCode: a.wardCode || "",
+      bedId: a.bedId || "", bedNumber: a.bedNumber || "",
+      temp, pulse, bp, spo2, pain, note,
+      by: staff, savedAt: nowISO()
+    });
+    cok("Observation saved for " + (a.patientName || "the patient") +
+      " — it lives with the Registration ID " + (a.patientId || "") + ".");
+    ["c-temp", "c-pulse", "c-bp", "c-spo2", "c-pain", "c-note"].forEach((id) => {
+      const el = $("#" + id); if (el) el.value = "";
+    });
+    renderChart();
+  } catch (e) {
+    cerr("Could not save: " + ((e && (e.code || e.message)) || e));
+  } finally { btn.disabled = false; }
+});
+
+renderChart();

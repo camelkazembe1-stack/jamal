@@ -158,6 +158,40 @@ function paintMatches() {
   $("#p-accept").disabled = matched === 0;
 }
 
+// ---- reference-range validation engine ------------------------------------------
+// Some analysers send no flag at all. When the line carries a reference
+// range, the numeric result is judged here: "low-high", "<x" and ">x"
+// ranges are understood; far-out values are flagged critical, the rest
+// high/low. The auto flag is marked "(auto)" so the tech sees it was
+// computed by JAMALI, not by the instrument.
+function flagForResult(result, refRange) {
+  const v = parseFloat(String(result).replace(/[^0-9.\-]/g, ""));
+  const s = String(refRange || "").trim();
+  if (!isFinite(v) || !s) return "";
+  let m = s.match(/^([0-9.]+)\s*[-\u2013]\s*([0-9.]+)$/);
+  if (m) {
+    const lo = parseFloat(m[1]), hi = parseFloat(m[2]);
+    if (!(isFinite(lo) && isFinite(hi) && hi > lo)) return "";
+    if (v <= lo * 0.5 || v >= hi * 2) return "C (auto)";
+    if (v < lo) return "L (auto)";
+    if (v > hi) return "H (auto)";
+    return "";
+  }
+  m = s.match(/^<\s*([0-9.]+)$/);
+  if (m) {
+    const hi = parseFloat(m[1]);
+    if (!isFinite(hi)) return "";
+    return v > hi * 2 ? "C (auto)" : (v > hi ? "H (auto)" : "");
+  }
+  m = s.match(/^>\s*([0-9.]+)$/);
+  if (m) {
+    const lo = parseFloat(m[1]);
+    if (!isFinite(lo)) return "";
+    return v < lo ? "L (auto)" : "";
+  }
+  return "";
+}
+
 function showParsed(rows, source) {
   PARSED = rows;
   $("#p-card").hidden = rows.length === 0;
@@ -166,7 +200,14 @@ function showParsed(rows, source) {
     iFail("Nothing usable in " + source + " - expected CSV (regId,test,result,unit,refRange), HL7 ORU or ASTM-style lines.");
     return;
   }
-  iOk("");
+  let autoFlagged = 0;
+  PARSED.forEach((r) => {
+    if (!r.flag && r.refRange) {
+      const f = flagForResult(r.result, r.refRange);
+      if (f) { r.flag = f; autoFlagged++; }
+    }
+  });
+  iOk(autoFlagged ? autoFlagged + " line(s) auto-flagged against their reference range." : "");
   paintMatches();
 }
 

@@ -312,6 +312,32 @@ $("#g-assign").addEventListener("click", async () => {
   btn.disabled = false;
 });
 
+// ---- auto bed allocation ----------------------------------------------------
+// One tap: pick the first free bed of the chosen ward; if no ward is chosen,
+// pick the active ward with the most free beds. The nurse still presses
+// Assign Bed, so the human confirms the placement - urgent care is never
+// delayed by hunting for a bed number.
+$("#g-auto").addEventListener("click", () => {
+  ferr(""); fok("");
+  if (!selected) return ferr("Find and choose the patient first (step 1).");
+  let w = wards.find((x) => x.wardId === $("#g-ward").value);
+  if (!w) {
+    const cands = wards.filter((x) => x.status !== "Inactive")
+      .map((x) => ({ w: x, free: availableBeds(x.wardId).length }))
+      .sort((a, b) => b.free - a.free);
+    if (!cands.length || cands[0].free === 0)
+      return ferr("No available bed in any active ward — free or receive beds first.");
+    w = cands[0].w;
+    $("#g-ward").value = w.wardId;
+    renderBeds();
+  }
+  const free = availableBeds(w.wardId);
+  if (!free.length) return ferr("No available bed in " + (w.wardCode || w.wardName) + " — choose another ward.");
+  $("#g-bed").value = free[0].bedId;
+  fok("Auto-picked bed " + (free[0].bedNumber || "") + " (" + (w.wardCode || w.wardName) +
+    ") — press Assign Bed to place " + who(selected) + ".");
+});
+
  
 function render() {
   const act = assignments.filter((a) => a.status === "Active");

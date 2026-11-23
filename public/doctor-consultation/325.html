@@ -234,6 +234,19 @@
       </div>
     </div>
 
+    <div class="card add-card" id="os-card">
+      <h2>Order sets &mdash; the facility's standard bundles</h2>
+      <p class="mini-note" style="margin-bottom:10px">One click fills the sheet with a saved bundle: investigations, medicines and
+      orders the clinic uses together (e.g. a febrile-illness panel). Applying still allows edits &mdash; and the safety checks below still run.</p>
+      <div class="os-row">
+        <select id="os-pick" class="os-pick"><option value="">— Choose an order set —</option></select>
+        <button class="ghost-btn" id="os-apply" type="button">Apply to the sheet</button>
+        <button class="ghost-btn" id="os-save" type="button">Save the sheet as a set</button>
+      </div>
+      <p class="mini-note" id="os-note" style="margin-top:8px"></p>
+      <p class="form-err" id="os-err" hidden></p>
+    </div>
+
     <div class="card add-card">
       <h2>Prescriptions &mdash; medicines for the pharmacy</h2>
       <p class="mini-note" style="margin-bottom:10px">One line per medicine. Prescriptions reach the pharmacy desk when this consultation is completed.</p>
