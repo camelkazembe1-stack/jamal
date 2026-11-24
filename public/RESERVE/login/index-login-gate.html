@@ -33,11 +33,13 @@
   h1 span { color: #38bdf8; }
   .sub { font-size: 14px; color: #94a3b8; margin-bottom: 22px; text-align: center; }
   label { display: block; font-size: 13px; color: #94a3b8; margin: 12px 0 5px; }
-  input {
+  input, select {
     width: 100%; background: #0b1220; color: #e2e8f0; border: 1px solid #334155;
     border-radius: 10px; padding: 11px 13px; font-size: 15px; outline: none;
   }
-  input:focus { border-color: #38bdf8; }
+  select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+  select option { background: #0b1220; color: #e2e8f0; }
+  input:focus, select:focus { border-color: #38bdf8; }
   button.wide {
     width: 100%; margin-top: 18px; display: flex; align-items: center; justify-content: center; gap: 10px;
     background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: #06121f; border: 0; border-radius: 12px;
@@ -116,7 +118,23 @@
       <label for="ca-phone">Phone number</label>
       <input id="ca-phone" type="tel" placeholder="e.g. 0780526437">
       <label for="ca-position">Staff position</label>
-      <input id="ca-position" type="text" placeholder="e.g. Receptionist, Nurse, Accountant">
+      <select id="ca-position">
+        <option>Administrator</option>
+        <option>Doctor</option>
+        <option>Nurse</option>
+        <option>Midwife</option>
+        <option>Pharmacist</option>
+        <option>Lab technician</option>
+        <option>Radiographer</option>
+        <option>Receptionist</option>
+        <option>Records officer</option>
+        <option>Billing officer</option>
+        <option>HR officer</option>
+        <option>Store keeper</option>
+        <option>Support services</option>
+        <option>Viewer</option>
+        <option>Other</option>
+      </select>
       <label for="ca-token">Four-digit token</label>
       <div class="token-row"><input id="ca-token" type="text" inputmode="numeric" maxlength="4" placeholder="••••"></div>
       <button class="wide" id="create-btn" type="button">Create Account</button>

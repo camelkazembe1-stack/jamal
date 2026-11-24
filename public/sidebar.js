@@ -1692,6 +1692,109 @@ export const server = {
 /* ==== JAMALI_502_BLOCK_END ==== */
 
 /* ======================================================================
+   BUSINESS ROLE CATALOG (25 Nov 2026) - one catalog everywhere. Staff
+   Roles (399) picks roles from it, the Account Administration desk
+   (380) applies its module templates, the login gate's staff-position
+   list reads it, and the sidebar enforces it: role -> menu folders.
+   IMPORTANT: this block sits OUTSIDE the JAMALI_502_BLOCK markers on
+   purpose - the 502 core is regenerated from SERVER/server.js by
+   SERVER/sync.js and would wipe anything placed inside it.
+   Each template lists plain module folders (never wing rows): the
+   enforcement half expands the set DOWN into every sub-page of a
+   granted module and UP into the wing rows that keep the menu
+   readable - never sideways into sibling modules. An empty
+   Administrator template means every folder. Roles are the storage
+   names (the 399 registry stores them verbatim) - never rename an
+   entry, only add new ones at the end.
+   ====================================================================== */
+export const STAFF_ROLES = [
+  "Administrator",
+  "Doctor",
+  "Nurse",
+  "Midwife",
+  "Pharmacist",
+  "Lab technician",
+  "Radiographer",
+  "Receptionist",
+  "Records officer",
+  "Billing officer",
+  "HR officer",
+  "Store keeper",
+  "Support services",
+  "Viewer"
+];
+
+export const STAFF_ROLE_TEMPLATES = {
+  "Administrator": [],
+  "Doctor": [
+    "victim-registration", "triage", "nurse-consultation",
+    "doctor-consultation", "treatment-procedures", "patient-module",
+    "patient-file", "referrals", "ward-management", "patient-admission",
+    "patient-discharge", "laboratory", "radiology", "emergency-department",
+    "icu-management", "surgery-theatre", "icd10", "telemedicine",
+    "chronic-disease", "infection-control"
+  ],
+  "Nurse": [
+    "victim-registration", "triage", "nurse-consultation",
+    "patient-module", "patient-file", "ward-management", "patient-admission",
+    "patient-discharge", "maternity-delivery", "antenatal-care",
+    "paediatric-department", "immunisation", "emergency-department",
+    "birth-certificates", "chronic-disease"
+  ],
+  "Midwife": [
+    "victim-registration", "triage", "nurse-consultation",
+    "patient-module", "patient-file", "ward-management", "patient-admission",
+    "patient-discharge", "maternity-delivery", "antenatal-care",
+    "birth-certificates", "emergency-department"
+  ],
+  "Pharmacist": [
+    "pharmacy", "pharmacy-stock", "drug-interactions",
+    "patient-module", "medical-supplies"
+  ],
+  "Lab technician": [
+    "laboratory", "blood-bank", "patient-file"
+  ],
+  "Radiographer": [
+    "radiology", "patient-file"
+  ],
+  "Receptionist": [
+    "victim-registration", "triage", "patient-module",
+    "patient-file", "referrals", "doctor-schedule", "birth-certificates",
+    "death-certificates", "ambulance-transport"
+  ],
+  "Records officer": [
+    "victim-registration", "patient-module", "patient-file",
+    "icd10", "health-audit", "birth-certificates", "death-certificates"
+  ],
+  "Billing officer": [
+    "hospital-billing", "hospital-payments", "health-insurance",
+    "tariff-engine", "add-transaction", "view-file"
+  ],
+  "HR officer": [
+    "employees", "hospital-staff", "doctor-schedule",
+    "staff-development", "staff-roles", "branches"
+  ],
+  "Store keeper": [
+    "stock-management", "suppliers", "medical-supplies",
+    "medical-equipment", "hospital-inventory"
+  ],
+  "Support services": [
+    "dietary-nutrition", "laundry-management", "housekeeping"
+  ],
+  "Viewer": [
+    "patient-module", "hospital-reports"
+  ]
+};
+
+// The template seeds for one role, or null when the role is not in the
+// catalog. "Administrator" comes back as [] which callers must treat as
+// "every folder" (never as "no folders").
+export function roleTemplateFolders(role) {
+  var t = STAFF_ROLE_TEMPLATES[String(role || "")];
+  return t ? t.slice() : null;
+}
+
+/* ======================================================================
    THE NAV BRIDGE - was public/jamali-bridge.js, unchanged.
    ====================================================================== */
 /* JAMALI - public/jamali-bridge.js, the internal navigation bridge.
@@ -2636,15 +2739,203 @@ catch (e) {}
    try { sessionStorage.removeItem(MODE_KEY); } catch (e) {}
  }
  
- var ALWAYS_OPEN = ["home", "file-viewer"];
+ var ALWAYS_OPEN = ["home", "file-viewer", "staff-roles"];
 var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
+
+ /* ======================================================================
+   BUSINESS ROLE ENFORCEMENT (25 Nov 2026) - the other half of the
+   catalog above. A signed-in Google account is gated by the Staff
+   Roles registry (healthStaff - the same per-device store page 399
+   edits, read through the same local shim): role -> module template,
+   or the member's own custom folder set. Everything else keeps the
+   open model: anonymous visitors, unreadable registries (first offline
+   visit), empty registries (staff onboarding not started yet) and
+   folder-Administrator registry rows all see the whole menu. The
+   administrator email (camelkazembe1@gmail.com) always sees everything,
+   folders outside the menu tree (standalone tools, the comment desk)
+   never gate, and the visibility config keeps applying on top.
+   ====================================================================== */
+var STAFF_ACCESS = {
+  mode: "open",      // open | loading | member | unknown | suspended | nomodules
+  email: "",
+  folders: null,     // granted menu folders in member mode; null = everything open
+  role: "",
+  watchedEmail: ""
+};
+
+function staffMenuFolders() {
+  var M = window.JAMALI_MENU || [], out = {}, i;
+  for (i = 0; i < M.length; i++) out[M[i].folder] = 1;
+  return out;
+}
+
+function staffChildMap() {
+  // folder -> direct child folders, walked from the flat menu with a
+  // depth stack. d 0 = Home/desk rows (no parent), 1 = wing, 2 = main
+  // module, 3 = sub-page.
+  var M = window.JAMALI_MENU || [], kids = {}, stack = [], i, d, f;
+  for (i = 0; i < M.length; i++) {
+    d = M[i].d || 0;
+    f = M[i].folder;
+    while (stack.length && stack[stack.length - 1].d >= d) stack.pop();
+    if (d > 0 && stack.length) {
+      var p = stack[stack.length - 1].folder;
+      (kids[p] = kids[p] || []).push(f);
+    }
+    stack.push({ folder: f, d: d });
+  }
+  return kids;
+}
+
+function staffParentMap() {
+  var M = window.JAMALI_MENU || [], par = {}, stack = [], i, d, f;
+  for (i = 0; i < M.length; i++) {
+    d = M[i].d || 0;
+    f = M[i].folder;
+    while (stack.length && stack[stack.length - 1].d >= d) stack.pop();
+    if (d > 0 && stack.length) par[f] = stack[stack.length - 1].folder;
+    stack.push({ folder: f, d: d });
+  }
+  return par;
+}
+
+function staffExpandDown(seeds) {
+  // A granted module carries its sub-pages (ward-management opens the
+  // ward pages; a custom-ticked wing opens everything under it).
+  var kids = staffChildMap(), out = {}, queue = [], i;
+  for (i = 0; i < seeds.length; i++) {
+    if (!out[seeds[i]]) { out[seeds[i]] = 1; queue.push(seeds[i]); }
+  }
+  while (queue.length) {
+    var cur = queue.shift(), list = kids[cur] || [];
+    for (i = 0; i < list.length; i++) {
+      if (!out[list[i]]) { out[list[i]] = 1; queue.push(list[i]); }
+    }
+  }
+  return Object.keys(out);
+}
+
+function staffExpandUp(set) {
+  // Granted modules re-attach their wing ancestors so the sidebar keeps
+  // the wing row (and its hub) visible above the granted modules -
+  // without granting the wing's other children.
+  var par = staffParentMap(), out = {}, i, cur;
+  for (i = 0; i < set.length; i++) out[set[i]] = 1;
+  for (i = 0; i < set.length; i++) {
+    cur = set[i];
+    while (par[cur]) { cur = par[cur]; out[cur] = 1; }
+  }
+  return Object.keys(out);
+}
+
+function staffComputeFolders(record) {
+  // null = every folder (registry Administrator). [] = nothing granted.
+  if (String(record.role || "") === "Administrator") return null;
+  var seeds;
+  if (String(record.accessMode || "role") === "custom" &&
+      Array.isArray(record.modules) && record.modules.length) {
+    seeds = record.modules;
+  } else {
+    var t = STAFF_ROLE_TEMPLATES[String(record.role || "")];
+    if (!t) return []; // role not in the catalog: nothing opens until the admin adjusts it
+    seeds = t;
+  }
+  // Templates and custom ticks list plain modules (no wing rows): the
+  // set grows DOWN into every sub-page of a granted module and UP into
+  // the wing rows that keep the menu readable - never sideways into
+  // sibling modules.
+  return staffExpandUp(staffExpandDown(seeds));
+}
+
+function staffRepaint() {
+  try { paintNav(); } catch (e) {}
+  try { applySidebarVis(); } catch (e2) {}
+  try { filterLinks(document); } catch (e3) {}
+  try { jamaliAdminPaint(); } catch (e5) {}
+  if (PAGE_ID && current !== "system-admin" && !isAdmin()) {
+    var wasBlocked = !!document.querySelector(".jamali-vis-notice");
+    if (!wasBlocked) {
+      try { guardUserPage(mainEl()); } catch (e4) {}
+    } else if (folderAllowed(current)) {
+      location.reload(); // this page was blocked and the registry just allowed it
+    }
+  }
+}
+
+function staffApplyEmail() {
+  var mail = "";
+  try {
+    if (auth && auth.currentUser && auth.currentUser.email) {
+      mail = String(auth.currentUser.email).toLowerCase();
+    }
+  } catch (e) {}
+  if (!mail) mail = String((activeUser && activeUser.email) || "").toLowerCase();
+  if (mail === STAFF_ACCESS.email) return;
+  STAFF_ACCESS.email = mail;
+  if (!mail) {
+    STAFF_ACCESS.watchedEmail = "";
+    STAFF_ACCESS.mode = "open";
+    STAFF_ACCESS.folders = null;
+    STAFF_ACCESS.role = "";
+    staffRepaint();
+    return;
+  }
+  STAFF_ACCESS.watchedEmail = mail;
+  STAFF_ACCESS.mode = "loading";
+  STAFF_ACCESS.folders = null;
+  onSnapshot(collection(db, "healthStaff"), function (snap) {
+    if (STAFF_ACCESS.watchedEmail !== mail) return; // identity changed while the read was in flight
+    var rows = [];
+    snap.forEach(function (d) { rows.push(d.data()); });
+    var rec = null;
+    for (var i = 0; i < rows.length; i++) {
+      if (String(rows[i].email || "").trim().toLowerCase() === mail) { rec = rows[i]; break; }
+    }
+    if (!rec) {
+      // Empty registry = staff onboarding has not started: keep the open
+      // model. A non-empty registry without my email = not registered:
+      // every menu folder closes, only Home / Staff Roles / the file
+      // viewer and the unclassified pages stay reachable.
+      STAFF_ACCESS.mode = rows.length ? "unknown" : "open";
+      STAFF_ACCESS.folders = rows.length ? [] : null;
+      STAFF_ACCESS.role = "";
+    } else if (String(rec.status || "Active") === "Suspended") {
+      STAFF_ACCESS.mode = "suspended";
+      STAFF_ACCESS.folders = [];
+      STAFF_ACCESS.role = String(rec.role || "");
+    } else {
+      STAFF_ACCESS.role = String(rec.role || "");
+      var f = staffComputeFolders(rec);
+      if (f === null) { STAFF_ACCESS.mode = "member"; STAFF_ACCESS.folders = null; }
+      else { STAFF_ACCESS.mode = f.length ? "member" : "nomodules"; STAFF_ACCESS.folders = f; }
+    }
+    staffRepaint();
+  }, function () {
+    // Registry unreadable (offline first visit, shim failure): keep the
+    // open model - never lock a working facility out of its own system.
+    if (STAFF_ACCESS.watchedEmail !== mail) return;
+    STAFF_ACCESS.mode = "open";
+    STAFF_ACCESS.folders = null;
+    STAFF_ACCESS.role = "";
+    staffRepaint();
+  });
+}
+
  function folderAllowed(folder) {
    // RETURNED (demand 24 Nov 2026): the administrator desk belongs to
    // camelkazembe1@gmail.com only - every other visitor (signed in or
-   // anonymous) neither sees the entry nor opens the page. Account
-   // grants stay deactivated: every other folder is open for everyone.
+   // anonymous) neither sees the entry nor opens the page.
    if (folder === "system-admin") return isAdmin();
-   return true;
+   // BUSINESS ROLES (25 Nov 2026): the administrator email keeps
+   // everything; always-open folders, folders outside the menu tree
+   // (standalone tools, the comment desk) and the open modes stay open;
+   // a signed-in member opens exactly the folders their role - or their
+   // custom selection - grants.
+   if (isAdmin()) return true;
+   if (ALWAYS_OPEN.indexOf(folder) !== -1) return true;
+   if (!staffMenuFolders()[folder]) return true;
+   if (STAFF_ACCESS.folders === null) return true;
+   return STAFF_ACCESS.folders.indexOf(folder) !== -1;
  }
 
  
@@ -3351,8 +3642,11 @@ p.label + "</a>";
     // The top-right Comments button exists for the owner's eyes only.
     jamaliOwnerPaint(user);
     // The Admin button + the whole page-config tooling ride the same
-    // identity - repaint them on every auth change too.
+    // identity - repaint them on every auth change too. The business
+    // role gate follows the same identity (login = gate on, logout =
+    // open model again).
     recomputeAdmin();
+    staffApplyEmail();
   }
   sideAuthRender(null);
   window.JAMALI_SIDEBAR_AUTH = { render: sideAuthRender };
@@ -3680,16 +3974,68 @@ document.querySelector("main") || document.body;
   // updates the local mirror so the layout survives being offline.
 
   function hasAnyGrant() {
-    // Account grants stay deactivated (no accounts since 20 Nov): every
-    // signed-in or anonymous visitor counts as fully allowed. The only
-    // thing that hides anything is the administrator's visibility config.
-    return true;
+    // BUSINESS ROLES (25 Nov 2026): the open modes (anonymous, loading,
+    // unreadable registry, empty registry, registry Administrator)
+    // always pass - the only thing that hides anything for them is the
+    // administrator's visibility config. A registered member with zero
+    // granted modules waits for the admin allowance notice.
+    if (STAFF_ACCESS.folders === null) return true;
+    return STAFF_ACCESS.folders.length > 0;
+  }
+
+  // BUSINESS ROLES (25 Nov 2026): the page guard for role-gated pages.
+  // The message tells the member why: not in the registry, suspended,
+  // or the module simply sits outside their role.
+  function blockStaffPage() {
+    var app = document.getElementById("app");
+    if (app) {
+      app.style.display = "none";
+    } else {
+      var kids = Array.prototype.slice.call(document.body.children);
+      for (var i = 0; i < kids.length; i++) {
+        var id = kids[i].id || "";
+        if (id.indexOf("jamali-") === 0) continue;
+        kids[i].style.display = "none";
+      }
+    }
+    var head = "", body = "";
+    if (STAFF_ACCESS.mode === "unknown") {
+      head = "Your account is not in the Staff Roles registry yet.";
+      body = "<span>Signed in as <b>" + (STAFF_ACCESS.email || "this Google account") +
+        "</b>, but no staff row carries this email. The administrator adds staff on the " +
+        "<a href=\"/staff-roles/399\">Staff Roles</a> page - until then only Home and " +
+        "Staff Roles open for you.</span>";
+    } else if (STAFF_ACCESS.mode === "suspended") {
+      head = "This account is suspended.";
+      body = "<span>The Staff Roles registry holds <b>" + (STAFF_ACCESS.email || "this account") +
+        "</b> with status <b>Suspended</b>. Only Home and Staff Roles open while the " +
+        "suspension stands.</span>";
+    } else {
+      head = "This module is not part of your role.";
+      body = "<span>Your role" + (STAFF_ACCESS.role ? " (<b>" + STAFF_ACCESS.role + "</b>)" : "") +
+        " does not open this module. The administrator can widen it on the " +
+        "<a href=\"/staff-roles/399\">Staff Roles</a> page - by moving you to another role " +
+        "or by giving your row a custom module selection.</span>";
+    }
+    var n = document.createElement("div");
+    n.className = "jamali-vis-notice";
+    n.innerHTML = "<b>" + head + "</b>" + body;
+    document.body.appendChild(n);
   }
 
   function guardUserPage(main) {
     if (menuHidden(current) || pageHidden(PAGE_ID)) { blockPage(); return; }
+    // BUSINESS ROLES (25 Nov 2026): the role gate first - an unknown or
+    // suspended account gets its own clear notice (blockStaffPage), a
+    // zero-module member gets the allowance notice, and an ordinary
+    // member outside this module gets the role notice. The old
+    // visibility-config block stays in front of everything.
+    if (ALWAYS_OPEN.indexOf(current) === -1 && !folderAllowed(current)) {
+      if (STAFF_ACCESS.mode === "unknown" || STAFF_ACCESS.mode === "suspended") { blockStaffPage(); return; }
+      if (!hasAnyGrant()) { blockAllowance(); return; }
+      blockStaffPage(); return;
+    }
     if (ALWAYS_OPEN.indexOf(current) === -1 && !hasAnyGrant()) { if (current === "home") { blankHome(main); return; } blockAllowance(); return; }
-    if (!folderAllowed(current) && ALWAYS_OPEN.indexOf(current) === -1) { blockPage(); return; }
     applyUserHides(main);
     watchPage(main, function () { applyUserHides(main); });
   }
@@ -4390,7 +4736,7 @@ document.querySelector("main") || document.body;
   } else {
     try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
   }
-  authSettled().then(function () { recomputeAdmin(); }).catch(function () {});
+  authSettled().then(function () { recomputeAdmin(); staffApplyEmail(); }).catch(function () { staffApplyEmail(); });
 
 
  
@@ -4497,8 +4843,19 @@ document.querySelector("main") || document.body;
       }
       return out;
     }
-    var all = !session || session.role === "admin";
-    var g = (session && Array.isArray(session.grants)) ? session.grants : [];
+    // BUSINESS ROLES (25 Nov 2026): the open modes (anonymous personal
+    // use, unreadable registry, registry Administrator) keep the old
+    // everything-scope; a registered member may only request deletion
+    // of the data groups behind their granted modules - the same grants
+    // that open their pages - and a suspended or unknown account may
+    // not request any deletion at all.
+    var all = isAdmin() || (session && session.role === "admin") ||
+      STAFF_ACCESS.mode !== "member" || STAFF_ACCESS.folders === null;
+    // In member mode the scopes ride the staff folder set; the dormant
+    // account-system session grants keep working for a restored login.
+    var g = (STAFF_ACCESS.mode === "member" && Array.isArray(STAFF_ACCESS.folders))
+      ? STAFF_ACCESS.folders
+      : ((session && Array.isArray(session.grants)) ? session.grants : []);
     function hit(set) {
       if (all) return true;
       for (var i = 0; i < set.length; i++) { if (g.indexOf(set[i]) !== -1) return true; }

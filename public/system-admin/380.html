@@ -57,6 +57,13 @@ every other page; the page module imports its data layer from it. -->
   <section id="modsel" hidden style="margin-top:18px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;text-align:left;">
     <h2 style="font-size:18px;margin:0 0 10px;">Select modules — <span id="modsel-who"></span></h2>
     <p style="color:#64748b;font-size:13px;margin:0 0 10px;">Tick the main modules this user may open — ticking a module reveals its submodules for individual selection. A granted submodule always carries its parent module. Only selected modules and submodules appear for the user on Home and in the sidebar.</p>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#334155;">Role template
+        <select id="modsel-role" style="border:1px solid #cbd5e1;border-radius:8px;padding:6px 10px;font-size:13.5px;background:#fff;"></select>
+      </label>
+      <button class="act" id="modsel-apply" type="button">Apply role modules</button>
+      <span id="modsel-tmplnote" style="color:#64748b;font-size:12.5px;">Picking a role ticks its whole module set (sub-pages included) — adjust the ticks afterwards and Save.</span>
+    </div>
     <div id="modsel-body"></div>
     <p style="margin:12px 0 0;display:flex;gap:8px;align-items:center;">
       <button class="act" id="modsel-all" type="button">Select all</button>

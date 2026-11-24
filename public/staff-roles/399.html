@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Staff Roles — JAMALI Health</title>
 <link rel="stylesheet" href="/staff-roles/399.css">
+<style>
+  .role-note { color: #475569; font-size: 12.5px; margin: 4px 0 0; }
+  .access-fs { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin: 2px 0 0; }
+  .access-fs legend { font-weight: 700; font-size: 13px; color: #0f172a; padding: 0 6px; }
+  .acc-mode { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 13.5px; cursor: pointer; }
+  #f-access-tree { border-top: 1px dashed #e2e8f0; margin-top: 8px; padding-top: 6px; max-height: 260px; overflow: auto; }
+  #f-access-tree label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 3px 0; font-size: 13.5px; }
+  #f-access-tree label.top { font-weight: 700; }
+  #f-access-tree label.kid { margin-left: 22px; }
+  .acc-note { color: #64748b; font-size: 12px; margin: 6px 0 0; }
+</style>
 <script type="module" src="/sidebar.js"></script>
 </head>
 <body>
@@ -38,13 +49,26 @@
         <option>Administrator</option>
         <option>Doctor</option>
         <option>Nurse</option>
+        <option>Midwife</option>
         <option>Pharmacist</option>
         <option>Lab technician</option>
+        <option>Radiographer</option>
         <option>Receptionist</option>
-        <option>Billing officer</option>
         <option>Records officer</option>
+        <option>Billing officer</option>
+        <option>HR officer</option>
+        <option>Store keeper</option>
+        <option>Support services</option>
         <option>Viewer</option>
       </select></label>
+      <p class="role-note span-all" id="f-role-info" hidden></p>
+      <fieldset class="span-all access-fs" id="f-access-fs">
+        <legend>Module access</legend>
+        <label class="acc-mode"><input type="radio" name="f-access" value="role" checked> Follow the role's template</label>
+        <label class="acc-mode"><input type="radio" name="f-access" value="custom"> Custom selection</label>
+        <div id="f-access-tree" hidden></div>
+        <p class="acc-note" id="f-access-note">The role's template decides which modules the member opens; the sidebar hides and blocks every other module for them.</p>
+      </fieldset>
       <label>Branch<input id="f-branch" list="f-branches" placeholder="e.g. Main facility">
         <datalist id="f-branches"></datalist></label>
       <label>Status<select id="f-status">
@@ -72,7 +96,7 @@
     <div class="table-wrap">
       <table class="bk">
         <thead><tr>
-          <th>Name</th><th>Email</th><th>Role</th><th>Branch</th><th>Status</th><th></th>
+          <th>Name</th><th>Email</th><th>Role</th><th>Module access</th><th>Branch</th><th>Status</th><th></th>
         </tr></thead>
         <tbody id="t-body"></tbody>
       </table>
@@ -92,7 +116,7 @@
   (function () {
     var boot = document.getElementById("h-boot");
     if (boot) { boot.hidden = false; boot.textContent = "Staff Roles \u00b7 build 1 \u00b7 connecting\u2026"; }
-    window.__p99 = { page: "399", build: "1", t0: Date.now() };
+    window.__p99 = { page: "399", build: "2", t0: Date.now() };
   })();
   function __jamaliHerr(msg) {
     var box = document.getElementById("h-err");

@@ -40,6 +40,8 @@ async function boot() {
     const h = await fb.bootCloudFirestore();
     F = {
       fb: fb,
+      STAFF_ROLES: fb.STAFF_ROLES || [],
+      roleTemplate: fb.roleTemplateFolders || null,
       db: h.db,
       fs: h.fs,
       doc: h.fs.doc,
@@ -63,6 +65,9 @@ async function boot() {
   catch (e) { showErr("Could not load the database module: " + txt(e)); return; }
   readAll();
   checkAdmin();
+  // The role template list rides the shared catalog - refill now that F
+  // carries STAFF_ROLES (the boot-time fill used the fallback list).
+  fillRoleTemplateSelect();
 }
 
 function txt(e) {
@@ -433,6 +438,91 @@ document.getElementById("modsel-none").addEventListener("click", () => {
     cb.dispatchEvent(new Event("change"));
   });
 });
+
+// BUSINESS ROLES (25 Nov 2026): the role template applies in one click.
+// The catalog (STAFF_ROLES / roleTemplateFolders) rides the shared
+// /sidebar.js module, so this desk, the Staff Roles page and the
+// sidebar's enforcement always expand the same role -> module mapping.
+function expandSeedsInMenuTree(seeds) {
+  const want = {};
+  (seeds || []).forEach((s) => { want[s] = 1; });
+  const set = {};
+  for (const t of menuTree()) {
+    if (want[t.folder]) {
+      set[t.folder] = 1;
+      for (const k of t.kids) { set[k.folder] = 1; for (const g3 of k.kids) set[g3.folder] = 1; }
+      continue;
+    }
+    for (const k of t.kids) {
+      if (want[k.folder]) {
+        set[k.folder] = 1;
+        for (const g3 of k.kids) set[g3.folder] = 1;
+      } else {
+        for (const g3 of k.kids) { if (want[g3.folder]) set[g3.folder] = 1; }
+      }
+    }
+  }
+  return set;
+}
+
+function applyRoleTemplate() {
+  const noteEl = document.getElementById("modsel-tmplnote");
+  const roleSel = document.getElementById("modsel-role");
+  if (!F || !F.roleTemplate || !roleSel) return;
+  const role = roleSel.value;
+  const boxes = document.querySelectorAll("#modsel-body input[type=checkbox]");
+  let n = 0;
+  if (String(role) === "Administrator") {
+    boxes.forEach((cb) => { cb.checked = true; });
+    n = boxes.length;
+    if (noteEl) noteEl.textContent = "Administrator: every module ticked (" + n + ").";
+  } else {
+    const set = expandSeedsInMenuTree(F.roleTemplate(role) || []);
+    boxes.forEach((cb) => { cb.checked = !!set[cb.dataset.folder]; if (cb.checked) n++; });
+    if (noteEl) {
+      noteEl.textContent = n
+        ? (role + ": " + n + " modules ticked (sub-pages included) - adjust the ticks if needed, then Save Access.")
+        : (role + ": the catalog holds no module set for this role - tick manually.");
+    }
+  }
+  // Open the sub-lists of every box that now carries ticks beneath it,
+  // without firing the cascade handlers (they would re-tick siblings).
+  document.querySelectorAll("#modsel-body > div").forEach((topBox) => {
+    const mainCb = topBox.querySelector("input[type=checkbox]");
+    const kidBox = mainCb ? mainBox(mainCb) : null;
+    if (!kidBox) return;
+    const kids = kidBox.querySelectorAll(":scope > label > input[type=checkbox]");
+    let anyKid = false;
+    kids.forEach((kcb) => {
+      const g3Box = g3BoxOf(kcb);
+      const anyG3 = g3Box ? Array.from(g3Box.querySelectorAll("input[type=checkbox]")).some((x) => x.checked) : false;
+      if (g3Box && anyG3) g3Box.style.display = "block";
+      if (kcb.checked || anyG3) anyKid = true;
+    });
+    kidBox.style.display = (mainCb.checked || anyKid) ? "block" : "none";
+  });
+  function mainBox(cb) {
+    const wrap = cb.closest("label");
+    return wrap && wrap.nextElementSibling && wrap.nextElementSibling.tagName === "DIV"
+      ? wrap.nextElementSibling : null;
+  }
+  function g3BoxOf(kcb) {
+    const wrap = kcb.closest("label");
+    return wrap && wrap.nextElementSibling && wrap.nextElementSibling.tagName === "DIV"
+      ? wrap.nextElementSibling : null;
+  }
+}
+
+function fillRoleTemplateSelect() {
+  const sel = document.getElementById("modsel-role");
+  if (!sel) return;
+  const roles = (F && F.STAFF_ROLES && F.STAFF_ROLES.length) ? F.STAFF_ROLES.slice() : [];
+  if (!roles.length) { sel.innerHTML = "<option>Administrator</option><option>Doctor</option><option>Nurse</option>"; }
+  else sel.innerHTML = roles.map((r) => "<option>" + String(r).replace(/[&<>\"']/g, "") + "</option>").join("");
+  sel.value = "Doctor";
+}
+fillRoleTemplateSelect();
+document.getElementById("modsel-apply").addEventListener("click", applyRoleTemplate);
 document.getElementById("modsel-save").addEventListener("click", saveModsel);
 document.getElementById("modsel-close").addEventListener("click", () => {
   document.getElementById("modsel").hidden = true;
