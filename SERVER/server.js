@@ -161,9 +161,15 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // RETURNED (demand 24 Nov 2026): the administrator is the
+    // camelkazembe1@gmail.com account and nobody else - the email is
+    // the authority, no systemAdmins document needed. This gates the
+    // writes to systemPageConfig (the module/field visibility the
+    // sidebar tooling saves) and the system desk collections.
     function isSystemAdmin() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/systemAdmins/$(request.auth.uid));
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() == "camelkazembe1@gmail.com";
     }
 
 
@@ -1247,7 +1253,7 @@ var fsModRef = null;    // the loaded firebase-firestore CDN module, or null
 var fsDbRef = null;     // the real cloud Firestore handle, or null
 var fsBootPromise = null;
 
-function bootCloudFirestore() {
+export function bootCloudFirestore() {
   if (fsBootPromise) return fsBootPromise;
   fsBootPromise = (async function () {
     if (!appRef) {
@@ -1344,6 +1350,242 @@ export function commentWatch(cb) {
 // mailbox card, the owner sign-in card and the sidebar all compare the
 // signed-in email against this one exact address.
 export const commentOwner = COMMENT_OWNER_EMAIL;
+
+// ======================================================================
+// THE SYSTEM ADMINISTRATOR (demand 24 Nov 2026 - "return the admin
+// issue and user issue to camelkazembe1@gmail.com only"): the one
+// authority of the whole system is the signed-in Google identity, and
+// the administrator is camelkazembe1@gmail.com and nobody else - the
+// same owner email the comment desk already uses. isSystemAdmin()
+// gates the Account Administration desk (system-admin/380), the
+// sidebar area minus / field pins / hidden chip tooling and the write
+// side of systemPageConfig in the Firestore rules (see the
+// FIRESTORE_RULES block - isSystemAdmin() is the email check there
+// too, so publishing the rules once enables the cloud writes).
+// ======================================================================
+export const SYSTEM_ADMIN_EMAIL = "camelkazembe1@gmail.com";
+export function isSystemAdmin() {
+  var mail = "";
+  try {
+    if (auth && auth.currentUser && auth.currentUser.email) {
+      mail = String(auth.currentUser.email).toLowerCase();
+    }
+  } catch (e) {}
+  if (!mail) mail = String((activeUser && activeUser.email) || "").toLowerCase();
+  return mail === SYSTEM_ADMIN_EMAIL;
+}
+
+// The real-cloud handle is shared now: the visibility config
+// (systemPageConfig/visibility) and the Account Administration desk
+// talk to the actual Firestore, not to the per-browser local shim
+// (the implementation below is exported for them).
+
+// ======================================================================
+// EXPORT TO ONLINE DATABASE - the bridge from the local data engine
+// back to the server's database. The rules already give every signed-in
+// user one writable container of their own:
+//     match /data/{containerKey}/{rest=**}  where
+//     containerKey == request.auth.token.email.lower() + "__personal"
+// Export copies EVERY collection of THIS browser's local database (all
+// zones: the anonymous zone and each signed-in zone found in Local
+// Storage) into that container, keeping the zones separated on the way:
+//     data/<email>__personal/<zone>/<collection>/<docId>
+//   - zone is "anon" or "u__<email>" - zones never mix, in the cloud
+//     just like in the browser;
+//   - document ids and collection names are preserved, so re-exporting
+//     overwrites the very same documents - it never duplicates;
+//   - timestamps ({__jts: millis} markers) become real Firestore
+//     Timestamps;
+//   - documents over ~900 KB (the Firestore 1 MB limit, with margin)
+//     are skipped and counted in the summary.
+// Reading stays strictly one-way: the export writes, it never changes
+// anything in the browser's Local Storage, and it never deletes cloud
+// documents. A summary of each run lands in data/<email>__personal/
+// export/_meta (latest run: when, by whom, how many records).
+// ======================================================================
+export function exportLocalToCloud(onProgress) {
+  var z = localZone();
+  if (!z.signedIn) {
+    return Promise.reject(new Error(
+      "Sign in with Google first - the online database only accepts records from a signed-in user."));
+  }
+  var email = String(activeUser.email).toLowerCase();
+  var containerKey = email + "__personal";
+  var nsSafe = function (ns) { return String(ns).replace(/::/g, "__"); };
+
+  // 1) collect every local zone + collection with its stored documents
+  var jobs = [];
+  var seen = {};
+  function harvest(source, count, keyAt) {
+    for (var i = 0; i < count; i++) {
+      var key = keyAt(source, i);
+      if (!key || key.indexOf(ZONE_PREFIX) !== 0 || seen[key]) continue;
+      seen[key] = true;
+      /* key layout: jamaliLocal::<zone>::<collection>
+       *   - anonymous zone: "anon::<coll>"      (2 segments)
+       *   - signed-in zone: "u::<email>::<coll>" (3 segments)
+       * Collection names never contain "::", emails neither. */
+      var rest = key.slice(ZONE_PREFIX.length).split("::");
+      if (rest.length < 2) continue;
+      var ns;
+      var collName;
+      if (rest[0] === "u") {
+        if (rest.length < 3) continue;
+        ns = rest[0] + "::" + rest[1];
+        collName = rest.slice(2).join("::");
+      } else {
+        ns = rest[0];
+        collName = rest.slice(1).join("::");
+      }
+      if (!collName || /^__/.test(collName) || /^\./.test(collName)) continue;
+      var raw = null;
+      try { raw = source.getItem(key); } catch (e) {}
+      if (raw == null) continue;
+      var map = {};
+      try { map = JSON.parse(raw) || {}; } catch (e2) { map = {}; }
+      var ids = Object.keys(map);
+      if (!ids.length) continue;
+      jobs.push({ ns: ns, coll: collName, docs: map, ids: ids });
+    }
+  }
+  if (LS) harvest(LS, LS.length || 0, function (s, i) { try { return s.key(i); } catch (e) { return null; } });
+  else harvest({ getItem: function (k) { return MEMORY_STORE[k] || null; } },
+    Object.keys(MEMORY_STORE).length, function (s, i) { return Object.keys(MEMORY_STORE)[i]; });
+
+  // stable order: anonymous zone first, then signed-in zones alphabetically
+  jobs.sort(function (a, b) {
+    var za = a.ns === "anon" ? 0 : 1, zb = b.ns === "anon" ? 0 : 1;
+    if (za !== zb) return za - zb;
+    if (a.ns !== b.ns) return a.ns < b.ns ? -1 : 1;
+    return a.coll < b.coll ? -1 : (a.coll > b.coll ? 1 : 0);
+  });
+
+  // 2) flatten into cloud writes, converting timestamps, sanitising ids
+  var writes = [];
+  var skipped = 0;
+  function cloudValue(v) {
+    if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+    if (Array.isArray(v)) {
+      var out = [];
+      for (var i = 0; i < v.length; i++) out.push(cloudValue(v[i]));
+      return out;
+    }
+    if (typeof v === "object") {
+      if (v.__jts !== undefined && typeof v.__jts === "number") {
+        var ms = v.__jts;
+        return { __jts: ms }; // replaced with a real Timestamp at write time
+      }
+      var o = {};
+      for (var k in v) {
+        if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+        o[k] = cloudValue(v[k]);
+      }
+      return o;
+    }
+    return null;
+  }
+  function toCloudData(stored, fs) {
+    var v = cloudValue(stored);
+    return reviveTs(v, fs);
+  }
+  function reviveTs(v, fs) {
+    if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+    if (Array.isArray(v)) {
+      var out = [];
+      for (var i = 0; i < v.length; i++) out.push(reviveTs(v[i], fs));
+      return out;
+    }
+    if (typeof v === "object") {
+      if (v.__jts !== undefined && typeof v.__jts === "number") {
+        var ms = v.__jts;
+        return new fs.Timestamp(Math.floor(ms / 1000), (ms % 1000) * 1000000);
+      }
+      var o = {};
+      for (var k in v) {
+        if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+        o[k] = reviveTs(v[k], fs);
+      }
+      return o;
+    }
+    return v;
+  }
+  function docIdSafe(id) {
+    var s = String(id).replace(/\//g, "_");
+    if (/^(__|\.*$)/.test(s) || !s) s = "d_" + s;
+    return s;
+  }
+  for (var ji = 0; ji < jobs.length; ji++) {
+    var job = jobs[ji];
+    for (var di = 0; di < job.ids.length; di++) {
+      var id = job.ids[di];
+      var stored = job.docs[id];
+      if (!stored || typeof stored !== "object") continue;
+      try {
+        if (JSON.stringify(stored).length > 900000) { skipped++; continue; }
+      } catch (e0) { skipped++; continue; }
+      writes.push({
+        path: ["data", containerKey, nsSafe(job.ns), job.coll, docIdSafe(id)],
+        data: stored
+      });
+    }
+  }
+
+  var total = writes.length;
+  var done = 0;
+  function say(n) {
+    try {
+      if (typeof onProgress === "function") onProgress({ done: n, total: total });
+    } catch (e) {}
+  }
+
+  return bootCloudFirestore().then(function (h) {
+    if (total === 0) return { h: h, collections: jobs.length, records: 0, skipped: skipped };
+    say(0);
+    var CHUNK = 5;
+    function writeOne(w) {
+      var docRef = h.fs.doc.apply(h.fs, [h.db].concat(w.path));
+      return h.fs.setDoc(docRef, toCloudData(w.data, h.fs)).then(function () {
+        done++;
+        if (done % 10 === 0 || done === total) say(done);
+      });
+    }
+    var p = Promise.resolve();
+    for (var ci = 0; ci < writes.length; ci += CHUNK) {
+      (function (start) {
+        p = p.then(function () {
+          var batch = [];
+          for (var b = 0; b < CHUNK && start + b < writes.length; b++) batch.push(writeOne(writes[start + b]));
+          return Promise.all(batch);
+        });
+      })(ci);
+    }
+    return p.then(function () {
+      return { h: h, collections: jobs.length, records: total, skipped: skipped };
+    });
+  }).then(function (r) {
+    // the run summary - latest run only, overwritten on every export
+    var meta = {
+      by: email,
+      at: r.h.fs.serverTimestamp(),
+      zones: jobs.map(function (j2) { return nsSafe(j2.ns); }).filter(function (v2, i2, a2) { return a2.indexOf(v2) === i2; }),
+      collections: r.collections,
+      records: r.records,
+      skipped: r.skipped,
+      note: "copied from this browser's Local Storage; ids preserved, re-export overwrites"
+    };
+    return r.h.fs.setDoc(r.h.fs.doc(r.h.db, "data", containerKey, "export", "_meta"), meta)
+      .then(function () { return r; })
+      .catch(function () { return r; }); // the summary must not fail the export
+  }).then(function (r) {
+    return {
+      container: containerKey,
+      zones: jobs.map(function (j3) { return nsSafe(j3.ns); }).filter(function (v3, i3, a3) { return a3.indexOf(v3) === i3; }),
+      collections: r.collections,
+      records: r.records,
+      skipped: r.skipped
+    };
+  });
+}
 
 // ======================================================================
 // SERVER CONFIG - hosting facts and the server handle SERVER/linker.js

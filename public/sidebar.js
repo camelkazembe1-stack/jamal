@@ -199,9 +199,15 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // RETURNED (demand 24 Nov 2026): the administrator is the
+    // camelkazembe1@gmail.com account and nobody else - the email is
+    // the authority, no systemAdmins document needed. This gates the
+    // writes to systemPageConfig (the module/field visibility the
+    // sidebar tooling saves) and the system desk collections.
     function isSystemAdmin() {
       return isSignedIn()
-        && exists(/databases/$(database)/documents/systemAdmins/$(request.auth.uid));
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() == "camelkazembe1@gmail.com";
     }
 
 
@@ -1285,7 +1291,7 @@ var fsModRef = null;    // the loaded firebase-firestore CDN module, or null
 var fsDbRef = null;     // the real cloud Firestore handle, or null
 var fsBootPromise = null;
 
-function bootCloudFirestore() {
+export function bootCloudFirestore() {
   if (fsBootPromise) return fsBootPromise;
   fsBootPromise = (async function () {
     if (!appRef) {
@@ -1382,6 +1388,242 @@ export function commentWatch(cb) {
 // mailbox card, the owner sign-in card and the sidebar all compare the
 // signed-in email against this one exact address.
 export const commentOwner = COMMENT_OWNER_EMAIL;
+
+// ======================================================================
+// THE SYSTEM ADMINISTRATOR (demand 24 Nov 2026 - "return the admin
+// issue and user issue to camelkazembe1@gmail.com only"): the one
+// authority of the whole system is the signed-in Google identity, and
+// the administrator is camelkazembe1@gmail.com and nobody else - the
+// same owner email the comment desk already uses. isSystemAdmin()
+// gates the Account Administration desk (system-admin/380), the
+// sidebar area minus / field pins / hidden chip tooling and the write
+// side of systemPageConfig in the Firestore rules (see the
+// FIRESTORE_RULES block - isSystemAdmin() is the email check there
+// too, so publishing the rules once enables the cloud writes).
+// ======================================================================
+export const SYSTEM_ADMIN_EMAIL = "camelkazembe1@gmail.com";
+export function isSystemAdmin() {
+  var mail = "";
+  try {
+    if (auth && auth.currentUser && auth.currentUser.email) {
+      mail = String(auth.currentUser.email).toLowerCase();
+    }
+  } catch (e) {}
+  if (!mail) mail = String((activeUser && activeUser.email) || "").toLowerCase();
+  return mail === SYSTEM_ADMIN_EMAIL;
+}
+
+// The real-cloud handle is shared now: the visibility config
+// (systemPageConfig/visibility) and the Account Administration desk
+// talk to the actual Firestore, not to the per-browser local shim
+// (the implementation below is exported for them).
+
+// ======================================================================
+// EXPORT TO ONLINE DATABASE - the bridge from the local data engine
+// back to the server's database. The rules already give every signed-in
+// user one writable container of their own:
+//     match /data/{containerKey}/{rest=**}  where
+//     containerKey == request.auth.token.email.lower() + "__personal"
+// Export copies EVERY collection of THIS browser's local database (all
+// zones: the anonymous zone and each signed-in zone found in Local
+// Storage) into that container, keeping the zones separated on the way:
+//     data/<email>__personal/<zone>/<collection>/<docId>
+//   - zone is "anon" or "u__<email>" - zones never mix, in the cloud
+//     just like in the browser;
+//   - document ids and collection names are preserved, so re-exporting
+//     overwrites the very same documents - it never duplicates;
+//   - timestamps ({__jts: millis} markers) become real Firestore
+//     Timestamps;
+//   - documents over ~900 KB (the Firestore 1 MB limit, with margin)
+//     are skipped and counted in the summary.
+// Reading stays strictly one-way: the export writes, it never changes
+// anything in the browser's Local Storage, and it never deletes cloud
+// documents. A summary of each run lands in data/<email>__personal/
+// export/_meta (latest run: when, by whom, how many records).
+// ======================================================================
+export function exportLocalToCloud(onProgress) {
+  var z = localZone();
+  if (!z.signedIn) {
+    return Promise.reject(new Error(
+      "Sign in with Google first - the online database only accepts records from a signed-in user."));
+  }
+  var email = String(activeUser.email).toLowerCase();
+  var containerKey = email + "__personal";
+  var nsSafe = function (ns) { return String(ns).replace(/::/g, "__"); };
+
+  // 1) collect every local zone + collection with its stored documents
+  var jobs = [];
+  var seen = {};
+  function harvest(source, count, keyAt) {
+    for (var i = 0; i < count; i++) {
+      var key = keyAt(source, i);
+      if (!key || key.indexOf(ZONE_PREFIX) !== 0 || seen[key]) continue;
+      seen[key] = true;
+      /* key layout: jamaliLocal::<zone>::<collection>
+       *   - anonymous zone: "anon::<coll>"      (2 segments)
+       *   - signed-in zone: "u::<email>::<coll>" (3 segments)
+       * Collection names never contain "::", emails neither. */
+      var rest = key.slice(ZONE_PREFIX.length).split("::");
+      if (rest.length < 2) continue;
+      var ns;
+      var collName;
+      if (rest[0] === "u") {
+        if (rest.length < 3) continue;
+        ns = rest[0] + "::" + rest[1];
+        collName = rest.slice(2).join("::");
+      } else {
+        ns = rest[0];
+        collName = rest.slice(1).join("::");
+      }
+      if (!collName || /^__/.test(collName) || /^\./.test(collName)) continue;
+      var raw = null;
+      try { raw = source.getItem(key); } catch (e) {}
+      if (raw == null) continue;
+      var map = {};
+      try { map = JSON.parse(raw) || {}; } catch (e2) { map = {}; }
+      var ids = Object.keys(map);
+      if (!ids.length) continue;
+      jobs.push({ ns: ns, coll: collName, docs: map, ids: ids });
+    }
+  }
+  if (LS) harvest(LS, LS.length || 0, function (s, i) { try { return s.key(i); } catch (e) { return null; } });
+  else harvest({ getItem: function (k) { return MEMORY_STORE[k] || null; } },
+    Object.keys(MEMORY_STORE).length, function (s, i) { return Object.keys(MEMORY_STORE)[i]; });
+
+  // stable order: anonymous zone first, then signed-in zones alphabetically
+  jobs.sort(function (a, b) {
+    var za = a.ns === "anon" ? 0 : 1, zb = b.ns === "anon" ? 0 : 1;
+    if (za !== zb) return za - zb;
+    if (a.ns !== b.ns) return a.ns < b.ns ? -1 : 1;
+    return a.coll < b.coll ? -1 : (a.coll > b.coll ? 1 : 0);
+  });
+
+  // 2) flatten into cloud writes, converting timestamps, sanitising ids
+  var writes = [];
+  var skipped = 0;
+  function cloudValue(v) {
+    if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+    if (Array.isArray(v)) {
+      var out = [];
+      for (var i = 0; i < v.length; i++) out.push(cloudValue(v[i]));
+      return out;
+    }
+    if (typeof v === "object") {
+      if (v.__jts !== undefined && typeof v.__jts === "number") {
+        var ms = v.__jts;
+        return { __jts: ms }; // replaced with a real Timestamp at write time
+      }
+      var o = {};
+      for (var k in v) {
+        if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+        o[k] = cloudValue(v[k]);
+      }
+      return o;
+    }
+    return null;
+  }
+  function toCloudData(stored, fs) {
+    var v = cloudValue(stored);
+    return reviveTs(v, fs);
+  }
+  function reviveTs(v, fs) {
+    if (v === null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
+    if (Array.isArray(v)) {
+      var out = [];
+      for (var i = 0; i < v.length; i++) out.push(reviveTs(v[i], fs));
+      return out;
+    }
+    if (typeof v === "object") {
+      if (v.__jts !== undefined && typeof v.__jts === "number") {
+        var ms = v.__jts;
+        return new fs.Timestamp(Math.floor(ms / 1000), (ms % 1000) * 1000000);
+      }
+      var o = {};
+      for (var k in v) {
+        if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+        o[k] = reviveTs(v[k], fs);
+      }
+      return o;
+    }
+    return v;
+  }
+  function docIdSafe(id) {
+    var s = String(id).replace(/\//g, "_");
+    if (/^(__|\.*$)/.test(s) || !s) s = "d_" + s;
+    return s;
+  }
+  for (var ji = 0; ji < jobs.length; ji++) {
+    var job = jobs[ji];
+    for (var di = 0; di < job.ids.length; di++) {
+      var id = job.ids[di];
+      var stored = job.docs[id];
+      if (!stored || typeof stored !== "object") continue;
+      try {
+        if (JSON.stringify(stored).length > 900000) { skipped++; continue; }
+      } catch (e0) { skipped++; continue; }
+      writes.push({
+        path: ["data", containerKey, nsSafe(job.ns), job.coll, docIdSafe(id)],
+        data: stored
+      });
+    }
+  }
+
+  var total = writes.length;
+  var done = 0;
+  function say(n) {
+    try {
+      if (typeof onProgress === "function") onProgress({ done: n, total: total });
+    } catch (e) {}
+  }
+
+  return bootCloudFirestore().then(function (h) {
+    if (total === 0) return { h: h, collections: jobs.length, records: 0, skipped: skipped };
+    say(0);
+    var CHUNK = 5;
+    function writeOne(w) {
+      var docRef = h.fs.doc.apply(h.fs, [h.db].concat(w.path));
+      return h.fs.setDoc(docRef, toCloudData(w.data, h.fs)).then(function () {
+        done++;
+        if (done % 10 === 0 || done === total) say(done);
+      });
+    }
+    var p = Promise.resolve();
+    for (var ci = 0; ci < writes.length; ci += CHUNK) {
+      (function (start) {
+        p = p.then(function () {
+          var batch = [];
+          for (var b = 0; b < CHUNK && start + b < writes.length; b++) batch.push(writeOne(writes[start + b]));
+          return Promise.all(batch);
+        });
+      })(ci);
+    }
+    return p.then(function () {
+      return { h: h, collections: jobs.length, records: total, skipped: skipped };
+    });
+  }).then(function (r) {
+    // the run summary - latest run only, overwritten on every export
+    var meta = {
+      by: email,
+      at: r.h.fs.serverTimestamp(),
+      zones: jobs.map(function (j2) { return nsSafe(j2.ns); }).filter(function (v2, i2, a2) { return a2.indexOf(v2) === i2; }),
+      collections: r.collections,
+      records: r.records,
+      skipped: r.skipped,
+      note: "copied from this browser's Local Storage; ids preserved, re-export overwrites"
+    };
+    return r.h.fs.setDoc(r.h.fs.doc(r.h.db, "data", containerKey, "export", "_meta"), meta)
+      .then(function () { return r; })
+      .catch(function () { return r; }); // the summary must not fail the export
+  }).then(function (r) {
+    return {
+      container: containerKey,
+      zones: jobs.map(function (j3) { return nsSafe(j3.ns); }).filter(function (v3, i3, a3) { return a3.indexOf(v3) === i3; }),
+      collections: r.collections,
+      records: r.records,
+      skipped: r.skipped
+    };
+  });
+}
 
 // ======================================================================
 // SERVER CONFIG - hosting facts and the server handle SERVER/linker.js
@@ -1543,8 +1785,12 @@ export const server = {
   }
 
   function scan(node) {
-    if (!node || node.nodeType !== 1) return;
-    if (node.tagName === "A") neutralize(node);
+    /* node may be a document (nodeType 9) or an element (nodeType 1) -
+     * scan(document) at boot and on DOMContentLoaded/load must scan the
+     * whole page, so only null is rejected here (the document node used
+     * to be silently skipped, leaving every static page link unhandled). */
+    if (!node) return;
+    if (node.nodeType === 1 && node.tagName === "A") neutralize(node);
     if (node.querySelectorAll) {
       var list = node.querySelectorAll("a[href]");
       for (var i = 0; i < list.length; i++) neutralize(list[i]);
@@ -1560,10 +1806,31 @@ export const server = {
   function go(el) {
     var t = el.getAttribute("data-jamal-target");
     if (t == null) return false;
+    /* The pages' back links ("<- Home", "<- Health", ...) go back ONE
+     * step over the shell's page stack - the page the user was on before
+     * this one - instead of jumping straight to the hub they point at.
+     * When the shell has no earlier step, it falls back to the hub.
+     * A stale shell (cached before this demand) ignores JAMALI_BACK; the
+     * timer below then navigates to the hub through JAMALI_NAV, so the
+     * link still always works - it just moves like the old build. */
+    var back = !!(el.classList && el.classList.contains("back"));
     try {
-      window.parent.postMessage({ type: "JAMALI_NAV", target: t }, location.origin);
+      window.parent.postMessage(
+        { type: back ? "JAMALI_BACK" : "JAMALI_NAV", target: t },
+        location.origin
+      );
     } catch (e) {
       location.replace(t);
+      return true;
+    }
+    if (back) {
+      setTimeout(function () {
+        try {
+          window.parent.postMessage({ type: "JAMALI_NAV", target: t }, location.origin);
+        } catch (e2) {
+          location.replace(t);
+        }
+      }, 450);
     }
     return true;
   }
@@ -1633,9 +1900,11 @@ window.JAMALI_MENU = [
     // menu tree and the Home grid - the settings gear in the footer row
     // (1/4, next to the Login/Logout button's 3/4) opens the
     // organisation settings panel instead.
-    // RESERVE (admin removed): the "Account Administration" entry was
-    // deactivated with the login system; the panel lives in
-    // public/RESERVE/admin/.
+    // RETURNED (demand 24 Nov 2026): the "Account Administration" entry
+    // is back - it is painted for camelkazembe1@gmail.com only (the
+    // folderAllowed gate below hides it from every other visitor), and
+    // the Home grid keeps skipping the system-admin folder as before.
+    { label: "Account Administration", icon: "🛡️", folder: "system-admin", n: 380, d: 0 },
     { label: "Business", icon: "🏢", folder: "business", n: 2, d: 1 },
     { label: "Stock Management", icon: "📦", folder: "stock-management", n: 349, d: 2 },
     { label: "Stock Register", icon: "📋", folder: "stock-register", n: 348, d: 3 },
@@ -2370,8 +2639,11 @@ catch (e) {}
  var ALWAYS_OPEN = ["home", "file-viewer"];
 var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
  function folderAllowed(folder) {
-   // RESERVE (login removed): account grants are deactivated, so
-   // every folder is open for every visitor.
+   // RETURNED (demand 24 Nov 2026): the administrator desk belongs to
+   // camelkazembe1@gmail.com only - every other visitor (signed in or
+   // anonymous) neither sees the entry nor opens the page. Account
+   // grants stay deactivated: every other folder is open for everyone.
+   if (folder === "system-admin") return isAdmin();
    return true;
  }
 
@@ -2411,10 +2683,63 @@ var PARENT = {"ward-registration":"ward-management","bed-management":"ward-manag
  
  
  
-  // RESERVE (admin removed): the page-visibility state (VIS /
-  // VIS_DOC / DASHES / VIS_CHANGE) that the administrator's minus
-  // and plus pins read and wrote was deactivated with the login
-  // system. The full tooling lives in public/RESERVE/admin/.
+  // RETURNED (demand 24 Nov 2026): the page-visibility state (VIS /
+  // VIS_DOC / VIS_CHANGE) that the administrator's minus and plus
+  // pins read and write, ported back out of public/RESERVE/admin/ and
+  // wired to the Google identity: the administrator is the signed-in
+  // camelkazembe1@gmail.com account and nobody else. The config lives
+  // in the cloud document systemPageConfig/visibility (read by every
+  // signed-in user, written by the administrator only - see the
+  // FIRESTORE_RULES block in SERVER/server.js) with a local mirror in
+  // this browser so the last known layout still applies offline.
+  var VIS = { fields: {}, menu: {}, options: {} };
+  var VIS_DOC = ["systemPageConfig", "visibility"];
+  var VIS_CHANGE = null;
+  var VIS_LS_KEY = "jamaliPageConfig::visibility";
+  function visLocalLoad() {
+    try { return JSON.parse(localStorage.getItem(VIS_LS_KEY) || "null"); }
+    catch (e) { return null; }
+  }
+  function visLocalSave() {
+    try { localStorage.setItem(VIS_LS_KEY, JSON.stringify(VIS)); } catch (e) {}
+  }
+  function applyVisData(d) {
+    VIS.fields = (d && d.fields) || {};
+    VIS.menu = (d && d.menu) || {};
+    VIS.options = (d && d.options) || {};
+  }
+  function visPlain() {
+    return { fields: VIS.fields, menu: VIS.menu, options: VIS.options };
+  }
+  function chainOf(folder) {
+    var out = [folder], idx = -1, myD = 0;
+    for (var i = 0; i < PAGES.length; i++) {
+      if (PAGES[i].folder === folder) { idx = i; myD = PAGES[i].d || 0; break; }
+    }
+    if (idx < 0 || myD <= 1) return out;
+    for (var j = idx - 1; j >= 0; j--) {
+      var d = PAGES[j].d || 0;
+      if (d === 0) break;
+      if (d < myD) { out.unshift(PAGES[j].folder); myD = d; if (d === 1) break; }
+    }
+    return out;
+  }
+  function menuHidden(folder) {
+    var c = chainOf(folder);
+    for (var i = 0; i < c.length; i++) {
+      if (VIS.menu[c[i]]) return true;
+    }
+    return false;
+  }
+  function pageIdOfFolder(folder) {
+    for (var i = 0; i < PAGES.length; i++) {
+      if (PAGES[i].folder === folder) return folder + "/" + PAGES[i].n;
+    }
+    return null;
+  }
+  function pageHidden(pid) {
+    return !!(pid && VIS.fields[pid + ":__page__"]);
+  }
 
   // The quiet net for a patchy connection. A one-shot read whose client
   // is offline, or a watch that cannot reach the server yet, ends as an
@@ -2445,10 +2770,64 @@ var PARENT = {"ward-registration":"ward-management","bed-management":"ward-manag
     window.__jamaliOfflineLineShown = false;
   });
 
-  // RESERVE (admin removed): the administrator check and the style
-  // gate used by the admin page scan were deactivated with the
-  // login system. Nothing is admin, nothing is hidden, nothing
-  // measures the page for the visibility config.
+  // RETURNED (demand 24 Nov 2026): the administrator check - the
+  // signed-in Google identity is the one authority, and the desk
+  // belongs to camelkazembe1@gmail.com only (the same owner email the
+  // comment desk already uses). recomputeAdmin repaints the menu, the
+  // Admin button and the hidden chip the moment the identity settles
+  // or changes, so the tooling appears without a reload.
+  var SYSTEM_ADMIN_EMAIL = "camelkazembe1@gmail.com";
+  var ADMIN_STATE = { settled: false, admin: false };
+  function adminEmail() {
+    var mail = "";
+    try {
+      if (auth && auth.currentUser && auth.currentUser.email) {
+        mail = String(auth.currentUser.email).toLowerCase();
+      }
+    } catch (e) {}
+    if (!mail) mail = String((activeUser && activeUser.email) || "").toLowerCase();
+    return mail;
+  }
+  function isAdmin() { return ADMIN_STATE.admin; }
+  function recomputeAdmin() {
+    var was = ADMIN_STATE.admin;
+    ADMIN_STATE.settled = true;
+    ADMIN_STATE.admin = adminEmail() === SYSTEM_ADMIN_EMAIL;
+    if (was !== ADMIN_STATE.admin) {
+      try { paintNav(); } catch (e) {}
+      try { jamaliAdminPaint(); } catch (e2) {}
+      try { refreshHiddenChip(); } catch (e3) {}
+      try { applySidebarVis(); } catch (e4) {}
+      var main = mainEl();
+      if (ADMIN_STATE.admin) {
+        whenStylesReady(function () {
+          scanAdminPage(main);
+          watchPage(main, function () { scanAdminPage(main); });
+        });
+      } else {
+        try { guardUserPage(main); } catch (e5) {}
+      }
+    }
+  }
+
+  // Firefox warns that layout was forced before the page was fully
+  // loaded when a script reads element sizes while the stylesheets are
+  // still downloading, and unstyled content can flash. Anything that
+  // measures the page goes through this gate: the work runs the moment
+  // the page is styled (right away when it already is), with a short
+  // fallback so a stuck download can never hold the page hostage.
+  function whenStylesReady(fn) {
+    var done = false;
+    var go = function () {
+      if (done) return;
+      done = true;
+      if (window.requestAnimationFrame) window.requestAnimationFrame(fn);
+      else fn();
+    };
+    if (document.readyState === "complete") { go(); return; }
+    window.addEventListener("load", go, { once: true });
+    setTimeout(go, 3000);
+  }
 
 
  
@@ -2504,7 +2883,12 @@ var PARENT = {"ward-registration":"ward-management","bed-management":"ward-manag
 p.label + "</a>";
    var k = kidsOf(i);
    if (k.length) {
-     var tgAttrs = " type=\"button\" class=\"tg\" aria-expanded=\"false\"";
+     // RETURNED (demand 24 Nov 2026): for the administrator the folder
+     // toggle becomes the red minus that hides this whole area for
+     // every user; for everybody else it stays the plain fold toggle.
+     var tgAttrs = isAdmin()
+       ? " type=\"button\" class=\"tg jamali-menu-hide\" data-mkey=\"" + p.folder + "\""
+       : " type=\"button\" class=\"tg\" aria-expanded=\"false\"";
      html += "<button" + tgAttrs + "></button></div>";
      
      
@@ -2623,7 +3007,63 @@ p.label + "</a>";
    "#jamali-cpop-gate{border:1px solid #1e3a5f;background:#0b1220;border-radius:10px;padding:12px;text-align:center}",
    "#jamali-cpop-gate p{margin:0 0 10px;color:#bae6fd;font-size:13px;line-height:1.5}",
    "#jamali-cpop-gate-in{border:0;border-radius:10px;background:#0ea5e9;color:#fff;font-weight:800;font-size:13.5px;padding:10px 18px;cursor:pointer}",
-   "#jamali-cpop-gate-in:hover{background:#0284c7}"
+   "#jamali-cpop-gate-in:hover{background:#0284c7}",
+
+   // RETURNED (24 Nov 2026): the administrator page-config tooling -
+   // the red minus pin, the green plus pin, the Hidden chip and panel,
+   // the blocked-page notice and the sidebar area minus.
+   ".jamali-dash{display:inline-flex;align-items:center;justify-content:center;width:20px;",
+   "min-width:20px;max-width:20px;height:20px;box-sizing:border-box;padding:0;",
+   "margin:0;border-radius:6px;border:1px solid #fca5a5;background:#fff;",
+   "color:#dc2626;font-weight:900;font-size:13px;line-height:1;cursor:pointer}",
+   ".jamali-dash:hover{background:#fee2e2}",
+   ".jamali-dash.jamali-off{background:#dc2626;color:#fff;border-color:#b91c1c}",
+   ".jamali-dash.jamali-plus{background:#f0fdf4;color:#166534;border-color:#86efac}",
+   ".jamali-dash.jamali-plus:hover{background:#dcfce7}",
+   ".jamali-vis-mark{outline:2px dashed #f87171;outline-offset:2px;outline-style:solid;background-color:rgba(248,113,113,.16)}",
+   ".jamali-vis-host{position:relative;padding-right:26px}",
+   ".jamali-ctl-host{display:inline-block;position:relative;max-width:100%}",
+   ".jamali-ctl-host > input,.jamali-ctl-host > textarea,.jamali-ctl-host > select{padding-right:46px}",
+   ".jamali-corner-dash{position:absolute;top:3px;right:3px;margin:0;z-index:7;",
+   "width:16px;min-width:16px;max-width:16px;height:16px;font-size:11px;border-radius:5px}",
+   ".jamali-corner-dash.jamali-plus{right:23px}",
+   ".jamali-ctl-host .jamali-plus:not(.jamali-corner-dash){margin-left:4px}",
+   "select.jamali-opts{font:inherit;max-width:100%}",
+   "#jamali-hidden-chip{position:fixed;bottom:46px;right:14px;z-index:1001;",
+   "border:1px solid #fca5a5;border-radius:999px;background:#dc2626;color:#fff;",
+   "font-weight:800;font-size:12px;padding:7px 12px;cursor:pointer;",
+   "box-shadow:0 10px 24px rgba(0,0,0,.35)}",
+   "#jamali-hidden-chip:hover{filter:brightness(1.08)}",
+   "#jamali-vis-panel{position:fixed;bottom:84px;right:14px;z-index:1002;width:340px;",
+   "max-width:calc(100vw - 28px);max-height:60vh;overflow:auto;background:#111827;",
+   "border:1px solid #334155;border-radius:12px;padding:12px 14px;font-size:13px;",
+   "color:#e2e8f0;box-shadow:0 18px 40px rgba(0,0,0,.5)}",
+   "#jamali-vis-panel b{display:block;margin-bottom:8px;font-size:13px}",
+   "#jamali-vis-panel .jamali-vis-row{display:flex;align-items:center;justify-content:space-between;",
+   "gap:8px;padding:6px 0;border-bottom:1px solid #1e293b}",
+   "#jamali-vis-panel .jamali-vis-row span{flex:1;min-width:0;overflow:hidden;",
+   "text-overflow:ellipsis;white-space:nowrap}",
+   ".jamali-vis-show,.jamali-vis-showall{border:1px solid #4ade80;background:#052e16;",
+   "color:#4ade80;border-radius:8px;font-size:12px;font-weight:800;padding:4px 10px;",
+   "cursor:pointer;flex:0 0 auto}",
+   ".jamali-vis-showall{margin-top:10px;width:100%}",
+   ".jamali-vis-notice{max-width:560px;margin:60px auto;padding:26px 30px;border:1px solid #fca5a5;",
+   "border-radius:14px;background:#fff5f5;color:#7f1d1d;font-size:15px;line-height:1.6}",
+   ".jamali-vis-notice b{display:block;font-size:17px;margin-bottom:8px}",
+   ".jamali-menu-hide{align-self:center;flex:0 0 24px;width:24px;height:20px;margin:0 6px 0 0;",
+   "border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#dc2626;font-weight:900;",
+   "font-size:10.5px;line-height:1;cursor:pointer;display:flex;align-items:center;",
+   "justify-content:center;padding:0}",
+   ".jamali-menu-hide:hover{background:#fee2e2}",
+   ".jamali-menu-hide.jamali-off{background:#dc2626;color:#fff;border-color:#b91c1c}",
+   ".jamali-menu-hide.jamali-off:hover{filter:brightness(1.08)}",
+   ".node.jamali-menu-gone>a{color:#f87171}",
+   ".node.jamali-menu-gone>a.active{border-left-color:#f87171}",
+   "#jamali-admin-btn{position:fixed;top:60px;right:12px;z-index:1001;border-radius:10px;",
+   "border:1px solid #fca5a5;background:#0f172a;color:#fecaca;font-weight:800;font-size:13.5px;",
+   "padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
+   "#jamali-admin-btn:hover{background:#1e293b}",
+   "#jamali-admin-btn[hidden]{display:none}"
  ].join("");
  document.head.appendChild(css);
 
@@ -2910,6 +3350,9 @@ p.label + "</a>";
     }
     // The top-right Comments button exists for the owner's eyes only.
     jamaliOwnerPaint(user);
+    // The Admin button + the whole page-config tooling ride the same
+    // identity - repaint them on every auth change too.
+    recomputeAdmin();
   }
   sideAuthRender(null);
   window.JAMALI_SIDEBAR_AUTH = { render: sideAuthRender };
@@ -3004,9 +3447,29 @@ p.label + "</a>";
   // on it; the owner's Comments button navigates there. Visitors never
   // need the page - they write from the write popup above.
 
-  // RESERVE (admin removed): the floating Admin button that opened
-  // /system-admin/380 was deactivated with the login system. The
-  // panel itself lives in public/RESERVE/admin/.
+  // RETURNED (demand 24 Nov 2026): the floating Admin button that opens
+  // /system-admin/380 - visible for camelkazembe1@gmail.com only
+  // (jamaliAdminPaint, called from recomputeAdmin and sideAuthRender).
+  (function jamaliAdminButtonEnsure() {
+    if (document.getElementById("jamali-admin-btn")) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.id = "jamali-admin-btn";
+    b.hidden = true;
+    b.title = "Account Administration - the administrator desk";
+    b.innerHTML = "&#128737;&#65039; Admin";
+    b.addEventListener("click", function () {
+      if (window.JAMALI_INTERNAL_GO) window.JAMALI_INTERNAL_GO("/system-admin/380");
+      else location.replace("/system-admin/380.html");
+    });
+    document.body.appendChild(b);
+  })();
+
+  function jamaliAdminPaint() {
+    var b = document.getElementById("jamali-admin-btn");
+    if (b) b.hidden = !isAdmin();
+  }
+
 
 
   
@@ -3029,6 +3492,19 @@ p.label + "</a>";
   var tgs=scope.querySelectorAll(".tg");
   for(var t=0;t<tgs.length;t++){
     (function(btn){
+      if (isAdmin() && btn.classList.contains("jamali-menu-hide")) {
+        // RETURNED (demand 24 Nov 2026): the administrator's sidebar
+        // minus - one click hides this whole area (every page under it
+        // included) for every user, live. The button turns red while
+        // the area is hidden; clicking it again restores it.
+        btn.textContent = "(\u2212)";
+        btn.addEventListener("click", function () {
+          var f = btn.getAttribute("data-mkey");
+          if (!f) return;
+          makeMenuToggler(f, btn)();
+        });
+        return;
+      }
       sync(btn);
       btn.addEventListener("click",function(){
         var box=btn.parentNode.nextElementSibling;
@@ -3042,21 +3518,115 @@ p.label + "</a>";
 }
 wireToggles(aside);
  
-  // RESERVE (admin removed): paintNav (the sidebar rebuild used
-  // by the visibility config) was deactivated with the login
-  // system.
+  // RETURNED (demand 24 Nov 2026): paintNav - the sidebar rebuild the
+  // visibility config and the admin flip use: recompute the visible
+  // rows (the administrator keeps every row and reads the hidden ones
+  // from the red minus buttons), repaint the nav and rewire it.
+  function paintNav(){
+    visible=PAGES.map(function(p){return folderAllowed(p.folder);});
+    for(var v=0;v<PAGES.length;v++){
+      if(visible[v])continue;
+      var my=PAGES[v].d||0;
+      for(var w=v+1;w<PAGES.length;w++){
+        if((PAGES[w].d||0)<=my)break;
+        visible[w]=false;
+      }
+    }
+    var nv=aside.querySelector("nav"),nav2="";
+    for(var r=0;r<PAGES.length;r++){
+      if((PAGES[r].d||0)<=1&&visible[r])nav2+=render(r);
+    }
+    if (nav2 === "") {
+      for(var f=0;f<PAGES.length;f++){ if(visible[f]) nav2+=render(f); }
+    }
+    nv.innerHTML=nav2;
+    wireToggles(nv);
+    try { applySidebarVis(); } catch (e) {}
+  }
+
+  // RETURNED (demand 24 Nov 2026): filterLinks - the link hider driven
+  // by the visibility config: links to hidden areas and hidden pages
+  // disappear from every static page too (the administrator keeps
+  // seeing everything).
+  function filterLinks(root) {
+    var links = (root || document).querySelectorAll("a[href]");
+    for (var i = 0; i < links.length; i++) {
+      if (insideJamaliUi(links[i])) continue;
+      var href = links[i].getAttribute("href") || "";
+      var m = href.match(/^\/([a-z0-9-]+)\//i);
+      if (!m) continue;
+      if (m[1] === current) continue;
+      if (!folderAllowed(m[1])) { links[i].style.display = "none"; continue; }
+      var rest = href.slice(m[0].length).replace(/\.html$/, "").replace(/\/+$/, "");
+      if (menuHidden(m[1]) || pageHidden(m[1] + "/" + rest)) links[i].style.display = "none";
+    }
+  }
+
+  // RETURNED (demand 24 Nov 2026): bootVisibility - the visibility
+  // config is read from the cloud document systemPageConfig/visibility
+  // (every signed-in user reads it; only camelkazembe1@gmail.com can
+  // write it), with a live onSnapshot channel and a local mirror so
+  // the last known layout still applies offline. The first read is
+  // patient with a patchy connection: offline failures are retried a
+  // few times with a growing pause and once more the moment the device
+  // comes back online, and only a real refusal is reported. Until the
+  // configuration arrives the page simply keeps the default full view
+  // - nothing waits on the network.
+  function bootVisibility() {
+    var local = visLocalLoad();
+    if (local && typeof local === "object") {
+      VIS.fields = local.fields || {};
+      VIS.menu = local.menu || {};
+      VIS.options = local.options || {};
+    }
+    return bootCloudFirestore().then(function (h) {
+      var ref = h.fs.doc.apply(h.fs, [h.db].concat(VIS_DOC));
+      var live = false, timer = null;
+      function listenLive() {
+        if (live) return;
+        live = true;
+        h.fs.onSnapshot(ref, function (snap) {
+          applyVisData(snap && snap.exists() ? snap.data() : {});
+          visLocalSave();
+          if (VIS_CHANGE) { try { VIS_CHANGE(); } catch (e) {} }
+        }, function (e) {
+          console.warn("visibility watch skipped:", e);
+        });
+      }
+      function attempt(tries) {
+        if (live) return;
+        return h.fs.getDoc(ref).then(function (snap) {
+          if (snap && snap.exists()) {
+            applyVisData(snap.data());
+            visLocalSave();
+          }
+          listenLive();
+        }).catch(function (e) {
+          if (live) return;
+          if (!jamaliOffline(e) || tries >= 5) {
+            console.warn("visibility load skipped:", e);
+            return;
+          }
+          timer = setTimeout(function () { attempt(tries + 1); },
+            Math.min(15000, 1500 * tries));
+        });
+      }
+      window.addEventListener("online", function () {
+        if (timer) { clearTimeout(timer); timer = null; }
+        attempt(1);
+      });
+      window.addEventListener("offline", function () {
+        if (timer) { clearTimeout(timer); timer = null; }
+      });
+      return attempt(1);
+    }).catch(function (e) {
+      console.warn("visibility load skipped:", e);
+    });
+  }
 
   
   
   
-  // RESERVE (admin removed): filterLinks (the link hider driven
-  // by the visibility config) and the bootVisibility boot chain
-  // were deactivated with the login system. Every link, menu and
-  // page is open to every visitor now.
-
-  
-  
-  
   
   
 
@@ -3065,18 +3635,763 @@ wireToggles(aside);
 
 
  
-  // RESERVE (admin removed): mainEl and pageBoot (the admin page
-  // scan and the user page guard driven by the visibility config)
-  // were deactivated with the login system. Pages boot plainly
-  // and show everything.
+  // RETURNED (demand 24 Nov 2026): mainEl and pageBoot - the admin
+  // page scan (minus/plus pins on every field and button) and the
+  // user page guard (pages the administrator hid get blocked with a
+  // clear notice; everything else applies the user hides live).
+  function mainEl() {
+    return document.getElementById("app") ||
+document.querySelector("main") || document.body;
+  }
+
+  function pageBoot() {
+    if (!PAGE_ID) return;
+    if (current === "system-admin") return;
+    var main = mainEl();
+    var run = function () {
+      VIS_CHANGE = liveVisChange;
+      if (isAdmin()) {
+        // The administrator's page scan reads element sizes too - it
+        // waits for a styled page the same way the sidebar folding does.
+        whenStylesReady(function () {
+          scanAdminPage(main);
+          watchPage(main, function () { scanAdminPage(main); });
+        });
+      } else {
+        guardUserPage(main);
+      }
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", run);
+    } else {
+      run();
+    }
+  }
 
  
  
  
  
-  // RESERVE (admin removed): hasAnyGrant and guardUserPage (the
-  // allowance and page-hidden guards) were deactivated with the
-  // login system. Nothing is ever blocked or hidden.
+  // RETURNED (demand 24 Nov 2026): the whole page-config tooling,
+  // ported back from public/RESERVE/admin/ and rewired from the old
+  // /502.js import to the current module: the cloud handle comes from
+  // bootCloudFirestore(), the identity authority is isAdmin() (the
+  // signed-in camelkazembe1@gmail.com account), and every save also
+  // updates the local mirror so the layout survives being offline.
+
+  function hasAnyGrant() {
+    // Account grants stay deactivated (no accounts since 20 Nov): every
+    // signed-in or anonymous visitor counts as fully allowed. The only
+    // thing that hides anything is the administrator's visibility config.
+    return true;
+  }
+
+  function guardUserPage(main) {
+    if (menuHidden(current) || pageHidden(PAGE_ID)) { blockPage(); return; }
+    if (ALWAYS_OPEN.indexOf(current) === -1 && !hasAnyGrant()) { if (current === "home") { blankHome(main); return; } blockAllowance(); return; }
+    if (!folderAllowed(current) && ALWAYS_OPEN.indexOf(current) === -1) { blockPage(); return; }
+    applyUserHides(main);
+    watchPage(main, function () { applyUserHides(main); });
+  }
+
+  function blankHome(main) {
+    try { if (main) main.style.display = "none"; } catch (e) {}
+  }
+
+  function blockAllowance() {
+    var app = document.getElementById("app");
+    if (app) {
+      app.style.display = "none";
+    } else {
+      var kids = Array.prototype.slice.call(document.body.children);
+      for (var i = 0; i < kids.length; i++) {
+        var id = kids[i].id || "";
+        if (id.indexOf("jamali-") === 0) continue;
+        kids[i].style.display = "none";
+      }
+    }
+    var n = document.createElement("div");
+    n.className = "jamali-vis-notice";
+    n.innerHTML = "<b>Please wait for admin module allowance.</b>" +
+      "<span>Your account is approved, but the administrator has not allowed any module for it yet. " +
+      "You will see your modules here as soon as the administrator selects them for you.</span>";
+    document.body.appendChild(n);
+  }
+
+  function blockPage() {
+    var app = document.getElementById("app");
+    if (app) {
+      app.style.display = "none";
+    } else {
+      var kids = Array.prototype.slice.call(document.body.children);
+      for (var i = 0; i < kids.length; i++) {
+        var id = kids[i].id || "";
+        if (id.indexOf("jamali-") === 0) continue;
+        kids[i].style.display = "none";
+      }
+    }
+    var n = document.createElement("div");
+    n.className = "jamali-vis-notice";
+    n.innerHTML = "<b>This page is not available for your account.</b>" +
+      "<span>It was hidden by the administrator. " +
+      "Use the menu on the left, or ask the administrator (camelkazembe1@gmail.com) to grant you access.</span>";
+    document.body.appendChild(n);
+  }
+
+  function slug(text) {
+    return String(text || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "").slice(0, 40);
+  }
+
+  function insideJamaliUi(el) {
+    return !!(el.closest && el.closest("#jamali-sidebar,#jamali-acct,#jamali-admin-btn,#jamali-burger,#jamali-overlay,.jamali-vis-notice,#jamali-hidden-chip,#jamali-vis-panel,#jamali-settings,#jamali-owner-comments,#jamali-cpop,#jamali-cpop-veil"));
+  }
+
+  function isVisibleEl(el) {
+    if (el.closest && el.closest("[hidden]")) return false;
+    return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  }
+
+  function scanTargets(root) {
+    var map = {}, seq = 0;
+    function put(key, el, wrap, labelEl) {
+      if (!key) return;
+      // Two controls may share a label or carry no id at all; give the
+      // second one a numbered key so every field and every button gets
+      // its own dash and its own hide state, stable across rescans.
+      var k = key, n = 2;
+      while (map[k]) { k = key + "-" + n; n++; }
+      map[k] = { el: el, wrap: wrap || null, labelEl: labelEl || null, dash: null };
+    }
+    var ctrls = root.querySelectorAll("input, select, textarea");
+    for (var i = 0; i < ctrls.length; i++) {
+      var c = ctrls[i];
+      if (c.type === "hidden" || c.classList.contains("jamali-opts") ||
+          insideJamaliUi(c) ||
+          (!isVisibleEl(c) && !c._jamaliDash && !c.hasAttribute("data-jamali-opts") && !c.hasAttribute("data-jamali-gone"))) continue;
+      var row = c.closest ? c.closest("label") : null;
+      if (row && !insideJamaliUi(row)) {
+        var multi = row.querySelectorAll("input,select,textarea,button").length > 1;
+        put(c.id || ("row-" + (slug(row.textContent) || ("x" + (++seq)))), c, multi ? null : row, null);
+      } else {
+        var lab = null;
+        if (c.id && /^[A-Za-z0-9_-]+$/.test(c.id)) {
+          lab = root.querySelector('label[for="' + c.id + '"]');
+        }
+        put(c.id || ("row-" + (slug(c.name || c.type) || ("x" + (++seq)))), c, null, lab);
+      }
+    }
+    var btns = root.querySelectorAll("button");
+    for (var j = 0; j < btns.length; j++) {
+      var b = btns[j];
+      if (b.classList.contains("jamali-dash") || b.classList.contains("tg")) continue;
+      if (insideJamaliUi(b) || (!isVisibleEl(b) && !b._jamaliDash && !b.hasAttribute("data-jamali-gone"))) continue;
+      put(b.id || ("btn-" + (slug(b.textContent) || ("x" + (++seq)))), b, null, null);
+    }
+    return map;
+  }
+
+  function fieldsForPage() {
+    var out = {}, prefix = PAGE_ID + ":";
+    for (var k in VIS.fields) {
+      if (Object.prototype.hasOwnProperty.call(VIS.fields, k) && k.indexOf(prefix) === 0) {
+        out[k.slice(prefix.length)] = true;
+      }
+    }
+    return out;
+  }
+
+  function optionsForPage() {
+    var out = {}, prefix = PAGE_ID + ":";
+    for (var k in VIS.options) {
+      if (Object.prototype.hasOwnProperty.call(VIS.options, k) && k.indexOf(prefix) === 0) {
+        var v = VIS.options[k];
+        if (Array.isArray(v) && v.length) out[k.slice(prefix.length)] = v;
+      }
+    }
+    return out;
+  }
+
+  function fireInput(el) {
+    var evs = ["input", "change"];
+    for (var i = 0; i < evs.length; i++) {
+      try { el.dispatchEvent(new Event(evs[i], { bubbles: true })); } catch (e) {}
+    }
+  }
+
+  // The predefined-options swap: the original input stays in the DOM (the
+  // page's own script keeps reading and writing it), it is just hidden and a
+  // select is placed in its spot, mirroring every choice back into it.
+  function applyFieldOptions(el, list) {
+    var sel = el._jamaliOpts || null;
+    if (!list || !list.length) {
+      if (sel && sel.parentNode) sel.parentNode.removeChild(sel);
+      el._jamaliOpts = null;
+      if (el.getAttribute("data-jamali-opts")) {
+        el.removeAttribute("data-jamali-opts");
+        if (!el.getAttribute("data-jamali-gone")) el.style.display = "";
+      }
+      return;
+    }
+    if (!sel) {
+      sel = document.createElement("select");
+      sel.className = "jamali-opts";
+      sel.addEventListener("change", function () {
+        if (el.value === sel.value) return;
+        el.value = sel.value;
+        fireInput(el);
+      });
+      el._jamaliOpts = sel;
+      if (el.parentNode) el.parentNode.insertBefore(sel, el.nextSibling);
+      else document.body.appendChild(sel);
+    }
+    if (!el._jamaliOptsWired) {
+      el._jamaliOptsWired = true;
+      el.addEventListener("change", function () {
+        if (el._jamaliOpts && el._jamaliOpts.value !== el.value) el._jamaliOpts.value = el.value;
+      });
+    }
+    var cur = el.value == null ? "" : String(el.value);
+    var items = list.slice();
+    if (cur && items.indexOf(cur) === -1) items.unshift(cur);
+    // Rebuild the option children only when the list really changed;
+    // rebuilding on every scan would keep re-firing the page watcher.
+    var sig = JSON.stringify(items);
+    if (sel._jamaliSig !== sig) {
+      sel._jamaliSig = sig;
+      sel.innerHTML = "";
+      for (var i = 0; i < items.length; i++) {
+        var o = document.createElement("option");
+        o.value = items[i];
+        o.textContent = items[i];
+        sel.appendChild(o);
+      }
+    }
+    var want = (cur && items.indexOf(cur) !== -1) ? cur : items[0];
+    sel.value = want;
+    if (el.value !== want) { el.value = want; fireInput(el); }
+    el.style.display = "none";
+    if (!el.getAttribute("data-jamali-opts")) el.setAttribute("data-jamali-opts", "1");
+    sel.style.display = "";
+    sel.removeAttribute("data-jamali-gone");
+  }
+
+  function applyUserHides(root) {
+    var map = scanTargets(root);
+    var hidden = fieldsForPage();
+    var opts = optionsForPage();
+    for (var key in map) {
+      if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+      var t = map[key], el = t.el;
+      var isField = el.tagName !== "BUTTON";
+      var off = effHidden(key, el, hidden);
+      if (off) {
+        // Ordinary users lose the control completely - the field, its
+        // label and its wrapping row all close up, so no empty space and
+        // no trace that the control ever existed is left behind.
+        var host = t.wrap || el;
+        host.style.display = "none";
+        host.setAttribute("data-jamali-gone", "1");
+        if (t.labelEl && t.labelEl !== host) {
+          t.labelEl.style.display = "none";
+          t.labelEl.setAttribute("data-jamali-gone", "1");
+        }
+        if (el !== host) el.style.display = "none";
+        if (!el.getAttribute("data-jamali-gone")) el.setAttribute("data-jamali-gone", "1");
+      } else {
+        if (el.getAttribute("data-jamali-gone")) {
+          el.removeAttribute("data-jamali-gone");
+          if (!el.getAttribute("data-jamali-opts")) el.style.display = "";
+        }
+        if (t.wrap && t.wrap.getAttribute("data-jamali-gone")) {
+          t.wrap.removeAttribute("data-jamali-gone");
+          t.wrap.style.display = "";
+        }
+        if (t.labelEl && t.labelEl.getAttribute("data-jamali-gone")) {
+          t.labelEl.removeAttribute("data-jamali-gone");
+          t.labelEl.style.display = "";
+        }
+      }
+      if (isField) {
+        applyFieldOptions(el, opts[key]);
+        var sel = el._jamaliOpts;
+        if (sel) sel.style.display = off ? "none" : "";
+      }
+    }
+  }
+
+  // The + control: define the option list ordinary users must pick from.
+  function makeOptions(key, el, btn) {
+    return function () {
+      var full = PAGE_ID + ":" + key;
+      var cur = Array.isArray(VIS.options[full]) ? VIS.options[full].join(" | ") : "";
+      var ans = window.prompt(
+        "Predefined options for this field. Separate them with | - users " +
+        "will pick from this list only. Leave empty to go back to free typing:",
+        cur);
+      if (ans === null) return;
+      var parts = ans.split(/\||\n/), list = [];
+      for (var i = 0; i < parts.length; i++) {
+        var v = parts[i].trim();
+        if (v && list.indexOf(v) === -1) list.push(v);
+      }
+      bootCloudFirestore().then(function (h) {
+        return h.fs.getDoc(h.fs.doc.apply(h.fs, [h.db].concat(VIS_DOC))).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          if (list.length) VIS.options[full] = list;
+          else delete VIS.options[full];
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("options save failed", e);
+        dashError(btn);
+      });
+    };
+  }
+
+  function scanAdminPage(root) {
+    var map = scanTargets(root);
+    var hidden = fieldsForPage();
+    var opts = optionsForPage();
+    for (var key in map) {
+      if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+      var t = map[key], el = t.el;
+      var isField = el.tagName !== "BUTTON";
+      if (!el._jamaliDash) {
+        var dash = document.createElement("button");
+        dash.type = "button";
+        dash.className = "jamali-dash";
+        dash.textContent = "\u2212";
+        dash.addEventListener("click", makeToggler(key, dash));
+        el._jamaliDash = dash;
+        placeDash(t, dash);
+      }
+      if (isField && !el._jamaliPlus) {
+        var plus = document.createElement("button");
+        plus.type = "button";
+        plus.className = "jamali-dash jamali-plus" +
+          (el._jamaliDash.classList.contains("jamali-corner-dash") ? " jamali-corner-dash" : "");
+        plus.textContent = "+";
+        plus.title = "Predefined options - users must pick from this list";
+        plus.addEventListener("click", makeOptions(key, el, plus));
+        el._jamaliPlus = plus;
+        var dh = el._jamaliDash;
+        if (dh && dh.parentNode) dh.parentNode.insertBefore(plus, dh.nextSibling);
+        else placeDash(t, plus);
+      }
+      var off = effHidden(key, el, hidden);
+      setDashState(el._jamaliDash, off, isField ? "this field" : "this button");
+      if (isField) applyFieldOptions(el, opts[key]);
+      var mark = (isField && el._jamaliOpts) ? el._jamaliOpts : el;
+      mark.classList.toggle("jamali-vis-mark", !!off);
+      if (isField && el._jamaliOpts) el._jamaliOpts.style.display = "";
+    }
+  }
+
+  function effHidden(key, el, hidden) {
+    if (hidden[key]) return true;
+    var p = el ? el.parentElement : null;
+    while (p && p !== document.body) {
+      var k = p.getAttribute && p.getAttribute("data-jamali-key");
+      if (k && hidden[k]) return true;
+      p = p.parentElement;
+    }
+    return false;
+  }
+
+  function placeDash(t, b) {
+    if (b.parentNode) return;
+    var host = t.wrap || t.el;
+    var tag = host.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") {
+      // Tiny controls (checkbox, radio) keep the dash beside them; every
+      // other field gets the dash pinned to its top-right corner.
+      var sp = document.createElement("span");
+      sp.className = "jamali-ctl-host";
+      host.parentNode.insertBefore(sp, host);
+      sp.appendChild(host);
+      sp.appendChild(b);
+      if (host.type !== "checkbox" && host.type !== "radio") {
+        b.classList.add("jamali-corner-dash");
+      }
+      return;
+    }
+    host.classList.add("jamali-vis-host");
+    b.classList.add("jamali-corner-dash");
+    host.insertBefore(b, host.firstChild);
+  }
+
+  function makeToggler(key, btn) {
+    return function () {
+      bootCloudFirestore().then(function (h) {
+        return h.fs.getDoc(h.fs.doc.apply(h.fs, [h.db].concat(VIS_DOC))).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          var full = PAGE_ID + ":" + key;
+          if (VIS.fields[full]) delete VIS.fields[full]; else VIS.fields[full] = true;
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("visibility save failed", e);
+        dashError(btn);
+      });
+    };
+  }
+
+  // The sidebar area minus: hides (or restores) a whole menu area for every
+  // user. If the area is hidden only by itself the click restores it; if it
+  // is hidden because an ancestor is hidden, the click restores that
+  // nearest hidden ancestor, since a child of a hidden parent can never
+  // show on its own.
+  function makeMenuToggler(folder, btn) {
+    return function () {
+      bootCloudFirestore().then(function (h) {
+        return h.fs.getDoc(h.fs.doc.apply(h.fs, [h.db].concat(VIS_DOC))).then(function (snap) {
+          var d = snap.exists() ? snap.data() : {};
+          VIS.fields = d.fields || {};
+          VIS.menu = d.menu || {};
+          VIS.options = d.options || {};
+          if (VIS.menu[folder]) delete VIS.menu[folder];
+          else {
+            var top = nearestHiddenAncestor(folder);
+            if (top) delete VIS.menu[top];
+            else VIS.menu[folder] = true;
+          }
+          return saveVisibility();
+        });
+      }).then(function () {
+        afterVisChange();
+      }).catch(function (e) {
+        console.warn("menu visibility save failed", e);
+        menuToggleError(btn);
+      });
+    };
+  }
+
+  function menuToggleError(btn) {
+    btn.textContent = "!";
+    setTimeout(function () { btn.textContent = "(\u2212)"; }, 1500);
+  }
+
+  // The nearest ancestor of the folder that is hidden in its own right;
+  // chainOf returns the folder last, so the walk starts at its parent.
+  function nearestHiddenAncestor(folder) {
+    var c = chainOf(folder);
+    for (var i = c.length - 2; i >= 0; i--) {
+      if (VIS.menu[c[i]]) return c[i];
+    }
+    return null;
+  }
+
+  function labelOf(folder) {
+    for (var i = 0; i < PAGES.length; i++) {
+      if (PAGES[i].folder === folder) return PAGES[i].label || folder;
+    }
+    return folder;
+  }
+
+  function afterVisChange() {
+    applySidebarVis();
+    scanAdminPage(mainEl());
+    refreshHiddenChip();
+  }
+
+  // Fired by the live cloud channel: the administrator changed the
+  // visibility document somewhere, so re-apply everything right here.
+  function liveVisChange() {
+    applySidebarVis();
+    try { filterLinks(document); } catch (e) {}
+    if (!PAGE_ID || current === "system-admin") return;
+    var blocked = menuHidden(current) || pageHidden(PAGE_ID);
+    if (!isAdmin() && blocked && !document.querySelector(".jamali-vis-notice")) {
+      // The page this user is reading has just been hidden from the
+      // administrator's sidebar minus - block it on the spot, no reload.
+      blockPage();
+      return;
+    }
+    if (!isAdmin() && document.querySelector(".jamali-vis-notice") && !blocked) {
+      // This page was blocked before and the administrator has just
+      // allowed it again - a reload brings the real page in.
+      location.reload();
+      return;
+    }
+    var main = mainEl();
+    if (isAdmin()) { scanAdminPage(main); refreshHiddenChip(); }
+    else if (!blocked) applyUserHides(main);
+  }
+
+  function watchPage(root, fn) {
+    if (!window.MutationObserver) return;
+    var t = null;
+    new MutationObserver(function () {
+      if (t) clearTimeout(t);
+      t = setTimeout(fn, 350);
+    }).observe(root, { childList: true, subtree: true,
+      attributes: true, attributeFilter: ["hidden", "style", "class"] });
+  }
+
+  function applySidebarVis() {
+    var nodes = document.querySelectorAll("#jamali-sidebar .node[data-folder]");
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      var f = node.getAttribute("data-folder");
+      var gone = menuHidden(f) || pageHidden(pageIdOfFolder(f));
+      if (isAdmin()) {
+        // The administrator keeps the whole tree on screen and reads the
+        // hidden areas from the red minus buttons, so restoring is one
+        // click away; ordinary users get the rows removed completely.
+        node.style.display = "";
+        var kx = node.nextElementSibling;
+        if (kx && kx.classList && kx.classList.contains("kids")) kx.style.display = "";
+        node.classList.toggle("jamali-menu-gone", gone);
+        continue;
+      }
+      node.classList.remove("jamali-menu-gone");
+      node.style.display = gone ? "none" : "";
+      if (gone) {
+        var nx = node.nextElementSibling;
+        if (nx && nx.classList && nx.classList.contains("kids")) nx.style.display = "none";
+      }
+    }
+    if (isAdmin()) {
+      var mhs = document.querySelectorAll("#jamali-sidebar .tg.jamali-menu-hide");
+      for (var m = 0; m < mhs.length; m++) {
+        var mf = mhs[m].getAttribute("data-mkey");
+        if (!mf) continue;
+        var mg = menuHidden(mf);
+        mhs[m].classList.toggle("jamali-off", mg);
+        var top = mg ? nearestHiddenAncestor(mf) : null;
+        mhs[m].title = !mg
+          ? "Hide this area for every user - its sub-pages hide with it. Click again to restore."
+          : (top
+            ? ("Hidden under " + labelOf(top) + " - click to restore that area and everything under it")
+            : "Hidden for every user - click to restore it");
+      }
+      return;
+    }
+    var tgl = document.querySelectorAll("#jamali-sidebar .tg");
+    // Folding an empty area reads element sizes, so it waits for a
+    // styled page - measuring while the stylesheets are still
+    // downloading forces a layout on unstyled content.
+    whenStylesReady(function () {
+      for (var j = 0; j < tgl.length; j++) {
+        var box = tgl[j].parentNode.nextElementSibling;
+        if (!box || !box.classList || !box.classList.contains("kids")) continue;
+        var rows = box.querySelectorAll(".node");
+        var alive = 0;
+        for (var r = 0; r < rows.length; r++) {
+          if (isVisibleEl(rows[r])) alive++;
+        }
+        if (!alive) {
+          tgl[j].style.display = "none";
+          box.style.display = "none";
+        } else {
+          tgl[j].style.display = "";
+          box.style.display = "";
+        }
+      }
+    });
+  }
+
+  function setDashState(b, off, what) {
+    b.classList.toggle("jamali-off", !!off);
+    b.title = off
+      ? "Hidden — restore it from the Hidden panel (bottom-right)"
+      : "Click to hide " + what + " completely (restore from the Hidden panel)";
+  }
+
+  function saveVisibility() {
+    visLocalSave();
+    return bootCloudFirestore().then(function (h) {
+      return h.fs.setDoc(h.fs.doc.apply(h.fs, [h.db].concat(VIS_DOC)), {
+        scope: "visibility",
+        fields: VIS.fields,
+        menu: VIS.menu,
+        options: VIS.options,
+        updatedBy: SYSTEM_ADMIN_EMAIL,
+        updatedAt: h.fs.serverTimestamp()
+      });
+    }).catch(function (e) {
+      console.warn("visibility save to the online database failed - the layout is kept on this device:", e);
+    });
+  }
+
+  function dashError(b) {
+    b.textContent = "!";
+    setTimeout(function () { b.textContent = "-"; }, 1500);
+  }
+
+  function hiddenItems() {
+    var out = [];
+    for (var k in VIS.menu) {
+      if (Object.prototype.hasOwnProperty.call(VIS.menu, k) && VIS.menu[k]) {
+        out.push({ kind: "menu", key: k });
+      }
+    }
+    for (var f in VIS.fields) {
+      if (Object.prototype.hasOwnProperty.call(VIS.fields, f) && VIS.fields[f]) {
+        out.push({ kind: "field", key: f });
+      }
+    }
+    return out;
+  }
+
+  function hiddenLabel(it) {
+    if (it.kind === "menu") return "Area: " + labelOf(it.key);
+    var i = it.key.indexOf(":");
+    var page = it.key.slice(0, i), k = it.key.slice(i + 1);
+    return k === "__page__" ? ("Page: " + page) : (k + " — " + page);
+  }
+
+  function ensureHiddenChip() {
+    if (document.getElementById("jamali-hidden-chip")) return;
+    var c = document.createElement("button");
+    c.type = "button";
+    c.id = "jamali-hidden-chip";
+    c.hidden = true;
+    c.title = "Everything the dashes hid — click to restore any of it";
+    c.addEventListener("click", function () {
+      var p = document.getElementById("jamali-vis-panel");
+      if (!p) return;
+      p.hidden = !p.hidden;
+      if (!p.hidden) renderHiddenPanel();
+    });
+    document.body.appendChild(c);
+  }
+
+  function ensureVisPanel() {
+    if (document.getElementById("jamali-vis-panel")) return;
+    var p = document.createElement("div");
+    p.id = "jamali-vis-panel";
+    p.hidden = true;
+    document.body.appendChild(p);
+  }
+
+  function refreshHiddenChip() {
+    if (!isAdmin()) return;
+    ensureHiddenChip();
+    ensureVisPanel();
+    var c = document.getElementById("jamali-hidden-chip");
+    var n = hiddenItems().length;
+    c.hidden = n === 0;
+    c.textContent = "Hidden (" + n + ")";
+    var p = document.getElementById("jamali-vis-panel");
+    if (p && !p.hidden) renderHiddenPanel();
+  }
+
+  function renderHiddenPanel() {
+    var p = document.getElementById("jamali-vis-panel");
+    if (!p) return;
+    var items = hiddenItems();
+    p.innerHTML = "";
+    var h = document.createElement("b");
+    h.textContent = "Hidden by the administrator";
+    p.appendChild(h);
+    if (!items.length) {
+      var e = document.createElement("div");
+      e.className = "jamali-vis-row";
+      e.textContent = "Nothing is hidden.";
+      p.appendChild(e);
+      return;
+    }
+    for (var i = 0; i < items.length; i++) {
+      (function (it) {
+        var row = document.createElement("div");
+        row.className = "jamali-vis-row";
+        var s = document.createElement("span");
+        s.textContent = hiddenLabel(it);
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "jamali-vis-show";
+        b.textContent = "Show";
+        b.addEventListener("click", function () { restoreItem(it); });
+        row.appendChild(s);
+        row.appendChild(b);
+        p.appendChild(row);
+      })(items[i]);
+    }
+    var all = document.createElement("button");
+    all.type = "button";
+    all.className = "jamali-vis-showall";
+    all.textContent = "Show all";
+    all.addEventListener("click", showAllHidden);
+    p.appendChild(all);
+  }
+
+  function clearGoneMarks() {
+    var gones = document.querySelectorAll("[data-jamali-gone]");
+    for (var g = 0; g < gones.length; g++) {
+      gones[g].removeAttribute("data-jamali-gone");
+      gones[g].style.display = "";
+    }
+  }
+
+  function restoreItem(it) {
+    bootCloudFirestore().then(function (h) {
+      return h.fs.getDoc(h.fs.doc.apply(h.fs, [h.db].concat(VIS_DOC))).then(function (snap) {
+        var d = snap.exists() ? snap.data() : {};
+        VIS.fields = d.fields || {};
+        VIS.menu = d.menu || {};
+        VIS.options = d.options || {};
+        if (it.kind === "menu") delete VIS.menu[it.key];
+        else delete VIS.fields[it.key];
+        return saveVisibility();
+      });
+    }).then(function () {
+      clearGoneMarks();
+      afterVisChange();
+      var p = document.getElementById("jamali-vis-panel");
+      if (p && !p.hidden) renderHiddenPanel();
+    }).catch(function (e) {
+      console.warn("restore failed", e);
+    });
+  }
+
+  function showAllHidden() {
+    bootCloudFirestore().then(function (h) {
+      return h.fs.getDoc(h.fs.doc.apply(h.fs, [h.db].concat(VIS_DOC))).then(function (snap) {
+        var d = snap.exists() ? snap.data() : {};
+        VIS.options = d.options || {};
+        VIS.fields = {};
+        VIS.menu = {};
+        return saveVisibility();
+      });
+    }).then(function () {
+      clearGoneMarks();
+      afterVisChange();
+      renderHiddenPanel();
+    }).catch(function (e) {
+      console.warn("restore all failed", e);
+    });
+  }
+
+  // THE BOOT CHAIN: read the visibility config (cloud + live channel +
+  // local mirror), then paint the sidebar state, hide the right links,
+  // and boot the page scan / guard.
+  bootVisibility().then(function () {
+    applySidebarVis();
+    try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
+    if (isAdmin()) { ensureHiddenChip(); ensureVisPanel(); refreshHiddenChip(); }
+    pageBoot();
+  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
+    });
+  } else {
+    try { filterLinks(document); } catch (flErr) { console.warn("filterLinks skipped:", flErr); }
+  }
+  authSettled().then(function () { recomputeAdmin(); }).catch(function () {});
+
 
  
   
@@ -3252,6 +4567,7 @@ wireToggles(aside);
       "#jamali-settings .jd-danger:disabled,#jamali-settings .jd-primary:disabled{opacity:.55;cursor:default}",
       "#jamali-settings .jd-primary{display:block;width:100%;border:0;border-radius:10px;background:#0ea5e9;color:#fff;",
       "font-weight:800;font-size:13.5px;padding:11px 0;cursor:pointer;margin-top:8px}",
+      "#jamali-settings .jd-primary[hidden]{display:none}",
       "#jamali-settings .jd-primary:hover{background:#0284c7}",
       "#jamali-settings .jd-reason{display:block;margin:8px 0 0;color:#cbd5e1;font-size:12.5px}",
       "#jamali-settings .jd-reason b{display:block;margin-bottom:5px}",
@@ -3287,6 +4603,14 @@ wireToggles(aside);
     h += "<div class=\"jd-who\"><b></b><span></span></div>";
     h += "<div class=\"jd-zone\" id=\"jd-zone\"><b>Data lives in this browser</b><span>checking the data zone&hellip;</span></div>";
     h += "<div class=\"jd-cap\">Data</div>";
+    // EXPORT TO ONLINE DATABASE (demand 23 Nov 2026): when the user is
+    // signed in, one click copies this browser's local database to the
+    // database defined on the server - into the signed-in user's own
+    // container (data/<email>__personal/...), which the Firestore rules
+    // already allow. Anonymous visitors see only the sign-in hint.
+    h += "<button type=\"button\" id=\"jd-export\" class=\"jd-primary\" hidden>Export to online database</button>";
+    h += "<div class=\"jd-msg\" id=\"jd-export-msg\" hidden></div>";
+    h += "<div class=\"jd-none\" id=\"jd-export-hint\" hidden>Sign in with Google to export this browser's data to the online database.</div>";
     h += "<button type=\"button\" id=\"jd-show-del\">Show Delete Data</button>";
     h += "<div id=\"jd-del-body\" hidden></div>";
     h += "<div id=\"jd-mine\"></div>";
@@ -3306,6 +4630,63 @@ wireToggles(aside);
     });
     jamaliMinePaint(SETTINGS_EL.querySelector("#jd-mine"));
     jamaliZonePaint();
+    jamaliExportPaint();
+  }
+
+  // The export row: signed-in users get the button, anonymous visitors
+  // get the sign-in hint. Repainted on every settings open and on auth
+  // changes, so the button appears the moment Google settles.
+  function jamaliExportPaint() {
+    var btn = SETTINGS_EL.querySelector("#jd-export");
+    var hint = SETTINGS_EL.querySelector("#jd-export-hint");
+    if (!btn || !hint) return;
+    import("/sidebar.js").then(function (fb) {
+      var signed = !!(fb && fb.localZone && fb.localZone().signedIn);
+      btn.hidden = !signed;
+      hint.hidden = signed;
+      if (fb && fb.onAuthStateChanged) {
+        fb.onAuthStateChanged(null, function () {
+          if (!SETTINGS_EL || SETTINGS_EL.hidden) return;
+          var nowSigned = !!(fb.localZone && fb.localZone().signedIn);
+          btn.hidden = !nowSigned;
+          hint.hidden = nowSigned;
+        });
+      }
+    }).catch(function () {});
+    btn.addEventListener("click", jamaliExportRun);
+  }
+
+  function jamaliExportRun() {
+    var btn = SETTINGS_EL.querySelector("#jd-export");
+    var msg = SETTINGS_EL.querySelector("#jd-export-msg");
+    if (!btn || !msg) return;
+    btn.disabled = true;
+    msg.hidden = false;
+    msg.className = "jd-msg";
+    msg.textContent = "Copying this browser's local database to the online database\u2026";
+    import("/sidebar.js").then(function (fb) {
+      if (!fb || !fb.exportLocalToCloud) {
+        throw new Error("The export engine is not loaded on this page yet - reopen the settings and try again.");
+      }
+      return fb.exportLocalToCloud(function (p) {
+        if (p && p.total) {
+          msg.textContent = "Copying to the online database\u2026 " + p.done + " / " + p.total + " records";
+        }
+      });
+    }).then(function (r) {
+      btn.disabled = false;
+      msg.className = "jd-msg jd-ok";
+      var zones = (r && r.zones && r.zones.length) ? r.zones.join(", ") : "none";
+      msg.textContent = "Exported " + (r ? r.records : 0) + " records from " + (r ? r.collections : 0) +
+        " collections (zones: " + zones + ") into the online database container " +
+        (r ? r.container : "") + "." +
+        (r && r.skipped ? " " + r.skipped + " oversize records were skipped." : "") +
+        " Collection names and document ids are preserved - exporting again overwrites the same records, it never duplicates.";
+    }).catch(function (e) {
+      btn.disabled = false;
+      msg.className = "jd-msg jd-bad";
+      msg.textContent = delErrText(e);
+    });
   }
 
   // The data-zone line: where this browser's records are stored. It is
@@ -4287,3 +5668,29 @@ export function code39SVG(text, opts) {
     '<rect width="' + w + '" height="' + o.height + '" fill="#ffffff"/>' +
     '<g fill="#111111">' + bars + "</g></svg>";
 }
+
+// ======================================================================
+// KEEP THE SYSTEM FROM BEING INSPECTED (demand 24 Nov 2026 - "prevent
+// our system from being inspected"): the standard browser deterrent
+// layer on every page. The right-click menu, F12 and the DevTools /
+// view-source / save-page shortcuts are refused at the capture phase,
+// before any page handler can see them. Keyboard paste (Ctrl+V),
+// printing (Ctrl+P) and every other interaction stay untouched; this
+// is the honest first layer - the server keeps the real authority.
+// ======================================================================
+(function jamaliNoInspect() {
+  function jamaliInspectStop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+  document.addEventListener("contextmenu", jamaliInspectStop, true);
+  document.addEventListener("keydown", function (e) {
+    var k = (e.key || "").toUpperCase();
+    if (k === "F12") return jamaliInspectStop(e);
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey &&
+        (k === "I" || k === "J" || k === "C")) return jamaliInspectStop(e);
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey &&
+        (k === "U" || k === "S")) return jamaliInspectStop(e);
+  }, true);
+})();

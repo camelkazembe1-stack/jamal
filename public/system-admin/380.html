@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — JAMALI</title>
+<link rel="stylesheet" href="/system-admin/380.css">
+<!-- RETURNED (24 Nov 2026): menu.js was merged into the one shared
+module - the sidebar rides the single /sidebar.js module tag like
+every other page; the page module imports its data layer from it. -->
+<script type="module" src="/sidebar.js"></script>
+<style>
+  body{background:#f1f5f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;}
+  .wrap{max-width:1100px;margin:32px auto;padding:0 16px;}
+  h2{font-size:20px;margin:0 0 14px;color:#0f172a;}
+  .twrap{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:auto;}
+  table{border-collapse:collapse;width:100%;font-size:14px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
+  th{background:#f8fafc;color:#475569;font-weight:600;}
+  tr:last-child td{border-bottom:none;}
+  .st-approved{color:#15803d;font-weight:600;}
+  .st-pending{color:#b45309;font-weight:600;}
+  .st-rejected{color:#b91c1c;font-weight:600;}
+  button.act{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;}
+  button.act:hover:not(:disabled){background:#f1f5f9;}
+  button.act:disabled{opacity:.45;cursor:not-allowed;}
+  button.act.approve{background:#15803d;border-color:#15803d;color:#fff;}
+  button.act.approve:hover:not(:disabled){background:#166534;}
+  .err{color:#b91c1c;margin:12px 0 0;}
+  .note{color:#475569;margin:8px 0 0;font-size:13px;}
+  .st-completed{color:#15803d;font-weight:600;}
+  .st-failed{color:#b91c1c;font-weight:600;}
+  .st-approved{color:#0369a1;font-weight:600;}
+  #delreq td i{font-style:normal;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;}
+  .tab{border:1px solid #cbd5e1;background:#ffffff;border-radius:999px;padding:6px 14px;cursor:pointer;font-size:13px;font-weight:600;color:#475569;}
+  .tab:hover{background:#f1f5f9;}
+  .tab.on{background:#0f172a;border-color:#0f172a;color:#ffffff;}
+  .tab .n{display:inline-block;min-width:22px;text-align:center;background:#e2e8f0;color:#334155;border-radius:999px;padding:1px 7px;margin-left:6px;font-size:11.5px;font-weight:700;}
+  .tab.on .n{background:#334155;color:#ffffff;}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h2>Registered users</h2>
+  <div class="twrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th><th>Position</th><th>Phone</th><th>Google email</th>
+          <th>Registered</th><th>Status</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="rows"><tr><td colspan="7">Loading&hellip;</td></tr></tbody>
+    </table>
+  </div>
+  <section id="modsel" hidden style="margin-top:18px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;text-align:left;">
+    <h2 style="font-size:18px;margin:0 0 10px;">Select modules — <span id="modsel-who"></span></h2>
+    <p style="color:#64748b;font-size:13px;margin:0 0 10px;">Tick the main modules this user may open — ticking a module reveals its submodules for individual selection. A granted submodule always carries its parent module. Only selected modules and submodules appear for the user on Home and in the sidebar.</p>
+    <div id="modsel-body"></div>
+    <p style="margin:12px 0 0;display:flex;gap:8px;align-items:center;">
+      <button class="act" id="modsel-all" type="button">Select all</button>
+      <button class="act" id="modsel-none" type="button">Deselect all</button>
+      <button class="act approve" id="modsel-save" type="button">Save Access</button>
+      <button class="act" id="modsel-close" type="button">Close</button>
+      <span id="modsel-ok" hidden style="color:#15803d;font-weight:600;">Saved.</span>
+    </p>
+  </section>
+  <section id="delreq" hidden style="margin-top:18px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;">
+    <h2 style="font-size:18px;margin:0 0 6px;">Data Deletion Requests</h2>
+    <p style="color:#64748b;font-size:13px;margin:0 0 10px;">Organisation users cannot delete shared data directly &mdash; from Settings &rarr; Show Delete Data they send a deletion request with a required reason, and it lands here. Nothing is ever deleted before your approval. <b>Approve</b> shows a final confirmation with exactly which data will be deleted, executes the permanent deletion immediately (a retention copy is archived into the deletion audit first), records you as the deciding administrator with the date and time, and notifies the user. <b>Reject</b> requires a reason, keeps every document untouched, and notifies the user. Pending, approved, rejected, completed and failed requests are all kept here.</p>
+    <div class="tabs" id="delreq-tabs"></div>
+    <div class="twrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Requested</th><th>User</th><th>Position</th><th>Google email</th>
+            <th>Data groups</th><th>Reason</th><th>Status</th><th>Decision / execution</th>
+          </tr>
+        </thead>
+        <tbody id="delreq-rows"><tr><td colspan="8">Loading&hellip;</td></tr></tbody>
+      </table>
+    </div>
+    <p class="note" id="delreq-note" hidden></p>
+  </section>
+
+  <p class="err" id="err" hidden></p>
+  <p class="note" id="note" hidden></p>
+</main>
+<script type="module" src="/system-admin/380.js"></script>
+</body>
+</html>

@@ -45,6 +45,7 @@
       var HOME = "/home/1.html";
       var BOOT_KEY = "JAMALI_BOOT_PAGE";
       var LAST_KEY = "JAMALI_LAST_PAGE";
+      var STACK_KEY = "JAMALI_PAGE_STACK";
       var frame = document.getElementById("jamali-app");
 
       function norm(target) {
@@ -90,14 +91,76 @@
         norm(last) || HOME;
       frame.src = initial;
 
+      /* THE PAGE STACK - the shell moves pages with location.replace, so
+       * the browser never builds history entries for them. The stack here
+       * is the page history instead: every page the user reaches lands on
+       * it, and the pages' back links ("<- Home", "<- Health", ...) ask
+       * the shell to go back ONE step over it - to the page the user was
+       * on before this one - instead of jumping straight to a hub. When
+       * the stack has no earlier step left, the back link falls back to
+       * its own target (the hub it points at), so it always works. The
+       * stack survives a refresh through sessionStorage, newest last. */
+      var stack = [];
+      try {
+        var rawStack = JSON.parse(sessionStorage.getItem(STACK_KEY) || "[]");
+        if (Array.isArray(rawStack)) {
+          for (var si = 0; si < rawStack.length; si++) {
+            var sT = norm(rawStack[si]);
+            if (sT && stack[stack.length - 1] !== sT) stack.push(sT);
+          }
+        }
+      } catch (e) { stack = []; }
+      function stackSave() {
+        try { sessionStorage.setItem(STACK_KEY, JSON.stringify(stack.slice(-60))); } catch (e) {}
+      }
+      function stackPush(t) {
+        if (!t || stack[stack.length - 1] === t) return;
+        stack.push(t);
+        if (stack.length > 60) stack = stack.slice(-60);
+        stackSave();
+      }
+      function frameNav(t) {
+        try { frame.contentWindow.location.replace(t); }
+        catch (e) { frame.src = t; }
+      }
+      function frameHere() {
+        try {
+          var loc = frame.contentWindow.location;
+          return loc.pathname + (loc.search || "") + (loc.hash || "");
+        } catch (e) { return null; }
+      }
+      /* Back one step: drop the current page off the stack, reopen what
+       * came before it. Nothing earlier left -> the link's own target. */
+      function stackBack(fallback) {
+        var cur = frameHere() || (stack.length ? stack[stack.length - 1] : null);
+        var cut = -1, j;
+        for (j = stack.length - 1; j >= 0; j--) {
+          if (stack[j] === cur) { cut = j; break; }
+        }
+        stack = cut === -1 ? [] : stack.slice(0, cut);
+        stackSave();
+        var prev = stack.length ? stack[stack.length - 1] : null;
+        if (prev && prev !== cur) {
+          frameNav(prev);
+          return;
+        }
+        var t = norm(fallback);
+        if (t) { stackPush(t); frameNav(t); return; }
+        /* No earlier step and no fallback target: reload this page. */
+        if (cur) frameNav(cur);
+      }
+
+      stackPush(initial);
+
       window.addEventListener("message", function (ev) {
         if (ev.origin !== location.origin) return;
         var d = ev.data;
-        if (!d || d.type !== "JAMALI_NAV") return;
+        if (!d || (d.type !== "JAMALI_NAV" && d.type !== "JAMALI_BACK")) return;
         var t = norm(d.target);
+        if (d.type === "JAMALI_BACK") { stackBack(t); return; }
         if (!t) return;
-        try { frame.contentWindow.location.replace(t); }
-        catch (e) { frame.src = t; }
+        stackPush(t);
+        frameNav(t);
       });
 
       /* Remember the page the user is on so a refresh reopens it inside
@@ -110,6 +173,23 @@
           if (cur && cur !== "/") sessionStorage.setItem(LAST_KEY, cur);
         } catch (e) {}
       });
+    })();
+
+    /* KEEP THE SYSTEM FROM BEING INSPECTED (demand 24 Nov 2026): the
+     * same deterrent layer the pages carry from sidebar.js, on the
+     * shell document itself - right-click menu, F12 and the
+     * DevTools / view-source / save-page shortcuts are refused. */
+    (function () {
+      function stopInspect(e) { e.preventDefault(); e.stopPropagation(); return false; }
+      document.addEventListener("contextmenu", stopInspect, true);
+      document.addEventListener("keydown", function (e) {
+        var k = (e.key || "").toUpperCase();
+        if (k === "F12") return stopInspect(e);
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey &&
+            (k === "I" || k === "J" || k === "C")) return stopInspect(e);
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey &&
+            (k === "U" || k === "S")) return stopInspect(e);
+      }, true);
     })();
   </script>
 </body>
