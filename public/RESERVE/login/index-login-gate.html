@@ -67,6 +67,16 @@
   .usebtns button:hover { border-color: #38bdf8; color: #fff; transform: translateY(-1px); }
   .usebtns button small { display: block; margin-top: 6px; font-size: 11.5px; font-weight: 600; color: #94a3b8; }
   .token-row input { letter-spacing: 8px; text-align: center; font-weight: 800; }
+  /* ---- password policy strength meter (strengthening item 8) ---- */
+  .pw-meter { display: flex; align-items: center; gap: 10px; margin: -2px 0 10px; }
+  .pw-bars { display: flex; gap: 5px; flex: 1; }
+  .pw-bars i { height: 5px; flex: 1; border-radius: 3px; background: #1e293b; transition: background .2s; }
+  .pw-bars i.on.l1 { background: #ef4444; }
+  .pw-bars i.on.l2 { background: #f59e0b; }
+  .pw-bars i.on.l3 { background: #22c55e; }
+  .pw-bars i.on.l4 { background: #38bdf8; }
+  .pw-label { font-size: 12px; color: #94a3b8; min-width: 140px; text-align: right; }
+  .pw-label.bad { color: #f87171; }
   /* ---- account recovery panel (merged from the old recovery folders) ---- */
   .panel-title { font-size: 19px; text-align: center; margin-bottom: 14px; }
   .panel-title span { color: #38bdf8; }
@@ -114,7 +124,8 @@
       <label for="ca-username">Username</label>
       <input id="ca-username" type="text" placeholder="Choose a username">
       <label for="ca-password">Password</label>
-      <input id="ca-password" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+      <input id="ca-password" type="password" autocomplete="new-password" placeholder="At least 8 characters · letters &amp; numbers">
+      <div class="pw-meter" data-for="ca-password"><div class="pw-bars"><i></i><i></i><i></i><i></i></div><span class="pw-label"></span></div>
       <label for="ca-phone">Phone number</label>
       <input id="ca-phone" type="tel" placeholder="e.g. 0780526437">
       <label for="ca-position">Staff position</label>
@@ -180,7 +191,8 @@
         </section>
         <section id="step-new" class="hidden">
           <label for="fp-new1">New password</label>
-          <input id="fp-new1" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+          <input id="fp-new1" type="password" autocomplete="new-password" placeholder="At least 8 characters · letters &amp; numbers">
+          <div class="pw-meter" data-for="fp-new1"><div class="pw-bars"><i></i><i></i><i></i><i></i></div><span class="pw-label"></span></div>
           <label for="fp-new2">Repeat the new password</label>
           <input id="fp-new2" type="password" autocomplete="new-password" placeholder="Same again">
           <button class="wide" id="fp-save" type="button">Save New Password</button>
@@ -227,7 +239,7 @@
       auth, provider, onAuthStateChanged, signInWithPopup, signOut,
       db, collection, query, where, limit, getDocs,
       doc, getDoc, setDoc, updateDoc, writeBatch, serverTimestamp
-    } from "/502.js";
+    } from "/sidebar.js";
 
     document.getElementById("year").textContent = new Date().getFullYear();
 
@@ -546,7 +558,8 @@
       const rstatus = $("status-password");
       const p1 = $("fp-new1").value, p2 = $("fp-new2").value;
       if (!verifiedId) { sayR(rstatus, "Verify your phone number first."); return; }
-      if (p1.length < 6) { sayR(rstatus, "Password must be at least 6 characters."); return; }
+      const pwErr = passwordPolicyError(p1);
+      if (pwErr) { sayR(rstatus, pwErr); return; }
       if (p1 !== p2) { sayR(rstatus, "The two passwords do not match."); return; }
       btn.disabled = true; sayR(rstatus, "");
 
@@ -687,6 +700,48 @@
       }
     });
 
+    // ---- password policy & strength meter (strengthening item 8, 25 Nov 2026) ----
+    // One policy for every place a NEW password is set: account creation and
+    // the forgot-password desk. The forgot-token desk is left alone - it only
+    // proves an EXISTING password, it never sets one. The meter is live
+    // advice on top of the rule; the rule itself is enforced on submit.
+    const PW_MIN = 8;
+    function passwordPolicyError(pw) {
+      if (!pw || pw.length < PW_MIN) return "Password must be at least " + PW_MIN + " characters.";
+      if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return "Password must mix letters and numbers - at least one of each.";
+      if (/^(.)\1+$/.test(pw)) return "This password is too simple - vary the characters.";
+      return "";
+    }
+    function passwordScore(pw) {
+      let s = 0;
+      if (pw.length >= PW_MIN) s++;
+      if (pw.length >= 12) s++;
+      if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) s++;
+      if (/[0-9]/.test(pw)) s++;
+      if (/[^A-Za-z0-9]/.test(pw)) s++;
+      return s; // 0..5
+    }
+    function wirePwMeter(inputId) {
+      const input = document.getElementById(inputId);
+      const meter = input && input.parentElement ? input.parentElement.querySelector(".pw-meter[data-for='" + inputId + "']") : null;
+      if (!input || !meter) return;
+      const bars = meter.querySelectorAll(".pw-bars i");
+      const label = meter.querySelector(".pw-label");
+      const names = ["Weak", "Weak", "Fair", "Good", "Strong"];
+      input.addEventListener("input", () => {
+        const pw = input.value;
+        const err = passwordPolicyError(pw);
+        const s = pw ? passwordScore(pw) : 0;
+        let level = Math.max(0, Math.min(4, s - 1));
+        if (pw && err) level = (pw.length < PW_MIN) ? 0 : 1;
+        bars.forEach((b, i) => { b.className = (i < level && pw) ? ("on l" + level) : ""; });
+        label.textContent = pw ? (err || names[level]) : "";
+        label.className = "pw-label" + (err ? " bad" : "");
+      });
+    }
+    wirePwMeter("ca-password");
+    wirePwMeter("fp-new1");
+
     $("create-btn").addEventListener("click", async () => {
       const btn = $("create-btn");
       const username = $("ca-username").value.trim();
@@ -696,7 +751,8 @@
       const token = $("ca-token").value.trim();
 
       if (username.length < 3) { say("Username must be at least 3 characters."); return; }
-      if (password.length < 6) { say("Password must be at least 6 characters."); return; }
+      const pwErr = passwordPolicyError(password);
+      if (pwErr) { say(pwErr); return; }
       if (phone.replace(/[^0-9]/g, "").length < 9) { say("Enter a valid phone number."); return; }
       if (!position) { say("Enter your staff position."); return; }
       if (!/^[0-9]{4}$/.test(token)) { say("Choose a four-digit token."); return; }
