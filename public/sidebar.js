@@ -75,8 +75,9 @@
 // comment, and it lands in the shared "comments" collection in Firestore,
 // addressed to the owner (COMMENT_OWNER_EMAIL below). Only the owner may
 // read or delete the mailbox; a visitor can only add. The sidebar footer
-// carries the Comment button next to the Login/Logout button (one row,
-// 50% / 50%, the old settings gear is gone), and the owner sees a
+// carries the Comment button next to the Login/Logout button and the
+// settings gear (one row: Login/Logout 50% + Comment 25% + Settings 25%),
+// and the owner sees a
 // "Comments" button at the top right of every page.
 
 // ==== JAMALI SETTINGS SOURCE - the single source of truth for every settings file ====
@@ -2365,7 +2366,6 @@ window.JAMALI_MENU = [
     { label: "Stock Progress", icon: "📈", folder: "stock-progress", n: 347, d: 3 },
     { label: "Stock Change", icon: "🔄", folder: "stock-change", n: 346, d: 3 },
     { label: "Notification Center", icon: "🔔", folder: "notification-center", n: 411, d: 2 },
-    { label: "Notification Settings", icon: "⚙️", folder: "notification-settings", n: 412, d: 3 },
     { label: "Customers", icon: "👤", folder: "customers", n: 392, d: 2 },
     { label: "Suppliers", icon: "🏭", folder: "suppliers", n: 393, d: 2 },
     { label: "Employees", icon: "🧑‍💼", folder: "employees", n: 394, d: 2 },
@@ -3602,7 +3602,7 @@ p.label + "</a>";
    " body.jamali-sidebar-open #jamali-overlay{display:block}}",
    "#jamali-side-foot{flex:0 0 auto;padding:12px 14px;border-top:1px solid #1e293b;background:#0f172a}",
    ".jamali-foot-row{display:flex;align-items:stretch;gap:8px}",
-   "#jamali-side-auth{flex:3 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 4px;font-size:14px;font-weight:800;line-height:1.15;cursor:pointer;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}",
+   "#jamali-side-auth{flex:2 1 0;min-width:0;box-sizing:border-box;border:0;border-radius:10px;padding:10px 4px;font-size:14px;font-weight:800;line-height:1.15;cursor:pointer;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}",
    "#jamali-side-auth small{font-size:9.5px;font-weight:600;opacity:.9;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
    "#jamali-side-auth.login{background:#16a34a}",
    "#jamali-side-auth.login:hover{background:#15803d}",
@@ -3617,7 +3617,6 @@ p.label + "</a>";
    "#jamali-side-gear small{font-size:10px;font-weight:700;color:#94a3b8}",
    "#jamali-side-gear:hover{background:#334155;color:#fff}",
    "#jamali-side-gear:hover small{color:#e2e8f0}",
-   ".jamali-foot-row + .jamali-foot-row{margin-top:8px}",
    "#jamali-owner-comments{position:fixed;top:12px;right:12px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
    "#jamali-owner-comments:hover{background:#1e293b}",
    "#jamali-owner-comments[hidden]{display:none}",
@@ -3731,17 +3730,16 @@ p.label + "</a>";
   aside.innerHTML =
     "<div class=\"brand\"><i>JA</i>JAMAL</div>" +
     "<nav>" + nav + "</nav>" +
-    // THE FOOTER (23 Nov 2026): the Comment button keeps its own
-    // full-width row on top (users only - signed-in visitors write, the
-    // AI is not allowed; the owner never sees the button); below it the
-    // Login/Logout button takes 3/4 of the row and the settings gear
-    // 1/4 - clicking the gear opens the organisation settings panel.
+    // THE FOOTER (25 Nov 2026): ONE line for all three buttons, in the
+    // demanded proportions - the Login/Logout button takes 50% of the row,
+    // the Comment button 25% and the settings gear 25%. Clicking the gear
+    // opens the one settings panel; clicking Comment opens the write popup
+    // (signed-in users only - the AI is not allowed; the owner never sees
+    // the button).
     "<div id=\"jamali-side-foot\">" +
     "<div class=\"jamali-foot-row\">" +
-    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner (signed-in users only)\">&#128172;<small>Comment</small></button>" +
-    "</div>" +
-    "<div class=\"jamali-foot-row\">" +
     "<button type=\"button\" id=\"jamali-side-auth\" class=\"login\" title=\"Not signed in - click to sign in with Google\">Login</button>" +
+    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner (signed-in users only)\">&#128172;<small>Comment</small></button>" +
     "<button type=\"button\" id=\"jamali-side-gear\" title=\"Organisation settings\">&#9881;&#65039;<small>Settings</small></button>" +
     "</div></div>";
 
@@ -3809,6 +3807,13 @@ p.label + "</a>";
    bellPanel.hidden = true;
    document.body.appendChild(bellBtn);
    document.body.appendChild(bellPanel);
+   // ONE SETTINGS PLACE: the bell panel's Settings button opens the same
+   // settings panel the footer gear opens - no settings page behind a link.
+   // Delegation: the panel footer is painted on every open, so the click
+   // rides the panel container itself.
+   bellPanel.addEventListener("click", function (ev) {
+     if (ev.target && ev.target.id === "jamali-bell-settings") jamaliSettingsOpen();
+   });
 
    var JNOTIFY = [];
    function jbMillis(ts) {
@@ -3859,7 +3864,7 @@ p.label + "</a>";
        }
      }
      html += "<div class=\"jb-foot\"><a href=\"/notification-center/411\" class=\"jb-primary\">Open Center</a>" +
-       "<a href=\"/notification-settings/412\">Settings</a></div>";
+       "<button type=\"button\" id=\"jamali-bell-settings\">Settings</button></div>";
      bellPanel.innerHTML = html;
    }
    bellBtn.addEventListener("click", function (e) {
@@ -3987,10 +3992,11 @@ p.label + "</a>";
     jamaliCommentPopOpen();
   });
 
-  // THE SETTINGS GEAR (23 Nov 2026): 1/4 of the footer row, next to the
-  // Login/Logout button's 3/4. Clicking it opens the organisation
-  // settings panel - the gear is the only way in since the Organisation
-  // Settings entry left the menu tree and the Home grid.
+  // THE SETTINGS GEAR (25 Nov 2026): 25% of the one footer row, next to
+  // the Login/Logout button's 50% and the Comment button's 25%. Clicking
+  // it opens THE one settings panel - every setting the system has lives
+  // in it, and it is the only way in since the Organisation Settings and
+  // Notification Settings entries left the menu tree and the Home grid.
   document.getElementById("jamali-side-gear").addEventListener("click", function () {
     jamaliSettingsOpen();
   });
@@ -5450,6 +5456,13 @@ document.querySelector("main") || document.body;
       "#jamali-settings .jd-decision i{display:block;color:#64748b;font-style:normal;font-size:11px;margin-top:3px}",
       "#jamali-settings .jd-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}",
       "#jamali-settings .jd-item{border:1px solid #334155;border-radius:10px;padding:8px 10px}",
+      "#jamali-settings .jd-f{display:block;margin:6px 0;color:#cbd5e1;font-size:12.5px}",
+      "#jamali-settings .jd-f input,#jamali-settings .jd-f select{display:block;width:100%;box-sizing:border-box;margin-top:3px;",
+      "border:1px solid #334155;border-radius:9px;background:#0b1220;color:#e2e8f0;font:inherit;padding:8px 10px}",
+      "#jamali-settings .jd-tg{display:flex;flex-direction:column;gap:5px;margin:6px 0}",
+      "#jamali-settings .jd-tg label{display:flex;gap:8px;align-items:center;border:1px solid #334155;border-radius:9px;",
+      "padding:7px 10px;font-size:12.5px;color:#e2e8f0;cursor:pointer}",
+      "#jamali-settings .jd-tg label:hover{background:#1e293b}",
       "#jamali-settings .jd-item-top{display:flex;align-items:center;gap:8px}",
       "#jamali-settings .jd-what{flex:1;min-width:0;font-size:12.5px;color:#cbd5e1}",
       "#jamali-settings .jd-chip{font-size:10.5px;font-weight:900;letter-spacing:.5px;border-radius:999px;padding:3px 8px;flex:0 0 auto}",
@@ -5485,6 +5498,16 @@ document.querySelector("main") || document.body;
     h += "<button type=\"button\" id=\"jd-show-del\">Show Delete Data</button>";
     h += "<div id=\"jd-del-body\" hidden></div>";
     h += "<div id=\"jd-mine\"></div>";
+    // ONE SETTINGS PLACE (demand 25 Nov 2026): every setting the system has
+    // lives in this panel - Data (export + delete) above, Speaker settings
+    // (the 34 module pages' voice config) and Notification settings (the
+    // engine's events, channels and recipients) here. The per-page Speaker
+    // blocks and the Notification Settings menu entry stand down; the pages'
+    // Speaker buttons just open this panel.
+    h += "<div class=\"jd-cap\">Speaker settings</div>";
+    h += "<div id=\"jd-speaker\"></div>";
+    h += "<div class=\"jd-cap\">Notification settings</div>";
+    h += "<div id=\"jd-notify\"></div>";
     SETTINGS_EL.innerHTML = h;
     SETTINGS_EL.querySelector(".jd-close").addEventListener("click", function () {
       SETTINGS_EL.hidden = true;
@@ -5502,6 +5525,8 @@ document.querySelector("main") || document.body;
     jamaliMinePaint(SETTINGS_EL.querySelector("#jd-mine"));
     jamaliZonePaint();
     jamaliExportPaint();
+    jamaliSpeakerPaint();
+    jamaliNotifyPaint();
   }
 
   // The export row: signed-in users get the button, anonymous visitors
@@ -5963,6 +5988,182 @@ document.querySelector("main") || document.body;
       });
     });
   }
+
+  // ---- ONE SETTINGS PLACE: the two consolidated sections -------------------
+  // SPEAKER SETTINGS: the 34 module pages' announcement config. Writes the
+  // SAME record the pages read (healthQueueConfig/<module>, plus the
+  // jamali_qacfg_<module> Local Storage cache), so every page picks the
+  // values up live through its onSnapshot listener - nothing else changes.
+  var QA_MODULE_LIB = [
+    ["triage", "Triage", "\u{1F691}"],
+    ["nurse", "Nurse Consultation", "\u{1F489}"],
+    ["doctor", "Doctor Consultation", "\u{1FA7A}"],
+    ["pharmacy", "Pharmacy", "\u{1F48A}"],
+    ["treatment", "Treatment / Procedures", "\u{1FA79}"],
+    ["discharge", "Patient Discharge", "\u{1F6AA}"],
+    ["laboratory", "Laboratory", "\u{1F9EA}"],
+    ["radiology", "Radiology / Imaging", "\u{1FA7B}"],
+    ["billing", "Hospital Billing & Invoicing", "\u{1F9FE}"],
+    ["payments", "Payments & Financial", "\u{1F4B5}"],
+    ["insurance", "Health Insurance", "\u{1F6A1}"],
+    ["staff", "Staff & Human Resource", "\u{1F465}"],
+    ["duty", "Doctor Scheduling & Duty Roster", "\u{1F5D3}\uFE0F"],
+    ["emergency", "Emergency Department", "\u{1F6A8}"],
+    ["icu", "Intensive Care Unit (ICU)", "\u{1FAC0}"],
+    ["theatre", "Operating Theatre & Surgery", "\u{1F3E5}"],
+    ["maternity", "Maternity & Delivery", "\u{1F930}"],
+    ["antenatal", "Antenatal & Postnatal Care", "\u{1F931}"],
+    ["paediatric", "Paediatric Department", "\u{1F9D2}"],
+    ["dental", "Dental Department", "\u{1F9B7}"],
+    ["physio", "Physiotherapy & Rehabilitation", "\u{1F3CB}\uFE0F"],
+    ["mental", "Mental Health Services", "\u{1F9E0}"],
+    ["bloodbank", "Blood Bank & Transfusion", "\u{1FA78}"],
+    ["ambulance", "Ambulance & Patient Transport", "\u{1F691}"],
+    ["immunisation", "Immunisation & Vaccination", "\u{1F489}"],
+    ["chronic", "Chronic Disease", "\u{1FA7A}"],
+    ["infection", "Infection Prevention & Control", "\u{1F9A0}"],
+    ["mortuary", "Mortuary", "\u{1F56F}\uFE0F"],
+    ["equipment", "Medical Equipment", "\u{1F527}"],
+    ["procurement", "Medical Supplies & Procurement", "\u{1F4E6}"],
+    ["inventory", "General Hospital Inventory", "\u{1F3EC}"],
+    ["dietary", "Dietary & Nutrition", "\u{1F37D}\uFE0F"],
+    ["laundry", "Laundry", "\u{1F9FA}"],
+    ["housekeeping", "Housekeeping & Environmental Services", "\u{1F9F9}"]
+  ];
+
+  function jamaliSpeakerPaint() {
+    if (!SETTINGS_EL) return;
+    var box = SETTINGS_EL.querySelector("#jd-speaker");
+    if (!box) return;
+    var cur = "triage";
+    try { cur = window.localStorage.getItem("jamali_settings_qa") || "triage"; } catch (e) {}
+    if (!QA_MODULE_LIB.some(function (m) { return m[0] === cur; })) cur = "triage";
+    box.innerHTML =
+      '<select id="jd-qa-sel">' + QA_MODULE_LIB.map(function (m) {
+        return '<option value="' + m[0] + '"' + (m[0] === cur ? " selected" : "") + ">" +
+          jdEsc(m[2] + " " + m[1]) + "</option>";
+      }).join("") + "</select>" +
+      '<p class="jd-none">The voice announcements on every module page read these details aloud. Saving writes the same record the page reads, so the page picks it up live.</p>' +
+      '<label class="jd-f">Department / service name<input id="jd-qa-dept" type="text" placeholder="e.g. Triage"></label>' +
+      '<label class="jd-f">Staff name<input id="jd-qa-staff" type="text" placeholder="e.g. Nurse MWAJUMA"></label>' +
+      '<label class="jd-f">Office number<input id="jd-qa-office" type="text" placeholder="e.g. Doctor\'s Office 02"></label>' +
+      '<label class="jd-f">Room number<input id="jd-qa-room" type="text" placeholder="e.g. Nurse Room 03"></label>' +
+      '<label class="jd-f">Voice speed<select id="jd-qa-speed">' +
+        '<option value="0.6">Slow &middot; 0.6</option><option value="0.75">Clear &middot; 0.75</option>' +
+        '<option value="0.95">Normal &middot; 0.95</option></select></label>' +
+      '<button type="button" id="jd-qa-save" class="jd-primary">Save Speaker Settings</button>' +
+      '<div class="jd-msg" id="jd-qa-msg" hidden></div>';
+    var fill = function (data) {
+      var d = data || {};
+      var put = function (id, k) {
+        var el = box.querySelector("#" + id);
+        if (el) el.value = String(d[k] == null ? "" : d[k]);
+      };
+      put("jd-qa-dept", "department"); put("jd-qa-staff", "staffName");
+      put("jd-qa-office", "officeNumber"); put("jd-qa-room", "roomNumber");
+      var sp = box.querySelector("#jd-qa-speed");
+      if (sp) {
+        var r = Number(d.voiceRate);
+        sp.value = String(r >= 0.5 && r <= 1.1 ? r : 0.75);
+      }
+    };
+    try { fill(JSON.parse(window.localStorage.getItem("jamali_qacfg_" + cur) || "{}")); } catch (e) {}
+    import("/sidebar.js").then(function (fb) {
+      if (!fb || !fb.getDoc || !fb.doc) return;
+      return fb.getDoc(fb.doc(fb.db, "healthQueueConfig", cur)).then(function (ds) {
+        if (ds && ds.exists && ds.exists()) fill(ds.data());
+      });
+    }).catch(function () { /* the Local Storage fill stands */ });
+    var sel = box.querySelector("#jd-qa-sel");
+    sel.addEventListener("change", function () {
+      try { window.localStorage.setItem("jamali_settings_qa", sel.value); } catch (e) {}
+      jamaliSpeakerPaint();
+    });
+    box.querySelector("#jd-qa-save").addEventListener("click", function () {
+      var mod = sel.value, msg = box.querySelector("#jd-qa-msg");
+      var btn = box.querySelector("#jd-qa-save");
+      try { window.localStorage.setItem("jamali_settings_qa", mod); } catch (e) {}
+      var val = function (id) {
+        var el = box.querySelector("#" + id);
+        return el ? el.value.trim().replace(/\s+/g, " ") : "";
+      };
+      var sp = Number(box.querySelector("#jd-qa-speed").value);
+      var data = {
+        department: val("jd-qa-dept"), staffName: val("jd-qa-staff"),
+        officeNumber: val("jd-qa-office"), roomNumber: val("jd-qa-room"),
+        voiceRate: (sp >= 0.5 && sp <= 1.1) ? sp : 0.75,
+        updatedAt: new Date().toISOString()
+      };
+      btn.disabled = true; msg.hidden = false; msg.className = "jd-msg";
+      msg.textContent = "Saving speaker settings for " + mod + "\u2026";
+      import("/sidebar.js").then(function (fb) {
+        return fb.setDoc(fb.doc(fb.db, "healthQueueConfig", mod), data, { merge: true });
+      }).then(function () {
+        try {
+          window.localStorage.setItem("jamali_qacfg_" + mod, JSON.stringify(
+            Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 }, data)));
+        } catch (e) {}
+        msg.className = "jd-msg jd-ok";
+        msg.textContent = "Speaker settings saved for " + mod + " - the module page reads them live.";
+        btn.disabled = false;
+      }).catch(function (e) {
+        msg.className = "jd-msg jd-bad"; msg.textContent = delErrText(e); btn.disabled = false;
+      });
+    });
+  }
+
+  // NOTIFICATION SETTINGS: the same fields page 412 serves (events, channels,
+  // recipients), saved through the same saveNotifySettings the engine reads.
+  function jamaliNotifyPaint() {
+    if (!SETTINGS_EL) return;
+    var box = SETTINGS_EL.querySelector("#jd-notify");
+    if (!box) return;
+    var st = getNotifySettings();
+    var tg = function (items, attr, key0) {
+      return '<div class="jd-tg">' + items.map(function (it) {
+        return '<label><input type="checkbox" data-' + attr + '="' + it.key + '"' +
+          (st[it.key] ? " checked" : "") + "> " + jdEsc(it.label) +
+          (it.hint ? ' <span style="color:#64748b">- ' + jdEsc(it.hint) + "</span>" : "") + "</label>";
+      }).join("") + "</div>";
+    };
+    box.innerHTML =
+      tg(NOTIFY_EVENTS, "ev") +
+      tg(NOTIFY_CHANNELS, "ch") +
+      '<label class="jd-f">Phone number (for SMS)<input id="jd-ns-phone" type="tel" placeholder="e.g. 0780526437 or +255780526437"></label>' +
+      '<label class="jd-f">Email address (for email alerts)<input id="jd-ns-email" type="email" placeholder="owner@example.com"></label>' +
+      '<button type="button" id="jd-ns-save" class="jd-primary">Save Notification Settings</button>' +
+      '<div class="jd-msg" id="jd-ns-msg" hidden></div>';
+    box.querySelector("#jd-ns-phone").value = st.phone || "";
+    box.querySelector("#jd-ns-email").value = st.email || "";
+    box.querySelector("#jd-ns-save").addEventListener("click", function () {
+      var msg = box.querySelector("#jd-ns-msg"), btn = box.querySelector("#jd-ns-save");
+      var patch = {
+        phone: box.querySelector("#jd-ns-phone").value.trim(),
+        email: box.querySelector("#jd-ns-email").value.trim()
+      };
+      box.querySelectorAll("[data-ev]").forEach(function (c) { patch[c.getAttribute("data-ev")] = c.checked; });
+      box.querySelectorAll("[data-ch]").forEach(function (c) { patch[c.getAttribute("data-ch")] = c.checked; });
+      btn.disabled = true; msg.hidden = false; msg.className = "jd-msg";
+      msg.textContent = "Saving notification settings\u2026";
+      try {
+        saveNotifySettings(patch);
+        msg.className = "jd-msg jd-ok";
+        msg.textContent = "Notification settings saved - the engine re-arms on the next stock or payment event.";
+      } catch (e) {
+        msg.className = "jd-msg jd-bad"; msg.textContent = delErrText(e);
+      }
+      btn.disabled = false;
+    });
+  }
+
+  // ONE SETTINGS PLACE: pages and any button can open the panel - the
+  // per-page Speaker settings buttons dispatch jamali:settings-open with
+  // { section: "speaker", qa: "<module>" } and land here, preselected.
+  window.addEventListener("jamali:settings-open", function (ev) {
+    var d = (ev && ev.detail) || {};
+    if (d.qa) { try { window.localStorage.setItem("jamali_settings_qa", String(d.qa)); } catch (e) {} }
+    jamaliSettingsOpen();
+  });
   /* JD-DELETE-MODULE-END */
 })();
 

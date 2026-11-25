@@ -167,57 +167,17 @@ if (qaAnnounceBtn) qaAnnounceBtn.addEventListener("click", () => {
     qaSet("qa-note", "Announcement failed (" + ((e && e.message) || e) + ") — read aloud: " + sentence);
   }
 });
-const qaSettingsBox = document.getElementById("qa-settings");
+// ONE SETTINGS PLACE (25 Nov 2026): every setting lives in the one
+// settings panel the footer gear opens - the page keeps NO speaker
+// settings of its own any more. This button opens the panel with this
+// module preselected; the save writes the same healthQueueConfig
+// record the page reads live.
 const qaSettingsBtn = document.getElementById("qa-settings-btn");
-if (qaSettingsBtn && qaSettingsBox) {
-  qaSettingsBtn.addEventListener("click", () => {
-    qaSettingsBox.hidden = !qaSettingsBox.hidden;
-    if (!qaSettingsBox.hidden) {
-      const put = (id, k) => { const el = document.getElementById(id); if (el) el.value = String(qaCfg[k] || ""); };
-      put("qa-dept", "department"); put("qa-staff", "staffName");
-      put("qa-office", "officeNumber"); put("qa-room", "roomNumber");
-      const sp = document.getElementById("qa-speed"); if (sp) sp.value = String(qaRate());
-    }
-  });
-}
-const qaSaveBtn = document.getElementById("qa-save");
-if (qaSaveBtn) qaSaveBtn.addEventListener("click", async () => {
-  const qae = document.getElementById("qa-err");
-  const qao = document.getElementById("qa-ok");
-  if (qae) qae.hidden = true;
-  if (qao) qao.hidden = true;
-  const val = (id) => { const el = document.getElementById(id); return el ? el.value.trim().replace(/\s+/g, " ") : ""; };
-  const spEl = document.getElementById("qa-speed");
-  const spR = spEl ? Number(spEl.value) : NaN;
-  const data = {
-    department: val("qa-dept"),
-    staffName: val("qa-staff"),
-    officeNumber: val("qa-office"),
-    roomNumber: val("qa-room"),
-    voiceRate: (spR >= 0.5 && spR <= 1.1) ? spR : 0.75,
-    updatedAt: new Date().toISOString()
-  };
-  const sameSpeed = Math.abs(Number(qaCfg.voiceRate || 0.75) - data.voiceRate) < 0.001;
-  if (!data.department && !data.staffName && !data.officeNumber && !data.roomNumber && sameSpeed) {
-    if (qae) { qae.hidden = false; qae.textContent = "Fill at least one field — or leave the settings closed to keep the module's default."; }
-    return;
-  }
-  qaSaveBtn.disabled = true;
-  try {
-    await setDoc(doc(db, "healthQueueConfig", QA_MODULE), data, { merge: true });
-    // the reader must read through the info set in the speaker settings:
-    qaApplyCfg(data);
-    const qaline = qaSettingsLine();
-    if (qao) { qao.hidden = false; qao.textContent = "Speaker settings saved — the speaker is reading them through now."; }
-    if (!qaSpeakNow(qaline)) qaSet("qa-note", "This browser cannot speak — " + qaline);
-  } catch (e) {
-    if (qae) {
-      qae.hidden = false;
-      qae.textContent = "Save failed: " + ((e && e.message) || e) +
-        " — if it says permission-denied, publish the rules from the repo file firestore.rules first.";
-    }
-  } finally { qaSaveBtn.disabled = false; }
+if (qaSettingsBtn) qaSettingsBtn.addEventListener("click", () => {
+  window.dispatchEvent(new CustomEvent("jamali:settings-open",
+    { detail: { section: "speaker", qa: QA_MODULE } }));
 });
+
 function qaApplyCfg(data) {
   qaCfg = Object.assign({ department: "", staffName: "", officeNumber: "", roomNumber: "", voiceRate: 0.75 }, data || {});
   try { localStorage.setItem("jamali_qacfg_" + QA_MODULE, JSON.stringify(qaCfg)); } catch (e) {}

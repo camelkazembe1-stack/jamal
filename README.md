@@ -46,6 +46,25 @@ JAMALI
 > the JAMALI_502_BLOCK markers inside sidebar.js instead of a separate
 > public/502.js.
 
+> THE ONE SETTINGS PLACE + THE FOOTER LINE (25 Nov 2026): every setting now
+> lives in the one settings panel the footer gear opens - Data (export +
+> delete), Speaker settings (the announcement config of all 34 module
+> pages, saved into the same healthQueueConfig record each page reads
+> live) and Notification settings (events, channels, recipients - the same
+> storage the notification engine reads). The per-page Speaker settings
+> blocks are gone; each page's Speaker settings button just opens the panel
+> with that module preselected, and the Notification Settings entry left
+> the menu tree (the bell panel's Settings button opens the panel too; page
+> 412 still works by address). The footer is ONE line: Login/Logout 50% +
+> Comment 25% + Settings 25% - and the owner still never sees the Comment
+> button. THE PEN PHOTO WEB SEARCH (25 Nov 2026): the Stock Change camera
+> lookup is a multi-source chain now - Open Food Facts (food) then Open
+> Products Facts (general products) for barcodes, then Open Products Facts
+> search, DuckDuckGo Instant Answer and Wikipedia for the OCR label text -
+> so a pen photo comes back with the product instead of "external search
+> unavailable"; the dead Open Food Facts name-search endpoint is retired
+> and every result shows its real source.
+
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app
 

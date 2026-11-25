@@ -743,7 +743,17 @@ async function businessPhotoSigs() {
   return photoSigs;
 }
 
-// ---- external product lookup (Open Food Facts, cached, best effort) ----------
+// ---- external product lookup (multi-source web search, cached, best effort) --
+// Demand (25 Nov 2026): a pen photo must come back WITH the product from the
+// web. Open Food Facts only knows food and its old name-search endpoint is
+// dead (it answers with an HTML error page), so a pen used to end as
+// "external search unavailable". The lookup is a chain now, every source is
+// a CORS-open GET the browser can call directly (all verified live):
+//   barcode  : Open Food Facts (food) -> Open Products Facts (everything else)
+//   name/OCR : Open Products Facts search -> DuckDuckGo Instant Answer ->
+//              Wikipedia search
+// Return values: a product object, null (every source answered: not found),
+// or undefined (the network itself failed = external search unavailable).
 const offCache = loadLS(LS_SCAN_OFF, {});
 async function fetchJson(url, ms) {
   const ctl = new AbortController();
@@ -751,39 +761,85 @@ async function fetchJson(url, ms) {
   try { return await fetch(url, { signal: ctl.signal }); }
   finally { clearTimeout(t); }
 }
+function offCachePut(code, data) {
+  offCache[code] = { data, at: Date.now() };
+  saveLS(LS_SCAN_OFF, offCache);
+}
 async function offByBarcode(code) {
   const hit = offCache[code];
   if (hit && Date.now() - hit.at < 604800000) { scan.extTried++; return hit.data; }
   scan.extTried++;
+  const pick = (j) => (j && j.status === 1 && j.product) ? {
+    name: String(j.product.product_name || "").trim(),
+    brand: String(j.product.brands || "").trim(),
+    qty: String(j.product.quantity || "").trim(),
+    img: String(j.product.image_url || "").trim(),
+    cats: String(j.product.categories || "").trim(),
+    desc: "", src: ""
+  } : null;
+  let netErr = 0;
+  // 1. Open Food Facts (food products)
   try {
     const res = await fetchJson("https://world.openfoodfacts.org/api/v2/product/" +
       encodeURIComponent(code) + ".json?fields=product_name,brands,quantity,image_url,categories");
-    const j = await res.json();
-    const data = (j && j.status === 1 && j.product) ? {
-      name: String(j.product.product_name || "").trim(),
-      brand: String(j.product.brands || "").trim(),
-      qty: String(j.product.quantity || "").trim(),
-      img: String(j.product.image_url || "").trim(),
-      cats: String(j.product.categories || "").trim()
-    } : null;
-    offCache[code] = { data, at: Date.now() };
-    saveLS(LS_SCAN_OFF, offCache);
-    return data;
-  } catch (e) { return undefined; } // undefined = external search unavailable
+    const d = pick(await res.json());
+    if (d) { d.src = "Open Food Facts"; offCachePut(code, d); return d; }
+  } catch (e) { netErr++; }
+  // 2. Open Products Facts (general products: pens, soap, hardware, tools...)
+  try {
+    const res = await fetchJson("https://world.openproductsfacts.org/api/v2/product/" +
+      encodeURIComponent(code) + ".json?fields=product_name,brands,quantity,image_url,categories");
+    const d = pick(await res.json());
+    if (d) { d.src = "Open Products Facts"; offCachePut(code, d); return d; }
+  } catch (e) { netErr++; }
+  return netErr >= 2 ? undefined : null; // undefined = unreachable, null = not found
 }
 async function offByName(text) {
+  const q = String(text || "").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (!q) return null;
+  let netErr = 0;
+  // 1. Open Products Facts v2 search (works; the old OFF name-search
+  //    endpoint answers with an HTML error page since 2025)
   try {
-    const res = await fetchJson("https://world.openfoodfacts.org/cgi/search.pl?search_terms=" +
-      encodeURIComponent(text.slice(0, 60)) + "&simple=1&page_size=5&json=1");
+    const res = await fetchJson("https://world.openproductsfacts.org/api/v2/search?product_name_contains=" +
+      encodeURIComponent(q) + "&page_size=5&fields=product_name,brands,quantity,image_url,categories");
     const j = await res.json();
-    return (j && j.products || []).slice(0, 5).map((p) => ({
+    const list = ((j && j.products) || []).map((p) => ({
       name: String(p.product_name || "").trim(),
       brand: String(p.brands || "").trim(),
       qty: String(p.quantity || "").trim(),
       img: String(p.image_url || "").trim(),
-      cats: String(p.categories || "").trim()
+      cats: String(p.categories || "").trim(),
+      desc: "", src: "Open Products Facts"
     })).filter((p) => p.name);
-  } catch (e) { return null; }
+    if (list.length) return list[0];
+  } catch (e) { netErr++; }
+  // 2. DuckDuckGo Instant Answer - knows every product type (pens, tools...)
+  try {
+    const res = await fetchJson("https://api.duckduckgo.com/?q=" +
+      encodeURIComponent(q) + "&format=json&no_html=1&no_redirect=1");
+    const j = await res.json();
+    const head = String((j && j.Heading) || "").trim();
+    const abst = String((j && j.AbstractText) || "").trim();
+    if (head && abst) {
+      return { name: head, brand: "", qty: "", img: "",
+        cats: String((j && j.AbstractSource) || "").trim(),
+        desc: abst.slice(0, 220), src: "DuckDuckGo" };
+    }
+  } catch (e) { netErr++; }
+  // 3. Wikipedia search - the last web stop for a name
+  try {
+    const res = await fetchJson("https://en.wikipedia.org/w/api.php?action=query&list=search" +
+      "&srsearch=" + encodeURIComponent(q) + "&format=json&origin=*&srlimit=1");
+    const j = await res.json();
+    const hit = j && j.query && j.query.search && j.query.search[0];
+    if (hit && hit.title) {
+      const snip = String(hit.snippet || "").replace(/<[^>]*>/g, "").trim();
+      return { name: String(hit.title), brand: "", qty: "", img: "",
+        cats: "Wikipedia", desc: snip.slice(0, 220), src: "Wikipedia" };
+    }
+  } catch (e) { netErr++; }
+  return netErr >= 3 ? undefined : null;
 }
 
 // ---- OCR (Tesseract, the same loader the sale capture uses) ------------------
@@ -920,17 +976,23 @@ $("#scan-process").addEventListener("click", async () => {
       }
     }
 
-    // external search: only when the business has no confident record
+    // external search: only when the business has no confident record.
+    // Barcode first (food + general databases); when no database knows the
+    // barcode - a pen for example, Open Food Facts only covers food - the
+    // OCR label text goes to the web name search so the product still comes
+    // back with its name, source and reference.
     let ext = null, extState = "";
     if (!match || matchKind === "similar") {
       if (barcode) {
         const d = await offByBarcode(barcode);
         if (d === undefined) extState = "unavailable";
         else if (d) { ext = d; scan.extCount++; }
-      } else if (ocrText && tokensOf(ocrText).length >= 2 && scan.extCount < 10) {
-        const list = await offByName(ocrText);
-        if (list === null) extState = "unavailable";
-        else if (list.length) { ext = list[0]; scan.extCount++; }
+      }
+      if (!ext && extState !== "unavailable" && ocrText &&
+          tokensOf(ocrText).length >= 2 && scan.extCount < 10) {
+        const d = await offByName(ocrText);
+        if (d === undefined) extState = "unavailable";
+        else if (d) { ext = d; scan.extCount++; } else extState = "notfound";
       }
     }
     if (extState === "unavailable") scan.extUnavailable = true;
@@ -988,12 +1050,16 @@ function renderScanResults() {
         (r.stockId === s.id ? " selected" : "") + ">" + esc(s.name) + " (" + Number(s.units || 0).toLocaleString("en-US") + " units)</option>"))
       .concat(['<option value="__new__"' + (r.status === "new" && !r.stockId ? " selected" : "") + ">Register as a new product</option>"]);
     const dup = r.dupOfBatch ? '<span class="scan-chip st-new">already in this operation</span>' : "";
-    const extBox = r.ext ? '<div class="scan-ext"><p class="scan-ext-line"><b>External reference (Open Food Facts):</b> ' +
+    const extBox = r.ext ? '<div class="scan-ext"><p class="scan-ext-line"><b>External reference' +
+      (r.ext.src ? " (" + esc(r.ext.src) + ")" : "") + ':</b> ' +
       esc([r.ext.name, r.ext.brand, r.ext.qty].filter(Boolean).join(" \u00B7 ")) +
+      (r.ext.desc ? "<br>" + esc(r.ext.desc) : "") +
       (r.ext.img ? ' \u00B7 <a href="' + esc(r.ext.img) + '" target="_blank" rel="noopener">image</a>' : "") +
       "<br>External prices are reference only \u2014 business prices are never overwritten automatically.</p></div>" : "";
     const extNote = !r.ext && r.extState === "unavailable" ?
-      '<div class="scan-ext"><p class="scan-ext-line">External search is unreachable (offline?) \u2014 identified against business records only.</p></div>' : "";
+      '<div class="scan-ext"><p class="scan-ext-line">External search is unreachable (offline?) \u2014 identified against business records only.</p></div>' :
+      (!r.ext && r.extState === "notfound" ?
+      '<div class="scan-ext"><p class="scan-ext-line">The web search ran (barcode databases + name search) but no matching product came back \u2014 match it, rename it, or retake the photo closer.</p></div>' : "");
     const isNew = r.stockId === "__new__" || (!r.stockId && r.status === "new");
     return '<div class="scan-row is-' + esc(r.status) + '" data-i="' + i + '">' +
       '<img class="scan-thumb" src="' + r.thumb + '" alt="product">' +

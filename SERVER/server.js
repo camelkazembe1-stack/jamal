@@ -37,8 +37,9 @@
 // comment, and it lands in the shared "comments" collection in Firestore,
 // addressed to the owner (COMMENT_OWNER_EMAIL below). Only the owner may
 // read or delete the mailbox; a visitor can only add. The sidebar footer
-// carries the Comment button next to the Login/Logout button (one row,
-// 50% / 50%, the old settings gear is gone), and the owner sees a
+// carries the Comment button next to the Login/Logout button and the
+// settings gear (one row: Login/Logout 50% + Comment 25% + Settings 25%),
+// and the owner sees a
 // "Comments" button at the top right of every page.
 
 // ==== JAMALI SETTINGS SOURCE - the single source of truth for every settings file ====
