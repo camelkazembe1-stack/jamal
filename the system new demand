@@ -1,0 +1,681 @@
+# SYSTEM REQUIREMENT: AUTOMATED MULTI-PRODUCT RECOGNITION, IDENTIFICATION AND STOCK MANAGEMENT
+
+## 1. Introduction
+
+We need to introduce a new feature into the existing Stock Management System called **Automated Product Recognition and Identification**.
+
+The purpose of this feature is to allow users to identify products using their device camera without manually searching for each product in the system.
+
+The system must be capable of capturing one product or multiple products in a single photograph, identifying each product independently, searching available product databases and online sources, and comparing the results against products already registered in the business.
+
+**Important:** We are not building an AI chatbot or an AI assistant. We want an automated system that uses barcode recognition, computer vision, image matching, product databases, external search services and programmed identification procedures.
+
+The system must perform the identification and searching processes automatically and return results to the user.
+
+---
+
+# 2. Integration With the Existing Stock Management System
+
+The new feature must be integrated into the existing Stock Change module.
+
+### Current workflow
+
+Currently, users follow these steps:
+
+1. Open Stock Management.
+2. Select Stock Change.
+3. Select a product.
+4. Enter the number of units.
+5. Click Save.
+
+### Proposed workflow
+
+We want to introduce a camera button alongside the existing product selection field.
+
+The new workflow will be:
+
+1. Open Stock Management.
+2. Select Stock Change.
+3. Choose whether to select a product manually or use the camera.
+4. Click the camera button.
+5. Capture one or multiple products.
+6. The system processes the captured image.
+7. Identify individual products.
+8. Search for product information.
+9. Compare identified products with business records.
+10. Display identification results.
+11. Allow the user to confirm the products.
+12. Enter stock quantities.
+13. Save the stock change.
+
+The existing manual product selection functionality must remain available.
+
+---
+
+# 3. Camera Functionality
+
+The camera must be accessible directly from the product selection interface.
+
+When the user clicks the camera button, the system should open the device camera.
+
+The camera interface should support:
+
+- Capturing a single product.
+- Capturing multiple products.
+- Taking several photographs.
+- Retaking unclear photographs.
+- Flashlight support where available.
+- Switching between front and rear cameras where supported.
+- Image preview before processing.
+- Uploading existing product photographs as an alternative.
+
+The system should not force users to photograph products individually.
+
+For example, a user should be able to arrange 30 different products on a table and capture them in one photograph.
+
+The system should then attempt to recognize all 30 products independently.
+
+---
+
+# 4. Multiple Product Detection and Recognition
+
+This is a major requirement.
+
+The system must support identifying multiple products within the same photograph.
+
+### Example
+
+A user places the following products on a table:
+
+- Sugar.
+- Cooking oil.
+- Rice.
+- Soap.
+- Toothpaste.
+- Milk.
+- Biscuits.
+- Wheat flour.
+- Salt.
+- Juice.
+- Other products.
+
+The user captures one photograph containing 30 different products.
+
+The system should automatically:
+
+1. Analyze the entire photograph.
+2. Detect individual product objects.
+3. Locate each product within the photograph.
+4. Separate individual product regions.
+5. Process each detected product independently.
+6. Attempt barcode recognition for each product.
+7. Use image matching where barcode recognition is unsuccessful.
+8. Return individual identification results.
+
+Each product must have its own identification result.
+
+### Important recognition rules
+
+The system must be capable of:
+
+- Detecting products placed close together.
+- Distinguishing products with similar packaging.
+- Identifying different brands.
+- Recognizing different package sizes.
+- Identifying identical products appearing multiple times.
+- Avoiding duplicate detection of the same physical product.
+- Handling partially hidden products.
+- Reporting products that cannot be identified confidently.
+
+If products overlap or are too small to identify, the system should request another photograph or a closer capture.
+
+The number of products must not be artificially restricted to 30.
+
+The system should support batch processing of larger quantities.
+
+---
+
+# 5. Barcode-First Identification
+
+After detecting individual products, the system should first attempt barcode recognition.
+
+For every detected product:
+
+1. Locate the barcode.
+2. Extract the barcode image.
+3. Decode the barcode number.
+4. Validate the barcode.
+5. Search the business database.
+6. If no business record exists, search external product databases.
+
+### Scenario A: Barcode exists in the business
+
+Suppose the system reads barcode `123456789`.
+
+It searches the business database and finds:
+
+| Field | Information |
+|---|---|
+| Product | Azam Sugar |
+| Package | 1 KG |
+| Barcode | 123456789 |
+| BP | 2,500 TZS |
+| SP | 3,000 TZS |
+| Available Stock | 50 |
+
+The system should recognize that the product is already registered.
+
+It should retrieve the existing business record rather than create another product.
+
+### Scenario B: Barcode is not registered
+
+If the barcode is not found in the business database:
+
+1. Search external product databases.
+2. Retrieve available product information.
+3. Compare the retrieved information against the captured image.
+4. Display the possible matching product.
+5. Allow the user to confirm the identification.
+
+---
+
+# 6. Identification of Products Without Barcodes
+
+Not every product has a barcode.
+
+Some products have missing, damaged, covered or unreadable barcodes.
+
+For these products, the system must use image-based identification.
+
+The process should be:
+
+1. Capture the product image.
+2. Detect the product boundaries.
+3. Extract visual characteristics.
+4. Compare the image against available product images.
+5. Search external visual product databases.
+6. Retrieve possible matches.
+7. Compare product names, brands and package descriptions.
+8. Display matching results.
+
+For example:
+
+A user captures a packet of flour without a barcode.
+
+The system should attempt to identify:
+
+- Product name.
+- Brand.
+- Package size.
+- Manufacturer.
+- Product category.
+
+It should then search for matching product information.
+
+If multiple products look similar, the system must display alternatives rather than automatically selecting an uncertain result.
+
+---
+
+# 7. External Product Search
+
+The system must not depend exclusively on products already registered in the business.
+
+It should be able to search external sources for products that are not registered.
+
+The search should use:
+
+**A. Barcode databases**
+
+Search using the extracted barcode.
+
+**B. Product databases**
+
+Retrieve structured product information, including product names, brands, package sizes and images.
+
+**C. Visual product search**
+
+Search for matching products using captured product images.
+
+**D. Manufacturer information**
+
+Where available, retrieve information directly from manufacturers or official product catalogues.
+
+Possible external data sources and technologies include:
+
+- Open Food Facts.
+- Google Cloud Vision and compatible visual-search services.
+- Commercial visual-search APIs.
+- Manufacturer product catalogues.
+- Other accessible product databases.
+
+Different sources may provide different information. The system should compare results before presenting a confident identification.
+
+---
+
+# 8. Product Information Retrieval
+
+For every identified product, the system should attempt to retrieve the following information:
+
+| Field | Description |
+|---|---|
+| Product Name | Product's name |
+| Brand | Product brand |
+| Manufacturer | Manufacturing company |
+| Barcode | Product barcode |
+| Product Image | Matching product image |
+| Category | Product category |
+| Package Size | For example, 500g, 1KG or 1L |
+| Package Type | Packet, carton, bottle or box |
+| BP | Buying price |
+| SP | Selling price |
+| Units per Package | Number of individual units in a package |
+| Description | Product specifications |
+
+### Important pricing rules
+
+The system must distinguish between external prices and business prices.
+
+- Existing BP must come from the business database.
+- Existing SP must come from the business database.
+- External prices may be presented as reference information.
+- External information must never automatically overwrite registered business prices.
+
+If the product is new, the user should be able to enter or confirm the required business prices.
+
+---
+
+# 9. Units Per Package Recognition
+
+The system must also identify product packaging and quantities.
+
+For example:
+
+A user captures a carton containing 24 bottles of juice.
+
+The system should attempt to determine:
+
+- Product: Juice.
+- Package type: Carton.
+- Individual unit: Bottle.
+- Units per package: 24.
+
+Other examples:
+
+| Product | Package | Units per Package |
+|---|---|---:|
+| Soda | Crate | 24 bottles |
+| Soap | Carton | 48 bars |
+| Water | Carton | 12 bottles |
+| Biscuits | Box | 20 packets |
+
+The system must not assume that every package contains the same number of units.
+
+Where this information cannot be verified, the user must be allowed to enter it manually.
+
+---
+
+# 10. Comparison Against Existing Business Products
+
+After identification, the system must compare every result against the existing business database.
+
+The comparison should use:
+
+1. Barcode.
+2. Product name.
+3. Brand.
+4. Package size.
+5. Product image.
+6. Manufacturer.
+7. Product specifications.
+
+The objective is to identify whether each product is already registered.
+
+### Possible outcomes
+
+**A. Exact Match**
+
+The product already exists.
+
+Action: Retrieve the existing product record.
+
+**B. Similar Match**
+
+The system finds a similar product, but some characteristics differ.
+
+Example:
+
+- Azam Sugar 1 KG.
+- Azam Sugar 2 KG.
+
+Action: Display both products and request confirmation.
+
+**C. New Product**
+
+The product does not exist in the business.
+
+Action: Present it as a potential new product and allow registration through the appropriate workflow.
+
+**D. Uncertain Identification**
+
+The system cannot establish a reliable match.
+
+Action: Request another photograph or manual product selection.
+
+---
+
+# 11. Comparison Against Stock Operations in Progress
+
+The system must also check stock operations that have not yet been completed.
+
+For example:
+
+A user is processing a stock change containing 10 packets of sugar.
+
+Before saving, the user captures another photograph containing sugar and other products.
+
+The system must check whether the detected products are already included in the current stock operation.
+
+It should:
+
+- Identify existing products in the current operation.
+- Detect repeated product entries.
+- Compare product variations.
+- Prevent accidental duplicate entries.
+- Allow the user to intentionally add more quantities to an existing product entry.
+
+This is important because product recognition and stock operations must remain synchronized.
+
+---
+
+# 12. Bulk Identification Results Interface
+
+After processing the photograph, the system should display all identified products in a structured list.
+
+For example, if the user captures 30 products:
+
+| No. | Product | Barcode | Business Match | Status |
+|---|---|---|---|---|
+| 1 | Sugar 1KG | Found | Yes | Registered |
+| 2 | Cooking Oil 1L | Found | Yes | Registered |
+| 3 | Soap 200g | Missing | Yes | Registered |
+| 4 | Rice 5KG | Found | No | New |
+| 5 | Flour 2KG | Found | Yes | Registered |
+| 6 | Juice 500ML | Found | No | New |
+| ... | ... | ... | ... | ... |
+| 30 | Product 30 | Missing | Uncertain | Review |
+
+These are illustrative results.
+
+Each result should contain:
+
+- Product image.
+- Product name.
+- Brand.
+- Barcode.
+- Package size.
+- BP.
+- SP.
+- Units per package.
+- Available business stock.
+- Identification status.
+- Matching confidence.
+- Source of information.
+
+The user should be able to review and correct individual results.
+
+---
+
+# 13. Bulk Product Confirmation
+
+After identification, the system should allow the user to confirm multiple products together.
+
+For example:
+
+The system identifies 30 products:
+
+- 20 already registered.
+- 7 new products.
+- 3 uncertain products.
+
+The user should be able to:
+
+- Confirm all correctly identified products.
+- Correct incorrect product matches.
+- Exclude products that should not be processed.
+- Review new products.
+- Manually identify uncertain products.
+
+The system must not automatically register uncertain products or create duplicate records.
+
+---
+
+# 14. Integration With Existing Stock Change
+
+After confirming the identified products, the system should transfer them into the existing Stock Change interface.
+
+For example:
+
+| Product | Units | BP | SP |
+|---|---:|---:|---:|
+| Sugar 1KG | 10 | 2,500 | 3,000 |
+| Cooking Oil 1L | 5 | 4,000 | 5,000 |
+| Soap 200g | 20 | 1,000 | 1,500 |
+
+The user enters or confirms the quantities.
+
+The existing Save functionality should then process the stock change.
+
+The new feature must not bypass existing stock validation, transaction rules or permissions.
+
+---
+
+# 15. Performance and Processing
+
+Since the system may process 30, 50, 100 or more products, performance is important.
+
+The implementation should support:
+
+- Batch image processing.
+- Individual product processing.
+- Parallel barcode recognition where practical.
+- Caching previously retrieved product information.
+- Reusing existing business product records.
+- Avoiding repeated external searches for the same barcode.
+- Showing processing progress.
+- Retrying failed searches.
+- Saving processing results temporarily until confirmation.
+
+### Processing indicators
+
+For example:
+
+```text
+Processing captured products...
+
+Products detected: 30
+
+Barcode identification: 18/30
+Image matching: 12/30
+Business database comparison: 25/30
+External search: In progress
+
+Completed: 25
+Needs review: 5
+```
+
+The user should be able to see which products have been processed and which are still being checked.
+
+---
+
+# 16. Error Handling
+
+The system must handle situations such as:
+
+- Camera permission denied.
+- Blurry photographs.
+- Poor lighting.
+- Damaged barcodes.
+- Multiple overlapping products.
+- No internet connection.
+- External search service unavailable.
+- Product not found.
+- Multiple possible product matches.
+- Incomplete product information.
+
+If external search is unavailable, the system should still be able to identify products using barcodes and existing business records.
+
+It must not invent product information.
+
+---
+
+# 17. Technical Architecture
+
+The feature should use several technologies working together.
+
+| Component | Responsibility |
+|---|---|
+| Device Camera | Capture product images |
+| Barcode Scanner | Read product barcodes |
+| Object Detection | Detect multiple individual products |
+| Image Segmentation | Separate individual products |
+| Computer Vision | Extract visual characteristics |
+| Image Matching | Compare captured images with product images |
+| External Search APIs | Retrieve online product information |
+| Product Databases | Retrieve structured product details |
+| Business Database | Find registered products |
+| Stock Operations Database | Check ongoing stock changes |
+| Processing Engine | Coordinate identification and search |
+
+Potential technologies include:
+
+- ZXing or QuaggaJS for barcode recognition.
+- OpenCV for image processing.
+- Object-detection models for locating multiple products.
+- Image-matching services for external visual searches.
+- Open Food Facts API for supported food products.
+- Existing database and backend services for business records.
+
+These technologies should be selected according to compatibility with the existing project's architecture.
+
+**Important:** OpenCV alone does not identify every product, and a barcode library does not perform product searches. The system needs the appropriate recognition, matching and search services working together.
+
+---
+
+# 18. Security and Data Integrity
+
+The system must respect existing business permissions.
+
+Requirements:
+
+1. Only authorized users can perform stock changes.
+2. Captured images must be handled securely.
+3. External information must not overwrite business records automatically.
+4. Product registration requires confirmation.
+5. Stock quantities must only change through authorized transactions.
+6. Duplicate products must be checked before registration.
+7. Every completed stock change must retain its normal transaction history.
+
+---
+
+# 19. Final Expected System Workflow
+
+```text
+             STOCK MANAGEMENT
+                     |
+                     |
+                STOCK CHANGE
+                     |
+                     |
+              PRODUCT SELECTION
+                     |
+              +------+------+
+              |             |
+           MANUAL         CAMERA
+          SELECTION          |
+                            |
+                     CAPTURE IMAGE
+                            |
+                            |
+                   MULTI-PRODUCT
+                     DETECTION
+                            |
+                            |
+                  SEPARATE PRODUCTS
+                            |
+                            |
+                 INDIVIDUAL PROCESSING
+                            |
+                            |
+                 BARCODE IDENTIFICATION
+                            |
+                  +---------+---------+
+                  |                   |
+              BARCODE FOUND       NO BARCODE
+                  |                   |
+                  v                   v
+             READ BARCODE       IMAGE MATCHING
+                  |                   |
+                  +---------+---------+
+                            |
+                            v
+                   PRODUCT IDENTIFICATION
+                            |
+                            v
+                    EXTERNAL SEARCH
+                       IF NEEDED
+                            |
+                            v
+                 BUSINESS DATABASE SEARCH
+                            |
+                            v
+                  EXISTING PRODUCT MATCH
+                            |
+                            v
+                STOCK OPERATION COMPARISON
+                            |
+                            v
+                  DISPLAY ALL RESULTS
+                            |
+                            v
+                   USER VERIFICATION
+                            |
+                            v
+                  PRODUCT CONFIRMATION
+                            |
+                            v
+                   ENTER STOCK UNITS
+                            |
+                            v
+                       SAVE
+                            |
+                            v
+                 UPDATE STOCK RECORDS
+```
+
+---
+
+# 20. Final Project Objective
+
+The objective is to transform the existing Stock Change module from a manually operated product-selection process into an automated product identification and stock processing workflow.
+
+A user should be able to place 30 different products in front of a camera, capture one photograph, and let the system independently process each product.
+
+The system should:
+
+- Detect every visible product it can reliably distinguish.
+- Read available barcodes.
+- Identify products without barcodes through image matching.
+- Search external product information sources.
+- Retrieve product specifications.
+- Determine package sizes and units per package where verifiable.
+- Compare products against registered business records.
+- Check stock operations in progress.
+- Identify existing and new products.
+- Display all results for confirmation.
+- Transfer confirmed products into Stock Change.
+
+**The most important requirement is that the system must perform actual searching and identification, not simply display information from a predefined list.**
+
+It must use the business database first where possible, then external product sources when necessary, and clearly distinguish verified information from uncertain matches.
+
+The existing Stock Management System must remain intact. This is an additional capability integrated into its existing workflow, not a replacement for the current stock management functionality.
