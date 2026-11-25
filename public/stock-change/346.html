@@ -22,6 +22,10 @@
     <h1 id="cause-title">Pick the stock</h1>
     <p class="sub" id="cause-sub"></p>
 
+    <div class="scan-entry">
+      <button class="scan-btn" id="scan-btn" type="button">&#128247; Scan products with camera</button>
+      <span class="scan-entry-sub">one photo, many products &mdash; barcodes, business records and external databases are checked for every product</span>
+    </div>
     <div class="field search-field">
       <input id="stock-search" type="text" placeholder="Search stock by name…">
     </div>
@@ -40,7 +44,13 @@
     <p class="sub" id="form-sub"></p>
 
     <div class="card form-card">
-      <div class="field">
+      <div class="field" id="f-batch" hidden>
+        <label>Scanned Products <span class="cap-soft" id="batch-count"></span></label>
+        <div class="batch-list" id="batch-list"></div>
+        <p class="cap-ocr" id="batch-note" hidden></p>
+      </div>
+
+      <div class="field" id="f-qty-single">
         <label>Quantity</label>
         <div class="qty-pair">
           <div class="qty-box"><span>Packages</span>
@@ -103,6 +113,54 @@
       </div>
     </div>
   </section>
+
+  <div class="cap-modal scan-modal" id="scan-modal" hidden>
+    <div class="scan-box">
+      <div class="scan-head">
+        <h2 id="scan-title">Scan products</h2>
+        <button class="ghost-btn scan-close" id="scan-close" type="button">&times; Close</button>
+      </div>
+
+      <div class="scan-stage" id="scan-stage-live">
+        <video id="scan-video" autoplay playsinline muted></video>
+        <p class="cap-modal-err" id="scan-err" hidden></p>
+        <div class="scan-actions">
+          <button class="save-btn" id="scan-shot" type="button">Capture photo</button>
+          <button class="ghost-btn" id="scan-torch" type="button" hidden>&#128161; Torch</button>
+          <button class="ghost-btn" id="scan-flip" type="button" hidden>&#128257; Switch camera</button>
+          <label class="ghost-btn scan-upload">Upload a photo instead<input id="scan-file" type="file" accept="image/*" hidden></label>
+        </div>
+        <p class="scan-hint">Arrange the products so each one is visible &mdash; a table full of goods in one photo is fine. Barcodes that can be seen from where you stand get read; the rest are matched by photo and name, and anything unclear is marked for review.</p>
+      </div>
+
+      <div class="scan-stage" id="scan-stage-review" hidden>
+        <canvas id="scan-canvas" class="scan-canvas"></canvas>
+        <div class="scan-actions">
+          <button class="save-btn" id="scan-process" type="button">Process this photo</button>
+          <button class="ghost-btn" id="scan-retake" type="button">Retake</button>
+        </div>
+      </div>
+
+      <div class="scan-stage" id="scan-stage-progress" hidden>
+        <p class="scan-progress-title" id="scan-progress-title">Processing captured products&hellip;</p>
+        <div class="scan-bar"><i id="scan-bar-fill"></i></div>
+        <pre class="scan-progress-log" id="scan-progress-log">Products detected: &hellip;</pre>
+      </div>
+
+      <div class="scan-stage" id="scan-stage-results" hidden>
+        <p class="cap-ocr" id="scan-summary"></p>
+        <div class="scan-bulk">
+          <button class="save-btn" id="scan-confirm-all" type="button">Confirm all Registered</button>
+          <button class="ghost-btn" id="scan-again" type="button">Capture another photo</button>
+        </div>
+        <div class="scan-results" id="scan-results"></div>
+        <p class="cap-modal-err" id="scan-transfer-err" hidden></p>
+        <div class="scan-actions scan-sticky">
+          <button class="save-btn" id="scan-transfer" type="button">Transfer confirmed products</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="cap-modal" id="cap-modal" hidden>
     <div class="cap-modal-box">

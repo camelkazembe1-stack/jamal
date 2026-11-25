@@ -4,6 +4,7 @@ initRecords({
   addLabel: "Add Stock Item", saveLabel: "Save",
   fields: [
     { key: "name", label: "Name", req: true, ph: "e.g. Sugar 1kg" },
+    { key: "barcode", label: "Barcode", ph: "the pack barcode \u2014 the camera scanner matches by it" },
     { key: "units", label: "Units Present", type: "number", def: 0, ph: "units in stock right now" },
     { key: "minUnits", label: "Low Units (alert at)", type: "number", def: 0, ph: "notify me when units reach this" },
     { key: "buyPrice", label: "Buying Price per Package", type: "number", req: true, pos: true },
@@ -14,6 +15,7 @@ initRecords({
     : d.minUnits != null && d.minUnits < 0 ? "Low Units cannot be below zero." : ""),
   columns: [
     { key: "name", label: "Name", cls: "c-party" },
+    { key: "barcode", label: "Barcode" },
     { key: "minUnits", label: "Low Units", fmt: "num" },
     { key: "buyPrice", label: "Buying Price / Package", fmt: "money" },
     { key: "unitsPerPackage", label: "Units / Package", fmt: "num" },
