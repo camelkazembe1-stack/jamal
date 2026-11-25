@@ -212,3 +212,48 @@ body {
 }
 @media print { body { background: #fff; } }
 /* =============== end jamali-supportive-background ================ */
+
+/* =============== STOCK CAPTURE (25 Nov 2026) =============== */
+#f-capture .cap-soft { font-weight: 400; color: #94a3b8; font-size: 12px; }
+.cap-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cap-btn {
+  border: 1px dashed #38bdf8; background: #0b1220; color: #bae6fd;
+  border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background .2s ease, border-color .2s ease;
+}
+.cap-btn:hover { background: #10203a; border-color: #0ea5e9; }
+.cap-photo {
+  width: 92px; height: 92px; object-fit: cover; border-radius: 10px;
+  border: 1px solid #334155; background: #0b1220;
+}
+.cap-status { color: #94a3b8; font-size: 12.5px; margin: 6px 0 0; }
+.cap-prices { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.cap-prices .qty-box { flex: 1; min-width: 150px; }
+.cap-update {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px;
+  color: #bae6fd; font-size: 13px; cursor: pointer;
+}
+.cap-update input { width: auto; }
+.cap-ocr {
+  margin: 10px 0 0; color: #94a3b8; font-size: 12.5px; line-height: 1.5;
+  background: #0b1220; border: 1px solid #1e293b; border-radius: 9px; padding: 9px 11px;
+}
+.cap-modal {
+  position: fixed; inset: 0; z-index: 1200; background: rgba(2, 8, 20, .78);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.cap-modal-box {
+  width: min(460px, 100%); background: #0b1220; border: 1px solid #334155;
+  border-radius: 16px; padding: 18px; box-shadow: 0 24px 60px rgba(0,0,0,.6);
+}
+.cap-modal-box h2 { margin: 0 0 12px; font-size: 17px; color: #e2e8f0; }
+.cap-modal-box video {
+  width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px;
+  background: #050a16; border: 1px solid #1e293b;
+}
+.cap-modal-err { color: #fca5a5; font-size: 13px; margin: 10px 0 0; }
+.cap-modal-actions { display: flex; gap: 10px; margin-top: 14px; }
+.cap-modal-hint { color: #64748b; font-size: 12.5px; line-height: 1.55; margin: 12px 0 0; }
+/* the hidden attribute must always win over these display rules */
+.cap-modal[hidden] { display: none; }
+.cap-update[hidden] { display: none; }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification Settings — JAMALI</title>
+<link rel="stylesheet" href="/notification-settings/412.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/notification-center/411">&larr; Notification Center</a>
+  <h1>Notification Settings</h1>
+  <p class="sub">You decide what the engine watches and where it delivers. Every choice here is saved for this zone the moment you press Save &mdash; the engine picks it up on the next event, no restart needed.</p>
+
+  <div class="two-col">
+    <section class="card">
+      <h2>What fires an alert</h2>
+      <div id="event-toggles"></div>
+    </section>
+
+    <section class="card">
+      <h2>Where alerts are delivered</h2>
+      <div id="channel-toggles"></div>
+      <div class="push-row">
+        <button class="ghost-btn" id="push-perm" type="button">Enable browser push</button>
+        <span class="push-state" id="push-state"></span>
+      </div>
+      <p class="hint">Dashboard and the in-app bell are delivered inside Jamal. SMS and email are queued as ready-to-send texts in the <a href="/notification-center/411">Notification Center</a> &mdash; one tap hands them to the phone's own messaging or mail app, so no external gateway is needed. Browser push pops a system notification while Jamal is open.</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Who receives the alerts</h2>
+    <div class="form-grid">
+      <label for="ns-phone">Phone number (for SMS)
+        <input id="ns-phone" type="tel" placeholder="e.g. 0780526437 or +255780526437">
+      </label>
+      <label for="ns-email">Email address (for email alerts)
+        <input id="ns-email" type="email" placeholder="owner@example.com">
+      </label>
+    </div>
+    <p class="hint" id="acct-hint"></p>
+  </section>
+
+  <section class="card">
+    <div class="min-head">
+      <h2>Minimum stock levels</h2>
+      <span class="min-sub">The same Low Units value the <a href="/stock-register/348">Stock Register</a> keeps &mdash; edit it here and the engine re-arms instantly.</span>
+    </div>
+    <div class="table-wrap"><table class="bk">
+      <thead><tr>
+        <th>Stock</th><th>Units present</th><th>Low Units (alert at)</th><th>State</th>
+      </tr></thead>
+      <tbody id="min-body"></tbody>
+    </table></div>
+    <p class="hint" id="min-hint">Stocks without a Low Units value (0) are not monitored.</p>
+  </section>
+
+  <div class="save-row">
+    <button class="cta-btn" id="save-btn" type="button">Save settings</button>
+    <button class="ghost-btn" id="test-btn" type="button">Send a test alert</button>
+    <span class="save-note" id="save-note" hidden></span>
+  </div>
+</main>
+<script type="module" src="/notification-settings/412.js"></script>
+</body>
+</html>

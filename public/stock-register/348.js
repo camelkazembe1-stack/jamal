@@ -5,13 +5,16 @@ initRecords({
   fields: [
     { key: "name", label: "Name", req: true, ph: "e.g. Sugar 1kg" },
     { key: "units", label: "Units Present", type: "number", def: 0, ph: "units in stock right now" },
+    { key: "minUnits", label: "Low Units (alert at)", type: "number", def: 0, ph: "notify me when units reach this" },
     { key: "buyPrice", label: "Buying Price per Package", type: "number", req: true, pos: true },
     { key: "unitsPerPackage", label: "Units per Package", type: "number", req: true, pos: true },
     { key: "unitPrice", label: "Unit Selling Price", type: "number", req: true, pos: true }
   ],
-  validate: (d) => (d.units != null && d.units < 0 ? "Units Present cannot be below zero." : ""),
+  validate: (d) => (d.units != null && d.units < 0 ? "Units Present cannot be below zero."
+    : d.minUnits != null && d.minUnits < 0 ? "Low Units cannot be below zero." : ""),
   columns: [
     { key: "name", label: "Name", cls: "c-party" },
+    { key: "minUnits", label: "Low Units", fmt: "num" },
     { key: "buyPrice", label: "Buying Price / Package", fmt: "money" },
     { key: "unitsPerPackage", label: "Units / Package", fmt: "num" },
     { key: "unitPrice", label: "Unit Selling Price", fmt: "money" }
@@ -19,7 +22,7 @@ initRecords({
   empty: {
     icon: "\uD83D\uDCE6",
     title: "No stock items yet",
-    sub: "Add a stock item \u2014 its name, the Units Present it starts with, its Buying Price per Package, Units per Package and Unit Selling Price. Units per Package is the bridge between packages and units \u2014 every stock module converts through it."
+    sub: "Add a stock item \u2014 its name, the Units Present it starts with, the Low Units the notification engine alerts at, its Buying Price per Package, Units per Package and Unit Selling Price. Units per Package is the bridge between packages and units \u2014 every stock module converts through it."
   }
 });
 

@@ -40,6 +40,16 @@ const state = { cause: null, dir: null, money: null, method: null, stock: null }
 let STOCKS = [];
 let searchQ = "";
 
+// STOCK CAPTURE (25 Nov 2026): on a Sale the camera photographs the
+// item or its price tag, the photo + the BP / SP are saved with the
+// sale record, and the sold amount is calculated automatically from
+// the (possibly corrected) prices. OCR via Tesseract.js is assistive
+// and optional - without it the prices load from the stock record and
+// stay fully editable, so the flow works offline too.
+const capState = { photo: null, ocrText: "", bpDirty: false, spDirty: false };
+let ocrTried = false;
+let capStream = null;
+
 const esc = (v) => String(v == null ? "" : v)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const fmt = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
@@ -128,6 +138,26 @@ function openForm() {
   $("#form-err").hidden = true;
   $("#preview").textContent = "";
 
+  // capture box: a Sales flow photographs the item / price tag and
+  // saves BP + SP with the record; everything else hides it again.
+  const isSale = state.cause === "Sales";
+  $("#f-capture").hidden = !isSale;
+  if (isSale) {
+    capState.photo = null;
+    capState.bpDirty = false;
+    capState.spDirty = false;
+    $("#cap-photo").hidden = true;
+    $("#cap-photo").removeAttribute("src");
+    $("#cap-status").textContent = "";
+    $("#cap-ocr").hidden = true;
+    $("#cap-ocr").textContent = "";
+    $("#cap-update-row").hidden = true;
+    $("#cap-update").checked = false;
+    $("#cap-bp").value = Number(r.buyPrice || 0) || "";
+    $("#cap-sp").value = Number(r.unitPrice || 0) || "";
+    ocrTried = false;
+  }
+
   const upp = uppOf();
   $("#qty-hint").textContent = upp
     ? "1 package = " + upp + " units \u2014 type the Packages or the Units and the other box calculates itself."
@@ -178,9 +208,22 @@ function txnTypeOf() { return state.money ? state.money : "NEUTRAL"; }
 
 function unitPriceOf() {
   const r = state.stock;
-  return state.money === "IN"
-    ? Number(r.unitPrice || 0)
-    : Number(r.buyPrice || 0) / (uppOf() || 1);
+  if (state.money === "IN") {
+    // a corrected SP from the capture box wins over the stored price
+    if (!$("#f-capture").hidden) {
+      const v = Number($("#cap-sp").value);
+      if (v > 0) return v;
+    }
+    return Number(r.unitPrice || 0);
+  }
+  return Number(r.buyPrice || 0) / (uppOf() || 1);
+}
+
+function captureUnitBpOf() {
+  const r = state.stock;
+  const bp = Number($("#cap-bp").value);
+  const perPackage = bp > 0 ? bp : Number(r.buyPrice || 0);
+  return perPackage / (uppOf() || 1);
 }
 
 function updatePreview() {
@@ -203,8 +246,100 @@ function updatePreview() {
     p += " \u00B7 no flow method";
   }
   p += " \u00B7 " + fmt(amount) + (state.money === "IN" ? " (SP)" : " (BP)");
+  if (state.cause === "Sales") {
+    const profit = Math.round(units * (Number($("#cap-sp").value || unitPriceOf()) - captureUnitBpOf()) * 100) / 100;
+    p += " \u00B7 profit " + fmt(profit) + " (SP \u2212 BP per unit \u00D7 units)";
+  }
   $("#preview").textContent = "Will save: " + p;
 }
+
+// ---- stock capture: camera + assistive OCR --------------------------------
+function ocrNote(msg) {
+  const el = $("#cap-ocr");
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+function tryOcr(canvas) {
+  if (ocrTried) return;
+  ocrTried = true;
+  const go = () => {
+    if (!window.Tesseract) { ocrNote("OCR unavailable - type the prices from the tag if they changed."); return; }
+    Tesseract.recognize(canvas, "eng").then((res) => {
+      const text = String((res && res.data && res.data.text) || "").replace(/\s+/g, " ").trim();
+      if (!text) { ocrNote("OCR read nothing useful - the prices stay as loaded from the stock."); return; }
+      capState.ocrText = text.slice(0, 300);
+      const nums = (text.match(/\d+(?:\.\d+)?/g) || []).map(Number).filter((n) => n > 0);
+      if (nums.length >= 2 && !capState.bpDirty && !capState.spDirty) {
+        $("#cap-bp").value = nums[0];
+        $("#cap-sp").value = nums[1];
+        $("#cap-update-row").hidden = false;
+        ocrNote("OCR read: \"" + text.slice(0, 140) + "\" - filled BP " + nums[0] + " and SP " + nums[1] + ". Correct them if the tag says otherwise.");
+      } else {
+        ocrNote("OCR read: \"" + text.slice(0, 140) + "\"");
+      }
+      updatePreview();
+    }).catch(() => ocrNote("OCR failed - the prices stay as loaded from the stock."));
+  };
+  if (window.Tesseract) { go(); return; }
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+  s.onload = go;
+  s.onerror = () => ocrNote("OCR library unavailable (offline?) - the prices stay as loaded.");
+  document.head.appendChild(s);
+  setTimeout(() => { if (!window.Tesseract) ocrNote("OCR timed out - the prices stay as loaded."); }, 15000);
+}
+
+$("#cap-btn").addEventListener("click", async () => {
+  $("#cap-modal-err").hidden = true;
+  $("#cap-modal").hidden = false;
+  try {
+    capStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" } }, audio: false
+    });
+    $("#cap-video").srcObject = capStream;
+  } catch (e) {
+    $("#cap-modal-err").textContent = e && e.name === "NotAllowedError"
+      ? "Camera permission denied - the sale can still be saved without a capture."
+      : "No camera available on this device (" + ((e && e.message) || e) + ").";
+    $("#cap-modal-err").hidden = false;
+  }
+});
+
+function capStop() {
+  if (capStream) { capStream.getTracks().forEach((t) => t.stop()); capStream = null; }
+  $("#cap-video").srcObject = null;
+  $("#cap-modal").hidden = true;
+}
+$("#cap-close").addEventListener("click", capStop);
+$("#cap-modal").addEventListener("click", (e) => { if (e.target === $("#cap-modal")) capStop(); });
+
+$("#cap-shot").addEventListener("click", () => {
+  const v = $("#cap-video");
+  if (!v.videoWidth) {
+    $("#cap-modal-err").textContent = "The camera is not ready yet.";
+    $("#cap-modal-err").hidden = false;
+    return;
+  }
+  const w = 480, h = Math.max(1, Math.round(v.videoHeight / v.videoWidth * 480));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  c.getContext("2d").drawImage(v, 0, 0, w, h);
+  const url = c.toDataURL("image/jpeg", 0.55);
+  capState.photo = url;
+  const img = $("#cap-photo");
+  img.src = url;
+  img.hidden = false;
+  $("#cap-status").textContent = "Captured - the photo rides along with this sale. Re-capture any time before saving.";
+  capStop();
+  tryOcr(c);
+});
+
+["#cap-bp", "#cap-sp"].forEach((s) => $(s).addEventListener("input", () => {
+  if (s === "#cap-bp") capState.bpDirty = true; else capState.spDirty = true;
+  if (Number($(s).value) > 0) $("#cap-update-row").hidden = false;
+  updatePreview();
+}));
 
 // ---- save: stock record + transaction record + movement log, one batch -----
 $("#save-btn").addEventListener("click", async () => {
@@ -244,23 +379,52 @@ $("#save-btn").addEventListener("click", async () => {
   const delta = state.dir === "IN" ? units : -units;
   const after = cur + delta;
 
+  // capture payload for a sale: BP / SP ride with the record (and the
+  // profit is frozen at save time), photo included when one was taken.
+  const isSale = state.cause === "Sales";
+  const capBp = Number($("#cap-bp").value);
+  const capSp = Number($("#cap-sp").value);
+  let stockPatch = { units: increment(delta) };
+  if (isSale && $("#cap-update").checked) {
+    if (capBp > 0) stockPatch.buyPrice = capBp;
+    if (capSp > 0) stockPatch.unitPrice = capSp;
+  }
+
   const btn = $("#save-btn");
   btn.disabled = true;
   btn.textContent = "Saving\u2026";
   try {
     const batch = writeBatch(db);
-    batch.update(doc(db, "stockItems", r.id), { units: increment(delta) });
+    batch.update(doc(db, "stockItems", r.id), stockPatch);
     batch.set(doc(collection(db, "transactions")), {
       transactionName: state.cause, dateTime: serverTimestamp(),
       flowMethod, transactionType: txnType, name, amount
     });
-    batch.set(doc(collection(db, "stockChanges")), {
+    const changeDoc = {
       stockId: r.id, stockName: r.name, cause: state.cause, direction: state.dir,
       units, amount, transactionType: txnType, flowMethod, name, createdAt: serverTimestamp()
-    });
+    };
+    if (isSale) {
+      const sp = capSp > 0 ? capSp : unitPriceOf();
+      const bpUnit = captureUnitBpOf();
+      changeDoc.spAtSale = Math.round(sp * 10000) / 10000;
+      changeDoc.bpAtSale = Math.round(bpUnit * 10000) / 10000;
+      changeDoc.profit = Math.round(units * (changeDoc.spAtSale - changeDoc.bpAtSale) * 100) / 100;
+      if (capState.photo) {
+        changeDoc.capture = {
+          photo: capState.photo, at: new Date().toISOString(),
+          bp: capBp > 0 ? capBp : null, sp: capSp > 0 ? capSp : null,
+          ocrText: capState.ocrText || ""
+        };
+      }
+    }
+    batch.set(doc(collection(db, "stockChanges")), changeDoc);
     await batch.commit();
-    $("#done-note").textContent = r.name + " moved from " + cur.toLocaleString("en-US") +
+    let note = r.name + " moved from " + cur.toLocaleString("en-US") +
       " to " + after.toLocaleString("en-US") + " units \u2014 the transaction was saved to the business transactions and the movement was logged.";
+    if (isSale) note += " Sold for " + fmt(amount) + (changeDoc.profit != null ? " (profit " + fmt(changeDoc.profit) + ")" : "") +
+      (capState.photo ? " \u00B7 the captured photo and its BP / SP are stored on the record." : "");
+    $("#done-note").textContent = note;
     showStep(4);
   } catch (e) {
     err("Save failed: " + (e && e.code === "permission-denied"

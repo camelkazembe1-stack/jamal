@@ -67,6 +67,25 @@
         <input id="in-bank" type="text" placeholder="e.g. Bank A">
       </div>
 
+      <div class="field" id="f-capture" hidden>
+        <label>Stock Capture <span class="cap-soft">photo &middot; BP &amp; SP saved with the sale</span></label>
+        <div class="cap-row">
+          <button class="cap-btn" id="cap-btn" type="button">&#128247; Capture stock &amp; prices</button>
+          <img id="cap-photo" class="cap-photo" alt="Captured stock" hidden>
+        </div>
+        <p class="cap-status" id="cap-status"></p>
+        <div class="cap-prices" id="cap-prices">
+          <div class="qty-box"><span>Buying Price / Package (BP)</span>
+            <input id="cap-bp" type="number" inputmode="decimal" min="0" step="any" placeholder="BP"></div>
+          <div class="qty-box"><span>Unit Selling Price (SP)</span>
+            <input id="cap-sp" type="number" inputmode="decimal" min="0" step="any" placeholder="SP"></div>
+        </div>
+        <label class="cap-update" id="cap-update-row" hidden>
+          <input id="cap-update" type="checkbox"> Update the stock's BP / SP to these values
+        </label>
+        <p class="cap-ocr" id="cap-ocr" hidden></p>
+      </div>
+
       <p class="preview" id="preview"></p>
       <p class="form-err" id="form-err" hidden></p>
       <button class="save-btn" id="save-btn" type="button">Save Stock Change</button>
@@ -84,6 +103,19 @@
       </div>
     </div>
   </section>
+
+  <div class="cap-modal" id="cap-modal" hidden>
+    <div class="cap-modal-box">
+      <h2 id="cap-modal-title">Capture the stock</h2>
+      <video id="cap-video" autoplay playsinline muted></video>
+      <p class="cap-modal-err" id="cap-modal-err" hidden></p>
+      <div class="cap-modal-actions">
+        <button class="save-btn" id="cap-shot" type="button">Capture</button>
+        <button class="ghost-btn" id="cap-close" type="button">Close</button>
+      </div>
+      <p class="cap-modal-hint">Point the camera at the item or its price tag. The photo is saved with the sale, and the BP / SP below ride along &mdash; when you sell N units the amount is calculated automatically.</p>
+    </div>
+  </div>
 
 </main>
 <script type="module" src="/stock-change/346.js"></script>

@@ -1768,7 +1768,8 @@ export const STAFF_ROLE_TEMPLATES = {
   ],
   "Billing officer": [
     "hospital-billing", "hospital-payments", "health-insurance",
-    "tariff-engine", "add-transaction", "view-file"
+    "tariff-engine", "add-transaction", "view-file",
+    "notification-center", "notification-settings"
   ],
   "HR officer": [
     "employees", "hospital-staff", "doctor-schedule",
@@ -1776,7 +1777,8 @@ export const STAFF_ROLE_TEMPLATES = {
   ],
   "Store keeper": [
     "stock-management", "suppliers", "medical-supplies",
-    "medical-equipment", "hospital-inventory"
+    "medical-equipment", "hospital-inventory",
+    "notification-center", "notification-settings"
   ],
   "Support services": [
     "dietary-nutrition", "laundry-management", "housekeeping"
@@ -1793,6 +1795,355 @@ export function roleTemplateFolders(role) {
   var t = STAFF_ROLE_TEMPLATES[String(role || "")];
   return t ? t.slice() : null;
 }
+
+/* ======================================================================
+   CUSTOMER SERVICE & AUTOMATED NOTIFICATION ENGINE (25 Nov 2026)
+   The demand: one centralized engine for every module - not one per
+   module. It lives in the shell (this file) so it monitors in the
+   background on every page of the zone:
+     - stock levels crossing their registered minimum (stockItems),
+     - money coming in (transactions, type IN),
+     - invoices aging past their due date (invoices).
+   When a condition is met it writes ONE record into the per-zone
+   "notifications" collection (title, message, module, recipient,
+   channels, delivery status, read flag) and three things light up at
+   once: the bell at the top right of every page, the Business
+   dashboard alert banner, and the Notification Center (411).
+
+   Crossing detection (demand section 8): an alert fires when the
+   stock level WORSENS (ok -> low -> critical -> out), never twice for
+   the same level, and re-arms when stock is replenished above the
+   minimum. The first snapshot after load is adopted silently, so a
+   reload never replays old alerts. Per-event and per-channel toggles
+   come from Notification Settings (412), stored per zone.
+
+   Delivery: dashboard + in-app are always delivered; SMS and email
+   are queued as ready-to-send texts - the Notification Center hands
+   them to the phone's own SMS / email app (no external gateway
+   needed); push uses the browser notification when permission was
+   granted. Nothing here can break a page write: every step is
+   guarded and the engine only ever appends notification records.
+   ====================================================================== */
+
+var NOTIFY_SETTINGS_LS = "jamaliNotifySettings::";
+var NOTIFY_STATE_LS = "jamaliNotifyEngineState::";
+
+export var NOTIFY_EVENTS = [
+  { key: "lowStock", label: "Low-stock alert", hint: "Fires when a stock reaches its Low Units level." },
+  { key: "outOfStock", label: "Out-of-stock alert", hint: "Fires when a stock runs out of units." },
+  { key: "payment", label: "Payment received", hint: "Fires when money comes in (Sales, Purchases Returns)." },
+  { key: "overdueInvoice", label: "Invoice overdue", hint: "Fires when an invoice passes its due date unpaid." }
+];
+export var NOTIFY_CHANNELS = [
+  { key: "dashboard", label: "Dashboard banner" },
+  { key: "inApp", label: "In-app bell" },
+  { key: "sms", label: "SMS (queued to phone)" },
+  { key: "email", label: "Email (queued)" },
+  { key: "push", label: "Browser push" }
+];
+var NOTIFY_LEVEL_META = {
+  low:      { icon: "\u26A0\uFE0F", label: "Low", cls: "jnt-low" },
+  critical: { icon: "\u26D4", label: "Critical", cls: "jnt-critical" },
+  out:      { icon: "\u{1F6AB}", label: "Out of stock", cls: "jnt-out" },
+  payment:  { icon: "\u{1F4B5}", label: "Payment", cls: "jnt-payment" },
+  invoice:  { icon: "\u{1F9FE}", label: "Invoice", cls: "jnt-invoice" },
+  info:     { icon: "\u{1F514}", label: "Info", cls: "jnt-info" }
+};
+var NOTIFY_DEFAULTS = {
+  lowStock: true, outOfStock: true, payment: true, overdueInvoice: true,
+  dashboard: true, inApp: true, sms: true, email: false, push: false,
+  phone: "", email: ""
+};
+
+function notifyZoneKey(prefix) {
+  return prefix + currentNamespace();
+}
+
+export function getNotifySettings() {
+  var base = {};
+  for (var k in NOTIFY_DEFAULTS) base[k] = NOTIFY_DEFAULTS[k];
+  try {
+    var raw = window.localStorage.getItem(notifyZoneKey(NOTIFY_SETTINGS_LS));
+    if (raw) {
+      var saved = JSON.parse(raw) || {};
+      for (var k2 in base) if (saved[k2] !== undefined) base[k2] = saved[k2];
+    }
+  } catch (e) { /* defaults survive a bad read */ }
+  if (!base.email && activeUser && activeUser.email) base.email = activeUser.email;
+  return base;
+}
+
+export function saveNotifySettings(patch) {
+  var cur = getNotifySettings();
+  for (var k in patch) if (NOTIFY_DEFAULTS[k] !== undefined) cur[k] = patch[k];
+  try { window.localStorage.setItem(notifyZoneKey(NOTIFY_SETTINGS_LS), JSON.stringify(cur)); } catch (e) {}
+  return cur;
+}
+
+function notifyEngineState() {
+  try {
+    return JSON.parse(window.localStorage.getItem(notifyZoneKey(NOTIFY_STATE_LS)) || "{}") || {};
+  } catch (e) { return {}; }
+}
+function notifySaveState(st) {
+  try { window.localStorage.setItem(notifyZoneKey(NOTIFY_STATE_LS), JSON.stringify(st)); } catch (e) {}
+}
+
+// One notification record into the per-zone collection - the same
+// direct store path the health audit uses, so the engine can never
+// collide with a page that is mid-write. Duplicate protection: a
+// record with the same dedupKey is never written twice.
+function notifyWrite(rec) {
+  try {
+    var ns = currentNamespace();
+    var map = loadColl(ns, "notifications");
+    for (var id in map) {
+      if (map[id] && map[id].dedupKey === rec.dedupKey) return false;
+    }
+    var store = {};
+    for (var k in rec) store[k] = rec[k];
+    store.createdAt = { __jts: Date.now() };
+    store.read = false;
+    map[newLocalId()] = packValue(store);
+    saveColl(ns, "notifications");
+    notifyCollection("notifications");
+    return true;
+  } catch (e) { return false; }
+}
+
+function notifyDeliver(rec) {
+  var settings = getNotifySettings();
+  rec.smsText = rec.message;
+  rec.recipient = settings.email || (activeUser && activeUser.email) || "";
+  rec.phone = settings.phone || "";
+  rec.delivery = {
+    dashboard: settings.dashboard ? "delivered" : "off",
+    inApp: settings.inApp ? "delivered" : "off",
+    sms: settings.sms ? "queued" : "off",
+    email: settings.email ? "queued" : "off",
+    push: settings.push && typeof window !== "undefined" && window.Notification &&
+          Notification.permission === "granted" ? "sent" : (settings.push ? "queued" : "off")
+  };
+  rec.channels = [];
+  for (var i = 0; i < NOTIFY_CHANNELS.length; i++) {
+    var c = NOTIFY_CHANNELS[i].key;
+    if (rec.delivery[c] === "delivered" || rec.delivery[c] === "queued" || rec.delivery[c] === "sent") {
+      rec.channels.push(c);
+    }
+  }
+  var wrote = notifyWrite(rec);
+  if (wrote && rec.delivery.push === "sent") {
+    try { new Notification(rec.title, { body: rec.message }); } catch (e) { /* stay sent-recorded */ }
+  }
+  return wrote;
+}
+
+// ---- stock crossing detection -----------------------------------------
+var NOTIFY_LEVEL_RANK = { ok: 3, low: 2, critical: 1, out: 0 };
+function notifyStockLevel(units, min) {
+  var m = Number(min) || 0;
+  if (!(m > 0)) return "ok";               // no Low Units set -> not monitored
+  var u = Number(units) || 0;
+  if (u <= 0) return "out";
+  if (u === m) return "low";
+  if (u < m) return "critical";
+  return "ok";
+}
+function notifyStockMessage(name, units, min, level) {
+  var u = Number(units) || 0, m = Number(min) || 0;
+  if (level === "low")
+    return "LOW STOCK ALERT: Your " + name + " stock has reached its minimum level of " + m +
+           " units. " + u + " unit(s) remain. Please restock.";
+  if (level === "critical")
+    return "CRITICAL STOCK ALERT: Your " + name + " stock has dropped below its minimum level of " +
+           m + " units. Only " + u + " unit(s) remain. Restock soon.";
+  return "OUT OF STOCK ALERT: Your " + name + " stock has run out. 0 units remain - restock immediately.";
+}
+
+function notifyEvaluateStocks(rows) {
+  var st = notifyEngineState();
+  st.stock = st.stock || {};
+  var changed = false;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var id = String(r.id || "");
+    if (!id) continue;
+    var min = Number(r.minUnits || 0);
+    var level = notifyStockLevel(r.units, min);
+    var prev = st.stock[id];
+    if (!prev || prev.min !== min || level === "ok") {
+      // first sight, edited threshold, or re-arm above the minimum:
+      // adopt silently - the epoch increments so the next descent
+      // fires a fresh alert instead of hitting the old dedup key.
+      st.stock[id] = {
+        level: level, min: min,
+        epoch: prev ? ((prev.epoch || 0) + (level === "ok" && prev.level !== "ok" ? 1 : 0)) : 0
+      };
+      changed = true;
+      continue;
+    }
+    if (NOTIFY_LEVEL_RANK[level] < NOTIFY_LEVEL_RANK[prev.level]) {
+      var settings = getNotifySettings();
+      var enabled = level === "out" ? settings.outOfStock : settings.lowStock;
+      if (enabled) {
+        notifyDeliver({
+          title: (level === "out" ? "Out of stock - " : level === "low" ? "Low stock - " : "Critical stock - ") + r.name,
+          message: notifyStockMessage(r.name, r.units, min, level),
+          module: "Stock Management", level: level,
+          dedupKey: "stock:" + id + ":" + level + ":" + (prev.epoch || 0)
+        });
+      }
+      st.stock[id] = { level: level, min: min, epoch: prev.epoch || 0 };
+      changed = true;
+    }
+  }
+  if (changed) notifySaveState(st);
+}
+
+// ---- payments ----------------------------------------------------------
+function notifyEvaluateTx(rows) {
+  var st = notifyEngineState();
+  st.txSeen = st.txSeen || [];
+  var seen = {};
+  for (var s = 0; s < st.txSeen.length; s++) seen[st.txSeen[s]] = true;
+  if (!st.txPrimed) {
+    // First snapshot ever (or after a storage reset): adopt the whole
+    // history silently so a fresh browser never replays old payments.
+    st.txPrimed = true;
+    for (var p = 0; p < rows.length; p++) {
+      if (!seen[rows[p].id]) { seen[rows[p].id] = true; st.txSeen.push(rows[p].id); }
+    }
+    notifySaveState(st);
+    return;
+  }
+  var settings = getNotifySettings();
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (seen[r.id]) continue;
+    seen[r.id] = true;
+    st.txSeen.push(r.id);
+    if (settings.payment && String(r.transactionType) === "IN" && Number(r.amount) > 0) {
+      notifyDeliver({
+        title: "Payment received",
+        message: "PAYMENT RECEIVED: " + (r.transactionName || "transaction") + " of " +
+                 (Number(r.amount) || 0).toLocaleString("en-US") +
+                 (r.flowMethod && r.flowMethod !== "N/A" ? " via " + r.flowMethod : "") +
+                 (r.name ? " - " + r.name : "") + ".",
+        module: "Transactions", level: "payment", dedupKey: "tx:" + r.id
+      });
+    }
+  }
+  if (st.txSeen.length > 400) st.txSeen = st.txSeen.slice(-400);
+  notifySaveState(st);
+}
+
+// ---- invoices turning overdue ------------------------------------------
+function notifyOverdueOf(r) {
+  if (String(r.status) === "Cancelled") return false;
+  var bal = Math.max(0, (Number(r.total) || 0) - (Number(r.paidAmount) || 0));
+  if (!(bal > 0.009)) return false;
+  if (!r.dueDate) return false;
+  var due = new Date(String(r.dueDate) + "T00:00:00");
+  if (isNaN(due.getTime())) return false;
+  var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  return due < t0;
+}
+
+function notifyEvaluateInvoices(rows) {
+  var st = notifyEngineState();
+  st.invNotified = st.invNotified || [];
+  var not = {};
+  for (var s = 0; s < st.invNotified.length; s++) not[st.invNotified[s]] = true;
+  var prime = !st.invPrimed;
+  st.invPrimed = true;
+  var settings = getNotifySettings();
+  var fired = false;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (!notifyOverdueOf(r) || not[r.id]) continue;
+    not[r.id] = true;
+    st.invNotified.push(r.id);
+    // An invoice already overdue when first seen is adopted silently;
+    // one that ages past its due date while the zone is alive fires.
+    if (!prime && settings.overdueInvoice) {
+      var bal = Math.max(0, (Number(r.total) || 0) - (Number(r.paidAmount) || 0));
+      notifyDeliver({
+        title: "Invoice overdue - " + (r.invNo || r.id),
+        message: "INVOICE OVERDUE: " + (r.invNo || "invoice") + " for " + (r.party || "customer") +
+                 " - " + bal.toLocaleString("en-US") + " outstanding, was due " + String(r.dueDate) + ".",
+        module: String(r.direction) === "purchase" ? "Purchase Invoice" : "Sales Invoice",
+        level: "invoice", dedupKey: "inv:" + r.id
+      });
+      fired = true;
+    }
+  }
+  if (st.invNotified.length > 400) st.invNotified = st.invNotified.slice(-400);
+  notifySaveState(st);
+  return fired;
+}
+
+function notifyRowsOf(snap) {
+  return (snap.docs || []).map(function (d) {
+    var r = d.data({ serverTimestamps: "estimate" }) || {};
+    r.id = d.id;
+    return r;
+  });
+}
+
+// ---- the engine itself --------------------------------------------------
+var NOTIFY_STARTED = false;
+function startNotifyEngine() {
+  if (NOTIFY_STARTED) return;
+  NOTIFY_STARTED = true;
+  try {
+    onSnapshot(collection(db, "stockItems"), function (snap) {
+      notifyEvaluateStocks(notifyRowsOf(snap));
+    });
+    onSnapshot(collection(db, "transactions"), function (snap) {
+      notifyEvaluateTx(notifyRowsOf(snap));
+    });
+    onSnapshot(collection(db, "invoices"), function (snap) {
+      notifyEvaluateInvoices(notifyRowsOf(snap));
+    });
+    // Invoices also age while nothing is written: re-scan every hour
+    // and every time the tab becomes visible again.
+    var rescan = function () {
+      try { getDocs(collection(db, "invoices")).then(function (snap) {
+        notifyEvaluateInvoices(notifyRowsOf(snap));
+      }).catch(function () {}); } catch (e) {}
+    };
+    setInterval(rescan, 60 * 60 * 1000);
+    if (typeof document !== "undefined" && document.addEventListener) {
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) rescan();
+      });
+    }
+  } catch (e) { /* the engine must never break the shell */ }
+}
+
+export function notifyTest() {
+  return notifyDeliver({
+    title: "Test notification",
+    message: "TEST: Jamal notifications are working. If SMS or email is enabled, this text is queued in the Notification Center outbox.",
+    module: "Notification Center", level: "info",
+    dedupKey: "test:" + Date.now()
+  });
+}
+
+export function notifySmsUri(phone, text) {
+  return "sms:" + String(phone || "").replace(/[^0-9+]/g, "") +
+         "?body=" + encodeURIComponent(text || "");
+}
+
+export function notifyUnreadCount() {
+  try {
+    var map = loadColl(currentNamespace(), "notifications");
+    var n = 0;
+    for (var id in map) if (map[id] && !map[id].read) n++;
+    return n;
+  } catch (e) { return 0; }
+}
+
 
 /* ======================================================================
    THE NAV BRIDGE - was public/jamali-bridge.js, unchanged.
@@ -2013,6 +2364,8 @@ window.JAMALI_MENU = [
     { label: "Stock Register", icon: "📋", folder: "stock-register", n: 348, d: 3 },
     { label: "Stock Progress", icon: "📈", folder: "stock-progress", n: 347, d: 3 },
     { label: "Stock Change", icon: "🔄", folder: "stock-change", n: 346, d: 3 },
+    { label: "Notification Center", icon: "🔔", folder: "notification-center", n: 411, d: 2 },
+    { label: "Notification Settings", icon: "⚙️", folder: "notification-settings", n: 412, d: 3 },
     { label: "Customers", icon: "👤", folder: "customers", n: 392, d: 2 },
     { label: "Suppliers", icon: "🏭", folder: "suppliers", n: 393, d: 2 },
     { label: "Employees", icon: "🧑‍💼", folder: "employees", n: 394, d: 2 },
@@ -2739,7 +3092,7 @@ catch (e) {}
    try { sessionStorage.removeItem(MODE_KEY); } catch (e) {}
  }
  
- var ALWAYS_OPEN = ["home", "file-viewer", "staff-roles"];
+ var ALWAYS_OPEN = ["home", "file-viewer", "staff-roles", "notification-center"];
 var PARENT = {"ward-registration":"ward-management","bed-management":"ward-management","ward-occupancy":"ward-management","bed-assignment":"ward-management","ward-bed-transfers":"ward-management","cleaning-maintenance":"ward-management","ward-register":"ward-management","bed-transfer-history":"ward-management","new-admission":"patient-admission","admission-list":"patient-admission","admission-details":"patient-admission","start-discharge":"patient-discharge","discharge-list":"patient-discharge","discharge-details":"patient-discharge","new-lab-request":"laboratory","lab-request-list":"laboratory","lab-workbench":"laboratory","new-imaging-request":"radiology","imaging-requests":"radiology","imaging-workbench":"radiology","tool":"convertor"};
 
  /* ======================================================================
@@ -3396,6 +3749,167 @@ p.label + "</a>";
  document.body.insertBefore(aside, document.body.firstChild);
  document.body.insertBefore(burger, document.body.firstChild);
  document.body.classList.add("jamali-has-sidebar");
+
+ /* NOTIFICATION BELL (25 Nov 2026): fixed at the top right of every
+  * page, next to nothing - the burger lives top left, the admin desk
+  * button sits below it. Shows the unread count badge, opens a small
+  * dark panel with the latest notifications of this zone (unread
+  * first), marks a row read on click and links to the Notification
+  * Center (411) and Notification Settings (412). The engine that
+  * feeds it starts here as well, once the identity has settled. */
+ (function jamaliBell() {
+   var bellCss = [
+     "#jamali-bell{position:fixed;top:12px;right:12px;z-index:1002;width:42px;height:42px;",
+     "border-radius:11px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:19px;",
+     "display:flex;align-items:center;justify-content:center;cursor:pointer;",
+     "box-shadow:0 10px 26px rgba(0,0,0,.45);transition:background .2s ease}",
+     "#jamali-bell:hover{background:#1e293b}",
+     "#jamali-bell .jb-badge[hidden]{display:none}",
+     "#jamali-bell .jb-badge{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;",
+     "border-radius:10px;background:#dc2626;color:#fff;font-size:11px;font-weight:800;",
+     "display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0f172a}",
+     "#jamali-bell-panel{position:fixed;top:60px;right:12px;z-index:1003;width:min(370px,calc(100vw - 24px));",
+     "max-height:min(480px,calc(100vh - 80px));overflow:auto;border-radius:14px;border:1px solid #334155;",
+     "background:#0b1220;color:#e2e8f0;box-shadow:0 18px 44px rgba(0,0,0,.55);font-size:13.5px}",
+     "#jamali-bell-panel .jb-head{display:flex;align-items:center;gap:8px;padding:12px 14px;",
+     "border-bottom:1px solid #1e293b;position:sticky;top:0;background:#0b1220}",
+     "#jamali-bell-panel .jb-head b{font-size:14.5px}",
+     "#jamali-bell-panel .jb-head .jb-clear{margin-left:auto;border:0;background:none;color:#38bdf8;",
+     "font-size:12.5px;cursor:pointer;font-weight:700}",
+     "#jamali-bell-panel .jb-item{padding:11px 14px;border-bottom:1px solid #16223b;cursor:pointer;",
+     "display:flex;gap:10px;align-items:flex-start}",
+     "#jamali-bell-panel .jb-item:hover{background:#101a30}",
+     "#jamali-bell-panel .jb-item.is-unread{border-left:3px solid #38bdf8}",
+     "#jamali-bell-panel .jb-item .jb-ico{font-size:17px;line-height:1.3}",
+     "#jamali-bell-panel .jb-item .jb-t{font-weight:700;font-size:13px}",
+     "#jamali-bell-panel .jb-item .jb-m{color:#94a3b8;font-size:12.5px;line-height:1.45;margin-top:2px}",
+     "#jamali-bell-panel .jb-item .jb-when{color:#64748b;font-size:11px;margin-top:3px}",
+     "#jamali-bell-panel .jb-item .jb-x{margin-left:auto;color:#64748b;font-size:12px;cursor:pointer;",
+     "border:0;background:none;flex:0 0 auto;padding:2px}",
+     "#jamali-bell-panel .jb-item .jb-x:hover{color:#f87171}",
+     "#jamali-bell-panel .jb-empty{padding:22px 16px;color:#64748b;text-align:center;font-size:12.5px}",
+     "#jamali-bell-panel .jb-foot{display:flex;gap:8px;padding:11px 14px;position:sticky;bottom:0;",
+     "background:#0b1220;border-top:1px solid #1e293b}",
+     "#jamali-bell-panel .jb-foot a{flex:1;text-align:center;text-decoration:none;border-radius:9px;",
+     "padding:8px 6px;font-weight:800;font-size:12.5px;border:1px solid #334155;color:#bae6fd;background:#0f172a}",
+     "#jamali-bell-panel .jb-foot a:hover{border-color:#38bdf8}",
+     "#jamali-bell-panel .jb-foot a.jb-primary{background:linear-gradient(135deg,#38bdf8,#0ea5e9);color:#06121f;border:0}"
+   ].join("");
+   var bellStyle = document.createElement("style");
+   bellStyle.textContent = bellCss;
+   document.head.appendChild(bellStyle);
+
+   var bellBtn = document.createElement("button");
+   bellBtn.id = "jamali-bell";
+   bellBtn.type = "button";
+   bellBtn.title = "Notifications";
+   bellBtn.innerHTML = "<span>\uD83D\uDD14</span><span class=\"jb-badge\" hidden></span>";
+   var bellPanel = document.createElement("div");
+   bellPanel.id = "jamali-bell-panel";
+   bellPanel.hidden = true;
+   document.body.appendChild(bellBtn);
+   document.body.appendChild(bellPanel);
+
+   var JNOTIFY = [];
+   function jbMillis(ts) {
+     if (!ts) return 0;
+     if (typeof ts.toMillis === "function") return ts.toMillis();
+     var t = new Date(ts).getTime();
+     return isNaN(t) ? 0 : t;
+   }
+   function jbAgo(ts) {
+     var ms = jbMillis(ts);
+     if (!ms) return "";
+     var s = Math.max(1, Math.round((Date.now() - ms) / 1000));
+     if (s < 60) return s + "s ago";
+     if (s < 3600) return Math.floor(s / 60) + "m ago";
+     if (s < 86400) return Math.floor(s / 3600) + "h ago";
+     return new Date(ms).toLocaleDateString("en-GB");
+   }
+   function jbUnread() {
+     var n = 0;
+     for (var i = 0; i < JNOTIFY.length; i++) if (!JNOTIFY[i].read) n++;
+     return n;
+   }
+   function jbBadge() {
+     var b = bellBtn.querySelector(".jb-badge");
+     var n = jbUnread();
+     b.hidden = !n;
+     b.textContent = n > 99 ? "99+" : String(n);
+   }
+   function jbRender() {
+     var sorted = JNOTIFY.slice().sort(function (a, b) {
+       return jbMillis(b.createdAt) - jbMillis(a.createdAt);
+     });
+     var top = sorted.slice(0, 8);
+     var html = "<div class=\"jb-head\"><b>\uD83D\uDD14 Notifications</b>" +
+       (jbUnread() ? "<button type=\"button\" class=\"jb-clear\">Mark all read</button>" : "") +
+       "</div>";
+     if (!top.length) {
+       html += "<div class=\"jb-empty\">No notifications yet.<br>The engine watches stock levels, payments and invoices in the background - alerts land here.</div>";
+     } else {
+       for (var i = 0; i < top.length; i++) {
+         var n = top[i];
+         html += "<div class=\"jb-item" + (n.read ? "" : " is-unread") + "\" data-id=\"" + String(n.id).replace(/\"/g, "&quot;") + "\">" +
+           "<span class=\"jb-ico\">\u{1F514}</span>" +
+           "<span class=\"jb-main\"><span class=\"jb-t\">" + String(n.title || "Notification").replace(/</g, "&lt;") + "</span>" +
+           "<div class=\"jb-m\">" + String(n.message || "").replace(/</g, "&lt;") + "</div>" +
+           "<div class=\"jb-when\">" + jbAgo(n.createdAt) + "</div></span>" +
+           "<button type=\"button\" class=\"jb-x\" title=\"Delete\">\u2715</button></div>";
+       }
+     }
+     html += "<div class=\"jb-foot\"><a href=\"/notification-center/411\" class=\"jb-primary\">Open Center</a>" +
+       "<a href=\"/notification-settings/412\">Settings</a></div>";
+     bellPanel.innerHTML = html;
+   }
+   bellBtn.addEventListener("click", function (e) {
+     e.stopPropagation();
+     bellPanel.hidden = !bellPanel.hidden;
+     if (!bellPanel.hidden) jbRender();
+   });
+   document.addEventListener("click", function (e) {
+     if (bellPanel.hidden) return;
+     if (bellPanel.contains(e.target) || bellBtn.contains(e.target)) return;
+     bellPanel.hidden = true;
+   });
+   bellPanel.addEventListener("click", function (e) {
+     var clear = e.target.closest && e.target.closest(".jb-clear");
+     if (clear) {
+       for (var i = 0; i < JNOTIFY.length; i++) {
+         if (!JNOTIFY[i].read) {
+           try { updateDoc(doc(db, "notifications", JNOTIFY[i].id), { read: true }); } catch (e2) {}
+         }
+       }
+       return;
+     }
+     var del = e.target.closest && e.target.closest(".jb-x");
+     if (del) {
+       e.stopPropagation();
+       var item = del.closest(".jb-item");
+       if (item) { try { deleteDoc(doc(db, "notifications", item.dataset.id)); } catch (e3) {} }
+       return;
+     }
+     var row = e.target.closest && e.target.closest(".jb-item");
+     if (row && row.dataset.id) {
+       var rec = null;
+       for (var j = 0; j < JNOTIFY.length; j++) if (JNOTIFY[j].id === row.dataset.id) rec = JNOTIFY[j];
+       if (rec && !rec.read) {
+         try { updateDoc(doc(db, "notifications", rec.id), { read: true }); } catch (e4) {}
+       }
+     }
+   });
+   onSnapshot(collection(db, "notifications"), function (snap) {
+     JNOTIFY = (snap.docs || []).map(function (d) {
+       var r = d.data({ serverTimestamps: "estimate" }) || {};
+       r.id = d.id;
+       return r;
+     });
+     jbBadge();
+     if (!bellPanel.hidden) jbRender();
+   });
+   authReady.then(function () { startNotifyEngine(); });
+ })();
+
 
  /* The sidebar answers the page: the active item is scrolled into
   * view, so opening the menu always shows where you are. */

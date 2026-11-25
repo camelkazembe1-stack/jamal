@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification Center — JAMALI</title>
+<link rel="stylesheet" href="/notification-center/411.css">
+<script type="module" src="/sidebar.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <a class="back" href="/business/2">&larr; Business</a>
+  <h1>Notification Center</h1>
+  <p class="sub">One place for everything the notification engine catches in the background &mdash; stock crossing its Low Units, money coming in, invoices aging past their due date. Tune what fires on <a href="/notification-settings/412">Notification Settings</a>.</p>
+
+  <section class="stat-row" id="stat-row">
+    <div class="stat"><span class="stat-ico">&#9888;&#65039;</span><span class="stat-n" id="st-low">0</span><span class="stat-l">Low stock</span></div>
+    <div class="stat is-bad"><span class="stat-ico">&#9940;</span><span class="stat-n" id="st-critical">0</span><span class="stat-l">Critical stock</span></div>
+    <div class="stat is-bad"><span class="stat-ico">&#128683;</span><span class="stat-n" id="st-out">0</span><span class="stat-l">Out of stock</span></div>
+    <div class="stat"><span class="stat-ico">&#128276;</span><span class="stat-n" id="st-unread">0</span><span class="stat-l">Unread alerts</span></div>
+  </section>
+
+  <div class="tabs" id="tabs"></div>
+
+  <section class="card list-card">
+    <div class="list-head">
+      <h2>Notifications</h2>
+      <div class="list-actions">
+        <button class="ghost-btn" id="read-all" type="button">Mark all read</button>
+        <button class="ghost-btn danger" id="clear-read" type="button">Clear read</button>
+      </div>
+    </div>
+    <div id="list"></div>
+    <div class="empty" id="empty" hidden>
+      <div class="empty-icon">&#128276;</div>
+      <p class="empty-title">Nothing here yet</p>
+      <p class="empty-sub">The engine watches stock levels, payments and invoices on every page. Set a Low Units value on a stock in the <a href="/stock-register/348">Stock Register</a> and the alerts will land here the moment a sale crosses it.</p>
+    </div>
+  </section>
+
+  <section class="card hist-card">
+    <h2>History &amp; delivery</h2>
+    <p class="hist-sub">Every notification ever generated in this zone &mdash; title, message, module, recipient, channel and delivery status. SMS and email rows are queued as ready-to-send texts: hand them to the phone with one tap.</p>
+    <div class="table-wrap"><table class="bk">
+      <thead><tr>
+        <th>Title</th><th>Message</th><th>Module</th><th>Recipient</th>
+        <th>Date &amp; time</th><th>Channels</th><th>Delivery</th><th>State</th><th></th>
+      </tr></thead>
+      <tbody id="hist-body"></tbody>
+    </table></div>
+    <p class="count-line" id="hist-count"></p>
+  </section>
+</main>
+<script type="module" src="/notification-center/411.js"></script>
+</body>
+</html>
