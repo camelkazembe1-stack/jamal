@@ -57,24 +57,21 @@ function render() {
   const cur = p.length ? find(p, tops) : { node: null, kids: tops };
   if (p.length && !cur) { location.hash = "#/"; return; }
 
-  let back = document.getElementById("lvl-back");
+  // NO BACK BUTTON ON THE HOME PAGE (demand 25 Nov 2026): the old
+  // "← Back" link is gone for good - the tiles, the top menu and the
+  // browser's own back button are the way around. Only the level title
+  // stays, and only while a sub-level is open.
   let title = document.getElementById("lvl-title");
-  if (!back) {
-    back = document.createElement("a");
-    back.id = "lvl-back"; back.className = "back"; back.textContent = "← Back";
+  if (!title) {
     title = document.createElement("h2");
     title.id = "lvl-title"; title.className = "lvl-title";
     const wrap = grid.parentNode;
     wrap.insertBefore(title, grid);
-    wrap.insertBefore(back, title);
   }
   if (p.length && cur.node) {
-    back.hidden = false;
-    back.href = p.length > 1 ? "#/" + p.slice(0, -1).join("/") : "#/";
     title.hidden = false;
     title.textContent = (cur.node.icon || "") + " " + cur.node.label;
   } else {
-    back.hidden = true;
     title.hidden = true;
   }
 

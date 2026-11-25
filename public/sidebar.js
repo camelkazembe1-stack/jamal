@@ -314,13 +314,12 @@ service cloud.firestore {
 
     match /comments/{docId} {
       // THE COMMENT DESK: the one collection visitors still write to.
-      // USERS ONLY (demand): a comment is a letter from a signed-in user
-      // to the owner - the AI and anonymous writers are not allowed and
-      // the database refuses them (text only, 1-2000 chars). Reading the
-      // mailbox and removing comments is the owner's alone.
-      allow create: if isSignedIn()
-        && request.auth.token.email != null
-        && request.resource.data.get("text", "") is string
+      // LOGIN NOT COMPULSORY (demand 25 Nov 2026): any visitor may send -
+      // the database checks the letter's shape only (text only, 1-2000
+      // chars) and takes the from line the popup sends ("Guest" when the
+      // sender has no account). Reading the mailbox and removing comments
+      // is still the signed-in owner's alone.
+      allow create: if request.resource.data.get("text", "") is string
         && request.resource.data.get("text", "").size() > 0
         && request.resource.data.get("text", "").size() <= 2000
         && request.resource.data.get("from", "") is string
@@ -1326,14 +1325,11 @@ function commentQuery(fs, cdb) {
   return fs.query(base, fs.orderBy("createdAt", "desc"), fs.limit(300));
 }
 
-// commentSend - USERS ONLY (demand: users only are required to send
-// comment; the AI is not allowed): the sender must be signed in, and the
-// comment goes to the owner with the account email as the from line.
-// Anonymous visitors get the sign-in gate in the write popup instead.
+// commentSend - OPEN TO EVERY VISITOR (demand 25 Nov 2026: login is not
+// compulsory to send a comment): the comment goes to the owner, a signed-in
+// sender carries the account email as the from line, an anonymous sender
+// goes down as "Guest". The write popup is the composer for everyone.
 export function commentSend(text, pageRef) {
-  if (!activeUser || !activeUser.email) {
-    return Promise.reject(new Error("Sign in with Google to send a comment - comments come from signed-in users only."));
-  }
   var t = String(text == null ? "" : text).trim();
   if (!t) return Promise.reject(new Error("Write the comment first - the box is empty."));
   if (t.length > 2000) return Promise.reject(new Error("The comment is over 2000 characters - shorten it and send it again."));
@@ -3647,10 +3643,7 @@ p.label + "</a>";
    "#jamali-cpop .msg{border-radius:10px;padding:9px 12px;margin:10px 0 0;line-height:1.5;font-size:12.5px}",
    "#jamali-cpop .msg.cpop-ok{background:#052e16;border:1px solid #4ade80;color:#bbf7d0}",
    "#jamali-cpop .msg.cpop-bad{background:#450a0a;border:1px solid #f87171;color:#fecaca}",
-   "#jamali-cpop-gate{border:1px solid #1e3a5f;background:#0b1220;border-radius:10px;padding:12px;text-align:center}",
-   "#jamali-cpop-gate p{margin:0 0 10px;color:#bae6fd;font-size:13px;line-height:1.5}",
-   "#jamali-cpop-gate-in{border:0;border-radius:10px;background:#0ea5e9;color:#fff;font-weight:800;font-size:13.5px;padding:10px 18px;cursor:pointer}",
-   "#jamali-cpop-gate-in:hover{background:#0284c7}",
+
 
    // RETURNED (24 Nov 2026): the administrator page-config tooling -
    // the red minus pin, the green plus pin, the Hidden chip and panel,
@@ -3734,12 +3727,12 @@ p.label + "</a>";
     // demanded proportions - the Login/Logout button takes 50% of the row,
     // the Comment button 25% and the settings gear 25%. Clicking the gear
     // opens the one settings panel; clicking Comment opens the write popup
-    // (signed-in users only - the AI is not allowed; the owner never sees
+    // (login not compulsory - any visitor may write; the owner never sees
     // the button).
     "<div id=\"jamali-side-foot\">" +
     "<div class=\"jamali-foot-row\">" +
     "<button type=\"button\" id=\"jamali-side-auth\" class=\"login\" title=\"Not signed in - click to sign in with Google\">Login</button>" +
-    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner (signed-in users only)\">&#128172;<small>Comment</small></button>" +
+    "<button type=\"button\" id=\"jamali-side-comment\" title=\"Write a comment to the owner (no login needed)\">&#128172;<small>Comment</small></button>" +
     "<button type=\"button\" id=\"jamali-side-gear\" title=\"Organisation settings\">&#9881;&#65039;<small>Settings</small></button>" +
     "</div></div>";
 
@@ -4025,11 +4018,7 @@ p.label + "</a>";
       "<textarea id=\"jamali-cpop-text\" maxlength=\"2000\" placeholder=\"Write your comment - it goes straight to the owner\"></textarea>" +
       "<div class=\"cpop-under\"><span class=\"cpop-count\" id=\"jamali-cpop-count\">0 / 2000</span>" +
       "<button type=\"button\" id=\"jamali-cpop-send\">Send comment</button></div>" +
-      "<div class=\"msg\" id=\"jamali-cpop-msg\" hidden></div>" +
-      "<div id=\"jamali-cpop-gate\" hidden>" +
-      "<p>Comments come from signed-in users only - the AI is not allowed to send.</p>" +
-      "<button type=\"button\" id=\"jamali-cpop-gate-in\">Sign in with Google</button>" +
-      "</div>";
+      "<div class=\"msg\" id=\"jamali-cpop-msg\" hidden></div>";
     document.body.appendChild(veil);
     document.body.appendChild(pop);
     document.addEventListener("keydown", function (e) {
@@ -4042,43 +4031,14 @@ p.label + "</a>";
     });
     document.getElementById("jamali-cpop-close").addEventListener("click", jamaliCommentPopClose);
     document.getElementById("jamali-cpop-send").addEventListener("click", jamaliCommentPopSend);
-    // USERS ONLY: the gate button reuses the sidebar Login button, so all
-    // its wiring (Google popup, error toasts, disabled states) stays in
-    // one place; the gate repaints itself when the identity changes.
-    document.getElementById("jamali-cpop-gate-in").addEventListener("click", function () {
-      var authBtn = document.getElementById("jamali-side-auth");
-      if (authBtn) authBtn.click();
-    });
-    import("/sidebar.js").then(function (fb) {
-      if (fb && fb.onAuthStateChanged) {
-        fb.onAuthStateChanged(null, function () { jamaliCommentPopPaintGate(); });
-      }
-    }).catch(function () { /* offline: the gate still paints on open */ });
   })();
 
-  // USERS ONLY: signed-in visitors get the composer, anonymous visitors
-  // (and anything automated) get the sign-in gate. Painted on open and
-  // again on every auth change.
-  function jamaliCommentPopPaintGate() {
-    var gate = document.getElementById("jamali-cpop-gate");
-    var ta = document.getElementById("jamali-cpop-text");
-    var under = document.querySelector("#jamali-cpop .cpop-under");
-    var from = document.getElementById("jamali-cpop-from");
-    if (!gate || !ta || !under || !from) return;
-    import("/sidebar.js").then(function (fb) {
-      var signed = !!(fb && fb.localZone && fb.localZone().signedIn);
-      gate.hidden = signed;
-      ta.hidden = !signed;
-      under.hidden = !signed;
-      from.hidden = !signed;
-    }).catch(function () { /* offline: keep the last painted state */ });
-  }
-
+  // OPEN TO EVERY VISITOR (demand 25 Nov 2026): no sign-in gate any more -
+  // the composer paints for everyone, the from line names the page.
   function jamaliCommentPopOpen() {
     var pop = document.getElementById("jamali-cpop");
     var veil = document.getElementById("jamali-cpop-veil");
     if (!pop || !veil) return;
-    jamaliCommentPopPaintGate();
     document.getElementById("jamali-cpop-from").textContent =
       "from " + (PAGE_ID || "/home/1");
     pop.hidden = false;

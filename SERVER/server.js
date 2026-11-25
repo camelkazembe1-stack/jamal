@@ -276,13 +276,12 @@ service cloud.firestore {
 
     match /comments/{docId} {
       // THE COMMENT DESK: the one collection visitors still write to.
-      // USERS ONLY (demand): a comment is a letter from a signed-in user
-      // to the owner - the AI and anonymous writers are not allowed and
-      // the database refuses them (text only, 1-2000 chars). Reading the
-      // mailbox and removing comments is the owner's alone.
-      allow create: if isSignedIn()
-        && request.auth.token.email != null
-        && request.resource.data.get("text", "") is string
+      // LOGIN NOT COMPULSORY (demand 25 Nov 2026): any visitor may send -
+      // the database checks the letter's shape only (text only, 1-2000
+      // chars) and takes the from line the popup sends ("Guest" when the
+      // sender has no account). Reading the mailbox and removing comments
+      // is still the signed-in owner's alone.
+      allow create: if request.resource.data.get("text", "") is string
         && request.resource.data.get("text", "").size() > 0
         && request.resource.data.get("text", "").size() <= 2000
         && request.resource.data.get("from", "") is string
@@ -1288,14 +1287,11 @@ function commentQuery(fs, cdb) {
   return fs.query(base, fs.orderBy("createdAt", "desc"), fs.limit(300));
 }
 
-// commentSend - USERS ONLY (demand: users only are required to send
-// comment; the AI is not allowed): the sender must be signed in, and the
-// comment goes to the owner with the account email as the from line.
-// Anonymous visitors get the sign-in gate in the write popup instead.
+// commentSend - OPEN TO EVERY VISITOR (demand 25 Nov 2026: login is not
+// compulsory to send a comment): the comment goes to the owner, a signed-in
+// sender carries the account email as the from line, an anonymous sender
+// goes down as "Guest". The write popup is the composer for everyone.
 export function commentSend(text, pageRef) {
-  if (!activeUser || !activeUser.email) {
-    return Promise.reject(new Error("Sign in with Google to send a comment - comments come from signed-in users only."));
-  }
   var t = String(text == null ? "" : text).trim();
   if (!t) return Promise.reject(new Error("Write the comment first - the box is empty."));
   if (t.length > 2000) return Promise.reject(new Error("The comment is over 2000 characters - shorten it and send it again."));

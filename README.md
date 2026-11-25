@@ -65,6 +65,18 @@ JAMALI
 > unavailable"; the dead Open Food Facts name-search endpoint is retired
 > and every result shows its real source.
 
+> COMMENT WITHOUT LOGIN + NO BACK BUTTON ON HOME (25 Nov 2026): sending a
+> comment no longer needs an account - the write popup is the composer for
+> every visitor (the sign-in gate, its CSS and its wiring are gone;
+> commentSend keeps the 1-2000 character check and signs the letter "Guest"
+> when the sender has no account) and the Firestore /comments create rule
+> accepts anonymous letters, so the updated rules must be published from
+> the Firebase console once (the delivery script writes the full text to
+> /tmp/jamali-firestore-rules.rules). Reading the mailbox and removing
+> comments is still the owner's alone. The home page no longer builds the
+> "← Back" link - the tiles, the menu and the browser's own back button
+> are the way around.
+
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app
 
