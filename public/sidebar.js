@@ -3589,9 +3589,6 @@ p.label + "</a>";
    "@media(max-width:800px){",
    " body.jamali-has-sidebar{margin-left:0}",
    " body.jamali-has-sidebar{padding-top:58px}",
-   " body.jamali-has-sidebar{padding-top:58px}",
-   " body.jamali-has-sidebar{padding-top:58px}",
-   " body.jamali-has-sidebar{padding-top:58px}",
    " #jamali-sidebar{transform:translateX(-100%)}",
    " body.jamali-sidebar-open #jamali-sidebar{transform:none}",
    " #jamali-burger{display:flex}",
@@ -3613,7 +3610,14 @@ p.label + "</a>";
    "#jamali-side-gear small{font-size:10px;font-weight:700;color:#94a3b8}",
    "#jamali-side-gear:hover{background:#334155;color:#fff}",
    "#jamali-side-gear:hover small{color:#e2e8f0}",
-   "#jamali-owner-comments{position:fixed;top:12px;right:12px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
+   // BESIDE THE BELL, NOT UNDER IT (26 Nov 2026, mobile-view demand): the
+   // Comments button sat on the exact same fixed spot as the notification
+   // bell (top:12 right:12) and the bell's higher z-index covered it
+   // completely - on a phone the notification literally interrupted the
+   // comment desk. It now sits in the same top strip, just left of the
+   // bell (the bell is 42px wide at right:12, so right:62 leaves an 8px
+   // gap), on every screen size.
+   "#jamali-owner-comments{position:fixed;top:12px;right:62px;z-index:1001;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#f1f5f9;font-weight:800;font-size:13.5px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.45);display:flex;align-items:center;gap:8px}",
    "#jamali-owner-comments:hover{background:#1e293b}",
    "#jamali-owner-comments[hidden]{display:none}",
    "#jamali-side-comment[hidden]{display:none}",

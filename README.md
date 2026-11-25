@@ -77,6 +77,17 @@ JAMALI
 > "← Back" link - the tiles, the menu and the browser's own back button
 > are the way around.
 
+> THE BUSINESS MODULE IN MOBILE VIEW + NO MORE INTERRUPT (26 Nov 2026):
+> the owner's Comments button sat on the exact same fixed spot as the
+> notification bell and the bell's higher z-index covered it completely
+> (a headless probe measured a 42x40px overlap on phone AND desktop) - on
+> a phone the notification literally interrupted the comment desk. The
+> Comments button now sits in the same top strip just left of the bell on
+> every screen size. The Business module page presents properly on a
+> phone (tighter padding below 560px so the tiles and the alert banner
+> breathe) and the mobile sidebar block lost its four duplicated padding
+> lines.
+
 
 Plain, honest bookkeeping for a small trading business, a Health desk for the hospital that has grown into a full medical wing, and a 256 tool file and data converter. A static, zero build web app. Live at https://jamali-lime.vercel.app
 

@@ -15,6 +15,10 @@ body { background: #f1f5f9; color: #0f172a; }
 .tile-label { text-align: center; line-height: 1.25; padding: 0 6px; }
 @media (max-width: 1100px) { .grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 560px)  { .grid { grid-template-columns: repeat(3, 1fr); } }
+/* PRESENTED ON A PHONE (26 Nov 2026, mobile-view demand): the desktop
+   34px side padding ate a 360px screen; 18px/14px lets the tiles and the
+   alert banner breathe on small phones. */
+@media (max-width: 560px)  { .wrap { padding: 18px 14px; } }
 
 /* ================= jamali-supportive-background ================= */
 /* Family theme: BOOKKEEPING - ledger paper, ruled lines, margin rule and coins.
