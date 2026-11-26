@@ -53,7 +53,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     "electricity", "water", "telephone", "internet", "repairs", "insurance", "bank charges",
     "interest allowed", "advertising", "stationery", "postage", "cleaning", "security",
     "fuel", "maintenance", "legal", "accounting fees", "bad debts", "carriage", "customs",
-    "licence", "license", "bank fee", "delivery", "printing", "petty expense"];
+    "licence", "license", "bank fee", "delivery", "printing", "petty expense", "cogs"];
   function classifyAcct(name) {
     var n = String(name || "").toLowerCase();
     if (n === "cash" || n === "bank" || n === "drawings") return "asset";
@@ -101,6 +101,13 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     var tn = String((t && t.transactionName) || "").trim() || "Unclassified";
     var detail = who ? who + " \u2014 " + tn : tn;
     var folio = pot.charAt(0).toUpperCase();
+    var la = tn.toLowerCase();
+    var an = String((t && t.asset) || "").trim() ||
+      (String((t && t.flowMethod) || "").trim().toLowerCase() === "cash" ? who : "");
+    if (la === "assets purchase") return { dr: { acct: an || "Assets", detail: an ? an + " \u2014 " + tn : detail, folio: folio, amt: amt },
+      cr: { acct: pot, detail: detail, folio: folio, amt: amt } };
+    if (la === "assets sale") return { dr: { acct: pot, detail: detail, folio: folio, amt: amt },
+      cr: { acct: an || "Assets", detail: an ? an + " \u2014 " + tn : detail, folio: folio, amt: amt } };
     if (ty === "IN") return { dr: { acct: pot, detail: detail, folio: folio, amt: amt },
       cr: { acct: tn, detail: detail, folio: folio, amt: amt } };
     if (ty === "OUT") return { dr: { acct: tn, detail: detail, folio: folio, amt: amt },
@@ -117,6 +124,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
   }
   function buildAccounts(txns) {
     var accts = new Map(), people = new Set();
+    var assetNames = {};
     function post(name, side, row) {
       if (!name) return;
       if (!accts.has(name)) accts.set(name, { kind: "asset", dr: [], cr: [], lastTs: null });
@@ -127,6 +135,9 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     }
     (txns || []).forEach(function (t) {
       var p = postingsFor(t);
+      var btl = String((t && t.transactionName) || "").trim().toLowerCase();
+      if (btl === "assets purchase" && p.dr.acct) assetNames[p.dr.acct] = 1;
+      if (btl === "assets sale" && p.cr.acct) assetNames[p.cr.acct] = 1;
       var ts = asDate(t.dateTime);
       var dateStr = t.date || (ts ? fmtDay(ts) : "\u2014");
       post(p.dr.acct, "dr", { id: t.id, date: dateStr, detail: p.dr.detail,
@@ -137,7 +148,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
       if (pn && pn.toLowerCase() !== "cash" && pn.toLowerCase() !== "bank") people.add(pn);
     });
     accts.forEach(function (a, n) {
-      a.kind = people.has(n) ? "person" : classifyAcct(n);
+      a.kind = assetNames[n] ? "asset" : (people.has(n) ? "person" : classifyAcct(n));
     });
     var order = Array.from(accts.keys()).sort(function (x, y) { return x.localeCompare(y); });
     var creditPeople = [];
@@ -397,7 +408,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
       rows.forEach(function (t) {
         var amt = Number(t.amount || 0);
         tot += amt;
-        var who = String(t.name || "").trim();
+        var who = String(t.name || t.asset || "").trim();
         var nameCell = who || (t.transactionName || "\u2014");
         html += rowCells([
           { v: fmtDay(t.dateTime || t.date), date: 1 },

@@ -53,7 +53,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     "electricity", "water", "telephone", "internet", "repairs", "insurance", "bank charges",
     "interest allowed", "advertising", "stationery", "postage", "cleaning", "security",
     "fuel", "maintenance", "legal", "accounting fees", "bad debts", "carriage", "customs",
-    "licence", "license", "bank fee", "delivery", "printing", "petty expense"];
+    "licence", "license", "bank fee", "delivery", "printing", "petty expense", "cogs"];
   function classifyAcct(name) {
     var n = String(name || "").toLowerCase();
     if (n === "cash" || n === "bank" || n === "drawings") return "asset";
@@ -95,6 +95,13 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     var tn = String((t && t.transactionName) || "").trim() || "Unclassified";
     var detail = who ? who + " \u2014 " + tn : tn;
     var folio = pot.charAt(0).toUpperCase();
+    var la = tn.toLowerCase();
+    var an = String((t && t.asset) || "").trim() ||
+      (String((t && t.flowMethod) || "").trim().toLowerCase() === "cash" ? who : "");
+    if (la === "assets purchase") return { dr: { acct: an || "Assets", detail: an ? an + " \u2014 " + tn : detail, folio: folio, amt: amt },
+      cr: { acct: pot, detail: detail, folio: folio, amt: amt } };
+    if (la === "assets sale") return { dr: { acct: pot, detail: detail, folio: folio, amt: amt },
+      cr: { acct: an || "Assets", detail: an ? an + " \u2014 " + tn : detail, folio: folio, amt: amt } };
     if (ty === "IN") return { dr: { acct: pot, detail: detail, folio: folio, amt: amt },
       cr: { acct: tn, detail: detail, folio: folio, amt: amt } };
     if (ty === "OUT") return { dr: { acct: tn, detail: detail, folio: folio, amt: amt },
@@ -111,6 +118,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
   }
   function buildAccounts(txns) {
     var accts = new Map(), people = new Set();
+    var assetNames = {};
     function post(name, side, row) {
       if (!name) return;
       if (!accts.has(name)) accts.set(name, { kind: "asset", dr: [], cr: [], lastTs: null });
@@ -121,6 +129,9 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
     }
     (txns || []).forEach(function (t) {
       var p = postingsFor(t);
+      var btl = String((t && t.transactionName) || "").trim().toLowerCase();
+      if (btl === "assets purchase" && p.dr.acct) assetNames[p.dr.acct] = 1;
+      if (btl === "assets sale" && p.cr.acct) assetNames[p.cr.acct] = 1;
       var ts = asDate(t.dateTime);
       var dateStr = t.date || (ts ? fmtDay(ts) : "\u2014");
       post(p.dr.acct, "dr", { id: t.id, date: dateStr, detail: p.dr.detail,
@@ -131,7 +142,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
       if (pn && pn.toLowerCase() !== "cash" && pn.toLowerCase() !== "bank") people.add(pn);
     });
     accts.forEach(function (a, n) {
-      a.kind = people.has(n) ? "person" : classifyAcct(n);
+      a.kind = assetNames[n] ? "asset" : (people.has(n) ? "person" : classifyAcct(n));
     });
     var order = Array.from(accts.keys()).sort(function (x, y) { return x.localeCompare(y); });
     var creditPeople = [];
@@ -391,7 +402,7 @@ import { db as jamaliCoreDb, collection as jamaliCoreCollection, getDocs as jama
       rows.forEach(function (t) {
         var amt = Number(t.amount || 0);
         tot += amt;
-        var who = String(t.name || "").trim();
+        var who = String(t.name || t.asset || "").trim();
         var nameCell = who || (t.transactionName || "\u2014");
         html += rowCells([
           { v: fmtDay(t.dateTime || t.date), date: 1 },
@@ -550,10 +561,13 @@ const TRANSACTIONS = {
     { name: "Commission Received",   icon: "\u{1F9FE}" },
     { name: "Other Income",          icon: "\u{1F4B4}" },
     { name: "Service Income",        icon: "\u{1F6E0}\u{FE0F}" },
-    { name: "Donation",              icon: "\u{1F381}" }
+    { name: "Donation",              icon: "\u{1F381}" },
+    { name: "Assets Sale",           icon: "\u{1F3E2}" }
   ],
   OUT: [
     { name: "Purchases",         icon: "\u{1F6D2}" },
+    { name: "COGS",              icon: "\u{1F4E6}" },
+    { name: "Assets Purchase",   icon: "\u{1F3D7}\u{FE0F}" },
     { name: "Rent",              icon: "\u{1F3E0}" },
     { name: "Sales Return",      icon: "\u{21A9}\u{FE0F}" },
     { name: "Petty Expense",     icon: "\u{1F9F9}" },
@@ -597,10 +611,12 @@ const TRANSACTIONS = {
  
 
 const $ = (s) => document.querySelector(s);
-const state = { type: null, txn: null, method: null, charges: null, person: null, owed: 0 };
+const state = { type: null, txn: null, method: null, charges: null, person: null, owed: 0, asset: null, assetCost: 0 };
 
 const RECOVERS = { "Debtors Recover": 1, "Creditors Recover": 1 };
 const isRecover = () => !!RECOVERS[state.txn];
+const ASSET_TXNS = { "Assets Purchase": 1, "Assets Sale": 1 };
+const isAssetTxn = () => !!ASSET_TXNS[state.txn];
 
 const fmt = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 });
 
@@ -656,6 +672,8 @@ document.querySelectorAll("#groups .tile").forEach((btn) =>
     state.type = btn.dataset.type;
     state.txn = btn.dataset.txn;
     if (isRecover()) { state.person = null; state.owed = 0; showPick(); return; }
+    if (state.txn === "Assets Purchase") { state.asset = null; state.assetCost = 0; showAssetStep(); return; }
+    if (state.txn === "Assets Sale") { state.asset = null; state.assetCost = 0; showPick(); return; }
     openForm();
   }));
 
@@ -666,25 +684,36 @@ function openForm() {
   state.method = null;
   state.charges = null;
   const rec = isRecover();
-  $("#txn-title").textContent = rec && state.person ? state.txn + " \u00B7 " + state.person : state.txn;
+  $("#txn-title").textContent = rec && state.person ? state.txn + " \u00B7 " + state.person
+    : isAssetTxn() && state.asset ? state.txn + " \u00B7 " + state.asset : state.txn;
   $("#txn-sub").textContent = rec && state.person
     ? "Step 3 of 3 \u00B7 " + (state.type === "IN" ? "owed to you: " : "you owe: ") + fmt(state.owed) +
       " \u2014 enter the paid amount, then Cash or Bank."
+    : isAssetTxn() && !editing
+    ? "Step 3 of 3 \u00B7 " + (state.type === "IN"
+        ? "the money comes in and the asset goes down \u2014 pick Cash, Credit or Bank." +
+          (state.assetCost ? " Registered cost: " + fmt(state.assetCost) + "." : "")
+        : "the asset goes up and the money goes out \u2014 pick Cash, Credit or Bank.")
     : "Step 2 of 2 \u00B7 " + state.type +
       (state.type === "NEUTRAL" ? " \u00B7 no flow method" : "");
   $("#save-btn").textContent = "Save Transaction";
-  $("#back-2").textContent = rec ? "\u2190 Names" : "\u2190 Transactions";
+  $("#back-2").textContent = rec ? "\u2190 Names"
+    : isAssetTxn() && !editing
+      ? (state.txn === "Assets Purchase" ? "\u2190 Asset details" : "\u2190 Assets")
+      : "\u2190 Transactions";
   $("#in-amount").value = "";
   $("#in-person").value = "";
   $("#in-bank").value = "";
   $("#in-charges").value = "";
   $("#form-err").hidden = true;
-  $("#amount-label").textContent = rec ? "Paid Amount" : "Amount";
+  $("#amount-label").textContent = rec ? "Paid Amount" : state.txn === "Assets Sale" ? "Selling Price" : "Amount";
 
   const needsMethod = state.type === "IN" || state.type === "OUT";
   $("#f-method").hidden = !needsMethod;
   if (needsMethod) {
-    $("#method-seg").innerHTML = (rec ? ["Cash", "Bank"] : ["Cash", "Credit", "Bank"]).map((m) =>
+    $("#method-seg").innerHTML = (rec ? ["Cash", "Bank"]
+      : state.txn === "COGS" ? ["Cash", "Bank"]
+      : ["Cash", "Credit", "Bank"]).map((m) =>
       `<button class="seg-btn" type="button" data-v="${m}">${METHOD_ICONS[m]} ${m}</button>`).join("");
     document.querySelectorAll("#method-seg .seg-btn").forEach((b) =>
       b.addEventListener("click", () => {
@@ -739,6 +768,12 @@ onSnapshot(query(collection(db, "transactions"), orderBy("dateTime", "asc")), (s
   if ($("#step-pick") && $("#step-pick").classList.contains("is-active")) renderPick();
 }, () => { TXNS = []; });
 
+let ASSETS = [];
+onSnapshot(collection(db, "assets"), (snap) => {
+  ASSETS = snap.docs.map((d) => Object.assign({ id: d.id }, d.data({ serverTimestamps: "estimate" })));
+  if ($("#step-pick").classList.contains("is-active")) renderPick();
+}, () => { ASSETS = []; });
+
 function personBalances(kind) {
   const bal = Object.create(null);
   TXNS.forEach((t) => {
@@ -764,6 +799,8 @@ function showPick() {
 }
 
 function renderPick() {
+  if (state.txn === "Assets Sale") return renderAssetPick();
+  $("#rec-empty-sub").textContent = "A name shows here once the books give it an amount owed.";
   const isDebtor = state.type === "IN";
   const bal = personBalances(isDebtor ? "debtors" : "creditors");
   const names = Object.keys(bal).filter((p) => bal[p] > 0)
@@ -792,6 +829,56 @@ function renderPick() {
       : "The business owes no creditor right now";
 }
 
+function renderAssetPick() {
+  const list = ASSETS.slice().sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+  $("#pick-title").textContent = "Pick the asset";
+  $("#pick-sub").textContent = "Step 2 of 3 \u00B7 assets already registered in the system \u2014 pick the one you are selling.";
+  $("#rec-grid").innerHTML = list.map((a) =>
+    '<button class="tile" type="button" data-a="' + escAttr(a.name || "") + '">' +
+      '<span class="tile-icon">\u{1F3E2}</span>' +
+      '<span class="tile-label">' + escAttr(a.name || "Unnamed") + "</span>" +
+      '<span class="tile-units">' + escAttr(a.category || "") +
+        (Number(a.cost) ? " \u00B7 cost " + fmt(a.cost) : "") + "</span>" +
+    "</button>").join("");
+  $("#rec-grid").querySelectorAll(".tile").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const hit = list.find((x) => (x.name || "") === btn.dataset.a);
+      state.asset = btn.dataset.a;
+      state.assetCost = hit ? Number(hit.cost) || 0 : 0;
+      state.person = null;
+      state.owed = 0;
+      openForm();
+    }));
+  $("#rec-empty-icon").textContent = "\u{1F3E2}";
+  $("#rec-empty").hidden = list.length > 0;
+  $("#rec-empty-title").textContent = "No registered assets yet";
+  $("#rec-empty-sub").textContent =
+    "Register the asset on the Fixed Assets page first \u2014 this list comes straight from that register.";
+}
+
+function showAssetStep() {
+  document.querySelectorAll(".step").forEach((s) => s.classList.remove("is-active"));
+  $("#step-asset").classList.add("is-active");
+  $("#asset-sub").textContent = "Step 2 of 3 \u00B7 name the stock/asset and the purchase price, then pick how you pay.";
+  $("#asset-err").hidden = true;
+  window.scrollTo({ top: 0 });
+}
+
+$("#asset-next").addEventListener("click", () => {
+  const bad = (m) => { const e = $("#asset-err"); e.textContent = m; e.hidden = false; };
+  $("#asset-err").hidden = true;
+  const nm = $("#in-asset").value.trim();
+  const amt = Number($("#in-asset-amount").value);
+  if (!nm) return bad("Enter the stock/asset name first.");
+  if (!amt || amt <= 0) return bad("Enter the purchase price first.");
+  state.asset = nm;
+  openForm();
+  $("#in-amount").value = amt;
+  updatePreview();
+});
+
+$("#back-asset").addEventListener("click", () => showStep(1));
+
 $("#back-pick").addEventListener("click", () => showStep(1));
 
 function findEntry(name) {
@@ -808,6 +895,11 @@ function prefillEdit(d) {
     state.type = hit.type;
     state.txn = hit.txn;
     if (isRecover()) state.person = String(d.name || "");
+    if (isAssetTxn()) {
+      const efm = String(d.flowMethod || "").trim().toLowerCase();
+      state.asset = String(d.asset || (efm === "cash" ? (d.name || "") : "") || "");
+      state.assetCost = 0;
+    }
   } else if (/charge/i.test(name)) {
     state.type = String(d.transactionType || "").toUpperCase() === "OUT" ? "OUT" : "CONTRA";
     state.txn = name;
@@ -832,7 +924,8 @@ function prefillEdit(d) {
   $("#f-charges").hidden = true;
   $("#f-charges-amount").hidden = true;
   $("#txn-title").textContent = "Edit: " + state.txn +
-    (isRecover() && state.person ? " \u00B7 " + state.person : "");
+    (isRecover() && state.person ? " \u00B7 " + state.person
+      : isAssetTxn() && state.asset ? " \u00B7 " + state.asset : "");
   $("#txn-sub").textContent = "Step 2 of 2 \u00B7 " + state.type +
     " \u2014 change the amount or method, then update. The date stays as it was.";
   $("#save-btn").textContent = "Update Transaction";
@@ -892,6 +985,7 @@ function updatePreview() {
       p += "   +   Bank Charges \u00B7 " + fmt($("#in-charges").value);
   } else {
     if (state.method) p += " \u00B7 " + state.method;
+    if (isAssetTxn() && state.asset) p += " \u00B7 " + state.asset;
     const nm = state.method === "Credit" ? $("#in-person").value.trim()
              : state.method === "Bank" ? $("#in-bank").value.trim() : "";
     if (nm) p += " \u00B7 " + nm;
@@ -931,7 +1025,7 @@ function updatePreview() {
   } else { 
     if (!state.method) return err(isRecover()
       ? "Choose Cash or Bank - Credit is not available here."
-      : "Choose Cash, Credit or Bank.");
+      : state.txn === "COGS" ? "COGS records by Cash or Bank only." : "Choose Cash, Credit or Bank.");
     let name = null;
     if (isRecover()) {
       name = state.person || null;
@@ -943,6 +1037,10 @@ function updatePreview() {
       name = $("#in-bank").value.trim();
       if (!name) return err("Enter the bank name.");
     }
+    if (isAssetTxn() && !state.asset)
+      return err(state.txn === "Assets Purchase"
+        ? "Enter the stock/asset name first."
+        : "Pick the asset first.");
 
     if (isRecover() && !editing) {
       // The overpay rule: the owed figure is recovered first. Anything
@@ -982,8 +1080,10 @@ function updatePreview() {
                     transactionType: state.type, name: $("#in-bank").value.trim() || null, amount: c });
       }
     } else {
-      docs.push({ transactionName: state.txn, dateTime: serverTimestamp(), flowMethod: state.method,
-                  transactionType: state.type, name, amount });
+      const base = { transactionName: state.txn, dateTime: serverTimestamp(), flowMethod: state.method,
+                  transactionType: state.type, name, amount };
+      if (isAssetTxn()) base.asset = state.asset;
+      docs.push(base);
       if (state.type === "OUT" && !editing && state.method === "Bank" && state.charges === "WITH") {
         const c = Number($("#in-charges").value);
         if (!c || c <= 0) return err("Enter the charges amount.");
@@ -1031,9 +1131,12 @@ function updatePreview() {
 
  
  $("#back-2").addEventListener("click", () => {
+  const wasEditing = editing;
   if (editing && savedBack) { location.href = savedBack; return; }
   if (editing) { editing = false; editId = ""; }
   if (isRecover()) { showPick(); return; }
+  if (!wasEditing && state.txn === "Assets Purchase") { showAssetStep(); return; }
+  if (!wasEditing && state.txn === "Assets Sale") { showPick(); return; }
   showStep(1);
 });
  $("#again-btn").addEventListener("click", () => {
@@ -1041,6 +1144,10 @@ function updatePreview() {
   state.type = state.txn = null;
   state.person = null;
   state.owed = 0;
+  state.asset = null;
+  state.assetCost = 0;
+  $("#in-asset").value = "";
+  $("#in-asset-amount").value = "";
   showStep(1);
 });
 

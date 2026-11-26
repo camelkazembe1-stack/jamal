@@ -26,7 +26,26 @@
     <div class="card empty" id="rec-empty" hidden>
       <div class="empty-icon" id="rec-empty-icon">&#x1F4B8;</div>
       <p class="empty-title" id="rec-empty-title">No names with a balance yet</p>
-      <p class="empty-sub">A name shows here once the books give it an amount owed.</p>
+      <p class="empty-sub" id="rec-empty-sub">A name shows here once the books give it an amount owed.</p>
+    </div>
+  </section>
+
+  
+  <section class="step" id="step-asset">
+    <button class="back" id="back-asset" type="button">&larr; Transactions</button>
+    <h1 id="asset-title">Assets Purchase</h1>
+    <p class="sub" id="asset-sub">Step 2 of 3 &mdash; name the stock/asset and the purchase price, then pick how you pay.</p>
+    <div class="card form-card">
+      <div class="field">
+        <label for="in-asset">Stock/Asset Name</label>
+        <input id="in-asset" type="text" placeholder="e.g. Building">
+      </div>
+      <div class="field">
+        <label for="in-asset-amount">Amount</label>
+        <input id="in-asset-amount" type="number" inputmode="decimal" min="0" step="any" placeholder="0.00">
+      </div>
+      <p class="form-err" id="asset-err" hidden></p>
+      <button class="save-btn" id="asset-next" type="button">Continue</button>
     </div>
   </section>
 
