@@ -1,24 +1,38 @@
-see cover the full internationsal demand to met high percent avout 98 
 
 
+Understood. Let's define the **Assets Purchase** workflow.
 
+### 1. Assets Purchase button
 
-at the stock register next to unitpresent show set the  low stock level 
-and  when the stock meet that stock level please send notification to phone  number  of  organisation  
+When the user clicks **Assets Purchase**, the system should:
 
+**Step 1: Ask for transaction details**
+- Amount – purchase price.
+- Stock/Asset Name – name of the asset purchased.
 
-remove the notification icon 
+**Step 2: Follow the existing Money Out transaction workflow.**
 
+This means the system should reuse the existing Money Out steps rather than creating a separate payment workflow.
 
+**Step 3: Accounting treatment**
 
-to stock progress ach value  must be i n its label  not with difference as now
+For example, purchasing a building for cash at 1,000:
 
-see  remove everyhting  in current setting and  we  need the  following  in setting  
-1.organisatoion details
- for usr  who dont  have must register  it  and  ir\ts  form must  contain the following  
-1. Organisation Name
-2. Organisation Type
-3. Location
-4. phone number
-5. email    for  login user only use the login with email
+| Account | Debit | Credit |
+|---|---:|---:|
+| Building | 1,000 | |
+| Cash | | 1,000 |
 
+The asset increases, and cash decreases.
+
+Assets Sale button
+When the user clicks Assets Sale:
+1. Retrieve Registered Assets: The system automatically loads assets already registered in the system.
+2. Select Asset: The user selects the asset they want to sell.
+3. Enter Amount: The user enters the selling price.
+4. Continue: Follow the existing Money In transaction workflow for the remaining steps.
+Accounting treatment
+For example, selling a building for cash at 1,000:
+Account	Debit	Credit
+Cash	1,000	
+Building		1,000
